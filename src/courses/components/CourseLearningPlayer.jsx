@@ -477,7 +477,7 @@ const CourseLearningPlayer = ({ course, onExit, user, initialView = 'OVERVIEW' }
   // Full Course Overview landing & curriculum view
   if (activePlayerView === 'OVERVIEW') {
     return (
-      <div className="learning-player-shell">
+      <div className="learning-player-shell overview-player-shell">
         <CourseOverviewView
           course={course}
           progress={progress}

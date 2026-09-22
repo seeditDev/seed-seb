@@ -1,22 +1,38 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  FaSearch, FaBookOpen, FaCode, FaClock,
-  FaCertificate, FaArrowRight, FaCheckCircle, FaGraduationCap,
-  FaPlay, FaDatabase, FaServer, FaCogs, FaUserTie, FaLaptopCode,
-  FaPlus, FaThLarge, FaListUl, FaBookmark, FaTimes, FaStar,
-  FaLayerGroup, FaFileAlt, FaFire, FaChevronRight, FaLock,
-  FaTrashAlt, FaExclamationTriangle, FaBolt
+import { 
+  FaSearch, 
+  FaBookOpen, 
+  FaPlay, 
+  FaClock, 
+  FaCheckCircle, 
+  FaBookmark, 
+  FaRegBookmark,
+  FaThLarge, 
+  FaListUl, 
+  FaGraduationCap, 
+  FaStar, 
+  FaBolt, 
+  FaLock, 
+  FaPlus, 
+  FaArrowRight, 
+  FaTrashAlt, 
+  FaCode, 
+  FaCheck, 
+  FaShieldAlt, 
+  FaChevronDown,
+  FaTimes,
+  FaLayerGroup,
+  FaGlobe,
+  FaTag,
+  FaClipboardCheck,
+  FaUserTie,
+  FaFileAlt
 } from 'react-icons/fa';
 import { COURSE_CATALOG } from '../data/courseCatalogData';
-import { 
-  fetchLiveCoursesFromFirestore, 
-  syncAllCoursesToFirestore 
-} from '../services/courseMetadataService';
+import { fetchLiveCoursesFromFirestore } from '../services/courseMetadataService';
 import { 
   getEnrolledCourseIds, 
-  fetchEnrolledCourseIds, 
   fetchUserCourseProgressMap,
-  getCourseProgress, 
   enrollCourse,
   unenrollCourse
 } from '../services/learningEngineService';
@@ -24,177 +40,167 @@ import { fetchUserEntitledCourseIds, checkCourseEntitlement } from '../services/
 import { toast } from 'sonner';
 import SeedCreditCoin from '../../components/SeedCreditCoin';
 import { calculateCourseRewards } from '../../utils/gamificationService';
+import '../styles/CourseCatalog.css';
 import '../styles/CourseLearningPlayer.css';
-
-const STATUS_TABS = [
-  { id: 'ALL', label: 'All Courses', icon: FaThLarge, color: '#0d9488', bg: 'rgba(13, 148, 136, 0.12)' },
-  { id: 'ENROLLED', label: 'Enrolled', icon: FaPlay, color: '#2563eb', bg: 'rgba(37, 99, 235, 0.12)' },
-  { id: 'IN_PROGRESS', label: 'In Progress', icon: FaClock, color: '#d97706', bg: 'rgba(217, 119, 6, 0.12)' },
-  { id: 'COMPLETED', label: 'Completed', icon: FaCheckCircle, color: '#16a34a', bg: 'rgba(22, 163, 74, 0.12)' },
-  { id: 'NOT_ENROLLED', label: 'Not Enrolled', icon: FaBookmark, color: '#7c3aed', bg: 'rgba(124, 58, 237, 0.12)' }
-];
-
-const DOMAIN_CATEGORIES = [
-  'All Domains',
-  'DSA',
-  'Programming',
-  'Core CS',
-  'Web Development',
-  'Database',
-  'Cloud & DevOps',
-  'AI & ML',
-  'Cybersecurity',
-  'Data Science'
-];
 
 const POPULAR_SEARCHES = [
   'DSA',
   'Python',
   'Web Development',
   'Database',
-  'System Design'
+  'System Design',
+  'AI/ML'
+];
+
+const DOMAIN_PILLS = [
+  { id: 'ALL', label: 'All Domains' },
+  { id: '01-programming', label: 'Programming' },
+  { id: '02-dsa', label: 'DSA' },
+  { id: '03-web-development', label: 'Web Development' },
+  { id: '04-databases', label: 'Databases' },
+  { id: '05-computer-science', label: 'Computer Science' },
+  { id: '06-system-design', label: 'System Design' },
+  { id: '07-ai-ml', label: 'AI / ML' },
+  { id: '08-cloud-devops', label: 'Cloud & DevOps' },
+  { id: '09-mobile-development', label: 'Mobile Development' },
+  { id: '11-projects', label: 'Projects' },
+  { id: '12-interview-placement', label: 'Interview & Placement' }
 ];
 
 /**
- * Domain Vector Graphic Banner inside Course Card
+ * High-fidelity Vector SVG Illustrations tailored for course thumbnails
  */
-const CourseBannerGraphic = ({ category = '', slug = '', title = '', isPopular = false, badgeText = '', isEnrolled = false }) => {
-  const c = (category + ' ' + slug + ' ' + title).toLowerCase();
+const CourseThumbnailIllustration = ({ category = '', slug = '', title = '' }) => {
+  const query = `${category} ${slug} ${title}`.toLowerCase();
 
-  // Render domain-specific visual SVG vectors
-  let visualGraphic = null;
-
-  if (c.includes('dsa') || c.includes('algorithm')) {
-    visualGraphic = (
-      <svg className="banner-svg-graphic" viewBox="0 0 240 140" fill="none">
-        {/* Tree / Graph Nodes */}
-        <line x1="120" y1="30" x2="60" y2="80" stroke="#10b981" strokeWidth="2.5" strokeDasharray="4 2" />
-        <line x1="120" y1="30" x2="180" y2="80" stroke="#10b981" strokeWidth="2.5" strokeDasharray="4 2" />
-        <line x1="60" y1="80" x2="30" y2="120" stroke="#34d399" strokeWidth="2" />
-        <line x1="60" y1="80" x2="90" y2="120" stroke="#34d399" strokeWidth="2" />
-        <line x1="180" y1="80" x2="150" y2="120" stroke="#34d399" strokeWidth="2" />
-        <line x1="180" y1="80" x2="210" y2="120" stroke="#34d399" strokeWidth="2" />
-
-        {/* Nodes */}
-        <circle cx="120" cy="30" r="16" fill="#047857" stroke="#34d399" strokeWidth="3" />
-        <circle cx="60" cy="80" r="14" fill="#065f46" stroke="#10b981" strokeWidth="2.5" />
-        <circle cx="180" cy="80" r="14" fill="#065f46" stroke="#10b981" strokeWidth="2.5" />
-        <circle cx="30" cy="120" r="10" fill="#064e3b" stroke="#34d399" strokeWidth="2" />
-        <circle cx="90" cy="120" r="10" fill="#064e3b" stroke="#34d399" strokeWidth="2" />
-        <circle cx="150" cy="120" r="10" fill="#064e3b" stroke="#34d399" strokeWidth="2" />
-        <circle cx="210" cy="120" r="10" fill="#064e3b" stroke="#34d399" strokeWidth="2" />
-
-        {/* Code glyph */}
-        <text x="120" y="35" fill="#ffffff" fontSize="13" fontWeight="800" textAnchor="middle">1</text>
-        <text x="60" y="85" fill="#ffffff" fontSize="11" fontWeight="700" textAnchor="middle">2</text>
-        <text x="180" y="85" fill="#ffffff" fontSize="11" fontWeight="700" textAnchor="middle">3</text>
-      </svg>
-    );
-  } else if (c.includes('python') || c.includes('programming')) {
-    visualGraphic = (
-      <svg className="banner-svg-graphic" viewBox="0 0 240 140" fill="none">
-        {/* Terminal Window */}
-        <rect x="25" y="20" width="190" height="100" rx="10" fill="#0f172a" stroke="#3b82f6" strokeWidth="2" />
-        <circle cx="45" cy="36" r="4" fill="#ef4444" />
-        <circle cx="57" cy="36" r="4" fill="#f59e0b" />
-        <circle cx="69" cy="36" r="4" fill="#10b981" />
-        {/* Code lines */}
-        <path d="M 45 60 L 60 70 L 45 80" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        <line x1="75" y1="70" x2="160" y2="70" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" />
-        <line x1="45" y1="95" x2="190" y2="95" stroke="#93c5fd" strokeWidth="2.5" strokeLinecap="round" strokeOpacity="0.7" />
-        <line x1="45" y1="107" x2="130" y2="107" stroke="#bfdbfe" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.5" />
-      </svg>
-    );
-  } else if (c.includes('web') || c.includes('react') || c.includes('frontend')) {
-    visualGraphic = (
-      <svg className="banner-svg-graphic" viewBox="0 0 240 140" fill="none">
-        {/* Browser Mockup */}
-        <rect x="20" y="15" width="200" height="110" rx="8" fill="#18181b" stroke="#6366f1" strokeWidth="2" />
-        <rect x="20" y="15" width="200" height="24" rx="8" fill="#27272a" />
-        <circle cx="35" cy="27" r="3.5" fill="#f43f5e" />
-        <circle cx="47" cy="27" r="3.5" fill="#fbbf24" />
-        <circle cx="59" cy="27" r="3.5" fill="#34d399" />
-        <rect x="75" y="21" width="130" height="12" rx="4" fill="#3f3f46" />
-        {/* React atom */}
-        <ellipse cx="120" cy="78" rx="40" ry="16" stroke="#38bdf8" strokeWidth="1.8" />
-        <ellipse cx="120" cy="78" rx="40" ry="16" stroke="#38bdf8" strokeWidth="1.8" transform="rotate(60 120 78)" />
-        <ellipse cx="120" cy="78" rx="40" ry="16" stroke="#38bdf8" strokeWidth="1.8" transform="rotate(120 120 78)" />
-        <circle cx="120" cy="78" r="6" fill="#38bdf8" />
-      </svg>
-    );
-  } else if (c.includes('database') || c.includes('sql')) {
-    visualGraphic = (
-      <svg className="banner-svg-graphic" viewBox="0 0 240 140" fill="none">
-        {/* Database Cylinders */}
-        <g transform="translate(40, 15)">
-          {/* Top cylinder */}
-          <ellipse cx="80" cy="25" rx="55" ry="15" fill="#0369a1" stroke="#38bdf8" strokeWidth="2" />
-          <path d="M 25 25 V 55 C 25 65, 135 65, 135 55 V 25" fill="#0284c7" stroke="#38bdf8" strokeWidth="2" />
-          {/* Middle cylinder */}
-          <path d="M 25 55 V 85 C 25 95, 135 95, 135 85 V 55" fill="#0369a1" stroke="#38bdf8" strokeWidth="2" />
-          {/* Bottom cylinder */}
-          <path d="M 25 85 V 110 C 25 120, 135 120, 135 110 V 85" fill="#075985" stroke="#38bdf8" strokeWidth="2" />
-          {/* Binary rows */}
-          <line x1="50" y1="40" x2="110" y2="40" stroke="#bae6fd" strokeWidth="2" strokeLinecap="round" />
-          <line x1="50" y1="70" x2="110" y2="70" stroke="#bae6fd" strokeWidth="2" strokeLinecap="round" />
-          <line x1="50" y1="100" x2="110" y2="100" stroke="#bae6fd" strokeWidth="2" strokeLinecap="round" />
-        </g>
-      </svg>
-    );
-  } else {
-    // System Design / Core CS / Cloud
-    visualGraphic = (
-      <svg className="banner-svg-graphic" viewBox="0 0 240 140" fill="none">
-        {/* Distributed Nodes */}
-        <rect x="30" y="30" width="55" height="32" rx="6" fill="#4c1d95" stroke="#a78bfa" strokeWidth="2" />
-        <rect x="155" y="30" width="55" height="32" rx="6" fill="#4c1d95" stroke="#a78bfa" strokeWidth="2" />
-        <rect x="92" y="85" width="55" height="32" rx="6" fill="#5b21b6" stroke="#c4b5fd" strokeWidth="2" />
-
-        <line x1="85" y1="46" x2="155" y2="46" stroke="#c4b5fd" strokeWidth="2" strokeDasharray="3 3" />
-        <line x1="57" y1="62" x2="92" y2="100" stroke="#c4b5fd" strokeWidth="2" strokeDasharray="3 3" />
-        <line x1="182" y1="62" x2="147" y2="100" stroke="#c4b5fd" strokeWidth="2" strokeDasharray="3 3" />
-
-        <circle cx="120" cy="46" r="6" fill="#10b981" />
-        <text x="57" y="50" fill="#ffffff" fontSize="9" fontWeight="700" textAnchor="middle">Node 1</text>
-        <text x="182" y="50" fill="#ffffff" fontSize="9" fontWeight="700" textAnchor="middle">Node 2</text>
-        <text x="120" y="105" fill="#ffffff" fontSize="9" fontWeight="700" textAnchor="middle">LB Cluster</text>
+  if (query.includes('java') && !query.includes('javascript')) {
+    // Steaming Coffee Cup (Java)
+    return (
+      <svg viewBox="0 0 100 100" fill="none" className="thumb-svg-graphic" xmlns="http://www.w3.org/2000/svg">
+        {/* Steam waves */}
+        <path d="M 40 30 Q 35 20, 42 12 Q 48 4, 42 0" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.85" />
+        <path d="M 52 32 Q 47 22, 54 14 Q 60 6, 54 2" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.9" />
+        <path d="M 64 30 Q 59 20, 66 12 Q 72 4, 66 0" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
+        {/* Cup body */}
+        <path d="M 28 36 L 76 36 L 72 74 C 71 82, 33 82, 32 74 Z" fill="url(#javaGrad)" stroke="#60a5fa" strokeWidth="1.5" />
+        {/* Saucer */}
+        <ellipse cx="52" cy="85" rx="34" ry="6" fill="#1e293b" stroke="#38bdf8" strokeWidth="1.5" />
+        {/* Cup Handle */}
+        <path d="M 74 44 C 86 44, 86 64, 73 66" stroke="#60a5fa" strokeWidth="3" fill="none" strokeLinecap="round" />
+        <defs>
+          <linearGradient id="javaGrad" x1="28" y1="36" x2="76" y2="80" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#1e3a8a" />
+            <stop offset="1" stopColor="#0f172a" />
+          </linearGradient>
+        </defs>
       </svg>
     );
   }
 
-  const badge = badgeText || (isPopular ? 'Most Popular' : '');
+  if (query.includes('javascript') || query.includes('js') || query.includes('web-dev-js')) {
+    // Yellow JS Box
+    return (
+      <svg viewBox="0 0 100 100" fill="none" className="thumb-svg-graphic" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="15" width="70" height="70" rx="12" fill="#f7df1e" />
+        <text x="45" y="68" fill="#000000" fontSize="32" fontWeight="900" fontFamily="sans-serif">J</text>
+        <text x="63" y="68" fill="#000000" fontSize="32" fontWeight="900" fontFamily="sans-serif">S</text>
+        <circle cx="28" cy="30" r="3" fill="#000000" opacity="0.3" />
+      </svg>
+    );
+  }
 
+  if (query.includes('dsa') || query.includes('algorithm') || query.includes('tree') || query.includes('graph')) {
+    // 3D Isometric Glowing Cubes / Graph Nodes
+    return (
+      <svg viewBox="0 0 100 100" fill="none" className="thumb-svg-graphic" xmlns="http://www.w3.org/2000/svg">
+        {/* Connection lines */}
+        <line x1="50" y1="38" x2="28" y2="65" stroke="#38bdf8" strokeWidth="2" strokeDasharray="3 2" />
+        <line x1="50" y1="38" x2="72" y2="65" stroke="#38bdf8" strokeWidth="2" strokeDasharray="3 2" />
+        <line x1="28" y1="65" x2="72" y2="65" stroke="#38bdf8" strokeWidth="1.5" />
+        {/* Top Cube */}
+        <g transform="translate(36, 12)">
+          <path d="M 14 0 L 28 8 L 14 16 L 0 8 Z" fill="#38bdf8" />
+          <path d="M 0 8 L 14 16 L 14 30 L 0 22 Z" fill="#0284c7" />
+          <path d="M 28 8 L 14 16 L 14 30 L 28 22 Z" fill="#0369a1" />
+        </g>
+        {/* Left Bottom Cube */}
+        <g transform="translate(14, 48)">
+          <path d="M 14 0 L 28 8 L 14 16 L 0 8 Z" fill="#60a5fa" />
+          <path d="M 0 8 L 14 16 L 14 30 L 0 22 Z" fill="#2563eb" />
+          <path d="M 28 8 L 14 16 L 14 30 L 28 22 Z" fill="#1d4ed8" />
+        </g>
+        {/* Right Bottom Cube */}
+        <g transform="translate(58, 48)">
+          <path d="M 14 0 L 28 8 L 14 16 L 0 8 Z" fill="#34d399" />
+          <path d="M 0 8 L 14 16 L 14 30 L 0 22 Z" fill="#059669" />
+          <path d="M 28 8 L 14 16 L 14 30 L 28 22 Z" fill="#047857" />
+        </g>
+      </svg>
+    );
+  }
+
+  if (query.includes('python')) {
+    // Python Terminal & Loops
+    return (
+      <svg viewBox="0 0 100 100" fill="none" className="thumb-svg-graphic" xmlns="http://www.w3.org/2000/svg">
+        <rect x="14" y="20" width="72" height="58" rx="8" fill="#0f172a" stroke="#38bdf8" strokeWidth="1.5" />
+        <circle cx="24" cy="30" r="2.5" fill="#ef4444" />
+        <circle cx="32" cy="30" r="2.5" fill="#f59e0b" />
+        <circle cx="40" cy="30" r="2.5" fill="#10b981" />
+        <path d="M 24 46 L 34 52 L 24 58" stroke="#facc15" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <line x1="42" y1="52" x2="68" y2="52" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" />
+        <line x1="24" y1="66" x2="52" y2="66" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      </svg>
+    );
+  }
+
+  if (query.includes('database') || query.includes('sql')) {
+    // Database Cylinders
+    return (
+      <svg viewBox="0 0 100 100" fill="none" className="thumb-svg-graphic" xmlns="http://www.w3.org/2000/svg">
+        {/* Cylinder 1 */}
+        <ellipse cx="50" cy="30" rx="30" ry="10" fill="#0284c7" />
+        <path d="M 20 30 L 20 45 C 20 52, 80 52, 80 45 L 80 30 Z" fill="#0369a1" />
+        <ellipse cx="50" cy="45" rx="30" ry="10" fill="#0284c7" stroke="#38bdf8" strokeWidth="1" />
+        {/* Cylinder 2 */}
+        <path d="M 20 45 L 20 60 C 20 67, 80 67, 80 60 L 80 45 Z" fill="#075985" />
+        <ellipse cx="50" cy="60" rx="30" ry="10" fill="#0284c7" stroke="#38bdf8" strokeWidth="1" />
+        {/* Cylinder 3 */}
+        <path d="M 20 60 L 20 75 C 20 82, 80 82, 80 75 L 80 60 Z" fill="#0c4a6e" />
+        <ellipse cx="50" cy="75" rx="30" ry="10" fill="#0284c7" stroke="#38bdf8" strokeWidth="1" />
+      </svg>
+    );
+  }
+
+  if (query.includes('web') || query.includes('react') || query.includes('html') || query.includes('css')) {
+    // Browser Mockup
+    return (
+      <svg viewBox="0 0 100 100" fill="none" className="thumb-svg-graphic" xmlns="http://www.w3.org/2000/svg">
+        <rect x="12" y="20" width="76" height="58" rx="8" fill="#18181b" stroke="#6366f1" strokeWidth="1.5" />
+        <rect x="12" y="20" width="76" height="14" rx="8" fill="#27272a" />
+        <circle cx="20" cy="27" r="2" fill="#ef4444" />
+        <circle cx="26" cy="27" r="2" fill="#f59e0b" />
+        <circle cx="32" cy="27" r="2" fill="#10b981" />
+        <rect x="20" y="42" width="26" height="26" rx="4" fill="#312e81" stroke="#818cf8" strokeWidth="1" />
+        <line x1="52" y1="46" x2="80" y2="46" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" />
+        <line x1="52" y1="56" x2="74" y2="56" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+        <line x1="52" y1="64" x2="68" y2="64" stroke="#64748b" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  // General CS / Algorithmic Graphic
   return (
-    <div className="course-card-top-banner">
-      <div className="banner-header-row">
-        {isEnrolled ? (
-          <span className="banner-enrolled-pill">
-            <FaCheckCircle className="badge-enrolled-icon" />
-            Enrolled
-          </span>
-        ) : badge ? (
-          <span className="banner-badge-pill">
-            <FaFire className="badge-fire-icon" />
-            {badge}
-          </span>
-        ) : (
-          <span className="banner-category-tag">{category}</span>
-        )}
-      </div>
-
-      <div className="banner-main-content">
-        <h3 className="banner-course-title">
-          {c.includes('dsa') ? 'Data Structures & Algorithms' :
-           c.includes('python') ? 'Python 3 Engineering' :
-           c.includes('web') ? 'Full-Stack Web Development' :
-           c.includes('database') ? 'Relational Databases & SQL' :
-           c.includes('system') ? 'Distributed Systems' : title}
-        </h3>
-        <div className="banner-graphic-container">
-          {visualGraphic}
-        </div>
-      </div>
-    </div>
+    <svg viewBox="0 0 100 100" fill="none" className="thumb-svg-graphic" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="32" stroke="#10b981" strokeWidth="2" strokeDasharray="4 3" opacity="0.6" />
+      <circle cx="50" cy="50" r="16" fill="#065f46" stroke="#34d399" strokeWidth="2" />
+      <circle cx="26" cy="30" r="7" fill="#047857" />
+      <circle cx="74" cy="30" r="7" fill="#047857" />
+      <circle cx="50" cy="82" r="7" fill="#047857" />
+      <line x1="50" y1="50" x2="26" y2="30" stroke="#34d399" strokeWidth="1.5" />
+      <line x1="50" y1="50" x2="74" y2="30" stroke="#34d399" strokeWidth="1.5" />
+      <line x1="50" y1="50" x2="50" y2="82" stroke="#34d399" strokeWidth="1.5" />
+    </svg>
   );
 };
 
@@ -202,13 +208,15 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedDomain, setSelectedDomain] = useState('All Domains');
+  
+  // Secondary Dropdown Filters
+  const [selectedLevel, setSelectedLevel] = useState('All Levels');
+  const [selectedPrice, setSelectedPrice] = useState('All');
+  const [selectedDuration, setSelectedDuration] = useState('Any Duration');
+  const [selectedLanguage, setSelectedLanguage] = useState('All');
+  const [selectedAssessment, setSelectedAssessment] = useState('With Assessments');
   const [sortBy, setSortBy] = useState('RECOMMENDED');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
-
-  const currentXP = totalXP ?? user?.totalXP ?? 0;
-  const currentCredits = seedCredits ?? user?.seedCredits ?? 2450;
-  const currentLevel = userLevelInfo?.level ?? user?.level ?? 1;
-  const currentTitle = userLevelInfo?.levelTitle ?? 'Novice Coder';
+  const [viewMode, setViewMode] = useState('list'); // Default 'list' matching screenshot
 
   const uid = user?.uid || 'guest';
   const [courses, setCourses] = useState(() => COURSE_CATALOG.filter(c => c.enabled !== false));
@@ -216,11 +224,33 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
   const [entitledSet, setEntitledSet] = useState(null);
   const [progressMap, setProgressMap] = useState({});
 
+  // Bookmarked / Saved courses
+  const [savedCourseIds, setSavedCourseIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('seed_saved_courses') || '[]');
+    } catch (_) {
+      return [];
+    }
+  });
+
+  const toggleBookmark = (courseId, e) => {
+    e.stopPropagation();
+    setSavedCourseIds(prev => {
+      const next = prev.includes(courseId)
+        ? prev.filter(id => id !== courseId)
+        : [...prev, courseId];
+      try {
+        localStorage.setItem('seed_saved_courses', JSON.stringify(next));
+      } catch (_) {}
+      toast.success(prev.includes(courseId) ? 'Course removed from bookmarks' : 'Course saved to bookmarks!');
+      return next;
+    });
+  };
+
   // Sync enrolled course IDs and fetch live real metadata from Firestore
   useEffect(() => {
     let isMounted = true;
     async function initCatalogAndProgress() {
-      // 1. Read and display real metadata from courses/ collection in Firestore (with caching)
       const live = await fetchLiveCoursesFromFirestore(COURSE_CATALOG);
       const activeCourses = (live && live.length > 0) 
         ? live.filter(c => c.enabled !== false) 
@@ -228,7 +258,6 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
       
       if (isMounted) setCourses(activeCourses);
 
-      // 2. Load enrollments & progress in a single Firestore pass (eliminates N+1 reads)
       const { enrolledIds: ids, progressMap: map } = await fetchUserCourseProgressMap(uid, activeCourses);
       if (isMounted) {
         setEnrolledIds(ids || []);
@@ -254,37 +283,32 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
       toast.error(ent.reason, { duration: 6000 });
       return;
     }
-    await enrollCourse(uid, course.courseId);
-    setEnrolledIds(prev => Array.from(new Set([...prev, course.courseId])));
+    const cid = course.courseId || course.slug || course.id;
+    await enrollCourse(uid, cid);
+    setEnrolledIds(prev => Array.from(new Set([...prev, cid, course.courseId])));
     toast.success(`Successfully enrolled in "${course.title}"!`);
-  };
-
-  const handlePromptUnenroll = (course) => {
-    setUnenrollCourseTarget(course);
   };
 
   const handleConfirmUnenroll = async (course) => {
     if (!course) return;
     setIsUnenrolling(true);
     try {
-      await unenrollCourse(uid, course.courseId);
-      setEnrolledIds(prev => prev.filter(id => id !== course.courseId));
+      const cid = course.courseId || course.slug || course.id;
+      await unenrollCourse(uid, cid);
+      setEnrolledIds(prev => prev.filter(id => id !== cid && id !== course.courseId));
       setProgressMap(prev => {
         const next = { ...prev };
+        delete next[cid];
         delete next[course.courseId];
         return next;
       });
       setUnenrollCourseTarget(null);
-      toast.info(`You have unenrolled from "${course.title}". Course progress has been reset.`);
+      toast.info(`You have unenrolled from "${course.title}".`);
     } catch (err) {
       toast.error('Failed to unenroll: ' + err.message);
     } finally {
       setIsUnenrolling(false);
     }
-  };
-
-  const handleStartCourse = (course) => {
-    onStartCourse(course);
   };
 
   // Status Counts for 5 Metric Cards
@@ -296,8 +320,8 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
 
     courses.forEach(course => {
       if (!course) return;
-      const isE = enrolledIds.includes(course.courseId);
-      const prog = progressMap[course.courseId];
+      const isE = enrolledIds.includes(course.courseId) || enrolledIds.includes(course.slug);
+      const prog = progressMap[course.courseId] || progressMap[course.slug];
       const pct = prog?.percentage || 0;
 
       if (isE) {
@@ -334,8 +358,8 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
         slug.includes(q) ||
         skills.some(s => String(s || '').toLowerCase().includes(q));
 
-      const isEnrolled = enrolledIds.includes(course.courseId);
-      const prog = progressMap[course.courseId];
+      const isEnrolled = enrolledIds.includes(course.courseId) || enrolledIds.includes(course.slug);
+      const prog = progressMap[course.courseId] || progressMap[course.slug];
       const pct = prog?.percentage || 0;
       const isCompleted = pct >= 100;
       const isInProgress = isEnrolled && pct > 0 && pct < 100;
@@ -348,13 +372,33 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
 
       let matchesDomain = true;
       if (selectedDomain !== 'All Domains') {
-        const d = String(selectedDomain || '').toLowerCase();
-        matchesDomain = category.includes(d) ||
-          slug.includes(d) ||
-          (d === 'dsa' && (category.includes('computer') || slug.includes('dsa')));
+        const cleanDomain = selectedDomain.replace(/^\d+\.\s*/, '').toLowerCase();
+        const dId = String(course.domainId || '').toLowerCase();
+        const dTitle = String(course.domainTitle || '').toLowerCase();
+        matchesDomain = dTitle.includes(cleanDomain) ||
+          dId.includes(cleanDomain.replace(/[^a-z0-9]/g, '')) ||
+          category.includes(cleanDomain) ||
+          slug.includes(cleanDomain) ||
+          (cleanDomain.includes('dsa') && (slug.includes('dsa') || dId.includes('dsa') || category.includes('dsa')));
       }
 
-      return matchesSearch && matchesStatus && matchesDomain;
+      // Secondary filter: Level
+      let matchesLevel = true;
+      if (selectedLevel !== 'All Levels') {
+        const lvl = String(course.level || '').toLowerCase();
+        if (selectedLevel === 'Beginner') matchesLevel = lvl.includes('beginner') || lvl.includes('all');
+        else if (selectedLevel === 'Intermediate') matchesLevel = lvl.includes('intermediate') || lvl.includes('all');
+        else if (selectedLevel === 'Advanced') matchesLevel = lvl.includes('advanced') || lvl.includes('expert');
+      }
+
+      // Secondary filter: Duration
+      let matchesDuration = true;
+      const hours = course.estimatedHours || 20;
+      if (selectedDuration === '< 10 Hours') matchesDuration = hours < 10;
+      else if (selectedDuration === '10 - 30 Hours') matchesDuration = hours >= 10 && hours <= 30;
+      else if (selectedDuration === '30+ Hours') matchesDuration = hours > 30;
+
+      return matchesSearch && matchesStatus && matchesDomain && matchesLevel && matchesDuration;
     });
 
     // Sorting
@@ -367,509 +411,602 @@ const CourseCatalog = ({ onStartCourse, user, totalXP, seedCredits, userLevelInf
     }
 
     return list;
-  }, [courses, searchQuery, selectedStatus, selectedDomain, sortBy, enrolledIds, progressMap]);
+  }, [courses, searchQuery, selectedStatus, selectedDomain, selectedLevel, selectedDuration, sortBy, enrolledIds, progressMap]);
 
   return (
-    <div className="course-catalog-container">
-      {/* 1. Hero Section matching user mockup */}
-      <div className="catalog-hero-card">
-        <div className="catalog-hero-split">
-          {/* Left Column: Title, Subtitle, Status Metric Cards */}
-          <div className="hero-left-column">
-            {/* Gamification Strip: Level, XP, Credits */}
-            <div className="catalog-gamification-strip" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 12px',
-                borderRadius: '999px',
-                background: 'rgba(16, 185, 129, 0.12)',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
-                color: '#10b981',
-                fontSize: '12px',
-                fontWeight: '700'
-              }}>
-                <FaGraduationCap size={13} />
-                Level {currentLevel} • {currentTitle}
-              </span>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 12px',
-                borderRadius: '999px',
-                background: 'rgba(59, 130, 246, 0.1)',
-                border: '1px solid rgba(59, 130, 246, 0.2)',
-                color: '#60a5fa',
-                fontSize: '12px',
-                fontWeight: '700'
-              }}>
-                <FaStar size={12} />
-                {currentXP.toLocaleString()} XP
-              </span>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 12px',
-                borderRadius: '999px',
-                background: 'rgba(245, 158, 11, 0.12)',
-                border: '1px solid rgba(245, 158, 11, 0.25)',
-                color: '#f59e0b',
-                fontSize: '12px',
-                fontWeight: '700'
-              }}>
-                <SeedCreditCoin size={15} />
-                {currentCredits.toLocaleString()} SEED Credits
-              </span>
+    <div className="clean-catalog-wrapper">
+      {/* 1. HERO SECTION */}
+      <section className="clean-catalog-hero">
+        {/* Left Column */}
+        <div className="hero-left-col">
+          <div className="hero-tag-pill">
+            <span>🌱</span>
+            <span>Learn • Practice • Grow</span>
+          </div>
+
+          <h1 className="hero-main-title">
+            Explore <span className="highlight-green">Courses &amp; Learning Paths</span>
+          </h1>
+
+          <p className="hero-sub-description">
+            Structured curriculum with instructor videos, readings, code examples, practice questions, and dual 90%+ gated assessments.
+          </p>
+
+          {/* Search Box */}
+          <div className="hero-search-container">
+            <FaSearch className="hero-search-icon" />
+            <input
+              type="text"
+              className="hero-search-input"
+              placeholder="Search courses, skills, or topics..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', marginRight: '8px' }}
+                title="Clear search"
+              >
+                <FaTimes size={13} />
+              </button>
+            )}
+            <button className="hero-search-btn">Search</button>
+          </div>
+
+          {/* Popular Searches */}
+          <div className="popular-searches-row">
+            <span className="popular-label">Popular searches:</span>
+            {POPULAR_SEARCHES.map(item => (
+              <button
+                key={item}
+                className="popular-tag-btn"
+                onClick={() => setSearchQuery(item)}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="hero-right-col">
+          {/* 5 Status Metrics Row */}
+          <div className="status-metrics-card-row">
+            <div 
+              className={`metric-pill-card ${selectedStatus === 'ALL' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('ALL')}
+              title="Show all courses"
+            >
+              <div className="metric-card-icon-box green-box">
+                <FaBookOpen />
+              </div>
+              <span className="metric-card-value">{statusCounts.ALL}</span>
+              <span className="metric-card-title">Total Courses</span>
             </div>
 
-            <h1 className="catalog-title">Explore Courses &amp; Learning Paths</h1>
-            <p className="catalog-subtitle">
-              Structured curriculum with instructor videos, structured reading, code examples, practice questions, and dual 90% gated assessments.
-            </p>
+            <div 
+              className={`metric-pill-card ${selectedStatus === 'ENROLLED' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('ENROLLED')}
+              title="Show enrolled courses"
+            >
+              <div className="metric-card-icon-box blue-round">
+                <FaPlay size={10} />
+              </div>
+              <span className="metric-card-value">{statusCounts.ENROLLED}</span>
+              <span className="metric-card-title">Enrolled</span>
+            </div>
 
-            {/* 5 Status Metric Filter Cards */}
-            <div className="status-metrics-row">
-              {STATUS_TABS.map(tab => {
-                const IconComponent = tab.icon;
-                const count = statusCounts[tab.id] ?? 0;
-                const isSelected = selectedStatus === tab.id;
+            <div 
+              className={`metric-pill-card ${selectedStatus === 'IN_PROGRESS' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('IN_PROGRESS')}
+              title="Show in-progress courses"
+            >
+              <div className="metric-card-icon-box orange-round">
+                <FaClock size={11} />
+              </div>
+              <span className="metric-card-value">{statusCounts.IN_PROGRESS}</span>
+              <span className="metric-card-title">In Progress</span>
+            </div>
 
-                return (
-                  <div
-                    key={tab.id}
-                    className={`status-metric-card ${isSelected ? 'active' : ''}`}
-                    onClick={() => setSelectedStatus(tab.id)}
-                    title={`Filter by ${tab.label}`}
-                  >
-                    <div className="metric-icon-box" style={{ background: tab.bg, color: tab.color }}>
-                      <IconComponent />
-                    </div>
-                    <div className="metric-data-col">
-                      <span className="metric-count-number">{count}</span>
-                      <span className="metric-label-text">{tab.label}</span>
-                    </div>
-                  </div>
-                );
-              })}
+            <div 
+              className={`metric-pill-card ${selectedStatus === 'COMPLETED' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('COMPLETED')}
+              title="Show completed courses"
+            >
+              <div className="metric-card-icon-box green-round">
+                <FaCheck size={10} />
+              </div>
+              <span className="metric-card-value">{statusCounts.COMPLETED}</span>
+              <span className="metric-card-title">Completed</span>
+            </div>
+
+            <div 
+              className={`metric-pill-card ${selectedStatus === 'NOT_ENROLLED' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('NOT_ENROLLED')}
+              title="Show not enrolled courses"
+            >
+              <div className="metric-card-icon-box purple-box">
+                <FaBookmark size={11} />
+              </div>
+              <span className="metric-card-value">{statusCounts.NOT_ENROLLED}</span>
+              <span className="metric-card-title">Not Enrolled</span>
+            </div>
+
+            {/* Stack of books with sprout illustration */}
+            <div className="metrics-sprout-art">
+              <svg viewBox="0 0 70 60" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                {/* Sprout Leaves */}
+                <path d="M 52 24 C 55 10, 48 3, 38 6 C 38 13, 45 22, 52 24 Z" fill="#10b981" />
+                <path d="M 52 24 C 61 21, 68 11, 64 3 C 55 3, 52 14, 52 24 Z" fill="#34d399" />
+                <line x1="52" y1="24" x2="52" y2="34" stroke="#059669" strokeWidth="2" strokeLinecap="round" />
+                {/* Book 1 */}
+                <rect x="14" y="32" width="46" height="7" rx="2" fill="#059669" />
+                {/* Book 2 */}
+                <rect x="10" y="40" width="54" height="7" rx="2" fill="#0d9488" />
+                {/* Book 3 */}
+                <rect x="6" y="48" width="62" height="8" rx="2" fill="#0f766e" />
+              </svg>
             </div>
           </div>
 
-          {/* Right Column: Search Box, Popular Searches, and Sprout Illustration */}
-          <div className="hero-right-column">
-            <div className="hero-search-wrapper">
-              <div className="catalog-search-box">
-                <FaSearch className="search-icon" />
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder="Search courses, modules, topics, skills..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button className="search-clear-btn" onClick={() => setSearchQuery('')} title="Clear search">
-                    <FaTimes />
-                  </button>
-                )}
-              </div>
-
-              {/* Popular Searches Clickable Chips */}
-              <div className="popular-searches-row">
-                <span className="popular-label">Popular searches:</span>
-                <div className="popular-tags-list">
-                  {POPULAR_SEARCHES.map(tag => (
-                    <button
-                      key={tag}
-                      className={`popular-tag-chip ${(searchQuery || '').toLowerCase() === String(tag || '').toLowerCase() ? 'active' : ''}`}
-                      onClick={() => setSearchQuery(tag)}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* Skills Promo Card */}
+          <div className="skills-promo-card">
+            <div className="promo-left-graphic">
+              <svg viewBox="0 0 65 60" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+                <path d="M 45 18 C 47 7, 41 2, 33 4 C 33 9, 39 16, 45 18 Z" fill="#10b981" />
+                <path d="M 45 18 C 53 16, 58 8, 55 2 C 48 2, 45 10, 45 18 Z" fill="#34d399" />
+                <line x1="45" y1="18" x2="45" y2="28" stroke="#059669" strokeWidth="2" strokeLinecap="round" />
+                <rect x="12" y="27" width="40" height="7" rx="2" fill="#059669" />
+                <rect x="8" y="35" width="48" height="7" rx="2" fill="#0d9488" />
+                <rect x="4" y="43" width="56" height="8" rx="2" fill="#0f766e" />
+              </svg>
             </div>
 
-            {/* "Learn Practice Grow" Illustration Box */}
-            <div className="hero-sprout-art-box">
-              <div className="sprout-books-graphic">
-                <svg viewBox="0 0 120 100" fill="none" className="books-svg">
-                  {/* Sprouting green plant leaf */}
-                  <path d="M 85 45 C 90 25, 80 10, 65 15 C 65 25, 75 40, 85 45 Z" fill="#10b981" />
-                  <path d="M 85 45 C 98 40, 108 25, 102 12 C 90 12, 85 30, 85 45 Z" fill="#34d399" />
-                  <line x1="85" y1="45" x2="85" y2="60" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" />
+            <div className="promo-center-text">
+              <h3 className="promo-main-heading">Build your skills. Unlock opportunities.</h3>
+              <p className="promo-sub-text">Learn today. Grow for tomorrow.</p>
+              <button 
+                className="promo-start-btn"
+                onClick={() => {
+                  if (filteredCourses[0]) onStartCourse(filteredCourses[0], 'OVERVIEW');
+                }}
+              >
+                <span>Start Learning</span>
+                <FaArrowRight size={10} />
+              </button>
+            </div>
 
-                  {/* Top Book (Teal) */}
-                  <rect x="25" y="45" width="70" height="12" rx="3" fill="#059669" />
-                  <rect x="30" y="47" width="60" height="2" fill="#34d399" opacity="0.6" />
-
-                  {/* Middle Book (Cyan/Green) */}
-                  <rect x="20" y="60" width="78" height="13" rx="3" fill="#0d9488" />
-                  <rect x="26" y="62" width="68" height="2" fill="#5eead4" opacity="0.6" />
-
-                  {/* Bottom Book (Deep Blue/Teal) */}
-                  <rect x="15" y="76" width="86" height="15" rx="3" fill="#0f766e" />
-                  <rect x="22" y="78" width="75" height="2" fill="#2dd4bf" opacity="0.6" />
-                </svg>
+            <div className="promo-right-bullets">
+              <div className="promo-bullet-item">
+                <FaCheckCircle className="promo-check-icon" />
+                <span>Industry-relevant curriculum</span>
               </div>
-              <div className="sprout-words-col">
-                <span className="sprout-word learn">Learn</span>
-                <span className="sprout-word practice">Practice</span>
-                <span className="sprout-word grow">Grow</span>
-                <div className="sprout-underline-bar" />
+              <div className="promo-bullet-item">
+                <FaCheckCircle className="promo-check-icon" />
+                <span>Hands-on practice</span>
+              </div>
+              <div className="promo-bullet-item">
+                <FaCheckCircle className="promo-check-icon" />
+                <span>Assessments &amp; certificates</span>
+              </div>
+              <div className="promo-bullet-item">
+                <FaCheckCircle className="promo-check-icon" />
+                <span>Boost your career</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* 2. Domain Filter Pills & Sort Bar */}
-      <div className="domain-filters-toolbar">
-        <div className="domain-pills-scroll">
-          {DOMAIN_CATEGORIES.map(domain => (
+      {/* 2. DOMAIN FILTER PILLS ROW */}
+      <div className="domain-pills-container">
+        {DOMAIN_PILLS.map(domain => {
+          const isSelected = selectedDomain === domain.label;
+          return (
             <button
-              key={domain}
-              className={`domain-pill-btn ${selectedDomain === domain ? 'active' : ''}`}
-              onClick={() => setSelectedDomain(domain)}
+              key={domain.id}
+              className={`domain-pill-item ${isSelected ? 'active' : ''}`}
+              onClick={() => setSelectedDomain(domain.label)}
             >
-              {domain}
+              {domain.label}
             </button>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* 3. SECONDARY FILTERS TOOLBAR */}
+      <div className="catalog-filters-toolbar">
+        <div className="filters-dropdown-group">
+          {/* Level Dropdown */}
+          <div className="filter-select-box">
+            <FaGraduationCap className="filter-icon" />
+            <select 
+              className="filter-dropdown-select"
+              value={selectedLevel}
+              onChange={(e) => setSelectedLevel(e.target.value)}
+            >
+              <option value="All Levels">All Levels</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+
+          {/* Price Dropdown */}
+          <div className="filter-select-box">
+            <FaTag className="filter-icon" />
+            <select 
+              className="filter-dropdown-select"
+              value={selectedPrice}
+              onChange={(e) => setSelectedPrice(e.target.value)}
+            >
+              <option value="All">Price: All</option>
+              <option value="Free">Free</option>
+              <option value="Premium">Included with Premium</option>
+            </select>
+          </div>
+
+          {/* Duration Dropdown */}
+          <div className="filter-select-box">
+            <FaClock className="filter-icon" />
+            <select 
+              className="filter-dropdown-select"
+              value={selectedDuration}
+              onChange={(e) => setSelectedDuration(e.target.value)}
+            >
+              <option value="Any Duration">Any Duration</option>
+              <option value="< 10 Hours">&lt; 10 Hours</option>
+              <option value="10 - 30 Hours">10 - 30 Hours</option>
+              <option value="30+ Hours">30+ Hours</option>
+            </select>
+          </div>
+
+          {/* Language Dropdown */}
+          <div className="filter-select-box">
+            <FaGlobe className="filter-icon" />
+            <select 
+              className="filter-dropdown-select"
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+            >
+              <option value="All">Language: All</option>
+              <option value="English">English</option>
+              <option value="Hindi">Multi-Track</option>
+            </select>
+          </div>
+
+          {/* Assessment Dropdown */}
+          <div className="filter-select-box">
+            <FaClipboardCheck className="filter-icon" />
+            <select 
+              className="filter-dropdown-select"
+              value={selectedAssessment}
+              onChange={(e) => setSelectedAssessment(e.target.value)}
+            >
+              <option value="With Assessments">With Assessments</option>
+              <option value="All">All Formats</option>
+            </select>
+          </div>
+
+          {/* Sort By Dropdown */}
+          <div className="filter-select-box">
+            <FaLayerGroup className="filter-icon" />
+            <select 
+              className="filter-dropdown-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="RECOMMENDED">Sort By: Recommended</option>
+              <option value="POPULAR">Most Popular</option>
+              <option value="RATING">Highest Rated</option>
+              <option value="MODULES">Most Modules</option>
+            </select>
+          </div>
         </div>
 
-        <div className="catalog-sort-group">
-          <span className="sort-label">Sort by</span>
-          <select 
-            className="catalog-sort-select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="RECOMMENDED">Recommended</option>
-            <option value="POPULAR">Most Popular</option>
-            <option value="RATING">Highest Rated</option>
-            <option value="MODULES">Most Modules</option>
-          </select>
+        {/* Right Controls: Count & View Switcher */}
+        <div className="toolbar-right-controls">
+          <span className="toolbar-courses-count">
+            {filteredCourses.length} {filteredCourses.length === 1 ? 'Course' : 'Courses'}
+          </span>
+
+          <div className="view-toggle-capsule">
+            <button 
+              className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+              title="List View (Default)"
+            >
+              <FaListUl size={12} />
+              <span>List</span>
+            </button>
+            <button 
+              className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              title="Grid View (Optional)"
+            >
+              <FaThLarge size={12} />
+              <span>Grid</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 3. Section Main Header & Grid/List View Switcher */}
-      <div className="catalog-courses-section">
-        <div className="catalog-section-header-row">
-          <div className="section-title-col">
-            <h2 className="section-main-heading">
-              {selectedStatus === 'ENROLLED' ? 'My Enrolled Courses' :
-               selectedStatus === 'IN_PROGRESS' ? 'Courses In Progress' :
-               selectedStatus === 'COMPLETED' ? 'Completed Courses' :
-               selectedStatus === 'NOT_ENROLLED' ? 'Available to Enroll' :
-               'Recommended Technical Courses'}
-            </h2>
-            <p className="section-desc-hint">Courses curated for your learning journey</p>
-          </div>
+      {/* 4. RECOMMENDED TECHNICAL COURSES HEADER */}
+      <div className="courses-section-header">
+        <h2 className="courses-section-title">
+          {selectedStatus === 'ENROLLED' ? 'My Enrolled Courses' :
+           selectedStatus === 'IN_PROGRESS' ? 'Courses In Progress' :
+           selectedStatus === 'COMPLETED' ? 'Completed Courses' :
+           selectedStatus === 'NOT_ENROLLED' ? 'Available to Enroll' :
+           'Recommended Technical Courses'}
+        </h2>
+        <p className="courses-section-subtitle">Courses curated for your learning journey</p>
+      </div>
 
-          <div className="section-controls-right">
-            <span className="courses-count-pill">{filteredCourses.length} {filteredCourses.length === 1 ? 'Course' : 'Courses'}</span>
-            
-            <div className="view-mode-toggle-group">
-              <button 
-                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-                title="Grid View"
-              >
-                <FaThLarge />
-                <span>Grid</span>
-              </button>
-              <button 
-                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-                title="List View"
-              >
-                <FaListUl />
-                <span>List</span>
-              </button>
-            </div>
-          </div>
+      {/* 5. COURSES LIST / GRID VIEW */}
+      {filteredCourses.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+          <FaBookOpen size={36} color="#94a3b8" style={{ marginBottom: '12px' }} />
+          <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: '0 0 6px 0' }}>No Courses Found</h3>
+          <p style={{ fontSize: '13.5px', color: '#64748b', margin: '0 0 16px 0' }}>
+            No courses match the active filters or search query "{searchQuery}".
+          </p>
+          <button 
+            onClick={() => {
+              setSearchQuery('');
+              setSelectedStatus('ALL');
+              setSelectedDomain('All Domains');
+              setSelectedLevel('All Levels');
+              setSelectedDuration('Any Duration');
+            }}
+            style={{
+              background: '#059669',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 18px',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer'
+            }}
+          >
+            Reset Filters
+          </button>
         </div>
+      ) : (
+        <div className={viewMode === 'list' ? 'catalog-cards-list-view' : 'catalog-cards-grid-view'}>
+          {filteredCourses.map(course => {
+            const isEnrolled = enrolledIds.includes(course.courseId) || enrolledIds.includes(course.slug);
+            const courseProg = progressMap[course.courseId] || progressMap[course.slug];
+            const coursePct = courseProg?.percentage || 0;
+            const isSaved = savedCourseIds.includes(course.courseId || course.slug);
+            const entitlement = checkCourseEntitlement(course, user, entitledSet);
+            const rewards = calculateCourseRewards(course);
 
-        {/* 4. Course Cards (Grid or List View) */}
-        {filteredCourses.length === 0 ? (
-          <div className="catalog-empty-state">
-            <FaBookOpen className="empty-state-icon" />
-            <h3 className="empty-state-title">No Courses Found</h3>
-            <p className="empty-state-text">
-              {selectedStatus === 'ENROLLED' ? 'You have not enrolled in any courses yet. Switch to "All Courses" and enroll to get started.' :
-               selectedStatus === 'IN_PROGRESS' ? 'No active courses currently in progress.' :
-               selectedStatus === 'COMPLETED' ? 'No completed courses yet. Finish all modules and 90% gated MSAs to earn your certificate!' :
-               `No courses found matching "${searchQuery}". Try selecting a different domain or clearing your search.`}
-            </p>
-            <button 
-              className="empty-state-reset-btn"
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedStatus('ALL');
-                setSelectedDomain('All Domains');
-              }}
-            >
-              Reset Filters
-            </button>
-          </div>
-        ) : (
-          <div className={viewMode === 'grid' ? 'catalog-cards-grid' : 'catalog-cards-list'}>
-            {filteredCourses.map(course => {
-              const isEnrolled = enrolledIds.includes(course.courseId);
-              const courseProg = progressMap[course.courseId];
-              const coursePct = courseProg?.percentage || 0;
-              const isCompleted = coursePct >= 100;
-              const isInProgress = isEnrolled && coursePct > 0 && !isCompleted;
-              const entitlement = checkCourseEntitlement(course, user, entitledSet);
-              const ent = entitlement;
-              const isLocked = entitlement.isLocked;
+            const totalModules = course.modules?.length || course.modulesCount || 4;
+            const totalLessons = course.lessonsCount || course.modules?.reduce((acc, m) => acc + (m.topics?.length || 0), 0) || 16;
+            const totalHours = course.estimatedHours || Math.round((course.modules?.reduce((acc, m) => acc + (m.estimatedMinutes || 60), 0) || 180) / 60 * 10) / 10 || 18;
 
-              const totalModules = course.modules?.length || course.modulesCount || 3;
-              const totalLessons = course.lessonsCount || course.modules?.reduce((acc, m) => acc + (m.topics?.length || 0), 0) || 8;
-              const totalHours = course.estimatedHours || Math.round((course.modules?.reduce((acc, m) => acc + (m.estimatedMinutes || 60), 0) || 180) / 60 * 10) / 10 || 3.5;
+            // Extract primary skills tags
+            const skillsList = Array.isArray(course.skills) && course.skills.length > 0
+              ? course.skills.slice(0, 6)
+              : [course.category || 'Tech', course.level || 'Foundations', 'Problem Solving', 'Best Practices'];
 
-              let primaryButtonLabel = 'Start Learning';
-              let primaryButtonIcon = <FaPlay />;
+            return (
+              <div 
+                key={course.courseId} 
+                className={viewMode === 'list' ? 'list-course-card' : 'grid-course-card'}
+              >
+                {/* Column 1: Dark Thumbnail Card */}
+                <div className="card-thumbnail-box">
+                  <div className="thumb-top-row">
+                    {isEnrolled ? (
+                      <span className="thumb-badge enrolled">
+                        <span className="thumb-dot" />
+                        <span>Enrolled</span>
+                      </span>
+                    ) : (
+                      <span className="thumb-badge category-tag">
+                        <span>{course.category || 'Engineering'}</span>
+                      </span>
+                    )}
+                  </div>
 
-              if (!isEnrolled) {
-                if (ent.isLocked) {
-                  primaryButtonLabel = 'Locked';
-                  primaryButtonIcon = <FaLock />;
-                } else {
-                  primaryButtonLabel = 'Enroll in Course';
-                  primaryButtonIcon = <FaPlus />;
-                }
-              } else if (isCompleted) {
-                primaryButtonLabel = 'Review Course';
-                primaryButtonIcon = <FaCheckCircle />;
-              } else if (isInProgress) {
-                primaryButtonLabel = `Resume (${coursePct}%)`;
-                primaryButtonIcon = <FaArrowRight />;
-              } else {
-                primaryButtonLabel = 'Start Learning';
-                primaryButtonIcon = <FaPlay />;
-              }
+                  <div className="thumb-center-content">
+                    <h4 className="thumb-course-title">{course.title}</h4>
+                    <p className="thumb-course-sub">
+                      {course.description ? course.description.slice(0, 65) + '...' : 'Build scalable applications with industry best practices.'}
+                    </p>
+                  </div>
 
-              return (
-                <div key={course.courseId} className={`mockup-course-card ${ent.isLocked && !isEnrolled ? 'course-locked-border' : ''}`}>
-                  {/* Top Dark Gradient Vector Banner */}
-                  <CourseBannerGraphic 
-                    category={course.category} 
-                    slug={course.slug} 
-                    title={course.title}
-                    isPopular={course.isPopular}
-                    badgeText={ent.isLocked && !isEnrolled ? ent.badge : course.badgeText}
-                    isEnrolled={isEnrolled}
-                  />
+                  <div className="thumb-illustration-mount">
+                    <CourseThumbnailIllustration 
+                      category={course.category} 
+                      slug={course.slug} 
+                      title={course.title} 
+                    />
+                  </div>
+                </div>
 
-                  {/* Card Main Body */}
-                  <div className="mockup-card-body">
-                    <h3 className="mockup-course-title clickable" onClick={() => onStartCourse(course)} title="Click to view course details">
-                      {course.title}
-                    </h3>
+                {/* Column 2: Middle Details Column */}
+                <div className="card-content-col">
+                  <div>
+                    <div className="course-title-row">
+                      <h3 
+                        className="main-course-title" 
+                        onClick={() => onStartCourse(course, isEnrolled ? 'CLASS' : 'OVERVIEW')}
+                        title={`Open ${course.title}`}
+                      >
+                        {course.title}
+                      </h3>
+                      {course.domainTitle && (
+                        <span className="domain-capsule-tag">{course.domainTitle}</span>
+                      )}
+                    </div>
 
-                    <p className="mockup-course-desc">
-                      {course.description}
+                    <p className="course-desc-snippet">
+                      {course.description || 'Comprehensive industry curriculum with video lectures, hands-on code examples, and dual 90% gated assessments.'}
                     </p>
 
-                    {/* Metadata Row matching user mockup */}
-                    <div className="mockup-metadata-row">
-                      <span className="meta-item">
-                        <FaBookOpen className="meta-icon" />
+                    {/* Metadata Specs Row */}
+                    <div className="card-metadata-row">
+                      <span className="meta-spec-item">
+                        <FaBookOpen className="spec-icon" />
                         <strong>{totalModules}</strong> Modules
                       </span>
-                      <span className="meta-divider">•</span>
-                      <span className="meta-item">
-                        <FaFileAlt className="meta-icon" />
+                      <span className="meta-spec-item">
+                        <FaFileAlt className="spec-icon" />
                         <strong>{totalLessons}</strong> Lessons
                       </span>
-                      <span className="meta-divider">•</span>
-                      <span className="meta-item">
-                        <FaClock className="meta-icon" />
+                      <span className="meta-spec-item">
+                        <FaClock className="spec-icon" />
                         <strong>{totalHours}</strong> Hours
                       </span>
-                      <span className="meta-divider">•</span>
-                      <span className="meta-item">
-                        <FaUserTie className="meta-icon" />
-                        {course.level || 'Intermediate'}
+                      <span className="meta-spec-item">
+                        <FaUserTie className="spec-icon" />
+                        {course.level || 'Intermediate to Advanced'}
                       </span>
                     </div>
 
-                    {/* Course Reward (300-500 XP and Seed Credits based on hours & modules) */}
-                    {(() => {
-                      const rewards = calculateCourseRewards(course);
-                      return (
-                        <div className="course-card-rewards-row">
-                          <div className="cc-rewards-left">
-                            <span className="cc-rewards-label">Course Reward:</span>
-                          </div>
-                          <div className="cc-rewards-pills">
-                            <span className="cc-reward-badge xp" title="Earn XP towards higher levels">
-                              <FaBolt className="badge-icon" /> +{rewards.totalXP} XP
-                            </span>
-                            <span className="cc-reward-badge sc" title="Earn SEED Credits">
-                              <SeedCreditCoin /> +{rewards.totalCredits}
-                            </span>
-                          </div>
+                    {/* Skills Tags Row */}
+                    <div className="skills-tags-row">
+                      {skillsList.map((skill, sIdx) => (
+                        <span key={sIdx} className="skill-tag-pill">{skill}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Social Proof Row */}
+                  <div className="social-proof-row">
+                    <span className="rating-badge">
+                      <FaStar className="rating-star-icon" />
+                      <span>{course.rating || 4.8}</span>
+                      <span className="reviews-count-dim">({(course.reviewsCount || 3.2).toLocaleString()}K)</span>
+                    </span>
+                    <span className="social-divider">•</span>
+                    <span className="enrolled-count-badge">
+                      <FaGraduationCap />
+                      <span>{(course.enrolledCount || 1074).toLocaleString()} enrolled</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Column 3: Right Rewards & Action Buttons */}
+                <div className="card-actions-col">
+                  <div className="actions-top-bar">
+                    <div className="rewards-box">
+                      <h5 className="rewards-title">Course Rewards</h5>
+                      <div className="rewards-list">
+                        <div className="reward-item xp">
+                          <FaBolt />
+                          <span>+{rewards.totalXP || 300} XP</span>
                         </div>
-                      );
-                    })()}
-
-                    {/* Live Firestore Social Proof (Rating & Enrollments) and Status Pill */}
-                    <div className="mockup-live-meta-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', margin: '4px 0 12px 0', fontSize: '13px' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#f59e0b', fontWeight: 600 }}>
-                          <FaStar style={{ fontSize: '12px' }} />
-                          <span>{course.rating || 4.9}</span>
-                          <span style={{ color: 'var(--text-muted, #94a3b8)', fontWeight: 400, fontSize: '12px' }}>
-                            ({course.reviewsCount || course.reviews?.length || 3})
-                          </span>
-                        </span>
-                        <span style={{ color: 'var(--border-color, #cbd5e1)' }}>•</span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--primary, #0d9488)', fontWeight: 600 }}>
-                          <FaGraduationCap style={{ fontSize: '13px' }} />
-                          <span>{(course.enrolledCount || 1000).toLocaleString()} enrolled</span>
-                        </span>
+                        <div className="reward-item credits">
+                          <SeedCreditCoin size={14} />
+                          <span>{rewards.totalCredits || 50} SEED Credits</span>
+                        </div>
+                        <div className="reward-item certificate">
+                          <FaCheckCircle />
+                          <span>Certificate on completion</span>
+                        </div>
                       </div>
-
-                      {isLocked ? (
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '3px 8px',
-                          borderRadius: '8px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          background: 'rgba(239, 68, 68, 0.12)',
-                          color: '#ef4444',
-                          border: '1px solid rgba(239, 68, 68, 0.25)'
-                        }}>
-                          <FaLock style={{ fontSize: '10px' }} />
-                          <span>{entitlement.badge || 'Cohort Restricted'}</span>
-                        </span>
-                      ) : isEnrolled ? (
-                        <span className="card-enrolled-status-pill">
-                          <FaCheckCircle style={{ fontSize: '11px' }} />
-                          <span>Enrolled</span>
-                        </span>
-                      ) : null}
                     </div>
 
-                    {/* Progress Bar (when enrolled & in progress) */}
-                    {isInProgress && (
-                      <div className="mockup-progress-wrap">
-                        <div className="progress-info-row">
-                          <span className="prog-text">Progress</span>
-                          <span className="prog-pct">{coursePct}%</span>
-                        </div>
-                        <div className="prog-track">
-                          <div className="prog-fill" style={{ width: `${coursePct}%` }} />
-                        </div>
-                      </div>
-                    )}
+                    <button 
+                      className={`bookmark-btn ${isSaved ? 'saved' : ''}`}
+                      onClick={(e) => toggleBookmark(course.courseId || course.slug, e)}
+                      title={isSaved ? 'Remove Bookmark' : 'Save Bookmark'}
+                    >
+                      {isSaved ? <FaBookmark /> : <FaRegBookmark />}
+                    </button>
+                  </div>
 
-                    {/* Details / Continue Learning & Unenroll Action Buttons */}
+                  {/* Buttons Row */}
+                  <div className="card-button-row">
                     {isEnrolled ? (
-                      <div className="mockup-actions-row enrolled-actions">
-                        <button 
-                          className="mockup-continue-btn"
-                          onClick={() => {
-                            if (isLocked) {
-                              toast.error(entitlement.reason, { duration: 6000 });
-                              return;
-                            }
-                            onStartCourse(course, 'CLASS');
-                          }}
-                          title={isLocked ? entitlement.reason : `Continue learning ${course.title}`}
+                      <>
+                        <button
+                          className="btn-continue-learning"
+                          onClick={() => onStartCourse(course, 'CLASS')}
+                          title="Continue learning"
                         >
-                          {isLocked ? <FaLock style={{ fontSize: '10px' }} /> : <FaPlay style={{ fontSize: '10px' }} />}
-                          <span>{isLocked ? 'Restricted' : 'Continue Learning'}</span>
+                          <FaPlay size={10} />
+                          <span>Continue Learning</span>
                         </button>
                         <button
-                          type="button"
-                          className="mockup-unenroll-btn"
-                          onClick={() => handlePromptUnenroll(course)}
-                          disabled={isUnenrolling}
+                          className="btn-unenroll-action"
+                          onClick={() => setUnenrollCourseTarget(course)}
                           title="Unenroll from this course"
                         >
-                          <FaTrashAlt style={{ fontSize: '10px' }} />
+                          <FaTrashAlt size={11} />
                           <span>Unenroll</span>
                         </button>
-                      </div>
+                      </>
                     ) : (
-                      <div className="mockup-actions-row single-action">
-                        <button 
-                          className={`mockup-details-btn ${ent.isLocked ? 'locked' : ''}`}
+                      <>
+                        <button
+                          className="btn-view-details"
                           onClick={() => onStartCourse(course, 'OVERVIEW')}
-                          title={ent.isLocked ? `Course locked: ${ent.reason}` : `View details and curriculum for ${course.title}`}
-                          style={ent.isLocked ? { borderColor: 'rgba(239, 68, 68, 0.4)', color: '#94a3b8' } : {}}
+                          title="View course syllabus and details"
                         >
-                          {ent.isLocked && <FaLock style={{ fontSize: '11px', color: '#f59e0b' }} />}
-                          <span>{ent.isLocked ? 'Locked (Tenant Restricted)' : 'Details'}</span>
-                          <FaArrowRight style={{ fontSize: '11px' }} />
+                          <FaPlay size={10} style={{ color: '#2563eb' }} />
+                          <span>View Details</span>
                         </button>
-                      </div>
+                        <button
+                          className="btn-enroll-action"
+                          onClick={() => handleEnrollCourse(course)}
+                          title="Enroll in this course"
+                        >
+                          <FaPlus size={10} />
+                          <span>Enroll</span>
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* 5. Centered Motivational Quote Footer matching mockup */}
-      <footer className="catalog-inspirational-footer">
-        <p className="quote-text">"Better developers build a better tomorrow."</p>
-        <span className="quote-author">— SEED SEB</span>
-      </footer>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Unenroll Confirmation Modal Warning Dialog */}
       {unenrollCourseTarget && (
         <div className="unenroll-confirm-overlay" onClick={() => !isUnenrolling && setUnenrollCourseTarget(null)}>
-          <div className="unenroll-confirm-modal" onClick={e => e.stopPropagation()}>
-            <div className="unenroll-modal-header">
-              <div className="unenroll-warning-icon-badge">
-                <FaExclamationTriangle />
+          <div className="unenroll-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-danger">
+              <div className="danger-icon-circle">
+                <FaTrashAlt />
               </div>
-              <div>
-                <h3 className="unenroll-modal-title">Unenroll from Course?</h3>
-                <p className="unenroll-modal-course-name">{unenrollCourseTarget.title}</p>
-              </div>
+              <h3>Confirm Course Unenrollment</h3>
             </div>
+            
+            <p className="modal-body-text">
+              Are you sure you want to unenroll from <strong>"{unenrollCourseTarget.title}"</strong>?
+              <br /><br />
+              <span className="danger-warning-note">
+                <FaShieldAlt style={{ marginRight: '6px', color: '#ef4444' }} />
+                Your tracked lesson progress, code submissions, and activity checkpoints for this course will be reset.
+              </span>
+            </p>
 
-            <div className="unenroll-modal-body">
-              <div className="unenroll-danger-alert">
-                <strong><FaExclamationTriangle style={{ color: '#ef4444', marginRight: '6px' }} /> Warning: Loss of Course Progress!</strong>
-                <p>
-                  Unenrolling will permanently reset all your completed lesson checkpoints, interactive practice code solutions, and assessment attempt records for this course.
-                </p>
-              </div>
-              <p className="unenroll-reassure-text">
-                You can re-enroll at any time, but your progress will restart from the beginning.
-              </p>
-            </div>
-
-            <div className="unenroll-modal-footer">
+            <div className="modal-footer-actions">
               <button 
-                type="button"
-                className="unenroll-cancel-btn" 
+                type="button" 
+                className="btn-cancel-modal" 
                 onClick={() => setUnenrollCourseTarget(null)}
                 disabled={isUnenrolling}
               >
-                Keep Learning
+                Keep Enrolled
               </button>
               <button 
-                type="button"
-                className="unenroll-confirm-btn" 
+                type="button" 
+                className="btn-confirm-unenroll" 
                 onClick={() => handleConfirmUnenroll(unenrollCourseTarget)}
                 disabled={isUnenrolling}
               >
-                {isUnenrolling ? 'Unenrolling...' : 'Yes, Unenroll & Reset Progress'}
+                {isUnenrolling ? 'Unenrolling...' : 'Yes, Unenroll'}
               </button>
             </div>
           </div>

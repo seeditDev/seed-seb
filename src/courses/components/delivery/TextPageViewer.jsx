@@ -56,53 +56,60 @@ const TextPageViewer = ({
       return items;
     }
 
-    // Fallback if no topic.pages configured
-    const textContent = topic?.lessonContent?.textAndVisuals?.content || topic?.description || 'Lesson content is being compiled.';
-    const visual = topic?.lessonContent?.textAndVisuals?.visualDiagram;
-    const fallbackCp = topic?.checkpoints?.[0] || topic?.lessonContent?.midVideoCheckpoints?.[0] || {
-      checkpointId: 'TXT_CP_1',
-      question: `Which fundamental principle is central to understanding ${topic?.title || 'this topic'}?`,
-      options: [
-        { id: 'A', text: 'Sequential structure and predictable algorithmic access' },
-        { id: 'B', text: 'Random access without bounds validation' },
-        { id: 'C', text: 'Dynamic allocation without deallocation' },
-        { id: 'D', text: 'None of the above' }
-      ],
-      correctAnswer: 'A',
-      explanation: 'Structured execution ensures predictable performance and boundary safety.'
-    };
+    // If no topic.pages configured: use only authentic topic content
+    const textContent = 
+      topic?.lesson?.content || 
+      topic?.lessonContent?.textAndVisuals?.content || 
+      topic?.lessonMarkdown || 
+      topic?.content || 
+      topic?.lesson?.summary || 
+      topic?.description || 
+      '';
 
-    return [
+    const visual = topic?.lessonContent?.textAndVisuals?.visualDiagram;
+
+    const firstAssessment = topic?.assessments?.[0];
+    const realCheckpoint = topic?.checkpoints?.[0] || topic?.lessonContent?.midVideoCheckpoints?.[0] || (firstAssessment ? {
+      checkpointId: firstAssessment.id || 'CP_1',
+      question: firstAssessment.question,
+      options: (firstAssessment.options || []).map((opt, oIdx) => ({
+        id: String.fromCharCode(65 + oIdx),
+        text: typeof opt === 'string' ? opt : (opt.text || `Option ${oIdx + 1}`)
+      })),
+      correctAnswer: typeof firstAssessment.correctAnswer === 'number' 
+        ? String.fromCharCode(65 + firstAssessment.correctAnswer)
+        : (firstAssessment.correctAnswer || 'A'),
+      explanation: firstAssessment.explanation || ''
+    } : null);
+
+    const stepItems = [
       {
         type: 'CONTENT',
         stepId: 'P1',
         pageIndex: 0,
-        title: `${topic?.title || 'Lesson'} — Concept Overview`,
+        title: topic?.title || 'Lesson Overview',
         content: textContent,
         visual: visual || null,
         example: topic?.activities?.find(a => a.type === 'EXAMPLE')?.languages?.cpp || null,
-        hasCheckpointAfter: true
-      },
-      {
-        type: 'CHECKPOINT',
-        stepId: fallbackCp.checkpointId || 'TXT_CP_1',
-        checkpointId: fallbackCp.checkpointId || 'TXT_CP_1',
-        pageIndex: 0,
-        title: `${topic?.title || 'Lesson'} — Knowledge Check`,
-        subtitle: `Checkpoint for: Concept Overview`,
-        checkpoint: fallbackCp,
-        parentPageTitle: `${topic?.title || 'Lesson'} — Concept Overview`,
-        parentPageIndex: 0
-      },
-      {
-        type: 'CONTENT',
-        stepId: 'P2',
-        pageIndex: 1,
-        title: `${topic?.title || 'Lesson'} — Core Principles & Summary`,
-        content: 'Review the underlying theory, consolidate your key takeaways, and proceed forward with the hands-on activities.',
-        hasCheckpointAfter: false
+        hasCheckpointAfter: Boolean(realCheckpoint)
       }
     ];
+
+    if (realCheckpoint) {
+      stepItems.push({
+        type: 'CHECKPOINT',
+        stepId: realCheckpoint.checkpointId || 'CP_1',
+        checkpointId: realCheckpoint.checkpointId || 'CP_1',
+        pageIndex: 0,
+        title: `${topic?.title || 'Lesson'} — Knowledge Check`,
+        subtitle: `Checkpoint for: ${topic?.title || 'Lesson'}`,
+        checkpoint: realCheckpoint,
+        parentPageTitle: topic?.title || 'Lesson',
+        parentPageIndex: 0
+      });
+    }
+
+    return stepItems;
   }, [topic]);
 
   const [currentStepIdx, setCurrentStepIdx] = useState(() => {

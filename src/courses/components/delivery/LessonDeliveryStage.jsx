@@ -4,6 +4,9 @@ import VideoCheckpointPlayer from './VideoCheckpointPlayer';
 import TextPageViewer from './TextPageViewer';
 import LessonMarkdownRenderer from './LessonMarkdownRenderer';
 import SQLInteractiveStage from '../activities/SQLInteractiveStage';
+import ReactInteractiveStage from '../activities/ReactInteractiveStage';
+import GuidedProjectStage from '../activities/GuidedProjectStage';
+import VSCodeStudioStage from '../activities/VSCodeStudioStage';
 import learningEngineService from '../../services/learningEngineService';
 
 const LessonDeliveryStage = ({
@@ -19,8 +22,25 @@ const LessonDeliveryStage = ({
 
   // Determine available modes
   const isSqlExercise = Boolean(topic?.sqlExercise || topic?.mode === 'SQL_INTERACTIVE');
-  const hasVideo = Boolean(topic?.videoUrl || topic?.lessonContent?.videoUrl);
-  const hasText = Boolean(topic?.pages?.length > 0 || topic?.lessonContent?.textAndVisuals || topic?.description);
+  const isCodeStudio = Boolean(topic?.codeStudio || topic?.mode === 'VSCODE_STUDIO');
+  const isReactExercise = Boolean(topic?.reactExercise || topic?.mode === 'REACT_INTERACTIVE' || topic?.runtime === 'REACT');
+  const isGuidedProject = Boolean(topic?.guidedProject || topic?.mode === 'GUIDED_PROJECT');
+  const hasVideo = Boolean(
+    topic?.videoUrl || 
+    topic?.youtubeVideoId || 
+    topic?.lessonContent?.videoUrl || 
+    topic?.video?.url ||
+    topic?.mode === 'VIDEO'
+  );
+
+  const hasText = Boolean(
+    topic?.pages?.length > 0 || 
+    topic?.lesson?.content || 
+    topic?.lesson?.summary || 
+    topic?.lessonContent?.textAndVisuals || 
+    topic?.description ||
+    topic?.content
+  );
   
   // Default delivery mode:
   // If author explicitly configured topic.mode, use that.
@@ -28,14 +48,17 @@ const LessonDeliveryStage = ({
   const authorMode = topic?.mode || (hasVideo && hasText ? 'VIDEO_TEXT' : (hasVideo ? 'VIDEO' : 'TEXT'));
   
   const [activeDeliveryMode, setActiveDeliveryMode] = useState(() => {
-    if (authorMode === 'TEXT') return 'TEXT';
+    if (authorMode === 'TEXT' || (!hasVideo && hasText)) return 'TEXT';
     return 'VIDEO';
   });
 
   useEffect(() => {
-    if (authorMode === 'TEXT') setActiveDeliveryMode('TEXT');
-    else if (authorMode === 'VIDEO') setActiveDeliveryMode('VIDEO');
-  }, [authorMode, topic?.topicId]);
+    if (authorMode === 'TEXT' || (!hasVideo && hasText)) {
+      setActiveDeliveryMode('TEXT');
+    } else if (authorMode === 'VIDEO' || (hasVideo && !hasText)) {
+      setActiveDeliveryMode('VIDEO');
+    }
+  }, [authorMode, hasVideo, hasText, topic?.topicId]);
 
   const handleCheckpointPassed = async (checkpointId, nextAllowedTime = 0) => {
     await learningEngineService.passTopicCheckpoint(
@@ -92,6 +115,127 @@ const LessonDeliveryStage = ({
           onComplete={() => {
             handleCheckpointPassed('sqlExercisePassed', 0);
             onCheckpointComplete?.('sqlExercisePassed');
+            if (activeModule?.moduleId && topic?.topicId) {
+              learningEngineService.markTopicCompleted(uid, course, activeModule.moduleId, topic.topicId).catch(() => {});
+            }
+          }}
+          onNextLesson={() => {
+            onTopicComplete?.();
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (isCodeStudio && topic?.codeStudio) {
+    return (
+      <div className="lesson-delivery-stage vscode-studio-delivery-mode">
+        {topic && (topic.lessonMarkdown || topic.description) && (
+          <div className="react-topic-intro-card">
+            <h3 className="react-topic-intro-title">
+              {topic.title}
+            </h3>
+            {topic.description && (
+              <p className="react-topic-intro-desc">
+                {topic.description}
+              </p>
+            )}
+            {topic.lessonMarkdown && (
+              <div className="react-topic-intro-markdown">
+                <LessonMarkdownRenderer content={topic.lessonMarkdown} />
+              </div>
+            )}
+          </div>
+        )}
+        <VSCodeStudioStage
+          key={topic.topicId}
+          studio={topic.codeStudio}
+          user={user}
+          onComplete={() => {
+            handleCheckpointPassed('studioPassed', 0);
+            onCheckpointComplete?.('studioPassed');
+            if (activeModule?.moduleId && topic?.topicId) {
+              learningEngineService.markTopicCompleted(uid, course, activeModule.moduleId, topic.topicId).catch(() => {});
+            }
+          }}
+          onNextLesson={() => {
+            onTopicComplete?.();
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (isGuidedProject && topic?.guidedProject) {
+    return (
+      <div className="lesson-delivery-stage project-delivery-mode">
+        {topic && (topic.lessonMarkdown || topic.description) && (
+          <div className="react-topic-intro-card">
+            <h3 className="react-topic-intro-title">
+              {topic.title}
+            </h3>
+            {topic.description && (
+              <p className="react-topic-intro-desc">
+                {topic.description}
+              </p>
+            )}
+            {topic.lessonMarkdown && (
+              <div className="react-topic-intro-markdown">
+                <LessonMarkdownRenderer content={topic.lessonMarkdown} />
+              </div>
+            )}
+          </div>
+        )}
+        <GuidedProjectStage
+          key={topic.topicId}
+          project={topic.guidedProject}
+          user={user}
+          onComplete={() => {
+            handleCheckpointPassed('projectPassed', 0);
+            onCheckpointComplete?.('projectPassed');
+            if (activeModule?.moduleId && topic?.topicId) {
+              learningEngineService.markTopicCompleted(uid, course, activeModule.moduleId, topic.topicId).catch(() => {});
+            }
+          }}
+          onNextLesson={() => {
+            onTopicComplete?.();
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (isReactExercise && topic?.reactExercise) {
+    return (
+      <div className="lesson-delivery-stage react-delivery-mode">
+        {topic && (
+          <div className="react-topic-intro-card">
+            <h3 className="react-topic-intro-title">
+              {topic.title}
+            </h3>
+            {topic.description && (
+              <p className="react-topic-intro-desc">
+                {topic.description}
+              </p>
+            )}
+            {topic.lessonMarkdown && (
+              <div className="react-topic-intro-markdown">
+                <LessonMarkdownRenderer content={topic.lessonMarkdown} />
+              </div>
+            )}
+            {topic.lessonContent?.textAndVisuals?.content && (
+              <div className="react-topic-intro-markdown">
+                <LessonMarkdownRenderer content={topic.lessonContent.textAndVisuals.content} />
+              </div>
+            )}
+          </div>
+        )}
+        <ReactInteractiveStage
+          key={topic.topicId}
+          exercise={topic.reactExercise}
+          onComplete={() => {
+            handleCheckpointPassed('reactExercisePassed', 0);
+            onCheckpointComplete?.('reactExercisePassed');
             if (activeModule?.moduleId && topic?.topicId) {
               learningEngineService.markTopicCompleted(uid, course, activeModule.moduleId, topic.topicId).catch(() => {});
             }

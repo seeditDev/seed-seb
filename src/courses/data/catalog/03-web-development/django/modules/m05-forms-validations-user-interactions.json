@@ -1,0 +1,1262 @@
+{
+  "moduleId": "m05-forms-validations-user-interactions",
+  "title": "Forms, Validations & User Interactions",
+  "description": "Core concepts and hands-on practice in Forms, Validations & User Interactions.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-creating-forms",
+      "title": "Creating forms",
+      "description": "Study concepts and solve targeted engineering problems for Creating forms.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-ZEBIAA01",
+          "title": "Creating Standard Forms",
+          "content": "In web development, forms are essential for user interaction. Think about contact pages, search bars, or login screens – they all use forms to collect information from users. Django provides a powerful and convenient way to create and manage these forms.\n\n**What are Standard Forms in Django?**\n\nStandard Forms refer to forms that we define by creating a class that inherits from Django's base `Form` class. This approach gives us a structured way to define what input fields our form should have and how it should behave.\n\nLet's walk through how to create a basic form.\n\n**1. Create a `forms.py` File**\n\nJust like we have `models.py` for our database structures and `views.py` for our request-handling logic, it's a common practice to create a dedicated file named `forms.py` inside your app directory. \n\nSo, inside your application's directory (e.g., `myapp/`), create a new file: `myapp/forms.py`.\n\n**2. Define Your Form Class**\n\nIn this new `forms.py` file, you'll define your form as a Python class. This class needs to inherit from `django.forms.Form`.\n\n```python\n# myapp/forms.py\nfrom django import forms\n\nclass ContactForm(forms.Form):\n # We will define the actual input fields here in the next lesson, \"Form Fields\".\n # For example, we might have fields for name, email, and a message.\n # For now, just understand that this class represents our form's structure.\n # name = forms.CharField()\n # email = forms.EmailField()\n pass # We'll fill this in properly in the next lesson\n```\n\nIn the code above:\n- We import the `forms` module from Django.\n- We create a class named `ContactForm` that inherits from `forms.Form`.\n- Inside this class, we will list the different input fields our form will contain. We'll cover exactly *how* to define these fields (like `CharField` for text input or `EmailField` for email input) in the very next sub-topic, \"Form Fields\". For this lesson, the key takeaway is that we create a class that acts as a blueprint for our form.\n\n**3. Using the Form in a View**\n\nOnce your form class is defined, you need to use it in a view. This is similar to how we fetched data using our models in views during \"CRUD Operations with Django ORM\".\n\nOpen your app's `views.py` file:\n\n```python\n# myapp/views.py\nfrom django.shortcuts import render\nfrom .forms import ContactForm # Import your new form class\n\ndef contact_us_view(request):\n form = ContactForm() # Create an instance of your form\n context = {\n 'form': form\n }\n return render(request, 'myapp/contact_page.html', context)\n```\nHere:\n- We import our `ContactForm` from `myapp.forms`.\n- In the `contact_us_view` function, we create an instance of `ContactForm`. This `form` object is what we'll pass to our template.\n- We then pass this `form` object to the template through the context dictionary.\n\n**4. Rendering the Form in a Template**\n\nNow, let's display this form on a webpage using Django's templating system, which you learned about in \"Templating Basics\" and \"Template Inheritance\".\n\nCreate a new template file, for example, `myapp/templates/myapp/contact_page.html`:\n\n```html\n\n{% extends \"base.html\" %} \n\n{% block content %}\n Contact Us\n \n {% csrf_token %} \n \n {{ form.as_p }} paragraph tag -->\n \n Send Message\n \n{% endblock %}\n```\nLet's break down the important parts within the `` tags:\n- `method=\"POST\"`: This attribute specifies how the form data should be sent to the server. We'll explore this more when we discuss collecting data.\n- `{% csrf_token %}`: This is a crucial Django template tag for Cross-Site Request Forgery protection. Always include it in your forms that modify data. \n***Note***: Since we will execute our examples in the SEED-IT lab environment, we disable CSRF protection temporarily for testing purposes, as you will see in the following examples. Do not do this in real production environments.\n\n- `{{ form.as_p }}`: This is where the magic happens! Django takes your `form` object (which we passed from the view) and renders all its defined fields as HTML input elements. `as_p` means each field will be wrapped in `` (paragraph) tags.\n - You can also use `{{ form.as_ul }}` (renders fields as list items ``) or `{{ form.as_table }}` (renders fields as table rows ``).\n- `...`: This is a standard HTML submit button that, when clicked, will attempt to send the form data.\n\n**Important Note:** Django's `{{ form.as_p }}` (or `as_ul`, `as_table`) only renders the form *fields* themselves (e.g., ``, ``). You still need to write the surrounding `` tags, the `{% csrf_token %}`, and the submit button manually in your template.\n\n**5. Configuring the URL**\n\nFinally, you'll need to map a URL to your `contact_us_view` so users can access it. This uses the concepts from \"URL Configuration\".\n\nIn your app's `urls.py` (e.g., `myapp/urls.py`):\n```python\n# myapp/urls.py\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n path('contact/', views.contact_us_view, name='contact_us'),\n # ... other urls ...\n]\n```\nAnd ensure this app's `urls.py` is included in your project's main `urls.py`.\n\n**Summary**\n\nCreating standard forms in Django involves:\n1. Defining a form class in `forms.py` that inherits from `django.forms.Form`.\n2. Instantiating this form class in your view.\n3. Passing the form instance to your template's context.\n4. Rendering the form in your template using `{{ form.as_p }}` (or similar), along with the necessary `` tags, `{% csrf_token %}`, and a submit button.\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django Forms define user-facing fields and centralize parsing and validation before application code uses submitted values. The key implementation detail in **Creating Standard Forms** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.http import HttpResponse\n\ndef index(request):\n return HttpResponse(\"Django is running.\")"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ZEBIAA01",
+            "question": "Which statement best describes **Creating Standard Forms** in the Django topic **Creating forms**?",
+            "options": [
+              "Django Forms define user-facing fields and centralize parsing and validation before application code uses submitted values.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Creating Standard Forms within Creating forms."
+          }
+        },
+        {
+          "pageId": "p-ZEBIAA04",
+          "title": "Form Fields",
+          "content": "In the previous lesson, we learned the basics of setting up a form class in Django. Now, let's dive into what makes up a form: the **Form Fields**.\n\n**What are Form Fields?**\n\nThink of form fields as the individual building blocks of any web form. They are the specific places where users enter information, like a text box for their name, a dropdown menu to select an option, or a checkbox to agree to terms. Each field is designed to collect a particular type of data.\n\nIn Django, when you define a form, you specify what fields it should contain. Django provides a rich set of built-in field types, each with its own characteristics.\n\n**Defining Fields in Django**\n\nYou define form fields as class attributes within your form class, which usually resides in a `forms.py` file inside your app. Each attribute is an instance of a field class provided by `django.forms`.\n\nLet's look at an example for creating a simple contact form:\n\n```python\n# myapp/forms.py\nfrom django import forms\n\nclass ContactForm(forms.Form):\n name = forms.CharField(label='Your Name', max_length=100)\n email = forms.EmailField(label='Your Email')\n message = forms.CharField(label='Your Message')\n send_copy = forms.BooleanField(label='Send a copy to yourself?', required=False)\n```\n\nLet's break this down:\n* We import `forms` from `django`.\n* Our `ContactForm` inherits from `forms.Form`.\n* `name`, `email`, `message`, and `send_copy` are the form fields.\n\n**Common Field Types**\n\nDjango offers many field types. Here are some of the most common ones you'll encounter:\n\n1. **`CharField`**:\n * Used for text input (e.g., names, subjects, short messages).\n * Renders as an `` in HTML by default.\n * Often takes a `max_length` argument.\n\n2. **`EmailField`**:\n * Specifically for email addresses.\n * Renders as `` in HTML. Django will check if the input looks like a valid email format (though more advanced validation is covered later).\n\n3. **`IntegerField`**:\n * For whole numbers (integers).\n * Renders as ``.\n\n4. **`BooleanField`**:\n * For true/false values.\n * Typically renders as an ``.\n * Its `required` argument behaves a bit differently: if `required=True` (the default for most fields), the checkbox *must* be checked. If `required=False`, it can be unchecked.\n\n5. **`DateField`**:\n * For dates.\n * Can render as `` or other date input widgets depending on configuration.\n\n6. **`ChoiceField`**:\n * Allows the user to choose from a set of predefined options.\n * Requires a `choices` argument, which is a list of tuples (e.g., `choices=[('tech', 'Technology'), ('art', 'Arts')]`).\n * Can render as a `` dropdown or radio buttons.\n\n**Field Arguments**\n\nWhen you define a field, you can pass arguments to customize its behavior and appearance:\n\n* **`label`**: A user-friendly name for the field that will be displayed next to it in the form (e.g., \"Your Name\"). If you don't provide a label, Django will generate one from the field's name (e.g., \"Name\" from `name`).\n* **`required`**: A boolean (True/False). By default, most fields are `required=True`, meaning the user must provide a value. If set to `False`, the field can be left blank.\n* **`initial`**: Sets an initial value for the field when the form is first displayed.\n* **`widget`**: Allows you to change how the field is rendered in HTML. For example, you can make a `CharField` render as a `` for longer messages:\n ```python\n message = forms.CharField(label='Your Message', widget=forms.Textarea)\n ```\n\n**Connecting to Models (Conceptual Link)**\n\nVery often, the fields in your Django forms will correspond directly to the fields in your Django models. For instance, if you have a `Product` model with a `name` (a `CharField`) and `price` (a `DecimalField`), you'd likely have a form with similar field types to create or update products. (Django has shortcuts for this, like `ModelForm`, which you might encounter later, but the core idea is that form fields often mirror model fields).\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django Forms define user-facing fields and centralize parsing and validation before application code uses submitted values. The key implementation detail in **Form Fields** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.http import HttpResponse\n\ndef index(request):\n return HttpResponse(\"Django is running.\")"
+          }
+        },
+        {
+          "pageId": "p-ZEBIAA07",
+          "title": "Collecting Data with Django Form",
+          "content": "So far we have seen how to define different form fields. We were able to see the forms but you must have noticed that after entering inputs to the form and when you click on SUBMIT - it did nothing.\nSo, let's see how we actually collect the information a user types into these forms.\n\n**The Journey of Form Data**\n\nImagine a user fills out a contact form on your website and clicks \"Submit\". What happens to that data?\n\n1. **In the Template (`.html` file):**\n * To send data to your server, this form needs two important attributes:\n * `method=\"POST\"`: This tells the browser to send the form data in the body of the HTTP request. \"POST\" is typically used when submitting data that will cause a change on the server (like saving new information).\n * `action=\"{% url 'your_view_handling_form_submission' %}\"`: This specifies the URL where the browser should send the form data. We use the `{% url %}` template tag (from `URL Configuration`) to point to a specific view that will handle this data.\n * You'll also include `{% csrf_token %}` inside your form for security. This is a Django requirement for POST forms.\n * And, of course, a submit button (e.g., `Send`).\n\n Here's a quick example of how your template (`contact_form_template.html`) might look:\n ```html\n \n \n {% csrf_token %}\n {{ form.as_p }} \n Submit\n \n ```\n\n2. **URL Configuration (`urls.py`):**\n * The `action` attribute in your form (e.g., `{% url 'contact_page' %}`) points to a URL pattern defined in your app's `urls.py` file.\n * This URL pattern maps to a specific view function. Often, the same view function handles both displaying the form (when a user first visits) and processing the submitted data.\n * Example `urls.py`:\n ```python\n # your_app/urls.py\n from django.urls import path\n from . import views\n\n urlpatterns = [\n # This URL will handle both displaying the form (GET) and processing it (POST)\n path('contact/', views.contact_view, name='contact_page'),\n # A separate URL for a \"thank you\" page after submission\n path('thank-you/', views.thank_you_view, name='thank_you_page'),\n ]\n ```\n\n3. **The View (`views.py`): Handling the Data**\n * The view function mapped to your form's `action` URL will receive the submitted data.\n * A view often handles two main scenarios for a form page:\n * **GET requests:** When a user first visits the page (e.g., `yourwebsite.com/contact/`). The view should display an empty form.\n * **POST requests:** When the user submits the form. The view needs to collect and process the data.\n * The submitted data from a POST request is available in the `request.POST` object. This object behaves much like a Python dictionary, where keys are the field names and values are the submitted data.\n\n Let's see how to handle this in a view:\n\n ```python\n # your_app/views.py\n from django.shortcuts import render, redirect\n from django.http import HttpResponse # For a simple thank you message\n from .forms import ContactForm # Assuming you have ContactForm in forms.py (from 'Creating Standard Forms')\n\n # A simple view for the thank you page\n def thank_you_view(request):\n return HttpResponse(\"Thank you for contacting us!\") # Or render a full template\n\n def contact_view(request):\n if request.method == 'POST':\n # 1. Data has been submitted!\n # The raw submitted data is in request.POST.\n # You could print it to your server console to inspect it:\n # print(request.POST)\n\n # 2. Bind the submitted data to a form instance:\n form = ContactForm(request.POST)\n\n # Now, the 'form' instance holds the data submitted by the user,\n # associated with the fields defined in your ContactForm class.\n # For example, if your form has a field 'user_email', the data entered\n # for 'user_email' is now conceptually part of this 'form' object.\n # You could access the raw value directly from request.POST:\n # submitted_email = request.POST.get('user_email')\n # print(f\"Email submitted: {submitted_email}\")\n\n # It's good practice to redirect after a successful POST. This prevents\n # issues like the form being re-submitted if the user refreshes the page.\n return redirect('thank_you_page') # Redirect to the 'thank_you_page' URL name\n\n else: # This is for a GET request (or any other method)\n # Display an empty, unbound form for the user to fill out\n form = ContactForm()\n\n return render(request, 'contact_form_template.html', {'form': form})\n ```\n\n**Key Idea: Binding Data to the Form**\n\nThe line `form = ContactForm(request.POST)` is crucial.\n* When you create a form instance *without* any arguments (e.g., `form = ContactForm()`), it's an **unbound** form – it's empty and ready to be displayed to the user for the first time.\n* When you create a form instance *with* `request.POST` (e.g., `form = ContactForm(request.POST)`), it's a **bound** form. Django takes the submitted data from `request.POST` and \"binds\" it (or associates it) to the respective fields of your `ContactForm`.\n\nThis process of binding makes the submitted data available through the `form` object in a structured way, corresponding to the `Form Fields` you defined. The `form` object now contains the user's input.\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django Forms define user-facing fields and centralize parsing and validation before application code uses submitted values. The key implementation detail in **Collecting Data with Django Form** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.http import HttpResponse\n\ndef index(request):\n return HttpResponse(\"Django is running.\")"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-ZEBIAA01-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Creating Standard Forms (Python)",
+          "code": "from django.http import HttpResponse\n\ndef index(request):\n return HttpResponse(\"Django is running.\")"
+        },
+        {
+          "exampleId": "ex-ZEBIAA04-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Form Fields (Python)",
+          "code": "from django.http import HttpResponse\n\ndef index(request):\n return HttpResponse(\"Django is running.\")"
+        },
+        {
+          "exampleId": "ex-ZEBIAA07-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Collecting Data with Django Form (Python)",
+          "code": "from django.http import HttpResponse\n\ndef index(request):\n return HttpResponse(\"Django is running.\")"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "ZEBIAA02",
+          "questionId": "ZEBIAA02",
+          "title": "Community Suggestion Box Form Setup",
+          "difficulty": "Medium",
+          "description": "Practice required-field handling in Django forms.",
+          "problemStatement": "Validate required form fields. Print `VALID` when every required value is non-empty; otherwise print `MISSING:` followed by missing field names in the required-list order.",
+          "constraints": [
+            "1 <= N <= 20",
+            "Field names contain letters, digits, or underscores."
+          ],
+          "inputFormat": "N `field=value` tokens followed by a comma-separated required-field list.",
+          "outputFormat": "`VALID` or `MISSING:name,...`.",
+          "sampleTestCases": [
+            {
+              "input": "3 name=Alice email=a@x.com city=Chennai name,email",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 name=Alice email=a@x.com city=Chennai name,email",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "2 name= email=x@y.com name,email",
+              "output": "MISSING:name",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "3 a=1 b=2 c=3 a,c",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "1 name=Alice name",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "2 a= b=ok a,b",
+              "output": "MISSING:a",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            }
+          ]
+        },
+        {
+          "problemId": "ZEBIAA03",
+          "questionId": "ZEBIAA03",
+          "title": "Daily Mood Tracker Form Display",
+          "difficulty": "Medium",
+          "description": "Practice identifying Django form field definitions.",
+          "problemStatement": "Convert space-separated `field:type` definitions into a semicolon-separated declaration string without changing field order.",
+          "constraints": [
+            "1 <= number of fields <= 10"
+          ],
+          "inputFormat": "One line containing field definitions.",
+          "outputFormat": "Same definitions joined by semicolons.",
+          "sampleTestCases": [
+            {
+              "input": "name:text age:number city:text",
+              "output": "name:text;age:number;city:text",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name:text age:number city:text",
+              "output": "name:text;age:number;city:text",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title:text body:textarea",
+              "output": "title:text;body:textarea",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "email:email",
+              "output": "email:email",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "username:text password:password",
+              "output": "username:text;password:password",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "date:date",
+              "output": "date:date",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "ZEBIAA05",
+          "questionId": "ZEBIAA05",
+          "title": "Django Feedback Form Fields Creation",
+          "difficulty": "Medium",
+          "description": "Practice collecting submitted form data.",
+          "problemStatement": "Read `field=value` tokens and serialize them in the same order using `&` between fields.",
+          "constraints": [
+            "Values contain no spaces."
+          ],
+          "inputFormat": "One line of form field assignments.",
+          "outputFormat": "Assignments joined by `&`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice age=21",
+              "output": "name=Alice&age=21",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice age=21",
+              "output": "name=Alice&age=21",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "name=Bob email=b@x.com",
+              "output": "name=Bob&email=b@x.com",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "course=Django level=advanced",
+              "output": "course=Django&level=advanced",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "city=Chennai",
+              "output": "city=Chennai",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "role=student",
+              "output": "role=student",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "ZEBIAA06",
+          "questionId": "ZEBIAA06",
+          "title": "Appointment Request Form Fields",
+          "difficulty": "Medium",
+          "description": "Practice treating a submitted form as model-ready data.",
+          "problemStatement": "Prefix the submitted field assignments with `MODEL:` and join fields with `|`. This models the clean handoff from a valid form to a model save operation.",
+          "constraints": [
+            "At least one field is supplied.",
+            "Field assignments contain no spaces."
+          ],
+          "inputFormat": "One line of `field=value` tokens.",
+          "outputFormat": "Print `MODEL:` followed by `|`-joined assignments.",
+          "sampleTestCases": [
+            {
+              "input": "title=Book author=Sam year=2024",
+              "output": "MODEL:title=Book|author=Sam|year=2024",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "title=Book author=Sam year=2024",
+              "output": "MODEL:title=Book|author=Sam|year=2024",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "name=Alice age=20",
+              "output": "MODEL:name=Alice|age=20",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "product=Keyboard price=1500",
+              "output": "MODEL:product=Keyboard|price=1500",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "course=Django level=advanced",
+              "output": "MODEL:course=Django|level=advanced",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "event=Hackathon seats=100",
+              "output": "MODEL:event=Hackathon|seats=100",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "ZEBIAA08",
+          "questionId": "ZEBIAA08",
+          "title": "Simple Feedback Form Data Collection",
+          "difficulty": "Medium",
+          "description": "Practice treating a submitted form as model-ready data.",
+          "problemStatement": "Prefix the submitted field assignments with `MODEL:` and join fields with `|`. This models the clean handoff from a valid form to a model save operation.",
+          "constraints": [
+            "At least one field is supplied.",
+            "Field assignments contain no spaces."
+          ],
+          "inputFormat": "One line of `field=value` tokens.",
+          "outputFormat": "Print `MODEL:` followed by `|`-joined assignments.",
+          "sampleTestCases": [
+            {
+              "input": "title=Book author=Sam year=2024",
+              "output": "MODEL:title=Book|author=Sam|year=2024",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "title=Book author=Sam year=2024",
+              "output": "MODEL:title=Book|author=Sam|year=2024",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "name=Alice age=20",
+              "output": "MODEL:name=Alice|age=20",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "product=Keyboard price=1500",
+              "output": "MODEL:product=Keyboard|price=1500",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "course=Django level=advanced",
+              "output": "MODEL:course=Django|level=advanced",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "event=Hackathon seats=100",
+              "output": "MODEL:event=Hackathon|seats=100",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "ZEBIAA09",
+          "questionId": "ZEBIAA09",
+          "title": "Simple Song Request Form",
+          "difficulty": "Medium",
+          "description": "Practice numeric form validation.",
+          "problemStatement": "Validate that the supplied numeric field value meets the minimum constraint.",
+          "constraints": [
+            "Values are integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "`VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "age=20|18",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "age=20|18",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=12|18",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "price=100|0",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "price=-5|0",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "score=99|100",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "Forms, Validations & User Interactions"
+    },
+    {
+      "topicId": "t02-form-rendering-submission",
+      "title": "Form Rendering & Submission",
+      "description": "Study concepts and solve targeted engineering problems for Form Rendering & Submission.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 15,
+      "pages": [
+        {
+          "pageId": "p-PAUMJI04",
+          "title": "Connecting Forms to Models",
+          "content": "In the previous lesson, we learned how to create forms using Django’s Form class and how to display them in templates. Now we will see how those forms can be connected to the database — so when a user fills out a form and submits it, the data gets saved in your model.\n\nThis is where **ModelForms** come in.\n\nA ModelForm is a special kind of Django form that is linked directly to a model. It knows which fields are in your model and can automatically create form fields for them. It also knows how to save the data to the database.\n\nThink of it as a smart form that already understands your data structure.\n#### Step-by-Step: Handling Form Submissions with a ModelForm\nLet’s say you have a model called `Product` like this:\n```python\n# models.py\nfrom django.db import models\n\nclass Product(models.Model):\n name = models.CharField(max_length=100)\n price = models.FloatField()\n description = models.TextField()\n```\nNow, let’s create a ModelForm for this model.\n\n```python\n# forms.py\nfrom django import forms\nfrom .models import Product\n\nclass ProductForm(forms.ModelForm):\n class Meta:\n model = Product\n fields = ['name', 'price', 'description']\n```\nThis form will now automatically create fields for `name`, `price`, and `description`.\n\n#### What Happens When a User Submits the Form?\nFrom submitting the form to saving it in the database.\n\n1. User sees the form\nThe user visits a URL that shows a blank form.\n```python\n# views.py\nfrom django.shortcuts import render, redirect\nfrom .forms import ProductForm\n\ndef add_product_view(request):\n if request.method == 'POST':\n form = ProductForm(request.POST) # Bind data from request\n if form.is_valid(): # Validates the form\n form.save() # Saves to the Product table!\n return redirect('product_list') # Go to another page after saving\n else:\n form = ProductForm() # Empty form for GET request\n\n return render(request, 'add_product.html', {'form': form})\n```\n**The HTML Template**\n```html\n\n{% extends \"base.html\" %}\n\n{% block content %}\n Add a New Product\n \n \n {{ form.as_p }}\n Submit\n \n{% endblock %}\n```\n\n#### What Django Does Behind the Scenes\n- On a GET request, it shows the empty form.\n- On a POST request, it grabs the submitted data using request.POST.\n- The ProductForm checks the data and, if valid, uses .save() to:\n- Create a new Product object\n- Insert it into the database\n- Then it redirects the user to another page so the form isn’t submitted again by accident.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "ModelForm connects validated form data to a model, reducing repetitive form and save logic while keeping validation in the correct layer. The key implementation detail in **Connecting Forms to Models** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.forms import ModelForm\nfrom .models import Book\n\nclass BookForm(ModelForm):\n class Meta:\n model = Book\n fields = [\"title\", \"author\", \"year\"]"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-PAUMJI04",
+            "question": "Which statement best describes **Connecting Forms to Models** in the Django topic **Form Rendering & Submission**?",
+            "options": [
+              "ModelForm connects validated form data to a model, reducing repetitive form and save logic while keeping validation in the correct layer.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Connecting Forms to Models within Form Rendering & Submission."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-PAUMJI04-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Connecting Forms to Models (Python)",
+          "code": "from django.forms import ModelForm\nfrom .models import Book\n\nclass BookForm(ModelForm):\n class Meta:\n model = Book\n fields = [\"title\", \"author\", \"year\"]"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "PAUMJI05",
+          "questionId": "PAUMJI05",
+          "title": "A Book Catalog App",
+          "difficulty": "Medium",
+          "description": "Practice required-field handling in Django forms.",
+          "problemStatement": "Validate required form fields. Print `VALID` when every required value is non-empty; otherwise print `MISSING:` followed by missing field names in the required-list order.",
+          "constraints": [
+            "1 <= N <= 20",
+            "Field names contain letters, digits, or underscores."
+          ],
+          "inputFormat": "N `field=value` tokens followed by a comma-separated required-field list.",
+          "outputFormat": "`VALID` or `MISSING:name,...`.",
+          "sampleTestCases": [
+            {
+              "input": "3 name=Alice email=a@x.com city=Chennai name,email",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 name=Alice email=a@x.com city=Chennai name,email",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "2 name= email=x@y.com name,email",
+              "output": "MISSING:name",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "3 a=1 b=2 c=3 a,c",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "1 name=Alice name",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "2 a= b=ok a,b",
+              "output": "MISSING:a",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            }
+          ]
+        },
+        {
+          "problemId": "PAUMJI06",
+          "questionId": "PAUMJI06",
+          "title": "Create a Simple Student Registration App",
+          "difficulty": "Medium",
+          "description": "Practice identifying Django form field definitions.",
+          "problemStatement": "Convert space-separated `field:type` definitions into a semicolon-separated declaration string without changing field order.",
+          "constraints": [
+            "1 <= number of fields <= 10"
+          ],
+          "inputFormat": "One line containing field definitions.",
+          "outputFormat": "Same definitions joined by semicolons.",
+          "sampleTestCases": [
+            {
+              "input": "name:text age:number city:text",
+              "output": "name:text;age:number;city:text",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name:text age:number city:text",
+              "output": "name:text;age:number;city:text",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title:text body:textarea",
+              "output": "title:text;body:textarea",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "email:email",
+              "output": "email:email",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "username:text password:password",
+              "output": "username:text;password:password",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "date:date",
+              "output": "date:date",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "Forms, Validations & User Interactions"
+    },
+    {
+      "topicId": "t03-validation-and-error-handling",
+      "title": "Validation and error handling",
+      "description": "Study concepts and solve targeted engineering problems for Validation and error handling.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 20,
+      "pages": [
+        {
+          "pageId": "p-LHXVRI01",
+          "title": "Built-In Validation in Django",
+          "content": "By now, you've already seen Django's built-in validation in action while working with models and forms in previous exercises. Let’s quickly go over what it does and what’s included!\n\nWhat is validation?\nIt’s Django’s way of checking if the data coming from users is valid—like making sure an email looks like an email or a number is actually a number—before saving it to the database.\n\nThe great part? Django handles a lot of this for you automatically, just based on how you define your model or form fields.\n\nExamples from our previous Product model:\n```python\nclass Product(models.Model):\n name = models.CharField(max_length=100)\n email_contact = models.EmailField()\n stock_quantity = models.IntegerField()\n description = models.TextField(blank=True)\n```\nDjango will:\n\n- Check that name is a string and no longer than 100 characters\n- Ensure email_contact looks like a valid email\n- Make sure stock_quantity is a whole number\n- Allow description to be empty (because of blank=True)\n\n#### Built-in validations Django provides:\n- required=True by default (unless you set blank=True)\n- max_length and min_length for text fields\n- Valid email format via EmailField\n- Numbers only via IntegerField, FloatField, etc.\n- Proper date/time format for DateField, DateTimeField\n- Unique value check using unique=True\n- File size/type (when using FileField, ImageField)\n- URL format via URLField\n- Choice validation with choices=[...]\n\nWhen using forms, either regular Form or ModelForm, Django will automatically apply the right checks based on the field types you've used.\n\nIn views:\n```python\nif form.is_valid():\n form.save()\n```\nThis line runs all built-in validations. If anything is wrong—like missing required fields or incorrect formats—form.is_valid() will return False, and the data won’t be saved.\n\nNext, we’ll learn how to add custom rules and show helpful error messages to users.\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Built-in field validation and custom `clean_*` or `clean()` methods turn invalid input into structured form errors instead of silently saving bad data. The key implementation detail in **Built-In Validation in Django** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-LHXVRI01",
+            "question": "Which statement best describes **Built-In Validation in Django** in the Django topic **Validation and error handling**?",
+            "options": [
+              "Built-in field validation and custom `clean_*` or `clean()` methods turn invalid input into structured form errors instead of silently saving bad data.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Built-In Validation in Django within Validation and error handling."
+          }
+        },
+        {
+          "pageId": "p-LHXVRI04",
+          "title": "Custom Validation Methods in Django Forms",
+          "content": "You've already learned that Django Forms come with many helpful built-in ways to check user input. But what if you have a special rule that Django doesn't know about? That's where **Custom Validation Methods** come in!\n\nCustom validation methods allow you to write your own Python code to check the data submitted in a form. This gives you complete control over the validation process. You'll write these methods directly inside your form class (e.g., in your `forms.py` file).\n\nThere are two main types of custom validation methods you can add to your Django Form classes:\n\n1. **`clean_()` methods:** For validating a single, specific field.\n2. **`clean()` method:** For validations that involve multiple fields or require a more general check of the form's data.\n\nLet's explore them!\n\n**1. Validating a Specific Field: `clean_()`**\n\nImagine you have a registration form and you want to prevent users from choosing \"admin\" as their username. Django's built-in `CharField` doesn't have a rule for this specific word. You can create a custom method for the `username` field.\n\n* **How it works:**\n * You define a method in your form class named `clean_` followed by the name of your field. For a field named `username`, the method would be `def clean_username(self):`.\n * Inside this method, you get the current value of the field from `self.cleaned_data.get('fieldname')`. `cleaned_data` is a dictionary that Django prepares with data that has passed initial cleaning (like type conversion).\n * You then write your Python logic to check the data.\n * If the data is invalid according to your rule, you **raise** a `forms.ValidationError` with a message explaining the error.\n * **Crucially**, if the data is valid, you must **return** the cleaned data for that field.\n\n* **Example:**\n\n Let's say you have a `RegistrationForm` in your `forms.py`:\n\n ```python\n # In your app's forms.py\n from django import forms\n\n class RegistrationForm(forms.Form):\n username = forms.CharField(max_length=100)\n email = forms.EmailField()\n age = forms.IntegerField()\n\n def clean_username(self):\n # Get the data for the username field\n username_data = self.cleaned_data.get('username')\n\n # Your custom validation logic\n if username_data and username_data.lower() == 'admin':\n # If validation fails, raise an error\n raise forms.ValidationError(\"Sorry, 'admin' cannot be used as a username.\")\n\n # Always return the cleaned data, whether you changed it or not\n return username_data\n\n def clean_age(self):\n age_data = self.cleaned_data.get('age')\n if age_data and age_data ()` methods have successfully executed.\n * The first thing you should do in your `clean()` method is call the `clean()` method of the parent class: `cleaned_data = super().clean()`. This ensures all standard cleaning logic is performed and `self.cleaned_data` is fully populated.\n * You can then access the values of any field from the `cleaned_data` dictionary (e.g., `cleaned_data.get('start_date')`, `cleaned_data.get('end_date')`).\n * Perform your cross-field validation logic.\n * If your validation fails, you **raise** a `forms.ValidationError` with an appropriate message.\n * **Crucially**, you must **return** the entire `cleaned_data` dictionary at the end of the method.\n\n* **Example:**\n\n Let's create a form where a password must be confirmed:\n\n ```python\n # In your app's forms.py\n from django import forms\n\n class PasswordChangeForm(forms.Form):\n new_password = forms.CharField(max_length=30)\n confirm_password = forms.CharField(max_length=30, label=\"Confirm new password\")\n\n def clean(self):\n # Call the parent class's clean method first!\n cleaned_data = super().clean()\n\n # Get the data for the fields you want to compare\n new_password_data = cleaned_data.get(\"new_password\")\n confirm_password_data = cleaned_data.get(\"confirm_password\")\n\n # Your custom validation logic\n # Make sure both fields have data before comparing\n if new_password_data and confirm_password_data:\n if new_password_data != confirm_password_data:\n # If validation fails, raise an error\n raise forms.ValidationError(\"The two password fields do not match.\")\n\n # Always return the full cleaned_data dictionary\n return cleaned_data\n ```\n\n#### How It All Works Together\nWhen you use a form in your view:\n```python\nform = RegistrationForm(request.POST)\nif form.is_valid():\n # Django runs:\n # 1. Built-in validation\n # 2. clean_() methods\n # 3. clean() method (if defined)\n # If all pass, you can safely use form.cleaned_data\n```\n\nIf anything fails, Django will store the error, and form.is_valid() returns False.\n\nCustom validation helps enforce your app’s specific rules.\nYou can use it with both forms.Form and forms.ModelForm.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Built-in field validation and custom `clean_*` or `clean()` methods turn invalid input into structured form errors instead of silently saving bad data. The key implementation detail in **Custom Validation Methods in Django Forms** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-LHXVRI01-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Built-In Validation in Django (Python)",
+          "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+        },
+        {
+          "exampleId": "ex-LHXVRI04-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Custom Validation Methods in Django Forms (Python)",
+          "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "LHXVRI05",
+          "questionId": "LHXVRI05",
+          "title": "Workshop Creation Form Validation",
+          "difficulty": "Medium",
+          "description": "Practice required-field handling in Django forms.",
+          "problemStatement": "Validate required form fields. Print `VALID` when every required value is non-empty; otherwise print `MISSING:` followed by missing field names in the required-list order.",
+          "constraints": [
+            "1 <= N <= 20",
+            "Field names contain letters, digits, or underscores."
+          ],
+          "inputFormat": "N `field=value` tokens followed by a comma-separated required-field list.",
+          "outputFormat": "`VALID` or `MISSING:name,...`.",
+          "sampleTestCases": [
+            {
+              "input": "3 name=Alice email=a@x.com city=Chennai name,email",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 name=Alice email=a@x.com city=Chennai name,email",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "2 name= email=x@y.com name,email",
+              "output": "MISSING:name",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "3 a=1 b=2 c=3 a,c",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "1 name=Alice name",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "2 a= b=ok a,b",
+              "output": "MISSING:a",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            }
+          ]
+        },
+        {
+          "problemId": "LHXVRI06",
+          "questionId": "LHXVRI06",
+          "title": "Product Feedback Form Validation",
+          "difficulty": "Medium",
+          "description": "Practice identifying Django form field definitions.",
+          "problemStatement": "Convert space-separated `field:type` definitions into a semicolon-separated declaration string without changing field order.",
+          "constraints": [
+            "1 <= number of fields <= 10"
+          ],
+          "inputFormat": "One line containing field definitions.",
+          "outputFormat": "Same definitions joined by semicolons.",
+          "sampleTestCases": [
+            {
+              "input": "name:text age:number city:text",
+              "output": "name:text;age:number;city:text",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name:text age:number city:text",
+              "output": "name:text;age:number;city:text",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title:text body:textarea",
+              "output": "title:text;body:textarea",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "email:email",
+              "output": "email:email",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "username:text password:password",
+              "output": "username:text;password:password",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "date:date",
+              "output": "date:date",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "Forms, Validations & User Interactions"
+    },
+    {
+      "topicId": "t04-enhancing-interactivity-file-uploads",
+      "title": "Enhancing Interactivity - File uploads",
+      "description": "Study concepts and solve targeted engineering problems for Enhancing Interactivity - File uploads.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-LHXVRI07",
+          "title": "Form Widgets and Labels",
+          "content": "#### Widgets in Django\nIn Django, a widget is the part of the form that renders the HTML input element — like a text box, drop-down, checkbox, etc.\nEach form field uses a widget to decide how it should look on the web page.\n\nExample:\n```python\nfrom django import forms\n\nclass MyForm(forms.Form):\n name = forms.CharField(widget=forms.TextInput())\n```\nHere, `TextInput()` is a widget that renders - an HTML `` element.\n\n#### Labels in Django\nA label is the text that appears next to a form field, describing what the user should enter. You must have noticed using this some of our previous examples.\n\nExample:\n```python\nclass MyForm(forms.Form):\n name = forms.CharField(label=\"Your Name\")\n```\nThe label \"Your Name\" will show up next to the input box.\n\n**If you don't set a label, Django will create one automatically based on the field name (e.g., \"name\" becomes \"Name\").**\n\n#### Built-in Widgets in Django\nHere are all the built-in widgets provided by Django (from django.forms.widgets):\n\n| **Widget Name** | **Renders as** | **Description** |\n| --------------------- | ------------------------------- | ------------------------------------ |\n| `TextInput` | `` | Single-line text input |\n| `Textarea` | `` | Multi-line text input |\n| `NumberInput` | `` | Numeric input |\n| `EmailInput` | `` | Email input |\n| `URLInput` | `` | URL input |\n| `PasswordInput` | `` | Password field (hidden text) |\n| `HiddenInput` | `` | Hidden field |\n| `DateInput` | `` | HTML5 date picker |\n| `DateTimeInput` | `` | Date + time picker |\n| `TimeInput` | `` | Time input |\n| `CheckboxInput` | `` | Checkbox |\n| `Select` | `` | Dropdown menu (single choice) |\n| `NullBooleanSelect` | `` (Yes/No/Unknown) | For Boolean fields |\n| `SelectMultiple` | `` | Multi-select dropdown |\n| `RadioSelect` | List of radio buttons | Radio buttons |\n| `FileInput` | `` | File upload field |\n| `ClearableFileInput` | File input with \"clear\" option | Used in `ImageField` and `FileField` |\n| `MultipleHiddenInput` | Multiple hidden inputs | Hidden inputs for multiple values |\n| `SplitDateTimeWidget` | Two inputs (date and time) | Used for split date-time fields |\n| `SelectDateWidget` | 3 dropdowns (day, month, year) | Date selector with dropdowns |\n\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Uploaded files arrive through `request.FILES`. Production code validates size/type, configures media storage, and avoids trusting client-provided filenames. The key implementation detail in **Form Widgets and Labels** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass ContactForm(forms.Form):\n name = forms.CharField(label=\"Name\", max_length=80)\n message = forms.CharField(widget=forms.Textarea)"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-LHXVRI07",
+            "question": "Which statement best describes **Form Widgets and Labels** in the Django topic **Enhancing Interactivity - File uploads**?",
+            "options": [
+              "Uploaded files arrive through `request.FILES`. Production code validates size/type, configures media storage, and avoids trusting client-provided filenames.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Form Widgets and Labels within Enhancing Interactivity - File uploads."
+          }
+        },
+        {
+          "pageId": "p-OARILE01",
+          "title": "Configuring File Uploads",
+          "content": "So far, you've learned how to build Django projects, create views, define URLs, use templates, create models and work with forms. Now, let's explore how to allow users to upload files to your Django application, like images or documents. \n\n#### Setting Up Media Files in Django\nBefore we upload anything, we need to set up where Django stores uploaded files and how they can be accessed. These uploaded files are called media files.\n\n1. What Are Media Files? \nIn Django:\n- Static files are files you include in your project (like CSS, JS, and logos).\n- Media files are files that users upload, like images or PDFs.\n\nThese media files need:\n- A place on your computer where Django saves them.\n- A URL so your app can show them to users.\n\n2. Configure `settings.py`\nOpen your project’s settings.py file and add these two settings at the bottom:\n\n```python\nfrom pathlib import Path\n\nMEDIA_ROOT = BASE_DIR / 'media' # Folder where uploaded files will be stored\nMEDIA_URL = '/media/' # URL to access those files\n```\nNote:\nBASE_DIR is already defined at the top of settings.py. It points to your project’s main folder.\n\nYou’ll also need to create a folder named media inside your project directory:\n```\nmkdir media\n```\nThis folder is where uploaded files will go.\n\n#### Serving Media Files During Development:\nNow that Django knows where to save media files, we need to make sure the development server can show them in your browser. \nWhen a user uploads a file (like a profile picture), Django:\n- Saves it in MEDIA_ROOT\n- Uses MEDIA_URL to build the link to show the file\n- Needs help serving those files during development\n\n1. Update `urls.py`\nOpen your main urls.py file (the one in your project folder, not in an app) and add this.\n```python\nfrom django.conf import settings\nfrom django.conf.urls.static import static\n\nurlpatterns = [\n path('admin/', admin.site.urls),\n # Add your app URLs here too\n]\n# Serve media files in development\nif settings.DEBUG:\n urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)\n```\n**What This Does** \n`static(`) tells Django:\n“If someone visits /media/filename.jpg, look for that file in the `media/` folder on disk.”\n\nif `settings.DEBUG:` makes sure this only happens during development (when DEBUG = True).\n\nIn production, you’ll use a real web server like Nginx to serve media files.\n\n**Example:** User Uploads an Image \nLet’s say a user uploads avatar.png. \nIt gets saved in your `media/` folder. \nYou can display it in a template using:\n```html\n\nThanks to the urls.py setup, Django will serve that image when you visit the page.\n```\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Uploaded files arrive through `request.FILES`. Production code validates size/type, configures media storage, and avoids trusting client-provided filenames. The key implementation detail in **Configuring File Uploads** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass UploadForm(forms.Form):\n file = forms.FileField()\n\ndef upload(request):\n if request.method == \"POST\":\n form = UploadForm(request.POST, request.FILES)\n if form.is_valid():\n uploaded = form.cleaned_data[\"file\"]\n return {\"name\": uploaded.name, \"size\": uploaded.size}\n return {\"status\": \"ready\"}"
+          }
+        },
+        {
+          "pageId": "p-OARILE04",
+          "title": "Handling Uploaded Files (Accessing Uploaded Files)",
+          "content": "In the previous lesson, we configured Django to accept file uploads by setting up MEDIA_ROOT and MEDIA_URL. Now let’s look at what happens when a user actually uploads a file — and how we can access that file in our view.\n\n1. The HTML Form for Uploads\nTo upload a file, your HTML form must include:\n```html\n\n Upload your file:\n \n Upload\n\n```\n- method=\"POST\" is required to send files.\n- enctype=\"multipart/form-data\" is essential for sending file data.\n\n2. Accessing Uploaded Files in the View\nIn your view, files are available through request.FILES:\n```python\ndef upload_file_view(request):\n if request.method == 'POST':\n if 'userfile' in request.FILES:\n uploaded_file = request.FILES['userfile']\n return HttpResponse(f\"Uploaded file: {uploaded_file.name} ({uploaded_file.size} bytes)\")\n else:\n return HttpResponse(\"No file was submitted.\")\n return render(request, 'upload_form.html')\n```\n3. Understanding the UploadedFile Object\nWhen you access request.FILES['userfile'], Django gives you an UploadedFile object with useful attributes:\n\n| Attribute | Description |\n| --------------- | ------------------------------------------------------------ |\n| `.name` | Original filename from user's device |\n| `.size` | File size in bytes |\n| `.content_type` | MIME type (e.g. \"image/jpeg\") |\n| `.read()` | Reads entire file into memory (not ideal for large files) |\n| `.chunks()` | Recommended for large files — reads file in pieces |\n\n*Use .chunks() instead of .read() to avoid memory issues.*\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Uploaded files arrive through `request.FILES`. Production code validates size/type, configures media storage, and avoids trusting client-provided filenames. The key implementation detail in **Handling Uploaded Files (Accessing Uploaded Files)** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass UploadForm(forms.Form):\n file = forms.FileField()\n\ndef upload(request):\n if request.method == \"POST\":\n form = UploadForm(request.POST, request.FILES)\n if form.is_valid():\n uploaded = form.cleaned_data[\"file\"]\n return {\"name\": uploaded.name, \"size\": uploaded.size}\n return {\"status\": \"ready\"}"
+          }
+        },
+        {
+          "pageId": "p-OARILE04A",
+          "title": "Handling Uploaded Files (Saving Files to Disk)",
+          "content": "Now that you can access uploaded files using request.FILES, let’s learn how to save them permanently to your server’s file system.\n\n1. Why Save the File?\nWhen Django receives a file, it stores it temporarily — in memory or a temp folder. To keep it, you must save it to a location defined by MEDIA_ROOT.\n\n2. Saving the File to MEDIA_ROOT\nHere’s how you do it:\n```python\nimport os\nfrom django.conf import settings\nfrom django.http import HttpResponse\nfrom django.shortcuts import render\n\ndef upload_file_view(request):\n if request.method == 'POST':\n if 'userfile' in request.FILES:\n uploaded_file = request.FILES['userfile']\n save_path = os.path.join(settings.MEDIA_ROOT, uploaded_file.name)\n\n with open(save_path, 'wb+') as destination:\n for chunk in uploaded_file.chunks():\n destination.write(chunk)\n\n return HttpResponse(f\"File '{uploaded_file.name}' saved to {save_path}\")\n else:\n return HttpResponse(\"No file was submitted.\")\n\n return render(request, 'upload_form.html')\n```\n\n3. What’s Happening in the Code?\n\n| **Step** | **Explanation** |\n| ------------------------ | ---------------------------------------- |\n| Check request method | File uploads happen via POST |\n| Get file object | `request.FILES['userfile']` |\n| Determine save path | `MEDIA_ROOT + filename` |\n| Open file in binary mode | `'wb+'` ensures binary write |\n| Write in chunks | Saves memory, works for large files |\n| Use `with` block | Automatically closes file, even on error |\n\n4. Reminder: Your Template\nMake sure your upload_form.html has:\n```html\n\n \n Upload\n\n```\n**Key Points:**\n- You must save uploaded files manually using Django’s tools.\n- Always write files using .chunks() and 'wb+' mode.\n- Use MEDIA_ROOT to store files consistently.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Uploaded files arrive through `request.FILES`. Production code validates size/type, configures media storage, and avoids trusting client-provided filenames. The key implementation detail in **Handling Uploaded Files (Saving Files to Disk)** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass UploadForm(forms.Form):\n file = forms.FileField()\n\ndef upload(request):\n if request.method == \"POST\":\n form = UploadForm(request.POST, request.FILES)\n if form.is_valid():\n uploaded = form.cleaned_data[\"file\"]\n return {\"name\": uploaded.name, \"size\": uploaded.size}\n return {\"status\": \"ready\"}"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-LHXVRI07-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Form Widgets and Labels (Python)",
+          "code": "from django import forms\n\nclass ContactForm(forms.Form):\n name = forms.CharField(label=\"Name\", max_length=80)\n message = forms.CharField(widget=forms.Textarea)"
+        },
+        {
+          "exampleId": "ex-OARILE01-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Configuring File Uploads (Python)",
+          "code": "from django import forms\n\nclass UploadForm(forms.Form):\n file = forms.FileField()\n\ndef upload(request):\n if request.method == \"POST\":\n form = UploadForm(request.POST, request.FILES)\n if form.is_valid():\n uploaded = form.cleaned_data[\"file\"]\n return {\"name\": uploaded.name, \"size\": uploaded.size}\n return {\"status\": \"ready\"}"
+        },
+        {
+          "exampleId": "ex-OARILE04-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Handling Uploaded Files (Accessing Uploaded Files) (Python)",
+          "code": "from django import forms\n\nclass UploadForm(forms.Form):\n file = forms.FileField()\n\ndef upload(request):\n if request.method == \"POST\":\n form = UploadForm(request.POST, request.FILES)\n if form.is_valid():\n uploaded = form.cleaned_data[\"file\"]\n return {\"name\": uploaded.name, \"size\": uploaded.size}\n return {\"status\": \"ready\"}"
+        },
+        {
+          "exampleId": "ex-OARILE04A-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Handling Uploaded Files (Saving Files to Disk) (Python)",
+          "code": "from django import forms\n\nclass UploadForm(forms.Form):\n file = forms.FileField()\n\ndef upload(request):\n if request.method == \"POST\":\n form = UploadForm(request.POST, request.FILES)\n if form.is_valid():\n uploaded = form.cleaned_data[\"file\"]\n return {\"name\": uploaded.name, \"size\": uploaded.size}\n return {\"status\": \"ready\"}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "LHXVRI08",
+          "questionId": "LHXVRI08",
+          "title": "Widgets Showcase",
+          "difficulty": "Medium",
+          "description": "Practice required-field handling in Django forms.",
+          "problemStatement": "Validate required form fields. Print `VALID` when every required value is non-empty; otherwise print `MISSING:` followed by missing field names in the required-list order.",
+          "constraints": [
+            "1 <= N <= 20",
+            "Field names contain letters, digits, or underscores."
+          ],
+          "inputFormat": "N `field=value` tokens followed by a comma-separated required-field list.",
+          "outputFormat": "`VALID` or `MISSING:name,...`.",
+          "sampleTestCases": [
+            {
+              "input": "3 name=Alice email=a@x.com city=Chennai name,email",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 name=Alice email=a@x.com city=Chennai name,email",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "2 name= email=x@y.com name,email",
+              "output": "MISSING:name",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "3 a=1 b=2 c=3 a,c",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "1 name=Alice name",
+              "output": "VALID",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            },
+            {
+              "input": "2 a= b=ok a,b",
+              "output": "MISSING:a",
+              "explanation": "Required fields are valid only when every required value is non-empty."
+            }
+          ]
+        },
+        {
+          "problemId": "LHXVRI09",
+          "questionId": "LHXVRI09",
+          "title": "Create a Contact Form using Widgets",
+          "difficulty": "Medium",
+          "description": "Practice identifying Django form field definitions.",
+          "problemStatement": "Convert space-separated `field:type` definitions into a semicolon-separated declaration string without changing field order.",
+          "constraints": [
+            "1 <= number of fields <= 10"
+          ],
+          "inputFormat": "One line containing field definitions.",
+          "outputFormat": "Same definitions joined by semicolons.",
+          "sampleTestCases": [
+            {
+              "input": "name:text age:number city:text",
+              "output": "name:text;age:number;city:text",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name:text age:number city:text",
+              "output": "name:text;age:number;city:text",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title:text body:textarea",
+              "output": "title:text;body:textarea",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "email:email",
+              "output": "email:email",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "username:text password:password",
+              "output": "username:text;password:password",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "date:date",
+              "output": "date:date",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "OARILE02",
+          "questionId": "OARILE02",
+          "title": "Your First Media Configuration",
+          "difficulty": "Medium",
+          "description": "Practice collecting submitted form data.",
+          "problemStatement": "Read `field=value` tokens and serialize them in the same order using `&` between fields.",
+          "constraints": [
+            "Values contain no spaces."
+          ],
+          "inputFormat": "One line of form field assignments.",
+          "outputFormat": "Assignments joined by `&`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice age=21",
+              "output": "name=Alice&age=21",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice age=21",
+              "output": "name=Alice&age=21",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "name=Bob email=b@x.com",
+              "output": "name=Bob&email=b@x.com",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "course=Django level=advanced",
+              "output": "course=Django&level=advanced",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "city=Chennai",
+              "output": "city=Chennai",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "role=student",
+              "output": "role=student",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "OARILE03",
+          "questionId": "OARILE03",
+          "title": "Configure Profile Picture Storage",
+          "difficulty": "Medium",
+          "description": "Practice treating a submitted form as model-ready data.",
+          "problemStatement": "Prefix the submitted field assignments with `MODEL:` and join fields with `|`. This models the clean handoff from a valid form to a model save operation.",
+          "constraints": [
+            "At least one field is supplied.",
+            "Field assignments contain no spaces."
+          ],
+          "inputFormat": "One line of `field=value` tokens.",
+          "outputFormat": "Print `MODEL:` followed by `|`-joined assignments.",
+          "sampleTestCases": [
+            {
+              "input": "title=Book author=Sam year=2024",
+              "output": "MODEL:title=Book|author=Sam|year=2024",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "title=Book author=Sam year=2024",
+              "output": "MODEL:title=Book|author=Sam|year=2024",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "name=Alice age=20",
+              "output": "MODEL:name=Alice|age=20",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "product=Keyboard price=1500",
+              "output": "MODEL:product=Keyboard|price=1500",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "course=Django level=advanced",
+              "output": "MODEL:course=Django|level=advanced",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "event=Hackathon seats=100",
+              "output": "MODEL:event=Hackathon|seats=100",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "OARILE05",
+          "questionId": "OARILE05",
+          "title": "Simple Text Note Uploader",
+          "difficulty": "Medium",
+          "description": "Practice treating a submitted form as model-ready data.",
+          "problemStatement": "Prefix the submitted field assignments with `MODEL:` and join fields with `|`. This models the clean handoff from a valid form to a model save operation.",
+          "constraints": [
+            "At least one field is supplied.",
+            "Field assignments contain no spaces."
+          ],
+          "inputFormat": "One line of `field=value` tokens.",
+          "outputFormat": "Print `MODEL:` followed by `|`-joined assignments.",
+          "sampleTestCases": [
+            {
+              "input": "title=Book author=Sam year=2024",
+              "output": "MODEL:title=Book|author=Sam|year=2024",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "title=Book author=Sam year=2024",
+              "output": "MODEL:title=Book|author=Sam|year=2024",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "name=Alice age=20",
+              "output": "MODEL:name=Alice|age=20",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "product=Keyboard price=1500",
+              "output": "MODEL:product=Keyboard|price=1500",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "course=Django level=advanced",
+              "output": "MODEL:course=Django|level=advanced",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "event=Hackathon seats=100",
+              "output": "MODEL:event=Hackathon|seats=100",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "OARILE06",
+          "questionId": "OARILE06",
+          "title": "Build a Simple Word document Uploader",
+          "difficulty": "Medium",
+          "description": "Practice numeric form validation.",
+          "problemStatement": "Validate that the supplied numeric field value meets the minimum constraint.",
+          "constraints": [
+            "Values are integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "`VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "age=20|18",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "age=20|18",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=12|18",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "price=100|0",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "price=-5|0",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "score=99|100",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "Forms, Validations & User Interactions"
+    }
+  ]
+}

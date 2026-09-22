@@ -1,0 +1,2513 @@
+{
+  "moduleId": "m15-asynchronous-javascript",
+  "title": "Asynchronous Javascript",
+  "description": "Core concepts and hands-on practice in Asynchronous Javascript.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-async-js",
+      "title": "Async JS",
+      "description": "Understand synchronous versus asynchronous JavaScript, the event loop, microtasks, macrotasks, and browser timers.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-ADVJS005",
+          "title": "Introduction to Asynchronous JavaScript",
+          "content": "- So far, we’ve learned how JavaScript executes code step by step: functions, scope, callbacks, and array methods. This is called **synchronous programming** — JavaScript runs code line by line, one task at a time.\n- **JavaScript is synchronous by default**, which means it executes one statement at a time and waits for it to finish before moving to the next.\n\n---\n\n**Let's understand synchronous programming from below image** :\n\n\n- But what happens when a task takes a long time, like loading an image or fetching data from the internet? We can't let our entire webpage freeze and unresponsive.\n- This is the problem with purely synchronous behavior of JS.\n\n\n**The Solution: Making JavaScript Asynchronous**\n- It’s like adding an extra lane for slow tasks. The main road stays free, so your app doesn’t get stuck.\n- It allows the program to handle multiple tasks at the same time.\n- We can make JavaScript asynchronous using tools like **callbacks, timers (setTimeout, setInterval), Promises, and async/await**, which you'll study in later in this course.\n\n---\n\n**Let's understand asynchronous programming from below image** :\n\n\nNext Let's see each behaviour of JS one by one with example to understand it in better way",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ADVJS005",
+            "question": "Which queue is processed before timer tasks after the current synchronous work completes?",
+            "options": [
+              "The microtask queue",
+              "The timer queue always first",
+              "The CSS queue",
+              "The file queue"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          }
+        },
+        {
+          "pageId": "p-ADVJS005A",
+          "title": "JavaScripts Default Behavior",
+          "content": "What is the default behavior of JavaScript execution?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS006",
+          "title": "Understanding Synchronous JavaScript",
+          "content": "In synchronous programming, tasks are executed one after the other, in sequence. Each line of code waits for the previous one to finish before moving on. This makes the execution predictable and linear.\n\n**Let's understand from example : Synchronous (Blocking)**\n```javascript\n// Simulating a heavy, time-taking task\nfunction slowTask() {\n    let start = Date.now();\n    while (Date.now() - start < 3000) {\n        // Busy wait for 3 seconds (blocking)\n    }\n    console.log(\"Slow task done\");\n}\n\nconsole.log(\"Start\");\nslowTask();\nconsole.log(\"End\");\n```\n**Output** :\n```text\nStart\nSlow task done\nEnd\n```\n\n**Explanation**:\n- `console.log(\"Start\")` → prints first.\n- `Date.now()` → gives current time in milliseconds.\n- `while (Date.now() - start < 3000)` → keeps looping until 3 seconds pass. This blocks the program for $3$ seconds, doing nothing else while waiting.\n- After $3$ seconds, `console.log(\"Slow task done\")` prints.\n- Finally, `console.log(\"End\")` prints.\n\n---\n\nDuring the 3-second loop, JavaScript is blocked. Ideally, the program should not wait and should continue running other tasks. This is the problem with synchronous code.To solve this problem, asynchronous JavaScript comes in.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS006A",
+          "title": "Identify Synchronous Behavior in JS",
+          "content": "What will be the output of the below code?\n\n```javascript\nconsole.log(\"Start\");\n\nfor (let i = 1; i <= 5; i++) {\n    console.log(\"Processing item\", i);\n}\n\nconsole.log(\"End\");\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS060",
+          "title": "Understanding Asynchronous  JavaScript",
+          "content": "- Asynchronous programming lets tasks run independently—while one task is waiting, others can continue. This non-blocking behavior improves performance and keeps web apps responsive.\n- You’ve already seen the example in synchronous code; now, let’s write the same code asynchronously using `setTimeout` to see the difference and how it solves the problem of blocking.\n\n\n**Example : Asynchronous (Non-Blocking)**\n```javascript\nconsole.log(\"Start\");\nsetTimeout(() => {\n    console.log(\"Slow task done (async)\");\n}, 3000);\nconsole.log(\"End\");\n```\n**Output** :\n```text\nStart\nEnd\nSlow task done (async)\n```\n\n\n**Explanation**\n- `console.log(\"Start\")` → runs immediately.\n- `setTimeout()` schedules the task to finish after 3 seconds but doesn’t block.\n- `console.log(\"End\")` runs right away.\n- After $3$ seconds, the callback inside `setTimeout` runs → \"Slow task done (async)\".\n\nAs you can see, the code **doesn’t stop execution** while waiting—the program continues running other tasks. This is the essence of **asynchronous, non-blocking behavior**.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+          }
+        },
+        {
+          "pageId": "p-ADVJS061",
+          "title": "Identify Asynchronous Behavior in JS",
+          "content": "Predict the Output of below code:\n\n```javascript\nconsole.log(\"A\");\n\nsetTimeout(() => {\n  console.log(\"B\");\n}, 0);\n\nconsole.log(\"C\");\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+          }
+        },
+        {
+          "pageId": "p-ADVJS062",
+          "title": "The Event Loop Model",
+          "content": "We've discussed that we can *make* JavaScript, which is synchronous by default, behave asynchronously. But how does it actually manage this? If it only has one thread (the Call Stack), how can it do things in the background without getting blocked?\n\nThe answer lies in a mechanism called the **Event Loop**, which works together with a few other key components: the **Call Stack**, **Web APIs**, the **Task Queue**, and the **Microtask Queue**.\n\n#### The Components Explained\n\n1.  **Call Stack (You this one):** This is JavaScript's main thread of execution. When a function is called, it's pushed onto the stack. When it returns, it's popped off. All synchronous code runs.\n\n2.  **Web APIs / Browser APIs:** These are not part of the JavaScript engine itself but are provided by the browser (or Node.js). They handle asynchronous operations. When you call something like `setTimeout()` or `fetch()`, the Call Stack hands the task over to the Web API and then immediately moves on. The Web API runs the task (e.g., a timer or a network request) in the background.\n\n3.  **Task Queue (or Macrotask Queue or Callback Queue):** Once a Web API has finished its task (e.g., the timer in `setTimeout` runs out), the callback function associated with that task is not executed immediately. Instead, it is placed in the **Task Queue**, where it waits its turn. This queue is for \"macrotasks\" like `setTimeout`, `setInterval`, and DOM events.\n\n4.  **Microtask Queue:** This is a second, higher-priority queue. It's used for the results of Promises (`.then()`, `.catch()`, `.finally()`) and other specific asynchronous tasks. **Microtasks always run before macrotasks.**\n\n\n\n\nNext, we will discuss more about how the Event Loop works.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "console.log(\"sync\");\nPromise.resolve().then(() => console.log(\"microtask\"));\nsetTimeout(() => console.log(\"timer\"), 0);\nconsole.log(\"sync-end\");"
+          }
+        },
+        {
+          "pageId": "p-ADVJS062A",
+          "title": "Event Loop - The Manager",
+          "content": "The **Event Loop** is a process that acts like a **manager**, constantly checking if the Call Stack is empty. Its job is to move functions from the queues onto the Call Stack so they can be executed.\n\nHere is its simple, continuous process:\n\n**1. Waits for the Call Stack to be empty** : \\\nAll synchronous code runs here. \\\n**2. When an async function is called (like setTimeout or fetch)** : \\\nit’s handed over to the **Web APIs**, which run it in the background. \\\nOnce done, the Web API places its callback in the **Microtask Queue or Task Queue**. \\\n**3. Checks the Microtask Queue.** : \\\nIf it has tasks, it moves them to the Call Stack to run until the queue is empty. \\\n**4. Then checks the Task Queue.** \\\nIf it has a task, it moves the oldest one to the Call Stack. \\\n**5. This cycle repeats**\n\n**Let's understand with an example:**\n\n```javascript\nconsole.log(\"1. Start\");\n\n// This is a Macrotask\nsetTimeout(() => {\n  console.log(\"4. Timeout Callback (from Task Queue)\");\n}, 0);\n\n// This is a Microtask\nPromise.resolve().then(() => {\n  console.log(\"3. Promise Resolved (from Microtask Queue)\");\n});\n\nconsole.log(\"2. End\");\n```\n#### Execution Order\n\n\n\n**Quick Note About Promise**\n- A **Promise** represents a value that may be available now, later, or never.\n- `.then()` schedules a **Microtask** to run once the Promise is resolved.\n\nIf you are not friendly with `Promise`, `.resolve()`, `.then()`, don’t worry — we’ll cover them later.\\\nFor now, just **focus on understanding how the execution flow works.**\n\n#### Output\n```text\n1. Start\n2. End\n3. Promise Resolved (from Microtask Queue)\n4. Timeout Callback (from Task Queue)\n```\nThis shows that even with a zero-second delay, the `setTimeout` callback runs last because the Microtask Queue (Promises) has higher priority than the Task Queue.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "console.log(\"sync\");\nPromise.resolve().then(() => console.log(\"microtask\"));\nsetTimeout(() => console.log(\"timer\"), 0);\nconsole.log(\"sync-end\");"
+          }
+        },
+        {
+          "pageId": "p-ADVJS062B",
+          "title": "Event Loop Priority Check",
+          "content": "When the Call Stack becomes empty, which queue does the Event Loop check first?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "console.log(\"sync\");\nPromise.resolve().then(() => console.log(\"microtask\"));\nsetTimeout(() => console.log(\"timer\"), 0);\nconsole.log(\"sync-end\");"
+          }
+        },
+        {
+          "pageId": "p-ADVJS062C",
+          "title": "Microtasks vs Macrotasks- Which Runs First",
+          "content": "You have a `setTimeout` callback and a Promise's `.then()` callback ready to execute. Which runs first?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "console.log(\"sync\");\nPromise.resolve().then(() => console.log(\"microtask\"));\nsetTimeout(() => console.log(\"timer\"), 0);\nconsole.log(\"sync-end\");"
+          }
+        },
+        {
+          "pageId": "p-ADVJS062D",
+          "title": "Where Do Browser Timers Live",
+          "content": "Where does a browser-specific operation like a `setTimeout` timer actually count down?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "console.log(\"Start\");\nconst id = setTimeout(() => console.log(\"Task\"), 0);\nconsole.log(\"End\");"
+          }
+        },
+        {
+          "pageId": "p-ADVJS064",
+          "title": "Async Battle - Which Runs First",
+          "content": "Guess the correct output of below code:\n```javascript\nconsole.log(\"1\");\n\nsetTimeout(() => console.log(\"2\"), 0);\n\nPromise.resolve().then(() => {\n  console.log(\"3\");\n  Promise.resolve().then(() => console.log(\"4\"));\n});\n\nconsole.log(\"5\");\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+          }
+        },
+        {
+          "pageId": "p-ADVJS066",
+          "title": "JavaScript Timer",
+          "content": "We’re now ready to look at another key piece of asynchronous JavaScript: **timers**. \\\nTimers - such as **`setTimeout`** and **`setInterval`** - let us **schedule code to run after a delay or at regular intervals**. \\\nLet’s dive in to see how timers fit into everything we’ve learned so far.\n\n**What are timers?** \\\nIn JavaScript, the timer function prevents your code from running everything at once when an event triggers or the page loads. This gives you more control over the timing of your program's actions. \\\nHere, you'll learn **how to set a timer function?** - (setTimeout and setInterval each one by one)\n\n**1) setTimeout :** \\\n`setTimeout` runs a function **once** after a given delay, and you can cancel it with `clearTimeout`.\n\n**Let's look at its Syntax** :\n```javascript\nsetTimeout(function, delay, arg1, arg2, ...);\n```\n**Parameters**\n- `function`: After the specified time period, this is the **function that is executed**.\n- `delay`: The delay time is expressed in **milliseconds**.\n- `arg1, arg2, ...` : If needed, these are the optional parameters (can pass to the function.).\n\n**Example :**\n```javascript\nconst timeoutId = setTimeout(() => {\n    console.log(\"Hello after 2 seconds\");\n}, 2000);\n```\n**Output :**\n```text\nHello after 2 seconds\n```\n**Explanation :** \\\n`setTimeout(...)` schedules the arrow function to run once after $2$ seconds. \\\nThe arrow function `() => { console.log(\"Hello after 2 seconds\"); }` is the code that will execute after the delay. \\\n`2000` is the delay in milliseconds ($2000$ ms = $2$ seconds). \\\nAfter approximately $2$ seconds, it prints: `Hello after 2 seconds`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "console.log(\"Start\");\nconst id = setTimeout(() => console.log(\"Task\"), 0);\nconsole.log(\"End\");"
+          }
+        },
+        {
+          "pageId": "p-ADVJS006C",
+          "title": "Event Loop in Action - The setTimeout Twist",
+          "content": "What will be the output of the below code :\n\n```javascript\nconsole.log(\"Start\");\n\nsetTimeout(() => {\n    console.log(\"Inside setTimeout\");\n}, 0);\n\nconsole.log(\"End\");\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "console.log(\"sync\");\nPromise.resolve().then(() => console.log(\"microtask\"));\nsetTimeout(() => console.log(\"timer\"), 0);\nconsole.log(\"sync-end\");"
+          }
+        },
+        {
+          "pageId": "p-ADVJS006D",
+          "title": "Stop the Clock - clearTimeout in Action",
+          "content": "Predict the output of below code :\n\n```javascript\nconsole.log(\"Start\");\n\nconst timeoutId = setTimeout(() => {\n    console.log(\"This will not run\");\n}, 1000);\n\nclearTimeout(timeoutId);\n\nconsole.log(\"End\");\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS006E",
+          "title": "2) setInterval",
+          "content": "`setInterval` runs a function **repeatedly** at a set interval until you stop it with `clearInterval`.\n\n**Let's look at its Syntax :**\n```javascript\nsetInterval(function, delay, arg1, arg2, ...);\n```\n**Parameters :**\n- `function` → The code or function you want to run repeatedly.\n- `delay` → Time interval between each call, in milliseconds (ms).\n- `arg1, arg2, ...` → (Optional) Values you can pass to the function being executed each time.\n\n**Example**:\n```javascript\nsetInterval(() => {\n    console.log(\"Hello every 2 seconds\");\n}, 2000);\n```\n**Output :**\n```text\nHello every 2 seconds\nHello every 2 seconds\nHello every 2 seconds\n... (repeats every 2 seconds)\n```\n**Explanation :** \\\nThe arrow function inside `setInterval` runs every $2$ seconds ($2000$ ms). \\\nIt keeps printing `\"Hello every 2 seconds\"` repeatedly. \\\nThe timer will continue forever unless you stop it using `clearInterval()`(we'll look into this in later part of course).",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "let count = 0;\nconst id = setInterval(() => {\n  console.log(++count);\n  if (count === 3) clearInterval(id);\n}, 10);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS006F",
+          "title": "Counter -  setInterval in Action",
+          "content": "What will be the output of below code :\n\n```javascript\nlet seconds = 0;\n\nsetInterval(() => {\n    seconds++;\n    console.log(`Seconds passed: ${seconds}`);\n}, 1000);\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "let count = 0;\nconst id = setInterval(() => {\n  console.log(++count);\n  if (count === 3) clearInterval(id);\n}, 10);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS006G",
+          "title": "Stop the Clock - clearInterval in Action",
+          "content": "What will be the output of below code :\n\n```javascript\nlet count = 0;\nconst id = setInterval(() => {\n    console.log(`Tick ${++count}`);\n    if (count === 3) clearInterval(id);\n}, 1000);\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "let count = 0;\nconst id = setInterval(() => {\n  console.log(++count);\n  if (count === 3) clearInterval(id);\n}, 10);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS065",
+          "title": "setTimeout vs setInterval",
+          "content": "What will be the output of below code :\n\n```javascript\nconsole.log(\"Start\");\n\n// setTimeout runs only once\nsetTimeout(() => {\n    console.log(\"Timeout: Runs once after 1 second\");\n}, 1000);\n\n// setInterval runs repeatedly\nconst intervalId = setInterval(() => {\n    console.log(\"Interval: Runs every 1 second\");\n}, 1000);\n\n// Stop the interval after 3 runs\nsetTimeout(() => {\n    clearInterval(intervalId);\n    console.log(\"Interval stopped\");\n}, 3100);\n\nconsole.log(\"End\");\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Promise reactions are microtasks and are processed before the next task such as a timer callback."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "console.log(\"Start\");\nconst id = setTimeout(() => console.log(\"Task\"), 0);\nconsole.log(\"End\");"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-ADVJS005-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Introduction to Asynchronous JavaScript (JavaScript)",
+          "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+        },
+        {
+          "exampleId": "ex-ADVJS005A-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "JavaScripts Default Behavior (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS006-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Understanding Synchronous JavaScript (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS006A-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Identify Synchronous Behavior in JS (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS060-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Understanding Asynchronous  JavaScript (JavaScript)",
+          "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+        },
+        {
+          "exampleId": "ex-ADVJS061-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Identify Asynchronous Behavior in JS (JavaScript)",
+          "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+        },
+        {
+          "exampleId": "ex-ADVJS062-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "The Event Loop Model (JavaScript)",
+          "code": "console.log(\"sync\");\nPromise.resolve().then(() => console.log(\"microtask\"));\nsetTimeout(() => console.log(\"timer\"), 0);\nconsole.log(\"sync-end\");"
+        },
+        {
+          "exampleId": "ex-ADVJS062A-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Event Loop - The Manager (JavaScript)",
+          "code": "console.log(\"sync\");\nPromise.resolve().then(() => console.log(\"microtask\"));\nsetTimeout(() => console.log(\"timer\"), 0);\nconsole.log(\"sync-end\");"
+        },
+        {
+          "exampleId": "ex-ADVJS062B-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Event Loop Priority Check (JavaScript)",
+          "code": "console.log(\"sync\");\nPromise.resolve().then(() => console.log(\"microtask\"));\nsetTimeout(() => console.log(\"timer\"), 0);\nconsole.log(\"sync-end\");"
+        },
+        {
+          "exampleId": "ex-ADVJS062C-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Microtasks vs Macrotasks- Which Runs First (JavaScript)",
+          "code": "console.log(\"sync\");\nPromise.resolve().then(() => console.log(\"microtask\"));\nsetTimeout(() => console.log(\"timer\"), 0);\nconsole.log(\"sync-end\");"
+        },
+        {
+          "exampleId": "ex-ADVJS062D-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Where Do Browser Timers Live (JavaScript)",
+          "code": "console.log(\"Start\");\nconst id = setTimeout(() => console.log(\"Task\"), 0);\nconsole.log(\"End\");"
+        },
+        {
+          "exampleId": "ex-ADVJS064-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Async Battle - Which Runs First (JavaScript)",
+          "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+        },
+        {
+          "exampleId": "ex-ADVJS066-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "JavaScript Timer (JavaScript)",
+          "code": "console.log(\"Start\");\nconst id = setTimeout(() => console.log(\"Task\"), 0);\nconsole.log(\"End\");"
+        },
+        {
+          "exampleId": "ex-ADVJS006C-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Event Loop in Action - The setTimeout Twist (JavaScript)",
+          "code": "console.log(\"sync\");\nPromise.resolve().then(() => console.log(\"microtask\"));\nsetTimeout(() => console.log(\"timer\"), 0);\nconsole.log(\"sync-end\");"
+        },
+        {
+          "exampleId": "ex-ADVJS006D-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Stop the Clock - clearTimeout in Action (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS006E-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "2) setInterval (JavaScript)",
+          "code": "let count = 0;\nconst id = setInterval(() => {\n  console.log(++count);\n  if (count === 3) clearInterval(id);\n}, 10);"
+        },
+        {
+          "exampleId": "ex-ADVJS006F-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Counter -  setInterval in Action (JavaScript)",
+          "code": "let count = 0;\nconst id = setInterval(() => {\n  console.log(++count);\n  if (count === 3) clearInterval(id);\n}, 10);"
+        },
+        {
+          "exampleId": "ex-ADVJS006G-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Stop the Clock - clearInterval in Action (JavaScript)",
+          "code": "let count = 0;\nconst id = setInterval(() => {\n  console.log(++count);\n  if (count === 3) clearInterval(id);\n}, 10);"
+        },
+        {
+          "exampleId": "ex-ADVJS065-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "setTimeout vs setInterval (JavaScript)",
+          "code": "console.log(\"Start\");\nconst id = setTimeout(() => console.log(\"Task\"), 0);\nconsole.log(\"End\");"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "ADVJS063",
+          "questionId": "ADVJS063",
+          "title": "Event Loop Ordering",
+          "difficulty": "Easy",
+          "description": "Observe synchronous code, Promise microtasks, and timer tasks in the event loop.",
+          "problemStatement": "Print SYNC-1, schedule a microtask and a timer, print SYNC-2, then let the queued callbacks run.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "No input.",
+          "outputFormat": "Print four lines in event-loop order.",
+          "sampleTestCases": [
+            {
+              "input": "",
+              "output": "SYNC-1\nSYNC-2\nMICROTASK\nTIMER",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "",
+              "output": "SYNC-1\nSYNC-2\nMICROTASK\nTIMER"
+            },
+            {
+              "input": "",
+              "output": "SYNC-1\nSYNC-2\nMICROTASK\nTIMER"
+            },
+            {
+              "input": "",
+              "output": "SYNC-1\nSYNC-2\nMICROTASK\nTIMER"
+            },
+            {
+              "input": "",
+              "output": "SYNC-1\nSYNC-2\nMICROTASK\nTIMER"
+            },
+            {
+              "input": "",
+              "output": "SYNC-1\nSYNC-2\nMICROTASK\nTIMER"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS065A",
+          "questionId": "ADVJS065A",
+          "title": "setTimeout Delay Ordering",
+          "difficulty": "Easy",
+          "description": "Use timer delays to determine which scheduled task runs first.",
+          "problemStatement": "Read delays for A, B, and C and report their execution order; ties keep original order.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line: dA dB dC.",
+          "outputFormat": "Print three labels in execution order.",
+          "sampleTestCases": [
+            {
+              "input": "10 0 5",
+              "output": "B C A",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "0 0 0",
+              "output": "A B C"
+            },
+            {
+              "input": "5 2 9",
+              "output": "B A C"
+            },
+            {
+              "input": "1 3 2",
+              "output": "A C B"
+            },
+            {
+              "input": "8 4 4",
+              "output": "B C A"
+            },
+            {
+              "input": "0 7 3",
+              "output": "A C B"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS065B",
+          "questionId": "ADVJS065B",
+          "title": "Coffee Timer Sequence",
+          "difficulty": "Easy",
+          "description": "Model dependent asynchronous coffee steps with nested timers.",
+          "problemStatement": "Print Start Brewing Coffee immediately, then Coffee is Ready after d1, then Enjoy your Coffee after d2 additional milliseconds.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line: d1 d2, each 0..20.",
+          "outputFormat": "Print the three messages in order.",
+          "sampleTestCases": [
+            {
+              "input": "2 1",
+              "output": "Start Brewing Coffee\nCoffee is Ready\nEnjoy your Coffee",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "0 0",
+              "output": "Start Brewing Coffee\nCoffee is Ready\nEnjoy your Coffee"
+            },
+            {
+              "input": "3 0",
+              "output": "Start Brewing Coffee\nCoffee is Ready\nEnjoy your Coffee"
+            },
+            {
+              "input": "0 4",
+              "output": "Start Brewing Coffee\nCoffee is Ready\nEnjoy your Coffee"
+            },
+            {
+              "input": "5 2",
+              "output": "Start Brewing Coffee\nCoffee is Ready\nEnjoy your Coffee"
+            },
+            {
+              "input": "1 5",
+              "output": "Start Brewing Coffee\nCoffee is Ready\nEnjoy your Coffee"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS065C",
+          "questionId": "ADVJS065C",
+          "title": "Cancel a Timer",
+          "difficulty": "Easy",
+          "description": "Use clearTimeout() to cancel a scheduled callback.",
+          "problemStatement": "Read cancel (0 or 1). Always print START. Schedule TASK and cancel it when requested; print END after the timer stage.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One integer: cancel.",
+          "outputFormat": "Print START, optional TASK, then END.",
+          "sampleTestCases": [
+            {
+              "input": "1",
+              "output": "START\nEND",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "0",
+              "output": "START\nTASK\nEND"
+            },
+            {
+              "input": "1",
+              "output": "START\nEND"
+            },
+            {
+              "input": "0",
+              "output": "START\nTASK\nEND"
+            },
+            {
+              "input": "1",
+              "output": "START\nEND"
+            },
+            {
+              "input": "0",
+              "output": "START\nTASK\nEND"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS065D",
+          "questionId": "ADVJS065D",
+          "title": "setInterval Repetition",
+          "difficulty": "Easy",
+          "description": "Use setInterval() and clearInterval() to repeat a callback a fixed number of times.",
+          "problemStatement": "Read N and print Tick 1 through Tick N, then clear the interval.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One integer N (0..20).",
+          "outputFormat": "Print one tick per line.",
+          "sampleTestCases": [
+            {
+              "input": "3",
+              "output": "Tick 1\nTick 2\nTick 3",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "0",
+              "output": ""
+            },
+            {
+              "input": "1",
+              "output": "Tick 1"
+            },
+            {
+              "input": "2",
+              "output": "Tick 1\nTick 2"
+            },
+            {
+              "input": "5",
+              "output": "Tick 1\nTick 2\nTick 3\nTick 4\nTick 5"
+            },
+            {
+              "input": "7",
+              "output": "Tick 1\nTick 2\nTick 3\nTick 4\nTick 5\nTick 6\nTick 7"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS065E",
+          "questionId": "ADVJS065E",
+          "title": "Traffic Light Simulation",
+          "difficulty": "Easy",
+          "description": "Cycle Red, Yellow, Green repeatedly for N emissions.",
+          "problemStatement": "Read N and print the repeating traffic-light sequence.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One integer N (1..30).",
+          "outputFormat": "Print N lines.",
+          "sampleTestCases": [
+            {
+              "input": "5",
+              "output": "Red\nYellow\nGreen\nRed\nYellow",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1",
+              "output": "Red"
+            },
+            {
+              "input": "2",
+              "output": "Red\nYellow"
+            },
+            {
+              "input": "3",
+              "output": "Red\nYellow\nGreen"
+            },
+            {
+              "input": "4",
+              "output": "Red\nYellow\nGreen\nRed"
+            },
+            {
+              "input": "6",
+              "output": "Red\nYellow\nGreen\nRed\nYellow\nGreen"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS065F",
+          "questionId": "ADVJS065F",
+          "title": "Stop a Countdown Timer",
+          "difficulty": "Easy",
+          "description": "Use clearInterval() to stop a countdown after reaching zero.",
+          "problemStatement": "Read N and print Countdown N down to Countdown 0, clearing the interval at zero.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One integer N (0..20).",
+          "outputFormat": "Print N+1 lines.",
+          "sampleTestCases": [
+            {
+              "input": "3",
+              "output": "Countdown 3\nCountdown 2\nCountdown 1\nCountdown 0",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "0",
+              "output": "Countdown 0"
+            },
+            {
+              "input": "1",
+              "output": "Countdown 1\nCountdown 0"
+            },
+            {
+              "input": "2",
+              "output": "Countdown 2\nCountdown 1\nCountdown 0"
+            },
+            {
+              "input": "5",
+              "output": "Countdown 5\nCountdown 4\nCountdown 3\nCountdown 2\nCountdown 1\nCountdown 0"
+            },
+            {
+              "input": "7",
+              "output": "Countdown 7\nCountdown 6\nCountdown 5\nCountdown 4\nCountdown 3\nCountdown 2\nCountdown 1\nCountdown 0"
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "advanced-javascript.json",
+      "_moduleTitle": "Asynchronous Javascript"
+    },
+    {
+      "topicId": "t02-callbacks-in-asynchronous",
+      "title": "Callbacks in Asynchronous",
+      "description": "Use callbacks for dependent asynchronous operations and recognize the readability limits of nested callback code.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-ADVJS069",
+          "title": "Callbacks in Asynchronous Programming",
+          "content": "In the previous module, you learned that functions can be passed as arguments to other functions—these are callback functions.\n\nIn synchronous code, callbacks run immediately or after a simple task. But many real-world tasks are asynchronous, like fetching data, reading a file, or waiting for a timer. \\\nIf JavaScript waited for these tasks to finish, the program would freeze.\n\n**Solution**: Use callbacks to run code after an asynchronous task completes, without blocking other operations.\n\n**Let's try to understand this from below example**:\n```javascript\nconsole.log(\"Start\");\n\n// Simulate an asynchronous task using setTimeout\nfunction fetchData(callback) {\n    console.log(\"Fetching data...\");\n    setTimeout(() => {\n        console.log(\"Data fetched!\");\n        callback(); // Run callback after data is fetched\n    }, 2000); // 2 seconds delay\n}\n\nfunction processData() {\n    console.log(\"Processing data...\");\n}\n\n// Call fetchData and pass processData as a callback\nfetchData(processData);\n\nconsole.log(\"End\");\n```\n**Output :**\n```text\nStart\nFetching data...\nEnd\nData fetched!\nProcessing data...\n```\n**Explanation :**\n1. The program starts by printing `\"Start\"` immediately because this is synchronous code.\n2. `fetchData` is called, and it prints `\"Fetching data...\"` right away.\n3. Inside `fetchData`, `setTimeout` is used to simulate an asynchronous task that takes 2 seconds.\n4. After 2 seconds, the `setTimeout` callback executes:\n    - It prints `\"Data fetched!\"`.\n    - Then it calls the callback function `processData`.\n5. `processData` runs only after the asynchronous task completes, printing `\"Processing data...\"`.\n6. Meanwhile, `\"End\"` is printed immediately after calling `fetchData` because the asynchronous task does not block the program.\n\n---\n\n**Key Point :** \\\nThe callback allows us to perform an action after the async task completes without stopping other code from running. \\\nThis is how callbacks enable asynchronous programming in JavaScript.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Nested callbacks can create callback pyramids that make sequencing and error handling harder to read."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "function apply(value, callback) {\n  return callback(value);\n}\nconsole.log(apply(5, x => x + 1));"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ADVJS069",
+            "question": "Why can deeply nested callbacks become difficult to maintain?",
+            "options": [
+              "They can create deeply nested control flow and reduce readability",
+              "They always run synchronously",
+              "They cannot handle errors",
+              "They disable Promises"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Nested callbacks can create callback pyramids that make sequencing and error handling harder to read."
+          }
+        },
+        {
+          "pageId": "p-ADVJS070A",
+          "title": "MCQ - How Async Callbacks Work in JS",
+          "content": "What will be the output of the below code :\n\n```javascript\nconsole.log(\"A\");\n\nfunction greetUser(callback) {\n    setTimeout(() => {\n        console.log(\"B\");\n        callback();\n    }, 1000);\n}\n\ngreetUser(() => {\n    console.log(\"C\");\n});\n\nconsole.log(\"D\");\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Nested callbacks can create callback pyramids that make sequencing and error handling harder to read."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "function apply(value, callback) {\n  return callback(value);\n}\nconsole.log(apply(5, x => x + 1));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS072A",
+          "title": "MCQ  - Order of Execution",
+          "content": "What will be printed first in the code below?\n\n```javascript\nconsole.log(\"Start\");\n\nsetTimeout(() => {\n    console.log(\"Task 1\");\n    setTimeout(() => {\n        console.log(\"Task 2\");\n    }, 0);\n}, 0);\n\nconsole.log(\"End\");\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Nested callbacks can create callback pyramids that make sequencing and error handling harder to read."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS072B",
+          "title": "MCQ  - Identification",
+          "content": "Which of the following best describes nested callbacks?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Nested callbacks can create callback pyramids that make sequencing and error handling harder to read."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS072",
+          "title": "Callback Hell",
+          "content": "In the previous practice problem, you must have noticed how multiple **nested callbacks** make the code hard to read and difficult to manage. \\\n**Callback Hell** happens when one function calls another function inside its callback, and that callback contains yet another function, and so on. \\\nThis creates a **chain of nested functions** that keeps growing sideways (like a pyramid), making the code look messy, confusing, and harder to debug or maintain.\n\n**Why it happens**\n- Each asynchronous operation (like reading a file, making an API request, or waiting for a timer) often needs to run after the previous one completes.\n- To maintain order, developers put one callback inside another.\n- When there are several dependent tasks, the nesting grows deeper, forming a **“pyramid”** shape.\n\n**Example**: \\\nNotice the indentation and pyramid shape? \\\nAs you can see pyramid of doom being formed. This is **Callback Hell**.\n\n\n**Problems with Callback Hell**:\n- Hard to read: The more nested callbacks, the messier the code.\n- Difficult to debug: If an error occurs, it’s hard to find.\n- Not reusable: You can’t easily reuse code inside deep nests.\n\n**Modern JavaScript the Solution to Callback Hell** is **Promises** and **async/await** for readable, maintainable asynchronous code.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Nested callbacks can create callback pyramids that make sequencing and error handling harder to read."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "function apply(value, callback) {\n  return callback(value);\n}\nconsole.log(apply(5, x => x + 1));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS073",
+          "title": "Solving the Callback Hell Problem",
+          "content": "You’re refactoring a JavaScript project suffering from deep nested callbacks.\nWhich of the following approaches is the best set of techniques to replace the “pyramid of doom” and make the code easier to read and maintain?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Nested callbacks can create callback pyramids that make sequencing and error handling harder to read."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "function apply(value, callback) {\n  return callback(value);\n}\nconsole.log(apply(5, x => x + 1));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS072C",
+          "title": "Identifying Issues",
+          "content": "What is the main problem with callback hell?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "Nested callbacks can create callback pyramids that make sequencing and error handling harder to read."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-ADVJS069-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Callbacks in Asynchronous Programming (JavaScript)",
+          "code": "function apply(value, callback) {\n  return callback(value);\n}\nconsole.log(apply(5, x => x + 1));"
+        },
+        {
+          "exampleId": "ex-ADVJS070A-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "MCQ - How Async Callbacks Work in JS (JavaScript)",
+          "code": "function apply(value, callback) {\n  return callback(value);\n}\nconsole.log(apply(5, x => x + 1));"
+        },
+        {
+          "exampleId": "ex-ADVJS072A-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "MCQ  - Order of Execution (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS072B-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "MCQ  - Identification (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS072-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Callback Hell (JavaScript)",
+          "code": "function apply(value, callback) {\n  return callback(value);\n}\nconsole.log(apply(5, x => x + 1));"
+        },
+        {
+          "exampleId": "ex-ADVJS073-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Solving the Callback Hell Problem (JavaScript)",
+          "code": "function apply(value, callback) {\n  return callback(value);\n}\nconsole.log(apply(5, x => x + 1));"
+        },
+        {
+          "exampleId": "ex-ADVJS072C-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Identifying Issues (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "ADVJS073B",
+          "questionId": "ADVJS073B",
+          "title": "Nested Callback Order",
+          "difficulty": "Easy",
+          "description": "Use nested callbacks to enforce a sequence of three actions.",
+          "problemStatement": "Read three labels and invoke the second only from the first callback and the third only from the second callback.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "Three lines.",
+          "outputFormat": "Print the labels in order.",
+          "sampleTestCases": [
+            {
+              "input": "A\nB\nC",
+              "output": "A\nB\nC",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "one\ntwo\nthree",
+              "output": "one\ntwo\nthree"
+            },
+            {
+              "input": "start\nmiddle\nend",
+              "output": "start\nmiddle\nend"
+            },
+            {
+              "input": "load\nparse\nrender",
+              "output": "load\nparse\nrender"
+            },
+            {
+              "input": "step1\nstep2\nstep3",
+              "output": "step1\nstep2\nstep3"
+            },
+            {
+              "input": "wash\ncook\neat",
+              "output": "wash\ncook\neat"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS073A",
+          "questionId": "ADVJS073A",
+          "title": "Nested setTimeout Sequence",
+          "difficulty": "Easy",
+          "description": "Use nested setTimeout callbacks for dependent asynchronous steps.",
+          "problemStatement": "Read three labels and three delays. Print the first label immediately, schedule the second after d1, then the third after d2.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "First three lines are labels; fourth line has d1 d2 d3.",
+          "outputFormat": "Print labels in order.",
+          "sampleTestCases": [
+            {
+              "input": "A\nB\nC\n1 1 1",
+              "output": "A\nB\nC",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "one\ntwo\nthree\n0 0 0",
+              "output": "one\ntwo\nthree"
+            },
+            {
+              "input": "A\nB\nC\n5 2 7",
+              "output": "A\nB\nC"
+            },
+            {
+              "input": "x\ny\nz\n2 4 1",
+              "output": "x\ny\nz"
+            },
+            {
+              "input": "load\nparse\nrender\n3 0 2",
+              "output": "load\nparse\nrender"
+            },
+            {
+              "input": "1\n2\n3\n1 2 3",
+              "output": "1\n2\n3"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS071",
+          "questionId": "ADVJS071",
+          "title": "Nested Callback Meal Preparation",
+          "difficulty": "Easy",
+          "description": "Sequence washing, cooking, and eating with nested callbacks.",
+          "problemStatement": "Read three action labels and execute them using nested callbacks.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "Three lines.",
+          "outputFormat": "Print them in order.",
+          "sampleTestCases": [
+            {
+              "input": "Washing vegetables\nCooking food\nEating food",
+              "output": "Washing vegetables\nCooking food\nEating food",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Wash\nCook\nEat",
+              "output": "Wash\nCook\nEat"
+            },
+            {
+              "input": "Prep\nBake\nServe",
+              "output": "Prep\nBake\nServe"
+            },
+            {
+              "input": "Open\nBoil\nPlate",
+              "output": "Open\nBoil\nPlate"
+            },
+            {
+              "input": "A\nB\nC",
+              "output": "A\nB\nC"
+            },
+            {
+              "input": "Start\nCook\nEat",
+              "output": "Start\nCook\nEat"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS073C",
+          "questionId": "ADVJS073C",
+          "title": "Nested Callback Cooking",
+          "difficulty": "Easy",
+          "description": "Execute three dependent cooking operations in order with callbacks.",
+          "problemStatement": "Read three operation names and call the next operation only after the previous callback fires.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "Three lines.",
+          "outputFormat": "Print the operations in order.",
+          "sampleTestCases": [
+            {
+              "input": "Chop vegetables\nBoil water\nCook pasta",
+              "output": "Chop vegetables\nBoil water\nCook pasta",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "A\nB\nC",
+              "output": "A\nB\nC"
+            },
+            {
+              "input": "Chop\nBoil\nServe",
+              "output": "Chop\nBoil\nServe"
+            },
+            {
+              "input": "Prepare\nCook\nEat",
+              "output": "Prepare\nCook\nEat"
+            },
+            {
+              "input": "Task1\nTask2\nTask3",
+              "output": "Task1\nTask2\nTask3"
+            },
+            {
+              "input": "First\nSecond\nThird",
+              "output": "First\nSecond\nThird"
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "advanced-javascript.json",
+      "_moduleTitle": "Asynchronous Javascript"
+    },
+    {
+      "topicId": "t03-promise-in-javascript",
+      "title": "Promise in javascript",
+      "description": "Create, consume, chain, combine, race, and settle Promises with the standard Promise combinators.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-ADVJS074",
+          "title": "Promises - The Solution to Callback Hell",
+          "content": "Now that you have learned how Callback Hell creates a messy, deeply-nested “pyramid of doom.”\nIt may work, but it’s hard to read, maintain, and debug. \\\nThis is where **Promises** come in— **they flatten that nesting** and provide a cleaner, more reliable way to handle asynchronous code.\n\nA Promise is a built-in JavaScript feature (introduced in ES6) that represents the result of an asynchronous operation. \\\nInstead of nesting callbacks inside callbacks, we can:\n\n- Create a promise for an async task and consume it.\n- Chain actions with `.then()` so they run one after another.\n- Handle errors in a single place with `.catch()`.\n- A Promise represents a value that may be available now, later, or never.\n- It has three possible states:\n     - `pending` – still working\n     - `fulfilled` – finished successfully\n     - `rejected` – finished with an error\n- Below image shows how promise works :\n\n**Let's understand promise from simple example :**\n```javascript\n// Create and consume in one go\nnew Promise((resolve, reject) => resolve(\"Hello from a Promise!\"))\n  .then(message => console.log(message))\n  .catch(error => console.error(error));\n```\n**Output** :\n```text\nHello from a Promise!\n```\n**Explanation**:\n- `new Promise((resolve, reject) => … )` creates the promise.\n- We immediately call `resolve(\"Hello from a Promise!\")`, so it’s fulfilled right away.\n- `.then()` consumes the fulfilled value and logs it.\n- `.catch()` is there to handle errors (won’t run in this example).\n\nWith Promises, the same multi-step workflow that looked like a staircase of brackets becomes a flat, top-to-bottom sequence of steps. \\\nThis is why Promises are often described as “the solution to callback hell.”",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "function apply(value, callback) {\n  return callback(value);\n}\nconsole.log(apply(5, x => x + 1));"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ADVJS074",
+            "question": "Which Promise combinator waits for all inputs to settle, including failures?",
+            "options": [
+              "Promise.allSettled()",
+              "Promise.race()",
+              "Promise.any()",
+              "Promise.all()"
+            ],
+            "correctAnswer": 0,
+            "explanation": "allSettled waits for every input Promise to settle and reports each outcome."
+          }
+        },
+        {
+          "pageId": "p-ADVJS072D",
+          "title": "Decode What a Promise Represents",
+          "content": "What does a Promise represent in JavaScript?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.resolve(\"Done\")\n  .then(value => console.log(value))\n  .catch(error => console.error(error));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS075",
+          "title": "Creating Promises and Consuming Promises",
+          "content": "**1. Creating a Promise :** \\\nA Promise is created using the `new Promise` constructor, which takes a function with two parameters: resolve and reject.\n- Call `resolve(value)` when the async task succeeds.\n- Call `reject(error)` when it fails.\n```javascript\nconst myPromise = new Promise((resolve, reject) => {\n    const success = true; // simulate async result\n    setTimeout(() => {\n        if (success) resolve(\"Task completed successfully!\");\n        else reject(\"Task failed!\");\n    }, 1000);\n});\n```\n\n**2. Consuming a Promise :** \\\nUse `.then()` to handle success, `.catch()` to handle errors, and `.finally()` for tasks that should run either way.\n```javascript\nmyPromise\n    .then(result => console.log(\"Success:\", result))\n    .catch(error => console.error(\"Error:\", error))\n    .finally(() => console.log(\"Task finished\"));\n```\n- `.then()` runs if `resolve()` is called.\n- `.catch()` runs if `reject()` is called.\n- `.finally()` always runs, useful for cleanup.\n\n**Combined Code Output**\n```t\nSuccess: Task completed successfully!\nTask finished\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.resolve(\"Done\")\n  .then(value => console.log(value))\n  .catch(error => console.error(error));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS072E",
+          "title": "How Promises Behave",
+          "content": "Which of these statements about Promises is true?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.resolve(\"Done\")\n  .then(value => console.log(value))\n  .catch(error => console.error(error));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS072F",
+          "title": "Predict Output",
+          "content": "What will be the output of the following code?\n\n```javascript\nconst promise = new Promise((resolve, reject) => {\n    resolve(\"Success!\");\n});\n\npromise.then(msg => console.log(msg));\nconsole.log(\"Done\");\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS072G",
+          "title": "Predict Output",
+          "content": "What will the following code log?\n\n```javascript\nnew Promise((resolve, reject) => {\n        reject(\"Oops!\");\n    })\n    .then(() => console.log(\"Success\"))\n    .catch(() => console.log(\"Error handled\"));\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS078",
+          "title": "Chaining Promises",
+          "content": "Now that we’ve learned how to create a Promise and how to consume it, let’s move one step further. \\\nOften, you’ll need to run several asynchronous tasks one after another, where the next task starts only after the previous one finishes. \\\nThis is where Promise chaining comes in.\n\nWhen you need to **run multiple asynchronous tasks** in sequence, **Promises let you chain operations** instead of nesting callbacks.\n\n**How it works :**\n- Each `.then()` returns a **new promise**.\n- The next `.then()` waits for the previous one to resolve.\n- You can attach a single `.catch()` at the end to handle **any error in the chain**.\n\n**Why it’s useful :**\n- Keeps code **flat and readable** —no “callback pyramid.”\n- Makes it easy to pass results from one async step to the next.\n\n**Example :**\n```javascript\ndoTask1()\n    .then(result1 => doTask2(result1))\n    .then(result2 => doTask3(result2))\n    .then(final => console.log(\"All done:\", final))\n    .catch(err => console.error(\"Error:\", err));\n```\nRuns three async tasks one after another, passing each result to the next, and catches any error at the end.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const prices = [40, 50, 60];\nconst total = prices\n  .map(x => x * 1.1)\n  .filter(x => x >= 50)\n  .reduce((sum, x) => sum + x, 0);\nconsole.log(total.toFixed(2));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS072H",
+          "title": "Predict Output",
+          "content": "What will the following code output?\n\n```javascript\nPromise.resolve(5)\n    .then(num => num * 2)\n    .then(num => num + 3)\n    .then(num => console.log(\"Result:\", num))\n    .catch(() => console.log(\"Error\"));\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS072I",
+          "title": "Use of Promise Chain",
+          "content": "Why do we use Promise chaining in JavaScript?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const prices = [40, 50, 60];\nconst total = prices\n  .map(x => x * 1.1)\n  .filter(x => x >= 50)\n  .reduce((sum, x) => sum + x, 0);\nconsole.log(total.toFixed(2));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS081",
+          "title": "Promise all()",
+          "content": "Until now, we’ve created and consumed single promises.\nBut real apps often need to run multiple async tasks together—for example:\n- Fetching data from several APIs\n- Loading images\n- Running independent computations \\\nJavaScript gives us static methods on the Promise class to manage arrays of promises.\n\n**1. Promise.all()** \\\n`Promise.all` method in JavaScript is used to **handle multiple promises concurrently** and **wait for all of them to resolve**. \\\nAll promises must be resolved for it to return a response. \\\nIf all promises resolve then it returns an array with all resolved promises.\n\n**Example**:\n```javascript\nconst promise1 = new Promise((resolve) =>\n    setTimeout(() => resolve(\"Promise 1 resolved\"), 1000)\n);\nconst promise2 = new Promise((resolve) =>\n    setTimeout(() => resolve(\"Promise 2 resolved\"), 500)\n);\nconst promise3 = new Promise((resolve) =>\n    setTimeout(() => resolve(\"Promise 3 resolved\"), 800)\n);\n\nconst promisesArray = [promise1, promise2, promise3];\n\nPromise.all(promisesArray)\n    .then((results) => {\n        console.log(\"All promises resolved:\", results);\n    })\n    .catch((error) => {\n        console.error(\"At least one promise rejected:\", error);\n    });\n```\n**Explanation**: \\\nThis code runs three promises at the same time:\n- `promise1` resolves after 1000 ms\n- `promise2` resolves after 500 ms\n- `promise3` resolves after 800 ms\n- `Promise.all(promisesArray)` waits until all three have resolved. \\\nThen the `.then` callback runs and logs:\n\n**Output**:\n```text\nAll promises resolved: [ 'Promise 1 resolved', 'Promise 2 resolved', 'Promise 3 resolved' ]\n```\n\n---\n\n**If we update `promise3` to reject state in above code** ,then it won't wait for others to resolve and will return with reason of the promise that is rejected. \\\n**Look at example below to get the better idea about this :**\n```javascript\nconst promise3 = new Promise((_, reject) =>\n  setTimeout(() => reject(\"Promise 3 rejected\"), 800)\n);\n```\nNow here in this case, `promise2` resolves after $500$ ms but `promise3` rejects after $800$ ms so it will not wait for `promise1` which is executing after $1000$ ms and will return a response:\n\n**Output**:\n```text\nAt least one promise rejected: Promise 3 rejected\n```\n\n---\n\n**Let's visulaize how `Promise.all` works :**",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.all([Promise.resolve(1), Promise.resolve(2)])\n  .then(values => console.log(values));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS083",
+          "title": "Identify Truth",
+          "content": "Which of the following statements about `Promise.all` is **TRUE**?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS084",
+          "title": "How Promise all Handles Rejections",
+          "content": "What happens if one of the promises passed to `Promise.all` **rejects**?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.all([Promise.resolve(1), Promise.resolve(2)])\n  .then(values => console.log(values));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS082",
+          "title": "Promise allSettled()",
+          "content": "Promise.allSettled runs several promises **at the same time** and waits until **every one has finished** —no matter if they **resolve** or **reject**.\nIt always returns an array of result objects.Each object has:\n- **status**: `\"fulfilled\"` or `\"rejected\"`.\n- **value**: the result (if fulfilled).\n- **reason**: the error (if rejected). \\\nSo you can check each promise’s outcome without stopping if one fails.\n\n---\n**Let's visualize how `Promise.allSettled()` works in JS :**\n\n\n---\n**Example**:\n```javascript\nconst promise1 = new Promise((resolve) =>\n    setTimeout(() => resolve(\"Promise 1 resolved\"), 1000)\n);\nconst promise2 = new Promise((resolve) =>\n    setTimeout(() => resolve(\"Promise 2 resolved\"), 500)\n);\nconst promise3 = new Promise((resolve) =>\n    setTimeout(() => resolve(\"Promise 3 resolved\"), 800)\n);\n\nconst promisesArray = [promise1, promise2, promise3];\n\nPromise.allSettled(promisesArray).then((results) => {\n    console.log(\"All promises settled:\", results);\n});\n```\n**Output**:\n```text\nAll promises settled: [\n  { status: 'fulfilled', value: 'Promise 1 resolved' },\n  { status: 'fulfilled', value: 'Promise 2 resolved' },\n  { status: 'fulfilled', value: 'Promise 3 resolved' }\n]\n```\nNow we will try and reject `promise2` like we did previously and see the response:\n```javascript\nconst promise2 = new Promise((_, reject) =>\n  setTimeout(() => reject(\"Promise 2 rejected\"), 500)\n);\n```\n**Output**:\n```text\nAll promises settled: [\n  { status: 'fulfilled', value: 'Promise 1 resolved' },\n  { status: 'rejected', reason: 'Promise 2 rejected' },\n  { status: 'fulfilled', value: 'Promise 3 resolved' }\n]\n```\n**Note**: \\\nUnlike `Promise.all()`, `Promise.allSettled()` waits for all promises to finish, even if some are rejected.\n\n**For example**, if `Promise2` rejects early, it still waits for `Promise1`, to resolve before returning the final results for all.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.allSettled([\n  Promise.resolve(\"A\"),\n  Promise.reject(\"B\")\n]).then(results => console.log(results));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS085",
+          "title": "Identify Behaviour of Promise allSettled()",
+          "content": "Which of the following statements best describes the behavior of `Promise.allSettled()` in JavaScript?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.allSettled([\n  Promise.resolve(\"A\"),\n  Promise.reject(\"B\")\n]).then(results => console.log(results));"
+          }
+        },
+        {
+          "pageId": "p-ADVJS085A",
+          "title": "Guess the Output",
+          "content": "```javascript\nconst promises = [\n    Promise.resolve(10),\n    Promise.reject('Error'),\n    Promise.resolve(20)\n];\n\nPromise.allSettled(promises).then(results => console.log(results));\n```\n\nWhat will be logged to the console?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS085E",
+          "title": "Promise race()",
+          "content": "As the name suggests, race **returns first promise with shortest delay whether it is resolved or rejected**.\n\nFor example if there are 5 promises which returns result like this:\n```text\nPromise 1 ==> 1 second (rejected)\nPromise 2 ==> 2 seconds (rejected)\nPromise 3 ==> 3 seconds (resolved)\nPromise 4 ==> 4 seconds (resolved)\nPromise 5 ==> 5 seconds (resolved)\n```\nSo, it will **return us `Promise 1` because it was the first one being returned**.\n\nThe `Promise.race` method in JavaScript is used to handle multiple promises concurrently, but it resolves or rejects as soon as the first promise in the input array settles, either by resolving or rejecting.\nThis can be useful when you're interested in the result of the first promise to complete, regardless of whether it's a success or failure.\n\nLet's understand how `Promise.race` method works from below image :\n\n\n**Example to understand `Promise.race` :**\n```javascript\nconst promise1 = new Promise((resolve) => {\n    setTimeout(() => resolve(\"Promise 1 done\"), 1000);\n});\n\nconst promise2 = new Promise((resolve) => {\n    setTimeout(() => resolve(\"Promise 2 done\"), 500);\n});\n\nPromise.race([promise1, promise2])\n    .then((result) => {\n        console.log(result); // Logs: \"Promise 2 done\"\n    });\n```\n**Explanation**:\n- `Promise.race` returns a promise that resolves or rejects as soon as the first promise settles.\n- In this example, `promise2` finishes first (after $500$ms), so `Promise.race` resolves with its value, ignoring the slower `promise1`.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.race([\n  Promise.resolve(\"fast\"),\n  new Promise(resolve => setTimeout(() => resolve(\"slow\"), 10))\n]).then(console.log);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS085F",
+          "title": "Identify Behaviour of Promise race()",
+          "content": "Which of the following statements best describes the behavior of `Promise.race()` in JavaScript?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.race([\n  Promise.resolve(\"fast\"),\n  new Promise(resolve => setTimeout(() => resolve(\"slow\"), 10))\n]).then(console.log);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS085G",
+          "title": "Predict Output",
+          "content": "What will be logged to the console?\n\n```JavaScript\nconst p1 = new Promise((resolve) => setTimeout(() => resolve(\"Fast\"), 500));\nconst p2 = new Promise((resolve) => setTimeout(() => resolve(\"Slow\"), 1000));\nconst p3 = new Promise((_, reject) => setTimeout(() => reject(\"Error\"), 300));\n\nPromise.race([p1, p2, p3])\n    .then((value) => console.log(\"Resolved with:\", value))\n    .catch((error) => console.log(\"Rejected with:\", error));\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS085J",
+          "title": "Promise any()",
+          "content": "It is somewhat similar to race method but with few minor differences:\n\n- It will **return with first resolved promise**.\\\nFor example if there are 5 promises which returns result like this:\n```javascript\nPromise 1 ==> 1 second (rejected)\nPromise 2 ==> 2 seconds (rejected)\nPromise 3 ==> 3 seconds (resolved)\nPromise 4 ==> 4 seconds (resolved)\nPromise 5 ==> 5 seconds (resolved)\n```\nSo, it will return us `Promise 3` because it was the first one being resolved.\n\n- If **all promises are rejected**, it will give you an **aggregated error**.\\\nFor example if there are $5$ promises which returns result like this:\n```javascript\nPromise 1 ==> 1 second (rejected)\nPromise 2 ==> 2 seconds (rejected)\nPromise 3 ==> 3 seconds (rejected)\nPromise 4 ==> 4 seconds (rejected)\nPromise 5 ==> 5 seconds (rejected)\n```\nSo, now it will return an aggregated result like this:\n```text\n[AggregateError: All promises were rejected]\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.any([\n  Promise.reject(\"A\"),\n  Promise.resolve(\"B\")\n]).then(console.log);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS085K",
+          "title": "Identify Behaviour of Promise any()",
+          "content": "Which of the following best describes how Promise.any() behaves?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "Promise.any([\n  Promise.reject(\"A\"),\n  Promise.resolve(\"B\")\n]).then(console.log);"
+          }
+        },
+        {
+          "pageId": "p-ADVJS085L",
+          "title": "Predict Output",
+          "content": "What will be the output of the following code?\n\n```javascript\nconst p1 = Promise.reject(\"Error 1\");\nconst p2 = new Promise((resolve) => setTimeout(() => resolve(\"Success 2\"), 1000));\nconst p3 = Promise.resolve(\"Success 3\");\n\nPromise.any([p1, p2, p3])\n    .then((result) => console.log(result))\n    .catch((err) => console.log(err));\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "allSettled waits for every input Promise to settle and reports each outcome."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const message = \"JavaScript\";\nconsole.log(message);"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-ADVJS074-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Promises - The Solution to Callback Hell (JavaScript)",
+          "code": "function apply(value, callback) {\n  return callback(value);\n}\nconsole.log(apply(5, x => x + 1));"
+        },
+        {
+          "exampleId": "ex-ADVJS072D-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Decode What a Promise Represents (JavaScript)",
+          "code": "Promise.resolve(\"Done\")\n  .then(value => console.log(value))\n  .catch(error => console.error(error));"
+        },
+        {
+          "exampleId": "ex-ADVJS075-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Creating Promises and Consuming Promises (JavaScript)",
+          "code": "Promise.resolve(\"Done\")\n  .then(value => console.log(value))\n  .catch(error => console.error(error));"
+        },
+        {
+          "exampleId": "ex-ADVJS072E-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "How Promises Behave (JavaScript)",
+          "code": "Promise.resolve(\"Done\")\n  .then(value => console.log(value))\n  .catch(error => console.error(error));"
+        },
+        {
+          "exampleId": "ex-ADVJS072F-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Predict Output (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS072F-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Predict Output (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS078-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Chaining Promises (JavaScript)",
+          "code": "const prices = [40, 50, 60];\nconst total = prices\n  .map(x => x * 1.1)\n  .filter(x => x >= 50)\n  .reduce((sum, x) => sum + x, 0);\nconsole.log(total.toFixed(2));"
+        },
+        {
+          "exampleId": "ex-ADVJS072F-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Predict Output (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS072I-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Use of Promise Chain (JavaScript)",
+          "code": "const prices = [40, 50, 60];\nconst total = prices\n  .map(x => x * 1.1)\n  .filter(x => x >= 50)\n  .reduce((sum, x) => sum + x, 0);\nconsole.log(total.toFixed(2));"
+        },
+        {
+          "exampleId": "ex-ADVJS081-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Promise all() (JavaScript)",
+          "code": "Promise.all([Promise.resolve(1), Promise.resolve(2)])\n  .then(values => console.log(values));"
+        },
+        {
+          "exampleId": "ex-ADVJS083-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Identify Truth (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS084-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "How Promise all Handles Rejections (JavaScript)",
+          "code": "Promise.all([Promise.resolve(1), Promise.resolve(2)])\n  .then(values => console.log(values));"
+        },
+        {
+          "exampleId": "ex-ADVJS082-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Promise allSettled() (JavaScript)",
+          "code": "Promise.allSettled([\n  Promise.resolve(\"A\"),\n  Promise.reject(\"B\")\n]).then(results => console.log(results));"
+        },
+        {
+          "exampleId": "ex-ADVJS085-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Identify Behaviour of Promise allSettled() (JavaScript)",
+          "code": "Promise.allSettled([\n  Promise.resolve(\"A\"),\n  Promise.reject(\"B\")\n]).then(results => console.log(results));"
+        },
+        {
+          "exampleId": "ex-ADVJS085A-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Guess the Output (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS085E-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Promise race() (JavaScript)",
+          "code": "Promise.race([\n  Promise.resolve(\"fast\"),\n  new Promise(resolve => setTimeout(() => resolve(\"slow\"), 10))\n]).then(console.log);"
+        },
+        {
+          "exampleId": "ex-ADVJS085F-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Identify Behaviour of Promise race() (JavaScript)",
+          "code": "Promise.race([\n  Promise.resolve(\"fast\"),\n  new Promise(resolve => setTimeout(() => resolve(\"slow\"), 10))\n]).then(console.log);"
+        },
+        {
+          "exampleId": "ex-ADVJS072F-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Predict Output (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        },
+        {
+          "exampleId": "ex-ADVJS085J-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Promise any() (JavaScript)",
+          "code": "Promise.any([\n  Promise.reject(\"A\"),\n  Promise.resolve(\"B\")\n]).then(console.log);"
+        },
+        {
+          "exampleId": "ex-ADVJS085K-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Identify Behaviour of Promise any() (JavaScript)",
+          "code": "Promise.any([\n  Promise.reject(\"A\"),\n  Promise.resolve(\"B\")\n]).then(console.log);"
+        },
+        {
+          "exampleId": "ex-ADVJS072F-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Predict Output (JavaScript)",
+          "code": "const message = \"JavaScript\";\nconsole.log(message);"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "ADVJS085O",
+          "questionId": "ADVJS085O",
+          "title": "Promise User Fetch",
+          "difficulty": "Easy",
+          "description": "Return a Promise that resolves for user 1 and rejects for other IDs.",
+          "problemStatement": "Read a user ID. Resolve user 1 as Alice; reject all other IDs and handle both outcomes.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One integer.",
+          "outputFormat": "Print USER Alice or ERROR User not found.",
+          "sampleTestCases": [
+            {
+              "input": "1",
+              "output": "USER Alice",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "0",
+              "output": "ERROR User not found"
+            },
+            {
+              "input": "1",
+              "output": "USER Alice"
+            },
+            {
+              "input": "2",
+              "output": "ERROR User not found"
+            },
+            {
+              "input": "10",
+              "output": "ERROR User not found"
+            },
+            {
+              "input": "999",
+              "output": "ERROR User not found"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS085P",
+          "questionId": "ADVJS085P",
+          "title": "Promise Even or Odd",
+          "difficulty": "Easy",
+          "description": "Use a Promise to resolve even numbers and reject odd numbers.",
+          "problemStatement": "Read an integer and asynchronously resolve '<n> is even' or reject '<n> is odd'.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One integer.",
+          "outputFormat": "Print the resolved/rejected message.",
+          "sampleTestCases": [
+            {
+              "input": "8",
+              "output": "8 is even",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "0",
+              "output": "0 is even"
+            },
+            {
+              "input": "7",
+              "output": "7 is odd"
+            },
+            {
+              "input": "-4",
+              "output": "-4 is even"
+            },
+            {
+              "input": "-9",
+              "output": "-9 is odd"
+            },
+            {
+              "input": "100",
+              "output": "100 is even"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS085Q",
+          "questionId": "ADVJS085Q",
+          "title": "Promise Chain Order Processing",
+          "difficulty": "Easy",
+          "description": "Chain order, payment, and shipping operations with Promises.",
+          "problemStatement": "Read a customer name and produce one final message through three .then() steps.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line name.",
+          "outputFormat": "Print Order for <name> placed -> Payment processed -> Order shipped.",
+          "sampleTestCases": [
+            {
+              "input": "Alice",
+              "output": "Order for Alice placed -> Payment processed -> Order shipped",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Bob",
+              "output": "Order for Bob placed -> Payment processed -> Order shipped"
+            },
+            {
+              "input": "SEED",
+              "output": "Order for SEED placed -> Payment processed -> Order shipped"
+            },
+            {
+              "input": "Ravi",
+              "output": "Order for Ravi placed -> Payment processed -> Order shipped"
+            },
+            {
+              "input": "User1",
+              "output": "Order for User1 placed -> Payment processed -> Order shipped"
+            },
+            {
+              "input": "Demo",
+              "output": "Order for Demo placed -> Payment processed -> Order shipped"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS085R",
+          "questionId": "ADVJS085R",
+          "title": "Promise Sandwich Chain",
+          "difficulty": "Easy",
+          "description": "Chain Promise-returning sandwich preparation steps.",
+          "problemStatement": "Read a starting bread message and append filling and serving messages through a Promise chain.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line.",
+          "outputFormat": "Print the final sandwich message.",
+          "sampleTestCases": [
+            {
+              "input": "Bread ready",
+              "output": "Bread ready -> Filling added -> Sandwich served",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Whole wheat",
+              "output": "Whole wheat -> Filling added -> Sandwich served"
+            },
+            {
+              "input": "Toast",
+              "output": "Toast -> Filling added -> Sandwich served"
+            },
+            {
+              "input": "Roti",
+              "output": "Roti -> Filling added -> Sandwich served"
+            },
+            {
+              "input": "Bun",
+              "output": "Bun -> Filling added -> Sandwich served"
+            },
+            {
+              "input": "Multigrain",
+              "output": "Multigrain -> Filling added -> Sandwich served"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS081A",
+          "questionId": "ADVJS081A",
+          "title": "Promise.all() Success Check",
+          "difficulty": "Easy",
+          "description": "Use Promise.all() to test whether every operation succeeds.",
+          "problemStatement": "Read three 0/1 flags. Resolve three Promises accordingly and print whether all succeeded.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line with three flags.",
+          "outputFormat": "Print ALL_SUCCESS or ALL_FAILED.",
+          "sampleTestCases": [
+            {
+              "input": "1 1 1",
+              "output": "ALL_SUCCESS",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1 0 1",
+              "output": "ALL_FAILED"
+            },
+            {
+              "input": "0 1 1",
+              "output": "ALL_FAILED"
+            },
+            {
+              "input": "1 1 0",
+              "output": "ALL_FAILED"
+            },
+            {
+              "input": "0 0 0",
+              "output": "ALL_FAILED"
+            },
+            {
+              "input": "1 1 1",
+              "output": "ALL_SUCCESS"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS081B",
+          "questionId": "ADVJS081B",
+          "title": "Promise.all() Image Loads",
+          "difficulty": "Easy",
+          "description": "Use Promise.all() to load multiple simulated images concurrently.",
+          "problemStatement": "Read N image labels and resolve one Promise per label. Print all loaded messages in input order.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "First line N; second line N labels.",
+          "outputFormat": "Print '<label> loaded' for each label.",
+          "sampleTestCases": [
+            {
+              "input": "3\nImage1 Image2 Image3",
+              "output": "Image1 loaded\nImage2 loaded\nImage3 loaded",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A loaded"
+            },
+            {
+              "input": "2\nA B",
+              "output": "A loaded\nB loaded"
+            },
+            {
+              "input": "4\nimg1 img2 img3 img4",
+              "output": "img1 loaded\nimg2 loaded\nimg3 loaded\nimg4 loaded"
+            },
+            {
+              "input": "3\nx y z",
+              "output": "x loaded\ny loaded\nz loaded"
+            },
+            {
+              "input": "5\na b c d e",
+              "output": "a loaded\nb loaded\nc loaded\nd loaded\ne loaded"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS085C",
+          "questionId": "ADVJS085C",
+          "title": "Promise.allSettled() Statuses",
+          "difficulty": "Easy",
+          "description": "Use Promise.allSettled() to inspect fulfilled and rejected operations.",
+          "problemStatement": "Read three 0/1 flags and report the settled status for each Promise.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line with three flags.",
+          "outputFormat": "Print 1: FULFILLED/REJECTED through 3.",
+          "sampleTestCases": [
+            {
+              "input": "1 0 1",
+              "output": "1: FULFILLED\n2: REJECTED\n3: FULFILLED",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "0 0 0",
+              "output": "1: REJECTED\n2: REJECTED\n3: REJECTED"
+            },
+            {
+              "input": "1 1 1",
+              "output": "1: FULFILLED\n2: FULFILLED\n3: FULFILLED"
+            },
+            {
+              "input": "0 1 0",
+              "output": "1: REJECTED\n2: FULFILLED\n3: REJECTED"
+            },
+            {
+              "input": "1 0 0",
+              "output": "1: FULFILLED\n2: REJECTED\n3: REJECTED"
+            },
+            {
+              "input": "0 1 1",
+              "output": "1: REJECTED\n2: FULFILLED\n3: FULFILLED"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS085D",
+          "questionId": "ADVJS085D",
+          "title": "Order Delivery with allSettled",
+          "difficulty": "Easy",
+          "description": "Track multiple delivery Promises without stopping on a failure.",
+          "problemStatement": "Read N delivery flags and use Promise.allSettled() to print each order's status.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "First line N; second line N flags.",
+          "outputFormat": "Print Order i: Delivered or Failed.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 0 1",
+              "output": "Order 1: Delivered\nOrder 2: Failed\nOrder 3: Delivered",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\n1",
+              "output": "Order 1: Delivered"
+            },
+            {
+              "input": "2\n0 0",
+              "output": "Order 1: Failed\nOrder 2: Failed"
+            },
+            {
+              "input": "4\n1 1 0 1",
+              "output": "Order 1: Delivered\nOrder 2: Delivered\nOrder 3: Failed\nOrder 4: Delivered"
+            },
+            {
+              "input": "5\n0 1 0 1 1",
+              "output": "Order 1: Failed\nOrder 2: Delivered\nOrder 3: Failed\nOrder 4: Delivered\nOrder 5: Delivered"
+            },
+            {
+              "input": "3\n0 1 0",
+              "output": "Order 1: Failed\nOrder 2: Delivered\nOrder 3: Failed"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS081C",
+          "questionId": "ADVJS081C",
+          "title": "Promise.race() Winner",
+          "difficulty": "Easy",
+          "description": "Determine which scheduled event settles first.",
+          "problemStatement": "Read delays for A, B, and C; the smallest delay wins and ties use input order.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line: dA dB dC.",
+          "outputFormat": "Print WINNER: A/B/C.",
+          "sampleTestCases": [
+            {
+              "input": "20 10 15",
+              "output": "WINNER: B",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "0 5 5",
+              "output": "WINNER: A"
+            },
+            {
+              "input": "5 0 1",
+              "output": "WINNER: B"
+            },
+            {
+              "input": "3 7 1",
+              "output": "WINNER: C"
+            },
+            {
+              "input": "4 4 4",
+              "output": "WINNER: A"
+            },
+            {
+              "input": "10 2 8",
+              "output": "WINNER: B"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS085I",
+          "questionId": "ADVJS085I",
+          "title": "Traffic Light Race",
+          "difficulty": "Easy",
+          "description": "Use Promise.race() to compare traffic-light delays with a power failure.",
+          "problemStatement": "Read Red, Yellow, Green, and failure delays. The smallest delay wins; failure wins ties.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line with four delays.",
+          "outputFormat": "Print First signal: <color> or Error: Power failure!.",
+          "sampleTestCases": [
+            {
+              "input": "3 2 1 15",
+              "output": "First signal: Green",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "10 8 6 5",
+              "output": "Error: Power failure!"
+            },
+            {
+              "input": "3 2 1 0",
+              "output": "Error: Power failure!"
+            },
+            {
+              "input": "1 5 9 10",
+              "output": "First signal: Red"
+            },
+            {
+              "input": "4 2 3 7",
+              "output": "First signal: Yellow"
+            },
+            {
+              "input": "5 2 1 3",
+              "output": "First signal: Green"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS085M",
+          "questionId": "ADVJS085M",
+          "title": "Promise.any() First Success",
+          "difficulty": "Easy",
+          "description": "Choose the first successful API response while ignoring failed attempts.",
+          "problemStatement": "Read three success/delay pairs. Among successful attempts, select the smallest delay; if none succeeds, print NO_SUCCESS.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line: s1 d1 s2 d2 s3 d3.",
+          "outputFormat": "Print FIRST_SUCCESS: API1/API2/API3 or NO_SUCCESS.",
+          "sampleTestCases": [
+            {
+              "input": "0 3 1 5 1 10",
+              "output": "FIRST_SUCCESS: API2",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1 9 0 2 0 1",
+              "output": "FIRST_SUCCESS: API1"
+            },
+            {
+              "input": "0 3 0 4 1 5",
+              "output": "FIRST_SUCCESS: API3"
+            },
+            {
+              "input": "1 4 1 4 0 1",
+              "output": "FIRST_SUCCESS: API1"
+            },
+            {
+              "input": "0 1 0 2 0 3",
+              "output": "NO_SUCCESS"
+            },
+            {
+              "input": "1 7 1 2 1 9",
+              "output": "FIRST_SUCCESS: API2"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS085N",
+          "questionId": "ADVJS085N",
+          "title": "Fastest Successful Image",
+          "difficulty": "Easy",
+          "description": "Use Promise.any() semantics to select the first image that loads successfully.",
+          "problemStatement": "Read three image name/success/delay records and choose the successful image with the smallest delay.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "Three lines: name successFlag delay.",
+          "outputFormat": "Print IMAGE: <name> or NO_IMAGES.",
+          "sampleTestCases": [
+            {
+              "input": "imgA 0 5\nimgB 1 8\nimgC 1 3",
+              "output": "IMAGE: imgC",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "a 1 5\nb 0 1\nc 0 2",
+              "output": "IMAGE: a"
+            },
+            {
+              "input": "a 0 1\nb 1 7\nc 1 8",
+              "output": "IMAGE: b"
+            },
+            {
+              "input": "a 0 1\nb 0 2\nc 0 3",
+              "output": "NO_IMAGES"
+            },
+            {
+              "input": "x 1 4\ny 1 4\nz 1 1",
+              "output": "IMAGE: z"
+            },
+            {
+              "input": "p 1 9\nq 1 2\nr 0 1",
+              "output": "IMAGE: q"
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "advanced-javascript.json",
+      "_moduleTitle": "Asynchronous Javascript"
+    },
+    {
+      "topicId": "t04-async-await",
+      "title": "Async/Await",
+      "description": "Use async/await to express Promise-based asynchronous workflows in clear, sequential-looking code.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 35,
+      "pages": [
+        {
+          "pageId": "p-ADVJS072J",
+          "title": "Promise chaining with then()",
+          "content": "In our previous sessions, we learned about Promises and how `.then()` and `.catch()` help handle asynchronous operations, with `setTimeout` simulating async tasks.\nBefore diving into `async/await`, it’s important to understand **Promise chaining with .then()**.\n\n`.then()` handles a **resolved promise**, but what if you need to perform another async operation immediately after? \\\n**For example**, fetching a user’s ID and then using it to fetch their posts. The key is that `.then()` returns a new promise, allowing you to chain multiple `.then() calls`.\n\n**Let's first visulaize JavaScript Promise Chaining**\n\n\n**For now let's jump into the code and see how this works with a real-world API call**. \\\n**Let's first understand how fetch API using `.then()` chaining**\n```javascript\nfunction getUserPost() {\n    fetch('https://jsonplaceholder.typicode.com/posts/1')\n        .then(response => response.json())\n        .then(post => {\n            console.log('Post:', post);\n            // Now fetch the user who wrote the post\n            return fetch(`https://jsonplaceholder.typicode.com/users/${post.userId}`);\n        })\n        .then(response => response.json())\n        .then(user => {\n            console.log('User:', user);\n        })\n        .catch(error => {\n            console.error('An error occurred:', error);\n        });\n}\n\ngetUserPost();\n```\nA function `getUserPost()` that fetches a post from an API and then fetches the user who wrote that post. The current implementation uses `.then()` chaining, now this code can be written in more clear format.\n\n**To make code more readable and clean **async-await** came in picture:**\n```javascript\nasync function getUserPost() {\n    try {\n        // First, get the post\n        const postResponse = await fetch('https://jsonplaceholder.typicode.com/posts/1');\n        const post = await postResponse.json();\n        console.log('Post:', post);\n\n        // Then, use the post's userId to get the user\n        const userResponse = await fetch(`https://jsonplaceholder.typicode.com/users/${post.userId}`);\n        const user = await userResponse.json();\n        console.log('User:', user);\n\n    } catch (error) {\n        console.error('An error occurred:', error);\n    }\n}\n\n// Call the function to see the result\ngetUserPost();\n```\nAs you can see here the code is more clear, readable and easy to understand using `async-await` \\\nwe'll explore `async-await` in depth next..",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "await pauses execution of the surrounding async function until the Promise settles, while the JavaScript event loop can continue other work."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "const prices = [40, 50, 60];\nconst total = prices\n  .map(x => x * 1.1)\n  .filter(x => x >= 50)\n  .reduce((sum, x) => sum + x, 0);\nconsole.log(total.toFixed(2));"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ADVJS072J",
+            "question": "What does await do inside an async function?",
+            "options": [
+              "It pauses that function until the awaited Promise settles",
+              "It blocks the JavaScript process permanently",
+              "It converts a Promise into a synchronous file read",
+              "It makes all code run in parallel"
+            ],
+            "correctAnswer": 0,
+            "explanation": "await pauses execution of the surrounding async function until the Promise settles, while the JavaScript event loop can continue other work."
+          }
+        },
+        {
+          "pageId": "p-ADVJS086",
+          "title": "Async - Await",
+          "content": "Previously, we learned how Promises rescued us from \"Callback Hell.\" While a big improvement, chaining multiple `.then()` blocks for sequential asynchronous tasks can still become cumbersome.\n\nThe Problem with `.then()` Chains:\n\n```javascript\nfetch('https://api.example.com/data')\n    .then(response => {\n        return response.json();\n    })\n    .then(data => {\n        console.log(data);\n    })\n    .catch(error => {\n        console.error('Something went wrong:', error);\n    });\n```\n\nThis is where `async/await` comes in. It's a modern feature built on Promises that lets us write asynchronous code that looks and reads like synchronous code, making it far cleaner and more intuitive.\n#### What is Async/Await?\n`Async/await` is essentially \"syntactic sugar\" over Promises. It provides a way to write asynchronous code that looks and behaves more like synchronous code, making it easier to read and understand.\n\nIt's composed of two keywords: `async` and `await`.\n\n*   **`async`**: When you place the `async` keyword before a function declaration, it turns that function into an *asynchronous function*. An async function always returns a Promise. If the function returns a value, the Promise will be resolved with that value. If the function throws an error, the Promise will be rejected.\n\n*   **`await`**: The `await` keyword can only be used *inside* an `async` function. It tells JavaScript to pause the execution of the function until the Promise is settled (either resolved or rejected).\n\n#### Syntax\nThe syntax is straightforward.\n\n**`async` function declaration:**\n\n```javascript\nasync function myAsyncFunction() {\n  // Asynchronous code here\n}\n```\n\n**Using `await` inside an `async` function:**\n\n```javascript\nasync function myAsyncFunction() {\n  let result = await someFunctionThatReturnsAPromise();\n  console.log(result);\n}\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "await pauses execution of the surrounding async function until the Promise settles, while the JavaScript event loop can continue other work."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+          }
+        },
+        {
+          "pageId": "p-ADVJS087",
+          "title": "The await Keyword",
+          "content": "Where can the `await` keyword be legally used?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "await pauses execution of the surrounding async function until the Promise settles, while the JavaScript event loop can continue other work."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+          }
+        },
+        {
+          "pageId": "p-ADVJS087A",
+          "title": "The await Keyword",
+          "content": "Predict the output\n```js\nasync function fetchNumber() {\n    return 42;\n}\n\nasync function main() {\n    console.log(\"Start\");\n\n    const result = await fetchNumber();\n\n    console.log(\"Number:\", result);\n    console.log(\"End\");\n}\n\nmain();\nconsole.log(\"After main call\");\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key Takeaway",
+            "text": "await pauses execution of the surrounding async function until the Promise settles, while the JavaScript event loop can continue other work."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-ADVJS072J-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Promise chaining with then() (JavaScript)",
+          "code": "const prices = [40, 50, 60];\nconst total = prices\n  .map(x => x * 1.1)\n  .filter(x => x >= 50)\n  .reduce((sum, x) => sum + x, 0);\nconsole.log(total.toFixed(2));"
+        },
+        {
+          "exampleId": "ex-ADVJS086-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Async - Await (JavaScript)",
+          "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+        },
+        {
+          "exampleId": "ex-ADVJS087-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "The await Keyword (JavaScript)",
+          "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+        },
+        {
+          "exampleId": "ex-ADVJS087-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "The await Keyword (JavaScript)",
+          "code": "async function main() {\n  const value = await Promise.resolve(\"Done\");\n  console.log(value);\n}\nmain();"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "ADVJS086A",
+          "questionId": "ADVJS086A",
+          "title": "Async/Await Greeting",
+          "difficulty": "Easy",
+          "description": "Replace a simple Promise chain with async/await.",
+          "problemStatement": "Read a name and await a Promise that resolves to a greeting.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line name.",
+          "outputFormat": "Print Hello, <name>.",
+          "sampleTestCases": [
+            {
+              "input": "Alice",
+              "output": "Hello, Alice",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Bob",
+              "output": "Hello, Bob"
+            },
+            {
+              "input": "SEED",
+              "output": "Hello, SEED"
+            },
+            {
+              "input": "Ravi",
+              "output": "Hello, Ravi"
+            },
+            {
+              "input": "Async",
+              "output": "Hello, Async"
+            },
+            {
+              "input": "World",
+              "output": "Hello, World"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS086B",
+          "questionId": "ADVJS086B",
+          "title": "Async Single Post",
+          "difficulty": "Easy",
+          "description": "Use an async function and await a simulated API response.",
+          "problemStatement": "Read a post title, await a Promise returning it, and print the title.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "One line title.",
+          "outputFormat": "Print Post Title: <title>.",
+          "sampleTestCases": [
+            {
+              "input": "Hello JavaScript",
+              "output": "Post Title: Hello JavaScript",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Async Basics",
+              "output": "Post Title: Async Basics"
+            },
+            {
+              "input": "Promises",
+              "output": "Post Title: Promises"
+            },
+            {
+              "input": "Event Loop",
+              "output": "Post Title: Event Loop"
+            },
+            {
+              "input": "Node.js",
+              "output": "Post Title: Node.js"
+            },
+            {
+              "input": "Advanced JS",
+              "output": "Post Title: Advanced JS"
+            }
+          ]
+        },
+        {
+          "problemId": "ADVJS086C",
+          "questionId": "ADVJS086C",
+          "title": "Convert Promise Chain to Async/Await",
+          "difficulty": "Easy",
+          "description": "Use async/await to perform two dependent operations sequentially.",
+          "problemStatement": "Read user and post values. Await the user operation first, then await the post operation and print both.",
+          "constraints": "- Inputs are valid and within JavaScript safe integer range.",
+          "inputFormat": "Two lines: user name and post title.",
+          "outputFormat": "Print USER <name> and POST <title>.",
+          "sampleTestCases": [
+            {
+              "input": "Alice\nHello World",
+              "output": "USER Alice\nPOST Hello World",
+              "explanation": "The sample demonstrates the required JavaScript concept."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }\n",
+            "C++": "#include <iostream>\nint main() { return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "def main():\n    pass\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8');\n// Implement the JavaScript solution here.\nvoid input;\n",
+            "Go": "package main\nfunc main() {}\n",
+            "Rust": "fn main() {}\n",
+            "C#": "using System;\nclass Program { static void Main() { } }\n",
+            "SQL": "-- JavaScript-focused exercise; no SQL solution is required.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Bob\nIntro",
+              "output": "USER Bob\nPOST Intro"
+            },
+            {
+              "input": "Ravi\nPromises",
+              "output": "USER Ravi\nPOST Promises"
+            },
+            {
+              "input": "SEED\nAsync JS",
+              "output": "USER SEED\nPOST Async JS"
+            },
+            {
+              "input": "User1\nCallbacks",
+              "output": "USER User1\nPOST Callbacks"
+            },
+            {
+              "input": "Admin\nEvent Loop",
+              "output": "USER Admin\nPOST Event Loop"
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "advanced-javascript.json",
+      "_moduleTitle": "Asynchronous Javascript"
+    }
+  ]
+}

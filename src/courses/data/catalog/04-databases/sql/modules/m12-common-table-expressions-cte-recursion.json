@@ -1,0 +1,449 @@
+{
+  "moduleId": "m12-common-table-expressions-cte-recursion",
+  "title": "Common Table Expressions (CTE) & Recursion",
+  "description": "Non-recursive CTEs with WITH clause, multiple CTEs, recursive CTEs for hierarchical organizational trees and graph querying.",
+  "estimatedHours": 4.5,
+  "topics": [
+    {
+      "topicId": "t01-common-table-expressions-ctes",
+      "title": "Common Table Expressions (CTEs)",
+      "description": "Build readable multi-step queries with named intermediate results.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 35,
+      "lessonMarkdown": "## CTEs as query-building blocks\n\nCTEs let you write a query as a sequence of named transformations.\n\n```sql\nWITH regional_sales AS (\n  SELECT region, SUM(amount) AS revenue\n  FROM sales\n  GROUP BY region\n)\nSELECT region, revenue\nFROM regional_sales\nWHERE revenue > 1500;\n```\n\nFor advanced tasks, think of each CTE as a small, testable intermediate result.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "## CTEs as query-building blocks\n\nCTEs let you write a query as a sequence of named transformations.\n\n```sql\nWITH regional_sales AS (\n  SELECT region, SUM(amount) AS revenue\n  FROM sales\n  GROUP BY region\n)\nSELECT region, revenue\nFROM regional_sales\nWHERE revenue > 1500;\n```\n\nFor advanced tasks, think of each CTE as a small, testable intermediate result."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE sales (sale_id INTEGER PRIMARY KEY, salesperson TEXT, region TEXT, amount REAL);",
+        "seedSql": "INSERT INTO sales VALUES (1,'Asha','South',1000),(2,'Ben','North',800),(3,'Asha','South',1200),(4,'Cara','West',1500),(5,'Ben','North',900),(6,'Dev','South',700);",
+        "defaultTable": "sales",
+        "defaultQuery": "SELECT * FROM sales ORDER BY sale_id;",
+        "tasks": [
+          {
+            "taskId": "sql-m8-cte-1",
+            "instruction": "Create a CTE that calculates total sales per region, then return the result.",
+            "expectedQuery": "WITH regional_sales AS (SELECT region, SUM(amount) AS revenue FROM sales GROUP BY region) SELECT region, revenue FROM regional_sales ORDER BY region;",
+            "solution": "WITH regional_sales AS (SELECT region, SUM(amount) AS revenue FROM sales GROUP BY region) SELECT region, revenue FROM regional_sales ORDER BY region;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "CTE",
+              "GROUP BY"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "region",
+                "revenue"
+              ],
+              "rows": [
+                [
+                  "North",
+                  1700
+                ],
+                [
+                  "South",
+                  2900
+                ],
+                [
+                  "West",
+                  1500
+                ]
+              ],
+              "rowCount": 3
+            }
+          },
+          {
+            "taskId": "sql-m8-cte-2",
+            "instruction": "Using a CTE, list regions whose revenue exceeds 1500.",
+            "expectedQuery": "WITH regional_sales AS (SELECT region, SUM(amount) AS revenue FROM sales GROUP BY region) SELECT region, revenue FROM regional_sales WHERE revenue > 1500 ORDER BY region;",
+            "solution": "WITH regional_sales AS (SELECT region, SUM(amount) AS revenue FROM sales GROUP BY region) SELECT region, revenue FROM regional_sales WHERE revenue > 1500 ORDER BY region;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "CTE"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "region",
+                "revenue"
+              ],
+              "rows": [
+                [
+                  "North",
+                  1700
+                ],
+                [
+                  "South",
+                  2900
+                ]
+              ],
+              "rowCount": 2
+            }
+          },
+          {
+            "taskId": "sql-m8-cte-3",
+            "instruction": "Use a CTE to calculate each salesperson total and return totals descending.",
+            "expectedQuery": "WITH person_sales AS (SELECT salesperson, SUM(amount) AS total_sales FROM sales GROUP BY salesperson) SELECT salesperson, total_sales FROM person_sales ORDER BY total_sales DESC, salesperson;",
+            "solution": "WITH person_sales AS (SELECT salesperson, SUM(amount) AS total_sales FROM sales GROUP BY salesperson) SELECT salesperson, total_sales FROM person_sales ORDER BY total_sales DESC, salesperson;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "CTE",
+              "aggregation"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "salesperson",
+                "total_sales"
+              ],
+              "rows": [
+                [
+                  "Asha",
+                  2200
+                ],
+                [
+                  "Ben",
+                  1700
+                ],
+                [
+                  "Cara",
+                  1500
+                ],
+                [
+                  "Dev",
+                  700
+                ]
+              ],
+              "rowCount": 4
+            }
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m8-cte-ch1",
+            "instruction": "Use two CTEs to calculate salesperson totals and then compare each salesperson with the overall average salesperson total.",
+            "expectedQuery": "WITH person_sales AS (SELECT salesperson, SUM(amount) AS total_sales FROM sales GROUP BY salesperson), avg_sales AS (SELECT AVG(total_sales) AS avg_total FROM person_sales) SELECT p.salesperson, p.total_sales FROM person_sales p CROSS JOIN avg_sales a WHERE p.total_sales > a.avg_total ORDER BY p.total_sales DESC;",
+            "solution": "WITH person_sales AS (SELECT salesperson, SUM(amount) AS total_sales FROM sales GROUP BY salesperson), avg_sales AS (SELECT AVG(total_sales) AS avg_total FROM person_sales) SELECT p.salesperson, p.total_sales FROM person_sales p CROSS JOIN avg_sales a WHERE p.total_sales > a.avg_total ORDER BY p.total_sales DESC;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "CTE",
+              "CROSS JOIN"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "salesperson",
+                "total_sales"
+              ],
+              "rows": [
+                [
+                  "Asha",
+                  2200
+                ],
+                [
+                  "Ben",
+                  1700
+                ]
+              ],
+              "rowCount": 2
+            }
+          },
+          {
+            "taskId": "sql-m8-cte-ch2",
+            "instruction": "Return the top region by revenue using a CTE.",
+            "expectedQuery": "WITH regional_sales AS (SELECT region, SUM(amount) AS revenue FROM sales GROUP BY region) SELECT region, revenue FROM regional_sales ORDER BY revenue DESC, region LIMIT 1;",
+            "solution": "WITH regional_sales AS (SELECT region, SUM(amount) AS revenue FROM sales GROUP BY region) SELECT region, revenue FROM regional_sales ORDER BY revenue DESC, region LIMIT 1;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "CTE",
+              "ORDER BY",
+              "LIMIT"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "region",
+                "revenue"
+              ],
+              "rows": [
+                [
+                  "South",
+                  2900
+                ]
+              ],
+              "rowCount": 1
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Build one and multiple CTEs",
+        "Use CTEs with aggregate results",
+        "Separate query stages clearly"
+      ],
+      "commonMistakes": [
+        "Treating a CTE as a permanent table",
+        "Referencing a CTE before it is defined",
+        "Packing too many unrelated steps into one CTE"
+      ],
+      "cheatSheet": [
+        "WITH cte_name AS (...) SELECT ...",
+        "Multiple CTEs: WITH a AS (...), b AS (...)"
+      ],
+      "reflectionQuestions": [
+        "What does a CTE name represent?",
+        "When is an intermediate step useful?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m8-cte-ex1",
+          "title": "One-step CTE",
+          "task": "Name an aggregation result before filtering it.",
+          "query": "WITH regional_sales AS (SELECT region, SUM(amount) AS revenue FROM sales GROUP BY region) SELECT * FROM regional_sales;",
+          "result": {
+            "columns": [
+              "region",
+              "revenue"
+            ],
+            "rows": [
+              [
+                "North",
+                1700
+              ],
+              [
+                "South",
+                2900
+              ],
+              [
+                "West",
+                1500
+              ]
+            ],
+            "rowCount": 3
+          },
+          "explanation": "The CTE makes the intermediate table explicit.",
+          "walkthrough": [
+            "Aggregate.",
+            "Name result.",
+            "Query the named result."
+          ]
+        },
+        {
+          "exampleId": "sql-m8-cte-ex2",
+          "title": "Two-step CTE",
+          "task": "Build an intermediate metric and reuse it.",
+          "query": "WITH person_sales AS (SELECT salesperson, SUM(amount) AS total_sales FROM sales GROUP BY salesperson) SELECT salesperson, total_sales FROM person_sales WHERE total_sales > 1500 ORDER BY total_sales DESC;",
+          "result": {
+            "columns": [
+              "salesperson",
+              "total_sales"
+            ],
+            "rows": [
+              [
+                "Asha",
+                2200
+              ],
+              [
+                "Ben",
+                1700
+              ]
+            ],
+            "rowCount": 2
+          },
+          "explanation": "The outer query reads like a second analytical step.",
+          "walkthrough": [
+            "Create metric.",
+            "Filter metric.",
+            "Sort result."
+          ]
+        },
+        {
+          "exampleId": "sql-m8-cte-ex3",
+          "title": "CTE + ranking idea",
+          "task": "Prepare a clean aggregate before applying a limit.",
+          "query": "WITH person_sales AS (SELECT salesperson, SUM(amount) AS total_sales FROM sales GROUP BY salesperson) SELECT salesperson, total_sales FROM person_sales ORDER BY total_sales DESC LIMIT 2;",
+          "result": {
+            "columns": [
+              "salesperson",
+              "total_sales"
+            ],
+            "rows": [
+              [
+                "Asha",
+                2200
+              ],
+              [
+                "Ben",
+                1700
+              ]
+            ],
+            "rowCount": 2
+          },
+          "explanation": "CTEs are useful preparation layers for advanced queries.",
+          "walkthrough": [
+            "Aggregate first.",
+            "Sort second.",
+            "Limit last."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Create a sales-performance report using multiple analytical stages.",
+      "pages": [
+        {
+          "pageId": "sql-m8-t2-p1",
+          "title": "Understand the idea",
+          "content": "A Common Table Expression (CTE) gives a name to an intermediate query result for the duration of one statement. It can make multi-step analytics easier to read and reuse.\n\n```sql\nWITH regional_sales AS (\n  SELECT region, SUM(amount) AS revenue\n  FROM sales\n  GROUP BY region\n)\nSELECT * FROM regional_sales\nWHERE revenue > 1500;\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "WITH introduces one or more named CTEs."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT * FROM sales ORDER BY sale_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t2-p1",
+            "question": "Which keyword starts a common table expression?",
+            "options": [
+              "WITH",
+              "TEMP",
+              "VIEW",
+              "USING"
+            ],
+            "correctAnswer": 0,
+            "explanation": "WITH introduces one or more named CTEs."
+          }
+        },
+        {
+          "pageId": "sql-m8-t2-p2",
+          "title": "Worked reasoning",
+          "content": "A CTE is part of one SQL statement; it is not automatically a permanent table.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "WITH introduces one or more named CTEs."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "WITH regional_sales AS (SELECT region, SUM(amount) revenue FROM sales GROUP BY region) SELECT * FROM regional_sales ORDER BY region;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t2-p2",
+            "question": "Can a CTE be referenced later in the same statement?",
+            "options": [
+              "Yes",
+              "No",
+              "Only in INSERT",
+              "Only in SQLite 2"
+            ],
+            "correctAnswer": 0,
+            "explanation": "WITH introduces one or more named CTEs."
+          }
+        },
+        {
+          "pageId": "sql-m8-t2-p3",
+          "title": "Predict before you run",
+          "content": "A CTE can be referenced by the statement sections that follow it.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "WITH introduces one or more named CTEs."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "Why use a CTE instead of nesting everything in one huge subquery?"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t2-p3",
+            "question": [
+              "To improve readability and structure",
+              "To permanently store data",
+              "To replace a database",
+              "To create an index automatically"
+            ],
+            "options": 0,
+            "correctAnswer": "CTEs are primarily a query-organization tool.",
+            "explanation": "WITH introduces one or more named CTEs."
+          }
+        },
+        {
+          "pageId": "sql-m8-t2-p4",
+          "title": "Debugging checklist",
+          "content": "Avoid using a CTE when a simple expression is clearer.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "WITH introduces one or more named CTEs."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "WITH name AS (SELECT ...) SELECT ...\nMultiple CTEs: WITH a AS (...), b AS (...) SELECT ..."
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t2-p4",
+            "question": [
+              "When does a CTE improve readability?",
+              "How could two CTEs represent two analytical steps?"
+            ],
+            "options": "Name each transformation step after what it represents.",
+            "correctAnswer": "## CTEs as query-building blocks\n\nCTEs let you write a query as a sequence of named transformations.\n\n```sql\nWITH regional_sales AS (\n  SELECT region, SUM(amount) AS revenue\n  FROM sales\n  GROUP BY region\n)\nSELECT region, revenue\nFROM regional_sales\nWHERE revenue > 1500;\n```\n\nFor advanced tasks, think of each CTE as a small, testable intermediate result.",
+            "explanation": "WITH introduces one or more named CTEs."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m8-cte-ex1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "One-step CTE",
+          "code": "WITH regional_sales AS (SELECT region, SUM(amount) AS revenue FROM sales GROUP BY region) SELECT * FROM regional_sales;"
+        },
+        {
+          "exampleId": "sql-m8-cte-ex2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Two-step CTE",
+          "code": "WITH person_sales AS (SELECT salesperson, SUM(amount) AS total_sales FROM sales GROUP BY salesperson) SELECT salesperson, total_sales FROM person_sales WHERE total_sales > 1500 ORDER BY total_sales DESC;"
+        },
+        {
+          "exampleId": "sql-m8-cte-ex3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "CTE + ranking idea",
+          "code": "WITH person_sales AS (SELECT salesperson, SUM(amount) AS total_sales FROM sales GROUP BY salesperson) SELECT salesperson, total_sales FROM person_sales ORDER BY total_sales DESC LIMIT 2;"
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Debug",
+        "Submit",
+        "Reflect"
+      ],
+      "scenario": "Sales analytics",
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 8: Advanced Querying & Set Logic",
+      "practiceProblems": []
+    }
+  ]
+}

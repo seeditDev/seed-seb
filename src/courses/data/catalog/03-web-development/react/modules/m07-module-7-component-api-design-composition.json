@@ -1,0 +1,60 @@
+{
+  "moduleId": "m07-module-7-component-api-design-composition",
+  "title": "Module 7: Component API Design & Composition",
+  "description": "Core concepts and hands-on practice in Module 7: Component API Design & Composition.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-7-1-compound-components-with-children",
+      "title": "7.1 Compound Components with Children",
+      "description": "Build flexible dialog cards and shells using the children prop pattern.",
+      "mode": "REACT_INTERACTIVE",
+      "readingTimeMinutes": 15,
+      "lessonMarkdown": "# 7.1 Compound Components with Children\n\n## What is composition?\n\nAs an application grows, you can either build one giant component with many flags:\n\n```jsx\n<Dialog\n  showTitle={true}\n  showFooter={true}\n  footerType=\"confirm\"\n  showIcon={false}\n  ...\n/>\n```\n\nor let the caller compose the inside:\n\n```jsx\n<ModalCard title=\"Confirmation Dialog\">\n  <p>Are you sure?</p>\n  <button>Confirm</button>\n</ModalCard>\n```\n\nComposition usually makes reusable UI easier to understand.\n\n---\n\n## 1. The `children` prop\n\nWhen you place JSX between the opening and closing tags of a component:\n\n```jsx\n<Card>\n  <p>Hello</p>\n</Card>\n```\n\nReact provides that nested JSX to the `Card` component as `children`.\n\n```jsx\nfunction Card({ children }) {\n  return (\n    <section>\n      {children}\n    </section>\n  );\n}\n```\n\nThe result is:\n\n```text\nCard\n └── children\n      └── <p>Hello</p>\n```\n\n---\n\n## 2. Why children are powerful\n\nWithout `children`, a card might need:\n\n```jsx\n<Card\n  title=\"Profile\"\n  body=\"...\"\n  footer=\"...\"\n/>\n```\n\nWith composition:\n\n```jsx\n<Card title=\"Profile\">\n  <ProfileDetails />\n  <ProfileActions />\n</Card>\n```\n\nThe caller controls the content.\n\nThe reusable container controls the outer layout.\n\n---\n\n## 3. Passing ordinary props and children together\n\n```jsx\nfunction Panel({ title, children }) {\n  return (\n    <section>\n      <h2>{title}</h2>\n      <div>{children}</div>\n    </section>\n  );\n}\n```\n\nUse:\n\n```jsx\n<Panel title=\"Settings\">\n  <p>Choose your preferences.</p>\n</Panel>\n```\n\n---\n\n## 4. Reusable modal shell\n\n```jsx\nfunction ModalCard({ title, children, onClose }) {\n  return (\n    <div className=\"modal\">\n      <h2>{title}</h2>\n\n      <div className=\"modal-content\">\n        {children}\n      </div>\n\n      <button onClick={onClose}>\n        Close\n      </button>\n    </div>\n  );\n}\n```\n\nThe component owns the shell.\n\nThe caller owns the message/buttons/content.\n\n---\n\n## 5. \"Compound components\" vs composition\n\nComposition is the broader idea.\n\nCompound components are a pattern where multiple components work together:\n\n```jsx\n<Card>\n  <Card.Header />\n  <Card.Body />\n  <Card.Footer />\n</Card>\n```\n\nThe exact implementation can use `children`, context, or both.\n\nStart with the simple version first:\n\n```jsx\nfunction Card({ children }) {\n  return <div>{children}</div>;\n}\n```\n\n---\n\n## 6. Children can be anything React can render\n\nExamples:\n\n```jsx\n<Card>Text</Card>\n```\n\n```jsx\n<Card>\n  <p>Paragraph</p>\n</Card>\n```\n\n```jsx\n<Card>\n  <ProductList />\n</Card>\n```\n\n```jsx\n<Card>\n  <>\n    <p>One</p>\n    <p>Two</p>\n  </>\n</Card>\n```\n\n---\n\n## 7. Keep the container focused\n\nA good reusable modal should generally care about:\n\n- shell layout\n- title placement\n- content region\n- closing action\n- accessibility concerns\n\nIt should not need to know the exact business content.\n\nSo:\n\n```jsx\n<ModalCard title=\"Delete project?\" onClose={close}>\n  <p>This cannot be undone.</p>\n  <button onClick={deleteProject}>Delete</button>\n</ModalCard>\n```\n\nis more reusable than hard-coding deletion logic inside `ModalCard`.\n\n---\n\n## 8. Accessibility basics\n\nA real modal may need more than styling:\n\n- an appropriate dialog role\n- an accessible label\n- focus management\n- Escape-key handling\n- focus return to the triggering element\n- preventing interaction with background content where appropriate\n\nThese are production concerns that become important when you build reusable dialogs.\n\n---\n\n## 9. Children and conditional rendering\n\n```jsx\n{isOpen && (\n  <ModalCard title=\"Confirmation\">\n    <p>Are you sure?</p>\n  </ModalCard>\n)}\n```\n\nThe parent controls whether the modal exists.\n\n---\n\n## Example: layout component\n\n```jsx\nfunction PageSection({ title, children }) {\n  return (\n    <section>\n      <h2>{title}</h2>\n      <div>{children}</div>\n    </section>\n  );\n}\n\nexport default function App() {\n  return (\n    <>\n      <PageSection title=\"Courses\">\n        <p>React</p>\n        <p>JavaScript</p>\n      </PageSection>\n\n      <PageSection title=\"Projects\">\n        <p>Portfolio</p>\n      </PageSection>\n    </>\n  );\n}\n```\n\n---\n\n## Common mistakes\n\n### Mistake 1: forgetting children\n\n```jsx\nfunction Card({ children }) {\n  return <div />; // children never rendered\n}\n```\n\n### Mistake 2: replacing composition with dozens of flags\n\nMany boolean props often indicate that a component is trying to do too much.\n\n### Mistake 3: assuming `children` is always one element\n\nIt can be text, one element, multiple elements, a Fragment, or other renderable content.\n\nFurther reading:\n- React: Passing Props to a Component — https://react.dev/learn/passing-props-to-a-component\n- Scrimba: Beyond the basics — https://docs.scrimba.com/react/beyond-the-basics\n- GeeksforGeeks: Prop Drilling and Composition/Context patterns — https://www.geeksforgeeks.org/reactjs/what-is-prop-drilling-and-how-to-avoid-it/",
+      "reactExercise": {
+        "title": "Exercise: Dialog Modal Shell",
+        "category": "Component API",
+        "difficulty": "Intermediate",
+        "description": "Build a reusable ModalCard component that renders child content inside a styled container.",
+        "defaultCode": "import React, { useState } from 'react';\n\nfunction ModalCard({ title, children, onClose }) {\n  return (\n    <div style={{\n      border: '1px solid #cbd5e1',\n      borderRadius: '10px',\n      padding: '20px',\n      maxWidth: '400px',\n      background: '#ffffff'\n    }}>\n      <h3 id=\"modal-title\">{title}</h3>\n\n      {/* TODO 1: Render children inside this content region. */}\n      <div id=\"modal-content\"></div>\n\n      <button id=\"close-btn\" onClick={onClose}>\n        Close\n      </button>\n    </div>\n  );\n}\n\nexport default function App() {\n  const [isOpen, setIsOpen] = useState(true);\n\n  return (\n    <div style={{ padding: '24px', fontFamily: 'sans-serif' }}>\n      <h2>Dashboard View</h2>\n\n      {isOpen && (\n        <ModalCard\n          title=\"Confirmation Dialog\"\n          onClose={() => setIsOpen(false)}\n        >\n          <p>Are you sure you want to deploy these changes to production?</p>\n        </ModalCard>\n      )}\n    </div>\n  );\n}\n",
+        "tasks": [
+          {
+            "id": 1,
+            "instruction": "Render title 'Confirmation Dialog' in #modal-title.",
+            "domSelector": "#modal-title",
+            "expectedText": "Confirmation Dialog",
+            "failMessage": "Expected dialog title to match."
+          },
+          {
+            "id": 2,
+            "instruction": "Render the child paragraph inside #modal-content.",
+            "domSelector": "#modal-content",
+            "expectedText": "Are you sure",
+            "failMessage": "Expected children text inside modal content."
+          },
+          {
+            "id": 3,
+            "instruction": "Clicking #close-btn closes the modal so #modal-title is no longer present.",
+            "domSelector": "#close-btn",
+            "simulateAction": "click",
+            "afterActionSelector": "#modal-title",
+            "afterActionExpectedText": "",
+            "failMessage": "Expected the modal to close when the Close button is clicked."
+          },
+          {
+            "id": 4,
+            "instruction": "ModalCard receives and renders children rather than hard-coding the content.",
+            "testRegex": "\\{children\\}",
+            "failMessage": "Expected ModalCard to render the children prop."
+          }
+        ],
+        "solution": "import React, { useState } from 'react';\n\nfunction ModalCard({ title, children, onClose }) {\n  return (\n    <div style={{\n      border: '1px solid #cbd5e1',\n      borderRadius: '10px',\n      padding: '20px',\n      background: '#ffffff'\n    }}>\n      <h3 id=\"modal-title\">{title}</h3>\n      <div id=\"modal-content\">{children}</div>\n      <button id=\"close-btn\" onClick={onClose}>\n        Close\n      </button>\n    </div>\n  );\n}\n\nexport default function App() {\n  const [isOpen, setIsOpen] = useState(true);\n\n  return (\n    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>\n      <ModalCard\n        title=\"Confirmation Dialog\"\n        onClose={() => setIsOpen(false)}\n      >\n        <p>Are you sure you want to proceed with deployment?</p>\n      </ModalCard>\n    </div>\n  );\n}\n"
+      },
+      "_sourceFile": "react-js.json",
+      "_moduleTitle": "Module 7: Component API Design & Composition",
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": []
+    }
+  ]
+}

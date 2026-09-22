@@ -1,0 +1,791 @@
+{
+  "moduleId": "m05-clean-architecture-full-crud-in-memory",
+  "title": "Clean Architecture & Full CRUD (In-Memory)",
+  "description": "Core concepts and hands-on practice in Clean Architecture & Full CRUD (In-Memory).",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-problems-in-current-design",
+      "title": "Problems in Current Design",
+      "description": "Study concepts and solve targeted engineering problems for Problems in Current Design.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 15,
+      "pages": [
+        {
+          "pageId": "p-XXIVKU01",
+          "title": "The Problem with All-in-One Controllers",
+          "content": "So far, you have written controllers that handle everything on their own — **API endpoints**, **data storage**, and **business rules**. \\\nThis may work for small applications, but as the **project grows**, **controllers start doing too much**. The **code becomes harder to read, harder to test, and harder to change safely**.\n\n---\n\n**Let's Look at the given example :**\n\n```java\n@RestController\n@RequestMapping(\"/books\")\npublic class BookController {\n\n private List books = new ArrayList<>();\n\n @PostMapping\n public void addBook(@RequestBody Book book) {\n books.add(book);\n }\n\n @GetMapping\n public List getBooks() {\n return books;\n }\n}\n```\n\n**What’s wrong here?**\n- The controller is handling data storage\n- The controller is handling business logic\n- Everything is tightly coupled\n- As features increase, the code becomes messy\n\nThis approach is **not scalable** and **not maintainable**.\n\n---\n\nIn the next lesson, we’ll see **how to solve this problem by structuring the application** in a better way.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding The Problem with All-in-One Controllers in Problems in Current Design is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-XXIVKU01",
+            "question": "In Problems in Current Design, what is the key consideration regarding The Problem with All-in-One Controllers?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-CCIVKU01",
+          "title": "The Solution - Layered Architecture",
+          "content": "To solve this problem, Spring Boot follows a **layered architecture**.\nThe idea is simple: **split responsibilities instead of putting everything in one place**.\n\nThis concept is called **Separation of Concerns** — each part of the application focuses on one specific job.\n\n---\n\n**Standard Layers:**\n```java\nController → Service → Repository\n```\n- **Controller :** \\\nHandles **HTTP requests** and **responses**. \\\nIt does not contain **business logic**.\n\n- **Service Layer :** \\\nContains **business logic** \\\nDecides **what should happen** \\\n**Coordinates** between **controller and repository** \n\n- **Repository Layer :** \\\nHandles **data access** and storage \\\nManages **data operations** \\\n**Stores** and **retrieves** data \\\n**Communicates with the database**\n\n---\n\n**Let's understand this layered architecture visually**\n\n\n\n**Request Flow:**\n\n```java\nClient → Controller → Service → Repository → Database\nDatabase → Repository → Service → Controller → Client\n```\n\nEach layer has **one clear responsibility**, making the application easier to understand, test, and maintain. \n\n---\n\nIn the next sections, **we’ll refactor our application step by step using this layered approach**.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding The Solution - Layered Architecture in Problems in Current Design is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CCIVKU01",
+            "question": "In Problems in Current Design, what is the key consideration regarding The Solution - Layered Architecture?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-CCIVKU01M",
+          "title": "Guess the Output",
+          "content": "What is the main goal of Layered Architecture?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Guess the Output in Problems in Current Design is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CCIVKU01M",
+            "question": "In Problems in Current Design, what is the key consideration regarding Guess the Output?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-XXIVKU01-java",
+          "language": "java",
+          "label": "Java",
+          "title": "The Problem with All-in-One Controllers (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-CCIVKU01-java",
+          "language": "java",
+          "label": "Java",
+          "title": "The Solution - Layered Architecture (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-CCIVKU01M-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Guess the Output (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        }
+      ],
+      "practiceProblems": [],
+      "_sourceFile": "springboot.json",
+      "_moduleTitle": "Clean Architecture & Full CRUD (In-Memory)"
+    },
+    {
+      "topicId": "t02-layered-architecture",
+      "title": "Layered Architecture",
+      "description": "Study concepts and solve targeted engineering problems for Layered Architecture.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 30,
+      "pages": [
+        {
+          "pageId": "p-CCIVKU02M",
+          "title": "Understanding Layered Architecture (From Task API)",
+          "content": "In the previous practice, you converted a working API into a Layered Architecture. \\\nNow let’s clearly understand:\n- What each layer does\n- How they communicate\n- How Spring connects everything automatically\n- How a request flows step by step\n\n---\n\n**What is Layered Architecture?** \\\nLayered Architecture means:\n- Dividing an application into different layers\n- Each layer has a specific responsibility\n- No layer should do everything\n\nIn our Task API, we followed this flow:\n```sss\nController → Service → Repository\n```\nEach layer has one clear job.\n\n---\n\n**Let's Understand Code Properly :** \\\n**`DemoApplication.java` (Application Start)**\n```java\n@SpringBootApplication\npublic class DemoApplication {\n\n public static void main(String[] args) {\n SpringApplication.run(DemoApplication.class, args);\n }\n}\n```\n**What this does :**\n- Starts the Spring Boot application.\n- Spring scans the project and finds classes marked with:\n - `@RestController`\n - `@Service`\n - `@Repository`\n- Spring automatically creates objects of those classes and connects them together.\n\nThis is why we never write `new TaskService()` manually.\n\n---\n\n**`TaskRepository.java` (Data Storage)**\n```java\n@Repository\npublic class TaskRepository {\n\n private final List tasks = new ArrayList<>();\n}\n```\n**What this does**\n- **`@Repository` tells Spring this class manages data**.\n- Spring creates one shared object of this class.\n- tasks list works like a small in-memory database.\n\n**Saving data**\n```java\npublic void save(String title) {\n tasks.add(title);\n}\n```\n**What happens**\n- Receives a task title.\n- Adds it into the list.\n- This is where data actually gets stored.\n\n**Getting data**\n```java\npublic List findAll() {\n return tasks;\n}\n```\n**What happens**\n- Returns all stored tasks.\n- No logic — just gives stored data.\n\n**Repository = only store & fetch data**.\n\n---\n\n\n**`TaskService.java` (Middle Layer)**\n```java\n@Service\npublic class TaskService {\n\n private final TaskRepository taskRepository;\n}\n```\n**What this does**\n- `@Service` tells Spring this class contains application logic.\n- Service needs Repository to access data.\n\n**Dependency Injection** (Important)\n```java\npublic TaskService(TaskRepository taskRepository) {\n this.taskRepository = taskRepository;\n}\n```\n\n**What happens**\n- Spring automatically sends the repository object here.\n- We did NOT create it manually.\n\n**Meaning:**\n```sss\nSpring creates Repository\n ↓\nGives it to Service\n```\nThis is called **Dependency Injection (DI)**.\n\n\n**Adding a task**\n```java\npublic void addTask(String title) {\n taskRepository.save(title);\n}\n```\n**What happens** :\n- Controller calls this method.\n- Service forwards task to repository for saving.\n- Service itself does not store data.\n\n**Getting all tasks**\n```java\npublic List getAllTasks() {\n return taskRepository.findAll();\n}\n```\n**What happens**\n- Service asks repository for stored tasks.\n- Returns them back to controller.\n\n**Service = middle communicator**.\n\n---\n\n**`TaskController.java` (API Layer)**\n```java\n@RestController\n@RequestMapping(\"/api/tasks\")\npublic class TaskController {\n\n private final TaskService taskService;\n}\n```\n**What this does**\n- `@RestController` → handles HTTP requests.\n- All APIs start with `/api/tasks`.\n- Controller needs Service to perform work.\n\n\n**Dependency Injection again**\n```java\npublic TaskController(TaskService taskService) {\n this.taskService = taskService;\n}\n```\n**What happens**\n- Spring gives Service object to Controller automatically.\n- Flow now becomes connected:\n```sss\nController → Service → Repository\n```\n\n**POST API (Add Task)**\n```java\n@PostMapping\npublic String addTask(@RequestBody String title) {\n taskService.addTask(title);\n return \"Task added successfully!\";\n}\n```\n\n**What happens step-by-step**\n- User sends POST request.\n- Spring reads request body into title.\n- Controller calls service:\n```java\ntaskService.addTask(title);\n```\n- Service sends data to repository.\n- Repository stores it in list.\n- Controller returns success message.\n\n**GET API (Get Tasks)**\n```java\n@GetMapping(\"/list\")\npublic List getTasks() {\n return taskService.getAllTasks();\n}\n```\n**What happens**\n- User requests task list.\n- Controller asks Service.\n- Service asks Repository.\n- Repository returns stored list.\n- Response goes back to user as JSON.\n\n---\n\n**Full Flow When API runs:** \n\n```sss\nClient Request\n ↓\nTaskController\n ↓\nTaskService\n ↓\nTaskRepository\n ↓\nList (data stored)\n```\nResponse comes back the same way.\n\n**One Simple Rule** \\\nController never directly accesses data. \\\nAlways:\n```sss\nController → Service → Repository\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Understanding Layered Architecture (From Task API) in Layered Architecture is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CCIVKU02M",
+            "question": "In Layered Architecture, what is the key consideration regarding Understanding Layered Architecture (From Task API)?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-TGHENA02",
+          "title": "Identify the Flow",
+          "content": "What is the **correct order of flow** in three-layered architecture?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Identify the Flow in Layered Architecture is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-TGHENA02",
+            "question": "In Layered Architecture, what is the key consideration regarding Identify the Flow?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-TGHENA02A",
+          "title": "Guess the Output",
+          "content": "**Scenario**\n\nYour API currently stores data in an ArrayList.\nTomorrow, you want to switch to a database **without changing controller code**.\n\n**Which layer should contain the storage logic**?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Guess the Output in Layered Architecture is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-TGHENA02A",
+            "question": "In Layered Architecture, what is the key consideration regarding Guess the Output?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-CCIVKU02M-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Understanding Layered Architecture (From Task API) (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-TGHENA02-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Identify the Flow (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-TGHENA02A-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Guess the Output (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "CCIVKU02",
+          "questionId": "CCIVKU02",
+          "title": "Layered Architecture - Demo",
+          "difficulty": "Easy",
+          "description": "Now that we know why separating responsibilities is important, let’s see how we implement **Layered Architecture** in a real Spring Boot example.\n\nWe have three layers:\n- **Controller** → Handles HTTP requests and responses\n- **Service** → Contains business logic\n- **Repository** → Handles data storage and retrieval\n\nLet’s go through the code step by step.\n\n---\n\n**UserController (Controller Layer)**\n\n```java\n@RestController\n@RequestMapping(\"/api/users\")\npublic class UserController {\n\n private final UserService userService;\n\n // Dependency Injection: Spring provides UserService automatically\n public UserController(UserService userService) {\n this.userService = userService;\n }\n\n @PostMapping\n public String addUser(@RequestBody User user) {\n userService.addUser(user.getName());\n return \"User '\" + user.getName() + \"' added successfully!\";\n }\n\n @GetMapping(\"/list\")\n public List getUsers() {\n return userService.getAllUsers();\n }\n}\n```\n\n**What it does:**\n- `UserController` depends on `UserService` to perform user-related operations.\n- Instead of creating the service using `new UserService()`, Spring automatically injects (provides) the `UserService` object into the controller through its constructor (Constructor-based Dependency Injection).\n- Example: When a client wants to add a user, the controller tells the service: \\\n**“Please add this user.”**\n\n**Key point**: Controller only manages requests and responses, not the actual work.\n\n---\n\n**UserService (Service Layer)**\n```java\n@Service\npublic class UserService {\n\n private final UserRepository userRepository;\n\n public UserService(UserRepository userRepository) {\n this.userRepository = userRepository;\n }\n\n public void addUser(String name) {\n userRepository.save(name);\n }\n\n public List getAllUsers() {\n return userRepository.findAll();\n }\n}\n```\n\n**What it does:**\n- Contains the business logic (decides what should happen).\n- Receives instructions from the controller and tells the repository to store or fetch data.\n- Dependency Injection (DI) is used here: Spring automatically provides the UserRepository object to the UserService via the constructor.\n- Example: When a user is added, the service tells the repository: \\\n**“Save this user in the database.”**\n\n**Key point:** Service does the real work, but it doesn’t handle HTTP or client requests.\n\n---\n\n**UserRepository (Repository Layer)**\n```java\n@Repository\npublic class UserRepository {\n\n private List users = new ArrayList<>();\n\n public void save(String name) {\n users.add(name);\n }\n\n public List findAll() {\n return users;\n }\n}\n```\n\n**What it does:**\n- Handles data storage and retrieval.\n- In this demo, it stores users in memory using a List.\n- Does not care about HTTP or business rules.\n\n**Key point:** Repository is only responsible for data, so if we switch to a real database later, we only change this layer.\n\n---\n\n**How the Layers Work Together**\n\n**Request flow:**\n```sss\nClient → Controller → Service → Repository → Data\n```\n\n**Example: Adding a user**\n1. Client sends POST /api/users with a name.\n2. Controller receives the request and asks the Service to add the user.\n3. Service tells the Repository to save the user.\n4. Repository stores the user → Response goes back to the client.\n\n**Example: Listing users**\n1. Client sends GET /api/users/list.\n2. Controller asks Service: “Get all users.”\n3. Service asks Repository: “Return all users.”\n4. Repository returns the list → Service passes it back → Controller sends it to the client.",
+          "problemStatement": "Now that we know why separating responsibilities is important, let’s see how we implement **Layered Architecture** in a real Spring Boot example.\n\nWe have three layers:\n- **Controller** → Handles HTTP requests and responses\n- **Service** → Contains business logic\n- **Repository** → Handles data storage and retrieval\n\nLet’s go through the code step by step.\n\n---\n\n**UserController (Controller Layer)**\n\n```java\n@RestController\n@RequestMapping(\"/api/users\")\npublic class UserController {\n\n private final UserService userService;\n\n // Dependency Injection: Spring provides UserService automatically\n public UserController(UserService userService) {\n this.userService = userService;\n }\n\n @PostMapping\n public String addUser(@RequestBody User user) {\n userService.addUser(user.getName());\n return \"User '\" + user.getName() + \"' added successfully!\";\n }\n\n @GetMapping(\"/list\")\n public List getUsers() {\n return userService.getAllUsers();\n }\n}\n```\n\n**What it does:**\n- `UserController` depends on `UserService` to perform user-related operations.\n- Instead of creating the service using `new UserService()`, Spring automatically injects (provides) the `UserService` object into the controller through its constructor (Constructor-based Dependency Injection).\n- Example: When a client wants to add a user, the controller tells the service: \\\n**“Please add this user.”**\n\n**Key point**: Controller only manages requests and responses, not the actual work.\n\n---\n\n**UserService (Service Layer)**\n```java\n@Service\npublic class UserService {\n\n private final UserRepository userRepository;\n\n public UserService(UserRepository userRepository) {\n this.userRepository = userRepository;\n }\n\n public void addUser(String name) {\n userRepository.save(name);\n }\n\n public List getAllUsers() {\n return userRepository.findAll();\n }\n}\n```\n\n**What it does:**\n- Contains the business logic (decides what should happen).\n- Receives instructions from the controller and tells the repository to store or fetch data.\n- Dependency Injection (DI) is used here: Spring automatically provides the UserRepository object to the UserService via the constructor.\n- Example: When a user is added, the service tells the repository: \\\n**“Save this user in the database.”**\n\n**Key point:** Service does the real work, but it doesn’t handle HTTP or client requests.\n\n---\n\n**UserRepository (Repository Layer)**\n```java\n@Repository\npublic class UserRepository {\n\n private List users = new ArrayList<>();\n\n public void save(String name) {\n users.add(name);\n }\n\n public List findAll() {\n return users;\n }\n}\n```\n\n**What it does:**\n- Handles data storage and retrieval.\n- In this demo, it stores users in memory using a List.\n- Does not care about HTTP or business rules.\n\n**Key point:** Repository is only responsible for data, so if we switch to a real database later, we only change this layer.\n\n---\n\n**How the Layers Work Together**\n\n**Request flow:**\n```sss\nClient → Controller → Service → Repository → Data\n```\n\n**Example: Adding a user**\n1. Client sends POST /api/users with a name.\n2. Controller receives the request and asks the Service to add the user.\n3. Service tells the Repository to save the user.\n4. Repository stores the user → Response goes back to the client.\n\n**Example: Listing users**\n1. Client sends GET /api/users/list.\n2. Controller asks Service: “Get all users.”\n3. Service asks Repository: “Return all users.”\n4. Repository returns the list → Service passes it back → Controller sends it to the client.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "CCIVKU02A",
+          "questionId": "CCIVKU02A",
+          "title": "Practice- Convert Task API to Layered Architecture",
+          "difficulty": "Easy",
+          "description": "**Scenario :**\n- You are given a working **Spring Boot API** that stores **task titles**.\nThe API works correctly, but it is written using an **all-in-one controller**, which is **not a good design**.\n\n---\n\n**Instructions:**\n1. **Complete your code** first.\n2. Click on **\"Run\"** to **start the server** and make sure it runs correctly.\n3. If you **make any changes** to the code after running, you must **run the server again**.\n4. Only after running the server with the **latest changes**, your submission will reflect the updated solution.\n5. **Do not submit** if the server is not running; otherwise, your solution will **fail**.\n\n\n\n---\n\n**Goal** \\\nConvert this into Layered Architecture by separating responsibilities and cleaning up the code.\n\n**API Details :** (Already Working)\n- `POST /api/tasks` → Add a task title\n- `GET /api/tasks/list` → Get all task titles\n\n**Look at the given `TaskController` code in your IDE and run the code.**\n- The controller is already working\n- It handles request mapping\n- It stores task titles and logic together\n- This code does **NOT** follow **Layered Architecture**.\n\n---\n\n**Your Task** \\\nRefactor the existing code into a proper layered architecture by following below rules:\n- Do NOT change API URLs\n- Do NOT change response messages\n- Use in-memory storage only\n- Follow this flow strictly:\n```sss\nController → Service → Repository\n```\n---\n\n**Now Follow These Steps Carefully**\n\n**Step 1: Create Repository Folder & File**\n- Go to this path:\n`src/main/java/com/example/demo`\n- Create a new folder : `repository`\n- Inside repository, create a file `TaskRepository.java`\n- **Add this code:**\n```java\npackage com.example.demo.repository;\n\nimport org.springframework.stereotype.Repository;\nimport java.util.ArrayList;\nimport java.util.List;\n\n@Repository\npublic class TaskRepository {\n\n private final List tasks = new ArrayList<>();\n\n public void save(String title) {\n tasks.add(title);\n }\n\n public List findAll() {\n return tasks;\n }\n}\n```\n\n\n**Step 2: Create Service Folder & File**\n- Go to the same base path:\n`src/main/java/com/example/demo`\n- Create a new folder : `service`\n- Inside service, create a file : `TaskService.java`\n- **Add this code:**\n```java\npackage com.example.demo.service;\n\nimport com.example.demo.repository.TaskRepository;\nimport org.springframework.stereotype.Service;\nimport java.util.List;\n\n@Service\npublic class TaskService {\n\n private final TaskRepository taskRepository;\n\n public TaskService(TaskRepository taskRepository) {\n this.taskRepository = taskRepository;\n }\n\n public void addTask(String title) {\n taskRepository.save(title);\n }\n\n public List getAllTasks() {\n return taskRepository.findAll();\n }\n}\n```\n\n**Step 3: Update Existing Controller**\n- Open this file:\n```sss\nsrc/main/java/com/example/demo/controller/TaskController.java\n```\n\n**Make These Changes**\n- Remove any List used for storage\n- Remove task logic\n- Inject `TaskService`\n\n**Updated `TaskController.java`:**\n```java\npackage com.example.demo.controller;\n\nimport com.example.demo.service.TaskService;\nimport org.springframework.web.bind.annotation.*;\nimport java.util.List;\n\n@RestController\n@RequestMapping(\"/api/tasks\")\npublic class TaskController {\n\n private final TaskService taskService;\n\n public TaskController(TaskService taskService) {\n this.taskService = taskService;\n }\n\n @PostMapping\n public String addTask(@RequestBody String title) {\n taskService.addTask(title);\n return \"Task added successfully!\";\n }\n\n @GetMapping(\"/list\")\n public List getTasks() {\n return taskService.getAllTasks();\n }\n}\n```\n\n**Final Folder Structure (After Refactoring)**\n```sss\nsrc/main/java/com/example/demo\n├── DemoApplication.java\n├── controller\n│ └── TaskController.java\n├── repository\n│ └── TaskRepository.java\n└── service\n └── TaskService.java\n```\n\n---\n\n**Test the APIs** \\\nAfter completing all the steps, **run the application**. \\\nNow test both endpoints to make sure everything still works.\n\n**Test 1: Add a Task (POST)**\n- Method: `POST`\n- URL: `/api/tasks`\n- Body: \\\nSend a plain text task title, for example: `Learn Spring Boot`\n\n\n**Expected Output**: \n```sss\nTask added successfully!\n```\n\n**Test 2: Get All Tasks (GET)**\n- Method: GET\n- URL: /api/tasks/list\n\n**Expected Output:** \n```sss\n[\"Learn Spring Boot\"]\n```\n\n---\n\nIn this practice, you **refactored an already working application**. \\\nYou converted a **single-controller (all-in-one) code** into a proper **Layered Architecture**. \\\nEarlier, the controller was handling everything — request handling, logic, and data storage — all in one place. \nNow, responsibilities are separated into different layers, making the code cleaner and easier to maintain.\n\n**What’s Next?** \\\nIn the next topic, you will understand how layered architecture works internally. \\\nYou will learn:\n- How Controller, Service, and Repository communicate with each other\n- How Spring automatically connects these layers\n- How the request flows through the application step by step\n\nNow that you have structured the code correctly, it’s time to understand how the layered architecture actually works",
+          "problemStatement": "**Scenario :**\n- You are given a working **Spring Boot API** that stores **task titles**.\nThe API works correctly, but it is written using an **all-in-one controller**, which is **not a good design**.\n\n---\n\n**Instructions:**\n1. **Complete your code** first.\n2. Click on **\"Run\"** to **start the server** and make sure it runs correctly.\n3. If you **make any changes** to the code after running, you must **run the server again**.\n4. Only after running the server with the **latest changes**, your submission will reflect the updated solution.\n5. **Do not submit** if the server is not running; otherwise, your solution will **fail**.\n\n\n\n---\n\n**Goal** \\\nConvert this into Layered Architecture by separating responsibilities and cleaning up the code.\n\n**API Details :** (Already Working)\n- `POST /api/tasks` → Add a task title\n- `GET /api/tasks/list` → Get all task titles\n\n**Look at the given `TaskController` code in your IDE and run the code.**\n- The controller is already working\n- It handles request mapping\n- It stores task titles and logic together\n- This code does **NOT** follow **Layered Architecture**.\n\n---\n\n**Your Task** \\\nRefactor the existing code into a proper layered architecture by following below rules:\n- Do NOT change API URLs\n- Do NOT change response messages\n- Use in-memory storage only\n- Follow this flow strictly:\n```sss\nController → Service → Repository\n```\n---\n\n**Now Follow These Steps Carefully**\n\n**Step 1: Create Repository Folder & File**\n- Go to this path:\n`src/main/java/com/example/demo`\n- Create a new folder : `repository`\n- Inside repository, create a file `TaskRepository.java`\n- **Add this code:**\n```java\npackage com.example.demo.repository;\n\nimport org.springframework.stereotype.Repository;\nimport java.util.ArrayList;\nimport java.util.List;\n\n@Repository\npublic class TaskRepository {\n\n private final List tasks = new ArrayList<>();\n\n public void save(String title) {\n tasks.add(title);\n }\n\n public List findAll() {\n return tasks;\n }\n}\n```\n\n\n**Step 2: Create Service Folder & File**\n- Go to the same base path:\n`src/main/java/com/example/demo`\n- Create a new folder : `service`\n- Inside service, create a file : `TaskService.java`\n- **Add this code:**\n```java\npackage com.example.demo.service;\n\nimport com.example.demo.repository.TaskRepository;\nimport org.springframework.stereotype.Service;\nimport java.util.List;\n\n@Service\npublic class TaskService {\n\n private final TaskRepository taskRepository;\n\n public TaskService(TaskRepository taskRepository) {\n this.taskRepository = taskRepository;\n }\n\n public void addTask(String title) {\n taskRepository.save(title);\n }\n\n public List getAllTasks() {\n return taskRepository.findAll();\n }\n}\n```\n\n**Step 3: Update Existing Controller**\n- Open this file:\n```sss\nsrc/main/java/com/example/demo/controller/TaskController.java\n```\n\n**Make These Changes**\n- Remove any List used for storage\n- Remove task logic\n- Inject `TaskService`\n\n**Updated `TaskController.java`:**\n```java\npackage com.example.demo.controller;\n\nimport com.example.demo.service.TaskService;\nimport org.springframework.web.bind.annotation.*;\nimport java.util.List;\n\n@RestController\n@RequestMapping(\"/api/tasks\")\npublic class TaskController {\n\n private final TaskService taskService;\n\n public TaskController(TaskService taskService) {\n this.taskService = taskService;\n }\n\n @PostMapping\n public String addTask(@RequestBody String title) {\n taskService.addTask(title);\n return \"Task added successfully!\";\n }\n\n @GetMapping(\"/list\")\n public List getTasks() {\n return taskService.getAllTasks();\n }\n}\n```\n\n**Final Folder Structure (After Refactoring)**\n```sss\nsrc/main/java/com/example/demo\n├── DemoApplication.java\n├── controller\n│ └── TaskController.java\n├── repository\n│ └── TaskRepository.java\n└── service\n └── TaskService.java\n```\n\n---\n\n**Test the APIs** \\\nAfter completing all the steps, **run the application**. \\\nNow test both endpoints to make sure everything still works.\n\n**Test 1: Add a Task (POST)**\n- Method: `POST`\n- URL: `/api/tasks`\n- Body: \\\nSend a plain text task title, for example: `Learn Spring Boot`\n\n\n**Expected Output**: \n```sss\nTask added successfully!\n```\n\n**Test 2: Get All Tasks (GET)**\n- Method: GET\n- URL: /api/tasks/list\n\n**Expected Output:** \n```sss\n[\"Learn Spring Boot\"]\n```\n\n---\n\nIn this practice, you **refactored an already working application**. \\\nYou converted a **single-controller (all-in-one) code** into a proper **Layered Architecture**. \\\nEarlier, the controller was handling everything — request handling, logic, and data storage — all in one place. \nNow, responsibilities are separated into different layers, making the code cleaner and easier to maintain.\n\n**What’s Next?** \\\nIn the next topic, you will understand how layered architecture works internally. \\\nYou will learn:\n- How Controller, Service, and Repository communicate with each other\n- How Spring automatically connects these layers\n- How the request flows through the application step by step\n\nNow that you have structured the code correctly, it’s time to understand how the layered architecture actually works",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "CCIVKU02B",
+          "questionId": "CCIVKU02B",
+          "title": "Practice - Build a Layered Notes API",
+          "difficulty": "Easy",
+          "description": "**Scenario :** \n- You are building a **Simple Notes API**. \n- A note is just a text message. \n- You are given an empty project structure with all required folders and files already created. \n- Your task is to complete the code by following **Layered Architecture**.\n\n\n---\n\n**Instructions:**\n1. **Complete your code** first.\n2. Click on **\"Run\"** to **start the server** and make sure it runs correctly.\n3. If you **make any changes** to the code after running, you must **run the server again**.\n4. Only after running the server with the **latest changes**, your submission will reflect the updated solution.\n5. **Do not submit** if the server is not running; otherwise, your solution will **fail**.\n\n\n---\n\n**Goal** \\\nImplement a working Spring Boot API using:\n```sss\nController → Service → Repository\n```\n\n**API Requirements** \\\nEndpoints to Implement\n- `POST /api/notes` → Add a note\n- `GET /api/notes/list` → Get all notes\n\n---\n\n**Instructions :**\n1. Open the project files:\n- `NoteController.java`\n- `NoteService.java`\n- `NoteRepository.java`\n2. Complete the code :\n- Complete the missing parts (marked with // TODO) in each file.\n3. Rules to follow:\n- Use constructor-based dependency injection only\n- Do not store data in the controller\n- Use an in-memory List for storage (no database)\n- Each layer must have only its own responsibility\n- Do not change the given package names or class names\n\n---\n\n**Expected Output :**\n1. `POST /api/notes` – Add a note : \n\"Buy groceries\" \n- **Output** :\n```sss\nNote added successfully!\n```\n\n2. `GET /api/notes/list` – Get all notes\n- **Output**\n```sss\n[\n \"Buy groceries\"\n]\n```",
+          "problemStatement": "**Scenario :** \n- You are building a **Simple Notes API**. \n- A note is just a text message. \n- You are given an empty project structure with all required folders and files already created. \n- Your task is to complete the code by following **Layered Architecture**.\n\n\n---\n\n**Instructions:**\n1. **Complete your code** first.\n2. Click on **\"Run\"** to **start the server** and make sure it runs correctly.\n3. If you **make any changes** to the code after running, you must **run the server again**.\n4. Only after running the server with the **latest changes**, your submission will reflect the updated solution.\n5. **Do not submit** if the server is not running; otherwise, your solution will **fail**.\n\n\n---\n\n**Goal** \\\nImplement a working Spring Boot API using:\n```sss\nController → Service → Repository\n```\n\n**API Requirements** \\\nEndpoints to Implement\n- `POST /api/notes` → Add a note\n- `GET /api/notes/list` → Get all notes\n\n---\n\n**Instructions :**\n1. Open the project files:\n- `NoteController.java`\n- `NoteService.java`\n- `NoteRepository.java`\n2. Complete the code :\n- Complete the missing parts (marked with // TODO) in each file.\n3. Rules to follow:\n- Use constructor-based dependency injection only\n- Do not store data in the controller\n- Use an in-memory List for storage (no database)\n- Each layer must have only its own responsibility\n- Do not change the given package names or class names\n\n---\n\n**Expected Output :**\n1. `POST /api/notes` – Add a note : \n\"Buy groceries\" \n- **Output** :\n```sss\nNote added successfully!\n```\n\n2. `GET /api/notes/list` – Get all notes\n- **Output**\n```sss\n[\n \"Buy groceries\"\n]\n```",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "springboot.json",
+      "_moduleTitle": "Clean Architecture & Full CRUD (In-Memory)"
+    },
+    {
+      "topicId": "t03-interface-based-design",
+      "title": "Interface-Based Design",
+      "description": "Study concepts and solve targeted engineering problems for Interface-Based Design.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 25,
+      "pages": [
+        {
+          "pageId": "p-TGHENAXY03",
+          "title": "Problem in Current Layered Design",
+          "content": "Right now, our classes depend directly on **concrete implementations**. \\\n**In Previous Example, You've seen:**\n```java\npublic class NoteService {\n\n private final NoteRepository noteRepository;\n\n public NoteService(NoteRepository noteRepository) {\n this.noteRepository = noteRepository;\n }\n}\n```\n**Here:**\n- `NoteService` directly depends on `NoteRepository`\n- The service **knows exactly which repository implementation is used**\n- This creates **tight coupling**.\n\n\n**What is Tight Coupling?** \\\nTight coupling means: \\\nOne class is strongly dependent on a specific implementation of another class.\n\n---\n\n**Real Problem Example** \\\nToday we are using:\n- In-Memory Repository (ArrayList)\n\n**Tomorrow we may want:**\n- Database repository (MySQL/PostgreSQL)\n- File storage\n- External API storage\n\nIf `NoteService` depends directly on `NoteRepository`, we must modify existing code whenever implementation changes.\n\nThis breaks an important clean architecture principle: \\\n**High-level modules should not depend on low-level modules.**\n\n---\n\n**Solution — Interface-Based Design** \\\nInstead of depending on a class, we depend on a contract. \\\nThat contract is called an **Interface**.\n\n**An interface defines :** \\\nWhat operations are available \\\n**NOT :** \\\nHow they are implemented\n\n---\n\nLet’s see this practically in the next section -",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Problem in Current Layered Design in Interface-Based Design is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-TGHENAXY03",
+            "question": "In Interface-Based Design, what is the key consideration regarding Problem in Current Layered Design?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-TGHENAXY06",
+          "title": "Guess the Issue",
+          "content": "What problem occurs when a class depends directly on a concrete implementation?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Guess the Issue in Interface-Based Design is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-TGHENAXY06",
+            "question": "In Interface-Based Design, what is the key consideration regarding Guess the Issue?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-TGHENAXY07",
+          "title": "Guess the Output",
+          "content": "Why is interface-based design useful when switching from in-memory storage to database storage?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Guess the Output in Interface-Based Design is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-TGHENAXY07",
+            "question": "In Interface-Based Design, what is the key consideration regarding Guess the Output?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-TGHENAXY03-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Problem in Current Layered Design (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-TGHENAXY06-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Guess the Issue (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-TGHENAXY07-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Guess the Output (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "TGHENAXY04",
+          "questionId": "TGHENAXY04",
+          "title": "Interface-Based Notes API - Demo",
+          "difficulty": "Easy",
+          "description": "Now we’ll convert your **Notes API** into **Interface-Based Design** using proper layered architecture. \\\nWe will create:\n```json\nController → Service (interface + impl) → Repository (interface + impl)\n```\nThis is the **standard Spring Boot industry structure**.\n\n---\n\n**How Project Structure looks in this Example:**\n```sss\ncom.example.demo\n│\n├── controller\n│ └── NoteController.java\n│\n├── service\n│ ├── NoteService.java (INTERFACE)\n│ └── NoteServiceImpl.java (IMPLEMENTATION)\n│\n├── repository\n│ ├── NoteRepository.java (INTERFACE)\n│ └── InMemoryNoteRepository.java (IMPLEMENTATION)\n```\n\n---\n\n**1. NoteRepository (Interface)**\n```java\npublic interface NoteRepository {\n void save(String note);\n List findAll();\n}\n```\n**What this code does :**\n- This is a repository contract.\n- It defines the operations related to data storage.\n- It does not contain any implementation logic.\n\n**Methods**\n- `save(String note)` → used to store a note\n- `findAll()` → used to retrieve all notes\n\nAny repository class must implement these methods.\n\n---\n\n**2. InMemoryNoteRepository (Repository Implementation)**\n```java\n@Repository\npublic class InMemoryNoteRepository implements NoteRepository {\n```\n**What this class does**\n- Provides the **actual implementation** of the repository interface.\n- Stores notes using an in-memory list.\n\n**In-memory storage**\n```java\nprivate final List notes = new ArrayList<>();\n```\n- Creates a list to store notes temporarily.\n- Data exists only while the application is running.\n\n**Save method**\n```java\n@Override\npublic void save(String note) {\n notes.add(note);\n}\n```\nAdds the received note into the list.\n\n**Fetch method**\n```java\n@Override\npublic List findAll() {\n return notes;\n}\n```\nReturns all stored notes.\n\n**Annotation :**\n```java\n@Repository\n```\n- Marks this class as a repository component.\n- Spring automatically creates and manages its object.\n\n---\n\n**3. NoteService (Interface)**\n```java\npublic interface NoteService {\n void addNote(String note);\n List getAllNotes();\n}\n```\n**What this code does**\n- Defines business operations related to notes.\n- Contains only method declarations.\n- No logic is written here.\n\n**Methods**\n- `addNote()` → adds a note\n- `getAllNotes()` → retrieves notes\n\n---\n\n**4. NoteServiceImpl (Service Implementation)**\n```java\n@Service\npublic class NoteServiceImpl implements NoteService {\n```\n**What this class does**\n- Contains the **business logic** of the application.\n- Uses repository methods to perform data operations.\n\n**Dependency declaration**\n```java\nprivate final NoteRepository noteRepository;\n```\n- Service depends on the repository interface.\n- The actual implementation is injected by Spring.\n\n**Constructor Injection**\n```java\npublic NoteServiceImpl(NoteRepository noteRepository) {\n this.noteRepository = noteRepository;\n}\n```\n- Spring automatically provides a repository object.\n- No manual object creation is required.\n\n**Add note logic**\n```java\n@Override\npublic void addNote(String note) {\n noteRepository.save(note);\n}\n```\nCalls repository to store the note.\n\n**Get notes logic**\n```java\n@Override\npublic List getAllNotes() {\n return noteRepository.findAll();\n}\n```\nRetrieves notes from repository.\n\n**Annotation**\n```java\n@Service\n```\n- Marks this class as a service layer component.\n- Spring manages its lifecycle automatically.\n\n---\n\n**5. NoteController**\n```java\n@RestController\n@RequestMapping(\"/api/notes\")\n```\n**What this class does**\n- Handles HTTP requests.\n- Communicates with the service layer.\n- Does not contain business or storage logic.\n\n**Service dependency**\n```java\nprivate final NoteService noteService;\n```\nController uses the service interface.\n\n**Constructor Injection**\n```java\npublic NoteController(NoteService noteService) {\n this.noteService = noteService;\n}\n```\nSpring injects the service implementation automatically.\n\n\n**POST Endpoint — Add Note**\n```java\n@PostMapping\npublic String addNote(@RequestBody String note)\n```\n- Receives note text from request body.\n- Calls service to add the note.\n- Returns success message.\n\n**GET Endpoint — Get Notes**\n```java\n@GetMapping(\"/list\")\npublic List getNotes()\n```\n- Calls service to fetch all notes.\n- Returns notes as JSON response.",
+          "problemStatement": "Now we’ll convert your **Notes API** into **Interface-Based Design** using proper layered architecture. \\\nWe will create:\n```json\nController → Service (interface + impl) → Repository (interface + impl)\n```\nThis is the **standard Spring Boot industry structure**.\n\n---\n\n**How Project Structure looks in this Example:**\n```sss\ncom.example.demo\n│\n├── controller\n│ └── NoteController.java\n│\n├── service\n│ ├── NoteService.java (INTERFACE)\n│ └── NoteServiceImpl.java (IMPLEMENTATION)\n│\n├── repository\n│ ├── NoteRepository.java (INTERFACE)\n│ └── InMemoryNoteRepository.java (IMPLEMENTATION)\n```\n\n---\n\n**1. NoteRepository (Interface)**\n```java\npublic interface NoteRepository {\n void save(String note);\n List findAll();\n}\n```\n**What this code does :**\n- This is a repository contract.\n- It defines the operations related to data storage.\n- It does not contain any implementation logic.\n\n**Methods**\n- `save(String note)` → used to store a note\n- `findAll()` → used to retrieve all notes\n\nAny repository class must implement these methods.\n\n---\n\n**2. InMemoryNoteRepository (Repository Implementation)**\n```java\n@Repository\npublic class InMemoryNoteRepository implements NoteRepository {\n```\n**What this class does**\n- Provides the **actual implementation** of the repository interface.\n- Stores notes using an in-memory list.\n\n**In-memory storage**\n```java\nprivate final List notes = new ArrayList<>();\n```\n- Creates a list to store notes temporarily.\n- Data exists only while the application is running.\n\n**Save method**\n```java\n@Override\npublic void save(String note) {\n notes.add(note);\n}\n```\nAdds the received note into the list.\n\n**Fetch method**\n```java\n@Override\npublic List findAll() {\n return notes;\n}\n```\nReturns all stored notes.\n\n**Annotation :**\n```java\n@Repository\n```\n- Marks this class as a repository component.\n- Spring automatically creates and manages its object.\n\n---\n\n**3. NoteService (Interface)**\n```java\npublic interface NoteService {\n void addNote(String note);\n List getAllNotes();\n}\n```\n**What this code does**\n- Defines business operations related to notes.\n- Contains only method declarations.\n- No logic is written here.\n\n**Methods**\n- `addNote()` → adds a note\n- `getAllNotes()` → retrieves notes\n\n---\n\n**4. NoteServiceImpl (Service Implementation)**\n```java\n@Service\npublic class NoteServiceImpl implements NoteService {\n```\n**What this class does**\n- Contains the **business logic** of the application.\n- Uses repository methods to perform data operations.\n\n**Dependency declaration**\n```java\nprivate final NoteRepository noteRepository;\n```\n- Service depends on the repository interface.\n- The actual implementation is injected by Spring.\n\n**Constructor Injection**\n```java\npublic NoteServiceImpl(NoteRepository noteRepository) {\n this.noteRepository = noteRepository;\n}\n```\n- Spring automatically provides a repository object.\n- No manual object creation is required.\n\n**Add note logic**\n```java\n@Override\npublic void addNote(String note) {\n noteRepository.save(note);\n}\n```\nCalls repository to store the note.\n\n**Get notes logic**\n```java\n@Override\npublic List getAllNotes() {\n return noteRepository.findAll();\n}\n```\nRetrieves notes from repository.\n\n**Annotation**\n```java\n@Service\n```\n- Marks this class as a service layer component.\n- Spring manages its lifecycle automatically.\n\n---\n\n**5. NoteController**\n```java\n@RestController\n@RequestMapping(\"/api/notes\")\n```\n**What this class does**\n- Handles HTTP requests.\n- Communicates with the service layer.\n- Does not contain business or storage logic.\n\n**Service dependency**\n```java\nprivate final NoteService noteService;\n```\nController uses the service interface.\n\n**Constructor Injection**\n```java\npublic NoteController(NoteService noteService) {\n this.noteService = noteService;\n}\n```\nSpring injects the service implementation automatically.\n\n\n**POST Endpoint — Add Note**\n```java\n@PostMapping\npublic String addNote(@RequestBody String note)\n```\n- Receives note text from request body.\n- Calls service to add the note.\n- Returns success message.\n\n**GET Endpoint — Get Notes**\n```java\n@GetMapping(\"/list\")\npublic List getNotes()\n```\n- Calls service to fetch all notes.\n- Returns notes as JSON response.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "TGHENAXY05",
+          "questionId": "TGHENAXY05",
+          "title": "Build a Task Manager API (Interface-Based Design)",
+          "difficulty": "Easy",
+          "description": "You are building a Simple Task Manager API. \\\nA task is just a text description (example: \"Complete homework\"). \\\nYour goal is to implement the API using:\n```sss\nController → Service → Repository\n```\nand follow **Interface-Based Design**.\n\n\n\n---\n\n**Instructions:**\n1. **Complete your code** first.\n2. Click on **\"Run\"** to **start the server** and make sure it runs correctly.\n3. If you **make any changes** to the code after running, you must **run the server again**.\n4. Only after running the server with the **latest changes**, your submission will reflect the updated solution.\n5. **Do not submit** if the server is not running; otherwise, your solution will **fail**.\n\n\n\n\n---\n\n**Goal :** \\\nComplete a working Spring Boot API using:\n- Service Interface + Implementation\n- Repository Interface + Implementation\n- Constructor-based Dependency Injection\n- In-memory storage (ArrayList)\n\n---\n\n**API Requirements** \n\n**1. Add Task**\n```java\nPOST /api/tasks\n```\n**Request Body:**\n```sss\nComplete homework\n```\n**Response:**\n```sss\nTask added successfully!\n```\n\n**2. Get All Tasks**\n```json\nGET /api/tasks/list\n```\n**Response:**\n```json\n[\n \"Complete homework\"\n]\n```\n\n---\n\n**Instructions :**\n- Complete the missing code marked with: `// TODO`\n- Use constructor-based dependency injection only\n- Do NOT store data in controller\n- Follow interface-based design\n- Repository handles storage only\n- Service handles logic only\n- Do not change package names",
+          "problemStatement": "You are building a Simple Task Manager API. \\\nA task is just a text description (example: \"Complete homework\"). \\\nYour goal is to implement the API using:\n```sss\nController → Service → Repository\n```\nand follow **Interface-Based Design**.\n\n\n\n---\n\n**Instructions:**\n1. **Complete your code** first.\n2. Click on **\"Run\"** to **start the server** and make sure it runs correctly.\n3. If you **make any changes** to the code after running, you must **run the server again**.\n4. Only after running the server with the **latest changes**, your submission will reflect the updated solution.\n5. **Do not submit** if the server is not running; otherwise, your solution will **fail**.\n\n\n\n\n---\n\n**Goal :** \\\nComplete a working Spring Boot API using:\n- Service Interface + Implementation\n- Repository Interface + Implementation\n- Constructor-based Dependency Injection\n- In-memory storage (ArrayList)\n\n---\n\n**API Requirements** \n\n**1. Add Task**\n```java\nPOST /api/tasks\n```\n**Request Body:**\n```sss\nComplete homework\n```\n**Response:**\n```sss\nTask added successfully!\n```\n\n**2. Get All Tasks**\n```json\nGET /api/tasks/list\n```\n**Response:**\n```json\n[\n \"Complete homework\"\n]\n```\n\n---\n\n**Instructions :**\n- Complete the missing code marked with: `// TODO`\n- Use constructor-based dependency injection only\n- Do NOT store data in controller\n- Follow interface-based design\n- Repository handles storage only\n- Service handles logic only\n- Do not change package names",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "springboot.json",
+      "_moduleTitle": "Clean Architecture & Full CRUD (In-Memory)"
+    },
+    {
+      "topicId": "t04-full-crud-apis",
+      "title": "Full CRUD APIs",
+      "description": "Study concepts and solve targeted engineering problems for Full CRUD APIs.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 20,
+      "pages": [
+        {
+          "pageId": "p-CCIVKU04",
+          "title": "Guess the Output",
+          "content": "Which annotation is used for updating data in Spring Boot?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Guess the Output in Full CRUD APIs is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CCIVKU04",
+            "question": "In Full CRUD APIs, what is the key consideration regarding Guess the Output?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-CCIVKU04A",
+          "title": "Guess the Output",
+          "content": "Which annotation deletes a specific event by ID?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Guess the Output in Full CRUD APIs is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CCIVKU04A",
+            "question": "In Full CRUD APIs, what is the key consideration regarding Guess the Output?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-CCIVKU04-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Guess the Output (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-CCIVKU04A-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Guess the Output (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "CCIVKU03",
+          "questionId": "CCIVKU03",
+          "title": "Building Your First User CRUD",
+          "difficulty": "Easy",
+          "description": "Our UserController is a REST API for managing users. All endpoints start with the base URL:\n```java\n/api/users\n```\nEach HTTP method does a specific operation — this is the CRUD pattern:\n- **C → Create** → POST\n- **R → Read** → GET\n- **U → Update** → PUT\n- **D → Delete** → DELETE\n\nLet’s go through each endpoint. \\\n**1. Create (POST)** \\\nEndpoint:\n```sss\nPOST /api/users\n```\nSince you already know POST, we won’t spend too much time here. It creates new data.\n\n---\n\n**2. Read (GET)** \\\nTwo Endpoints here:\n```sss\nGET /api/users -> Get all users (Returns a list of all users.)\nGET /api/users/{id} -> Get user by ID (Returns a single user by its ID.)\n```\nYou already know GET — it retrieves data.\n\n---\n\n**3. Update (PUT)** \\\nAnnotation Used:\n```java\n@PutMapping(\"/{id}\")\n```\n\nEndpoint:\n```ss\nPUT /api/users/{id}\n```\n\n**What it does:**\n- Updates an existing user by ID.\n- Requires the ID in the URL and a JSON body with updated information, e.g.:\n```sss\n{\n \"name\": \"Bob\"\n}\n```\n\n**Controller Code:**\n```java\n@PutMapping(\"/{id}\")\npublic String updateUser(@PathVariable int id,\n @RequestBody Map user) {\n\n if (id >= 0 && id = 0 && id < userService.getUserCount()) {\n userService.deleteUser(id);\n return \"User deleted successfully!\";\n } else {\n return \"User not found!\";\n }\n}\n```\n\n**What happens:**\n1. ID is taken from URL\n2. It checks if ID exists\n3. If valid → calls:\n```java\nuserService.deleteUser(id);\n```\n4. Returns success message\n5. If invalid → returns:\n```sss\n\"User not found!\"\n```\n6. So this deletes one specific user.\n\n\n**Response**: \\\n`\"User deleted successfully!\"` or `\"User not found!\"`.\n\n---\n\n- **Delete all users** \\\nAnnotation:\n```java\n@DeleteMapping\n```\n\n```sss\nDELETE /api/users\n```\nClears the entire user list.\n\n**Controller Code:**\n```java\n@DeleteMapping\npublic String deleteAllUsers() {\n userService.deleteAllUsers();\n return \"All users deleted successfully!\";\n}\n```\n**What happens:**\n- No ID required\n- Calls:\n```java\nuserService.deleteAllUsers();\n```\n- Clears the entire list\n- Returns success message\n\n\n**Response:** \\\n `\"All users deleted successfully!\"`",
+          "problemStatement": "Our UserController is a REST API for managing users. All endpoints start with the base URL:\n```java\n/api/users\n```\nEach HTTP method does a specific operation — this is the CRUD pattern:\n- **C → Create** → POST\n- **R → Read** → GET\n- **U → Update** → PUT\n- **D → Delete** → DELETE\n\nLet’s go through each endpoint. \\\n**1. Create (POST)** \\\nEndpoint:\n```sss\nPOST /api/users\n```\nSince you already know POST, we won’t spend too much time here. It creates new data.\n\n---\n\n**2. Read (GET)** \\\nTwo Endpoints here:\n```sss\nGET /api/users -> Get all users (Returns a list of all users.)\nGET /api/users/{id} -> Get user by ID (Returns a single user by its ID.)\n```\nYou already know GET — it retrieves data.\n\n---\n\n**3. Update (PUT)** \\\nAnnotation Used:\n```java\n@PutMapping(\"/{id}\")\n```\n\nEndpoint:\n```ss\nPUT /api/users/{id}\n```\n\n**What it does:**\n- Updates an existing user by ID.\n- Requires the ID in the URL and a JSON body with updated information, e.g.:\n```sss\n{\n \"name\": \"Bob\"\n}\n```\n\n**Controller Code:**\n```java\n@PutMapping(\"/{id}\")\npublic String updateUser(@PathVariable int id,\n @RequestBody Map user) {\n\n if (id >= 0 && id = 0 && id < userService.getUserCount()) {\n userService.deleteUser(id);\n return \"User deleted successfully!\";\n } else {\n return \"User not found!\";\n }\n}\n```\n\n**What happens:**\n1. ID is taken from URL\n2. It checks if ID exists\n3. If valid → calls:\n```java\nuserService.deleteUser(id);\n```\n4. Returns success message\n5. If invalid → returns:\n```sss\n\"User not found!\"\n```\n6. So this deletes one specific user.\n\n\n**Response**: \\\n`\"User deleted successfully!\"` or `\"User not found!\"`.\n\n---\n\n- **Delete all users** \\\nAnnotation:\n```java\n@DeleteMapping\n```\n\n```sss\nDELETE /api/users\n```\nClears the entire user list.\n\n**Controller Code:**\n```java\n@DeleteMapping\npublic String deleteAllUsers() {\n userService.deleteAllUsers();\n return \"All users deleted successfully!\";\n}\n```\n**What happens:**\n- No ID required\n- Calls:\n```java\nuserService.deleteAllUsers();\n```\n- Clears the entire list\n- Returns success message\n\n\n**Response:** \\\n `\"All users deleted successfully!\"`",
+          "constraints": [
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "TGHENA02B",
+          "questionId": "TGHENA02B",
+          "title": "Practice - Complete the Event API Controller",
+          "difficulty": "Easy",
+          "description": "**Scenario :** \\\nYou are building a simple **Event Management API** using Spring Boot.\n- The `EventService` and `EventRepository` layers are already implemented and working.\n- The **GET** and **POST** endpoints in the **`EventController`** are already completed for you.\n\nYour task is to **complete the `EventController`** by implementing the remaining CRUD functionality: **PUT and DELETE**.\n\n---\n\n**Instructions:**\n1. **Complete your code** first.\n2. Click on **\"Run\"** to **start the server** and make sure it runs correctly.\n3. If you **make any changes** to the code after running, you must **run the server again**.\n4. Only after running the server with the **latest changes**, your submission will reflect the updated solution.\n5. **Do not submit** if the server is not running; otherwise, your solution will **fail**.\n\n\n\n---\n\n**Controller Tasks :** \\\nYou need to implement the following endpoints in EventController: \\\n**1. Update an event by ID** \n- Method: PUT\n-URL: `/api/events/{id}`\n- Request Body: JSON with updated event data\n- **Response**:\n```sss\n\"Event updated successfully!\" if ID exists\n```\n\"Event not found!\" if ID is invalid\n\n**2. Delete an event by ID**\n- Method: DELETE\n- URL: /api/events/{id}\n- **Response**:\n```sss\n\"Event deleted successfully!\" if ID exists\n```\n\"Event not found!\" if ID is invalid\n\n3. **Delete all events**\n- Method: DELETE\n- URL: /api/events\n- **Response**: \n```sss\n\"All events deleted successfully!\"\n```",
+          "problemStatement": "**Scenario :** \\\nYou are building a simple **Event Management API** using Spring Boot.\n- The `EventService` and `EventRepository` layers are already implemented and working.\n- The **GET** and **POST** endpoints in the **`EventController`** are already completed for you.\n\nYour task is to **complete the `EventController`** by implementing the remaining CRUD functionality: **PUT and DELETE**.\n\n---\n\n**Instructions:**\n1. **Complete your code** first.\n2. Click on **\"Run\"** to **start the server** and make sure it runs correctly.\n3. If you **make any changes** to the code after running, you must **run the server again**.\n4. Only after running the server with the **latest changes**, your submission will reflect the updated solution.\n5. **Do not submit** if the server is not running; otherwise, your solution will **fail**.\n\n\n\n---\n\n**Controller Tasks :** \\\nYou need to implement the following endpoints in EventController: \\\n**1. Update an event by ID** \n- Method: PUT\n-URL: `/api/events/{id}`\n- Request Body: JSON with updated event data\n- **Response**:\n```sss\n\"Event updated successfully!\" if ID exists\n```\n\"Event not found!\" if ID is invalid\n\n**2. Delete an event by ID**\n- Method: DELETE\n- URL: /api/events/{id}\n- **Response**:\n```sss\n\"Event deleted successfully!\" if ID exists\n```\n\"Event not found!\" if ID is invalid\n\n3. **Delete all events**\n- Method: DELETE\n- URL: /api/events\n- **Response**: \n```sss\n\"All events deleted successfully!\"\n```",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "springboot.json",
+      "_moduleTitle": "Clean Architecture & Full CRUD (In-Memory)"
+    },
+    {
+      "topicId": "t05-projects",
+      "title": "Projects",
+      "description": "Study concepts and solve targeted engineering problems for Practice Projects.",
+      "mode": "PRACTICE",
+      "readingTimeMinutes": 20,
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": [
+        {
+          "problemId": "SPRB01",
+          "questionId": "SPRB01",
+          "title": "Note Taking API Project",
+          "difficulty": "Easy",
+          "description": "**Hello Developers!** Welcome to the **Note-Taking API Project** \n\nIn this project, you will build a **backend REST API** using **Spring Boot** that allows users to manage personal notes. \\\nModern backend systems are built using clean architecture, where responsibilities are clearly separated. \\\nThis project is designed to help you understand how a real backend application works internally-from handling HTTP requests to managing data in memory.\n\nChef wants a lightweight backend service where users can:\n- *Create notes*\n- *View all notes*\n- *Update existing notes*\n- *Delete notes*\n\nYour task is to complete the missing logic and make the API fully functional.\n\n---\n\n**Project Structure** \\\nYou are given 4 Java files representing a **Layered Architecture**:\n- `Note.java` → Model class\n- `NoteController.java` → REST Controller\n- `NoteService.java` → Service layer\n- `NoteRepository.java` → Repository layer (in-memory storage)\n\n**Important Rules**\n- Do **NOT** change class names\n- Do **NOT** change method names\n- Complete the sections marked with `TODO`\n- The testing system relies on the existing structure\n- **In-Memory Storage:** Data is lost when the application restarts (this is expected behaviour for this project).\n\n---\n\n**Data Structure** \\\nYou will be working with a **Note** object that has the following structure:\n- id (`Long`) - Unique ID generated automatically (e.g., 1, 2, 3...).\n- title (`String`) - The header of the note (e.g., \"Grocery List\").\n- content (`String`) - The body of the note (e.g., \"Milk, Eggs, Bread\").\n\n---\n\n**Your Task:**\n1. **Complete the Model** \\\n **File:** `model/Note.java` This class is the blueprint for our data.\n - **Constructor:** Complete the **Parameterized Constructor**. Assign the passed variables (`id`, `title`, `content`) to the class fields.\n - **Encapsulation**: Implement the missing **Getters** and **Setters** so other classes can access and modify the private data. \\\n**Docs:** Building a RESTful Web Service\n\n2. **Build the Repository (The Database Layer)** \\\n **File:** `repository/NoteRepository.java` This class manages the raw data in an `ArrayList`.\n - **Annotation:** Add the correct Spring annotation to mark this class as a Repository.\n - **Save Method:**\n - Assign a unique ID to the note using the `idCounter`.\n - Increment the `idCounter` (e.g., `idCounter++`) so the next note gets a new number.\n - Add the note to the `noteList`.\n - `findAll` Method: Return a **new ArrayList** containing the `noteList` (this creates a safe copy).\n - **Update Method:**\n - Loop through the list to find the note with the matching `id`. \n - If found, update its **title** and **content** using setters.\n - **Delete Method:** Remove the note from the `noteList` if its ID matches the provided ID. \\\n**Docs:** @Repository Annotation | Classpath Scanning (Component detection)\n\n3. **Connect the Service (The Logic Layer)** \\\n **File:** `service/NoteService.java` This class acts as a bridge between the API (Controller) and the Data (Repository).\n - **Annotation:** Add the correct Spring annotation to mark this class as a Service component.\n - **Constructor Injection:** Initialize the `noteRepository` variable inside the constructor.\n - **Delegation:** Complete the methods (`createNote`, `getAllNotes`, `updateNote`, `deleteNote`) by simply calling the corresponding methods in the `noteRepository`.\n - *Hint:* When creating a note, pass `null` as the ID (the repository handles ID generation). \\\n**Docs:** Constructor Injection | @Service Annotation\n\n4. **Define the API Endpoints (The Controller Layer)** \\\n **File:** `controller/NoteController.java` This class talks to the outside world (Frontend/Postman).\n - **Class Configuration:** Ensure this class is recognized as a **REST Controller**.\n - **Constructor:** Inject the `NoteService`.\n - **Map the Endpoints:** Add the correct Spring Boot annotations to the methods:\n - Create Note $\\rightarrow$ `@PostMapping`\n - Get Notes $\\rightarrow$ `@GetMapping`\n - Update Note $\\rightarrow$ `@PutMapping(\"/{id}\")`\n - Delete Note $\\rightarrow$ `@DeleteMapping(\"/{id}\")`\n - **Call the Service:** Inside each method, call the matching method from `noteService` and return the result. \\\n**Docs:** @RestController Annotation | @RequestBody Annotation | @PathVariable Annotation\n\n---\n\n**Expected Behaviour:**",
+          "problemStatement": "**Hello Developers!** Welcome to the **Note-Taking API Project** \n\nIn this project, you will build a **backend REST API** using **Spring Boot** that allows users to manage personal notes. \\\nModern backend systems are built using clean architecture, where responsibilities are clearly separated. \\\nThis project is designed to help you understand how a real backend application works internally-from handling HTTP requests to managing data in memory.\n\nChef wants a lightweight backend service where users can:\n- *Create notes*\n- *View all notes*\n- *Update existing notes*\n- *Delete notes*\n\nYour task is to complete the missing logic and make the API fully functional.\n\n---\n\n**Project Structure** \\\nYou are given 4 Java files representing a **Layered Architecture**:\n- `Note.java` → Model class\n- `NoteController.java` → REST Controller\n- `NoteService.java` → Service layer\n- `NoteRepository.java` → Repository layer (in-memory storage)\n\n**Important Rules**\n- Do **NOT** change class names\n- Do **NOT** change method names\n- Complete the sections marked with `TODO`\n- The testing system relies on the existing structure\n- **In-Memory Storage:** Data is lost when the application restarts (this is expected behaviour for this project).\n\n---\n\n**Data Structure** \\\nYou will be working with a **Note** object that has the following structure:\n- id (`Long`) - Unique ID generated automatically (e.g., 1, 2, 3...).\n- title (`String`) - The header of the note (e.g., \"Grocery List\").\n- content (`String`) - The body of the note (e.g., \"Milk, Eggs, Bread\").\n\n---\n\n**Your Task:**\n1. **Complete the Model** \\\n **File:** `model/Note.java` This class is the blueprint for our data.\n - **Constructor:** Complete the **Parameterized Constructor**. Assign the passed variables (`id`, `title`, `content`) to the class fields.\n - **Encapsulation**: Implement the missing **Getters** and **Setters** so other classes can access and modify the private data. \\\n**Docs:** Building a RESTful Web Service\n\n2. **Build the Repository (The Database Layer)** \\\n **File:** `repository/NoteRepository.java` This class manages the raw data in an `ArrayList`.\n - **Annotation:** Add the correct Spring annotation to mark this class as a Repository.\n - **Save Method:**\n - Assign a unique ID to the note using the `idCounter`.\n - Increment the `idCounter` (e.g., `idCounter++`) so the next note gets a new number.\n - Add the note to the `noteList`.\n - `findAll` Method: Return a **new ArrayList** containing the `noteList` (this creates a safe copy).\n - **Update Method:**\n - Loop through the list to find the note with the matching `id`. \n - If found, update its **title** and **content** using setters.\n - **Delete Method:** Remove the note from the `noteList` if its ID matches the provided ID. \\\n**Docs:** @Repository Annotation | Classpath Scanning (Component detection)\n\n3. **Connect the Service (The Logic Layer)** \\\n **File:** `service/NoteService.java` This class acts as a bridge between the API (Controller) and the Data (Repository).\n - **Annotation:** Add the correct Spring annotation to mark this class as a Service component.\n - **Constructor Injection:** Initialize the `noteRepository` variable inside the constructor.\n - **Delegation:** Complete the methods (`createNote`, `getAllNotes`, `updateNote`, `deleteNote`) by simply calling the corresponding methods in the `noteRepository`.\n - *Hint:* When creating a note, pass `null` as the ID (the repository handles ID generation). \\\n**Docs:** Constructor Injection | @Service Annotation\n\n4. **Define the API Endpoints (The Controller Layer)** \\\n **File:** `controller/NoteController.java` This class talks to the outside world (Frontend/Postman).\n - **Class Configuration:** Ensure this class is recognized as a **REST Controller**.\n - **Constructor:** Inject the `NoteService`.\n - **Map the Endpoints:** Add the correct Spring Boot annotations to the methods:\n - Create Note $\\rightarrow$ `@PostMapping`\n - Get Notes $\\rightarrow$ `@GetMapping`\n - Update Note $\\rightarrow$ `@PutMapping(\"/{id}\")`\n - Delete Note $\\rightarrow$ `@DeleteMapping(\"/{id}\")`\n - **Call the Service:** Inside each method, call the matching method from `noteService` and return the result. \\\n**Docs:** @RestController Annotation | @RequestBody Annotation | @PathVariable Annotation\n\n---\n\n**Expected Behaviour:**",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRB02",
+          "questionId": "SPRB02",
+          "title": "URL Shortener Project",
+          "difficulty": "Easy",
+          "description": "**Hey Learners!** Welcome to the **URL Shortener Project** \n\nIn this project, you will build a **backend REST API** using Spring Boot that converts long, messy URLs into short, clean, and shareable links.\n\nSharing long web addresses can be cumbersome. Chef needs a high-performance, lightweight service where users can shorten URLs and, when they click the short link, be instantly redirected to the original website.\n\nYour **task** is to **complete the missing logic** and make the API fully functional.\n\n---\n\n**Project Structure** \\\nYou are given **4 Java files** representing a **Layered Architecture**:\n1. `UrlRequest.java` → Model class (Data Transfer Object).\n2. `UrlRepository.java` → Repository layer (In-memory storage using HashMap).\n3. `UrlService.java` → Service layer (Business logic & Hashing).\n4. `UrlController.java` → REST Controller (API Endpoints).\n\n**Important Rules**\n- Do **NOT** change class names\n- Do **NOT** change method names\n- Complete the sections marked with `TODO`\n- The testing system relies on the existing structure\n- **In-Memory Storage:** Data is stored in a `HashMap`. Data is lost when the application restarts (this is expected behavior).\n\n**Data Structure** \\\nYou will be working with two primary structures in this project:\n1. **The Request Object (Input):**\n - `originalUrl` (String) - The long URL provided by the user that needs to be shortened (e.g., `https://www.codechef.com/`).\n2. **The Storage Map (Internal Memory):**\n - **Key** (String): The generated `shortCode` (e.g., `\"5d4140\"`).\n - **Value** (String): The `originalUrl` associated with that code.\n - *Note:* This Map acts as your temporary database.\n\n---\n\n**Your Task:**\n1. **Complete the Model** \\\n **File:** `model/UrlRequest.java` This class is the \"envelope\" that holds the data sent by the user.\n - **Constructor:** Complete the **Parameterized Constructor**. Assign the passed variable (`originalUrl`) to the class field.\n - **Encapsulation**: Implement the missing **Getters** and **Setters** so other classes can access and modify the private data. \\\n**Docs:** How JSON Maps to Java Objects\n\n2. **Build the Repository (The Database Layer)** \\\n **File:** `repository/UrlRepository.java` This class manages the raw data in a HashMap.\n - **Annotation:** Add the correct Spring annotation to mark this class as a Repository.\n - **`saveUrl` Method:** Store the mapping in the `urlStore` map. Use the `shortCode` as the Key and `originalUrl` as the Value. \n - **`getOriginalUrl` Method:** Retrieve the original url from the map using the `shortCode`.\n - **`exists` Method:** Return `true` if the map contains the `shortCode`, otherwise return `false`.\n - **`getAllUrls` Method:** Return the entire map. \\\n**Docs:** @Repository Annotation | Java HashMap | Java Map Interface (put, get, containsKey)\n\n3. **Connect the Service (The Logic Layer)** \\\n **File:** `service/UrlService.java` This class handles the logic, specifically generating the unique hash.\n - **Annotation:** Add the correct Spring annotation to mark this class as a Service.\n - **Constructor Injection:** Initialize the `urlRepository` variable inside the constructor.\n - **`shortenUrl` Method:**\n - **Hashing:** We use MD5 to generate a unique code. Use `DigestUtils.md5DigestAsHex` on the original URL bytes (Code provided).\n - **MD5 (Message-Digest Algorithm 5)** is a cryptographic hash function that converts any input (like a long URL) into a fixed-length 32-character hexadecimal string.\n - Hashing is **one-way**, meaning you can’t reverse it to get the original URL - perfect for generating unique, consistent codes.\n - In this project, we use Spring’s built-in `DigestUtils` class to create an MD5 hash of the long URL and then take the **first 6 characters** of that hash as the `shortCode`.\n - Substring: Extract the **first 6 characters** of the generated hash to create the `shortCode`.\n - Logic: Check if the code already exists in the repository. If it does **NOT**, save the new mapping.\n - Return: Return the generated `shortCode`.\n - **`getOriginalUrl` Method:** Call the repository to fetch the URL. \\\n**Docs:** Spring Constructor Injection | @Service Annotation | MD5 Hashing in Java | Java substring() Method\n\n4. **Define the API Endpoints (The Controller Layer)** \\\n **File:** `controller/UrlController.java` This class talks to the outside world (Frontend/Postman).\n - **Constructor:** Inject the `UrlService` into the controller.\n - **Endpoint 1:** Create Short URL\n - **Goal:** Receive a long URL and return a short code.\n - **Annotation:** Use `@PostMapping` and map it to `\"/api/shorten\"`.\n - **Input:** The method should accept a `@RequestBody` of type `UrlRequest` (code provided).\n - **Logic:**\n 1. Extract the original URL from the request object.\n 2. Call `urlService.shortenUrl(...)` to generate the code.\n - **Response:**\n - Wrap the result in a `ResponseEntity` (code provided).\n - Return a JSON Map where the key is `\"shortCode\"` and the value is the code you generated.\n - Example Output JSON: `{ \"shortCode\": \"5d4140\" }`\n - **Endpoint 2:** Redirect to Original URL\n - **Goal:** When a user visits the short link, redirect them to the real website.\n - **Annotation:** Use `@GetMapping` and map it to `\"/{shortCode}\"`. \n - **Input:** Use `@PathVariable` to capture the `shortCode` from the URL.\n - **Logic:**\n - Call `urlService.getOriginalUrl(...)` to find the long URL.\n - Check: If the URL is `null` (not found), return a **404 Not Found** status (code provided).\n - Success: If found, return an **HTTP 302 (Found)** status.\n - **Important:** You must set the **Location Header** of the response to the **original URL** so the browser knows where to go. \\\n**Docs:** @RestController Annotation | @RequestBody Annotation | @PathVariable Annotation | Building a RESTful Web Service | HTTP 302 Found (Redirect) | HTTP 404 Not Found\n\n---\n\n**Expected Behaviour:** \\\nSince our CodeChef domain itself is a little long, the generated short URLs you see here may also appear slightly longer than typical short URLs.",
+          "problemStatement": "**Hey Learners!** Welcome to the **URL Shortener Project** \n\nIn this project, you will build a **backend REST API** using Spring Boot that converts long, messy URLs into short, clean, and shareable links.\n\nSharing long web addresses can be cumbersome. Chef needs a high-performance, lightweight service where users can shorten URLs and, when they click the short link, be instantly redirected to the original website.\n\nYour **task** is to **complete the missing logic** and make the API fully functional.\n\n---\n\n**Project Structure** \\\nYou are given **4 Java files** representing a **Layered Architecture**:\n1. `UrlRequest.java` → Model class (Data Transfer Object).\n2. `UrlRepository.java` → Repository layer (In-memory storage using HashMap).\n3. `UrlService.java` → Service layer (Business logic & Hashing).\n4. `UrlController.java` → REST Controller (API Endpoints).\n\n**Important Rules**\n- Do **NOT** change class names\n- Do **NOT** change method names\n- Complete the sections marked with `TODO`\n- The testing system relies on the existing structure\n- **In-Memory Storage:** Data is stored in a `HashMap`. Data is lost when the application restarts (this is expected behavior).\n\n**Data Structure** \\\nYou will be working with two primary structures in this project:\n1. **The Request Object (Input):**\n - `originalUrl` (String) - The long URL provided by the user that needs to be shortened (e.g., `https://www.codechef.com/`).\n2. **The Storage Map (Internal Memory):**\n - **Key** (String): The generated `shortCode` (e.g., `\"5d4140\"`).\n - **Value** (String): The `originalUrl` associated with that code.\n - *Note:* This Map acts as your temporary database.\n\n---\n\n**Your Task:**\n1. **Complete the Model** \\\n **File:** `model/UrlRequest.java` This class is the \"envelope\" that holds the data sent by the user.\n - **Constructor:** Complete the **Parameterized Constructor**. Assign the passed variable (`originalUrl`) to the class field.\n - **Encapsulation**: Implement the missing **Getters** and **Setters** so other classes can access and modify the private data. \\\n**Docs:** How JSON Maps to Java Objects\n\n2. **Build the Repository (The Database Layer)** \\\n **File:** `repository/UrlRepository.java` This class manages the raw data in a HashMap.\n - **Annotation:** Add the correct Spring annotation to mark this class as a Repository.\n - **`saveUrl` Method:** Store the mapping in the `urlStore` map. Use the `shortCode` as the Key and `originalUrl` as the Value. \n - **`getOriginalUrl` Method:** Retrieve the original url from the map using the `shortCode`.\n - **`exists` Method:** Return `true` if the map contains the `shortCode`, otherwise return `false`.\n - **`getAllUrls` Method:** Return the entire map. \\\n**Docs:** @Repository Annotation | Java HashMap | Java Map Interface (put, get, containsKey)\n\n3. **Connect the Service (The Logic Layer)** \\\n **File:** `service/UrlService.java` This class handles the logic, specifically generating the unique hash.\n - **Annotation:** Add the correct Spring annotation to mark this class as a Service.\n - **Constructor Injection:** Initialize the `urlRepository` variable inside the constructor.\n - **`shortenUrl` Method:**\n - **Hashing:** We use MD5 to generate a unique code. Use `DigestUtils.md5DigestAsHex` on the original URL bytes (Code provided).\n - **MD5 (Message-Digest Algorithm 5)** is a cryptographic hash function that converts any input (like a long URL) into a fixed-length 32-character hexadecimal string.\n - Hashing is **one-way**, meaning you can’t reverse it to get the original URL - perfect for generating unique, consistent codes.\n - In this project, we use Spring’s built-in `DigestUtils` class to create an MD5 hash of the long URL and then take the **first 6 characters** of that hash as the `shortCode`.\n - Substring: Extract the **first 6 characters** of the generated hash to create the `shortCode`.\n - Logic: Check if the code already exists in the repository. If it does **NOT**, save the new mapping.\n - Return: Return the generated `shortCode`.\n - **`getOriginalUrl` Method:** Call the repository to fetch the URL. \\\n**Docs:** Spring Constructor Injection | @Service Annotation | MD5 Hashing in Java | Java substring() Method\n\n4. **Define the API Endpoints (The Controller Layer)** \\\n **File:** `controller/UrlController.java` This class talks to the outside world (Frontend/Postman).\n - **Constructor:** Inject the `UrlService` into the controller.\n - **Endpoint 1:** Create Short URL\n - **Goal:** Receive a long URL and return a short code.\n - **Annotation:** Use `@PostMapping` and map it to `\"/api/shorten\"`.\n - **Input:** The method should accept a `@RequestBody` of type `UrlRequest` (code provided).\n - **Logic:**\n 1. Extract the original URL from the request object.\n 2. Call `urlService.shortenUrl(...)` to generate the code.\n - **Response:**\n - Wrap the result in a `ResponseEntity` (code provided).\n - Return a JSON Map where the key is `\"shortCode\"` and the value is the code you generated.\n - Example Output JSON: `{ \"shortCode\": \"5d4140\" }`\n - **Endpoint 2:** Redirect to Original URL\n - **Goal:** When a user visits the short link, redirect them to the real website.\n - **Annotation:** Use `@GetMapping` and map it to `\"/{shortCode}\"`. \n - **Input:** Use `@PathVariable` to capture the `shortCode` from the URL.\n - **Logic:**\n - Call `urlService.getOriginalUrl(...)` to find the long URL.\n - Check: If the URL is `null` (not found), return a **404 Not Found** status (code provided).\n - Success: If found, return an **HTTP 302 (Found)** status.\n - **Important:** You must set the **Location Header** of the response to the **original URL** so the browser knows where to go. \\\n**Docs:** @RestController Annotation | @RequestBody Annotation | @PathVariable Annotation | Building a RESTful Web Service | HTTP 302 Found (Redirect) | HTTP 404 Not Found\n\n---\n\n**Expected Behaviour:** \\\nSince our CodeChef domain itself is a little long, the generated short URLs you see here may also appear slightly longer than typical short URLs.",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRB03",
+          "questionId": "SPRB03",
+          "title": "Encryption Terminal Project",
+          "difficulty": "Easy",
+          "description": "**Hey Innovators!** Welcome to **Project 1: Encryption Terminal** \n\nIn this project, you will build a **Spring Boot Backend** that acts as a digital coding machine. It converts readable text into secret codes and back again. \\\n**Data security is important!** Chef needs a secure way to transmit messages so that no one else can read them. Your system will use a classic **Caesar Cipher** algorithm to \"shift\" letters. \n\nYour **task** is to **complete the missing backend logic** to make this terminal fully functional.\n\n---\n\n**Project Structure** \\\nYou are given **3 Java files** representing a **Layered Architecture**:\n1. `EncryptionResponse.java` → **Model** (Data Transfer Object) that structures the JSON output.\n2. `EncryptionService.java` → **Service** (Business Logic) that handles the math and string manipulation.\n3. `EncryptionController.java` → **Controller** (API Endpoints) that handles web requests.\n\n**Important Rules**\n- Do **NOT** change class names\n- Do **NOT** change method names\n- Complete the sections marked with **TODO**\n- The testing system relies on the existing structure\n\n---\n\n**The Logic: Caesar Cipher** \\\nThis project uses a simple substitution method called the **Caesar Cipher**.\n- **The Key:** We use a SHIFT of **5**.\n- **Encryption:** Every letter moves **forward** by 5 spots in the alphabet (e.g., `A` becomes `F`).\n- **Decryption:** Every letter moves **backward** by 5 spots to reveal the original message.\n- **Wrap-Around:** If you shift past 'Z', you go back to 'A'. This is done using **Modulo Arithmetic** (`%`).\n\n---\n\n**Your Task:**\n1. **Complete the Model** \\\n **File:** `model/EncryptionResponse.java` This class acts as the \"box\" that holds the answer we send back to the user.\n - **Constructor:** Assign the incoming parameters (`originalText`, `transformedText`, `operation`) to the class fields.\n - **Getters:** Implement the methods to return the private field values so the system can convert them to JSON. \\\n**Docs:** Anatomy of a Java Class\n\n2. **Connect the Service (The Brain)** \\\n **File:** `service/EncryptionService.java` This is where the actual scrambling happens.\n - **Annotation:** Add the correct Spring annotation to mark this class as a Service.\n - **Process Method (The Loop):**\n - **Loop:** Convert the text to a char array and iterate through it.\n - **Base Logic:** Determine if the letter is Lowercase ('a') or Uppercase ('A') to select the correct base ASCII value (97 for 'a', 65 for 'A') needed to normalize the 0-25 index.\n - **The Math:** Apply the cipher formula using the `base` you just identified: `((character - base + shift) % 26) + base`\n - **Non-Letters:** In the `else` block (numbers, spaces, symbols), do **NOT** change the character. Append it directly to the result.\n - **Encrypt/Decrypt Methods:** \\\n Call the private `process()` helper method, passing the correct shift value.\n - *Hint for Decrypt:* call the `process()` function with the input `text`. For the second argument, you must reverse the shift using this formula: `26 - (SHIFT % 26)`. \\\n**Docs:** @Service Annotation | Java StringBuilder | ASCII Table\n\n3. **Define the API Endpoints (The Controller Layer)** \\\n **File:** `controller/EncryptionController.java` This class listens for requests from the outside world.\n - **Class Configuration:** Ensure this class is recognized as a **REST Controller** and handles requests starting with the base path `\"/api\"`.\n - **Dependency Injection:** Ensure the `EncryptionService` is correctly initialized via the constructor so the controller can use it.\n - **Endpoint 1: Encrypt a Message**\n - **Goal:** Create an endpoint that allows users to send plain text and receive the scrambled code. \n - **Mapping:** This method should handle GET requests at the path `\"/encrypt\"`.\n - **Input:** The method expects a value to be passed in the URL query string (e.g., `?message=Hello`). Use the appropriate Spring annotation to bind this parameter to a String variable.\n - **Logic:** Pass the captured input to your service layer to generate the encrypted text.\n - **Response:** Create and return a new instance of your `EncryptionResponse` model. Ensure the operation type is set to `\"encryption\"`.\n - **Endpoint 2: Decrypt a Message**\n - **Goal:** Create an endpoint that allows users to reverse the process and recover their original text.\n - **Mapping:** This method should handle GET requests at the path `\"/decrypt\"`.\n - **Input:** Similar to the encryption endpoint, capture the message parameter from the URL.\n - **Logic:** Pass the captured input to your service layer to retrieve the original text.\n - **Response:** Create and return a new instance of your `EncryptionResponse` model. Ensure the operation type is set to `\"decryption\"`. \\\n**Docs:** @RestController Annotation | Building a RESTful Web Service | Spring @RequestParam | Mapping Requests\n\n---\n\n**Expected Behaviour:**",
+          "problemStatement": "**Hey Innovators!** Welcome to **Project 1: Encryption Terminal** \n\nIn this project, you will build a **Spring Boot Backend** that acts as a digital coding machine. It converts readable text into secret codes and back again. \\\n**Data security is important!** Chef needs a secure way to transmit messages so that no one else can read them. Your system will use a classic **Caesar Cipher** algorithm to \"shift\" letters. \n\nYour **task** is to **complete the missing backend logic** to make this terminal fully functional.\n\n---\n\n**Project Structure** \\\nYou are given **3 Java files** representing a **Layered Architecture**:\n1. `EncryptionResponse.java` → **Model** (Data Transfer Object) that structures the JSON output.\n2. `EncryptionService.java` → **Service** (Business Logic) that handles the math and string manipulation.\n3. `EncryptionController.java` → **Controller** (API Endpoints) that handles web requests.\n\n**Important Rules**\n- Do **NOT** change class names\n- Do **NOT** change method names\n- Complete the sections marked with **TODO**\n- The testing system relies on the existing structure\n\n---\n\n**The Logic: Caesar Cipher** \\\nThis project uses a simple substitution method called the **Caesar Cipher**.\n- **The Key:** We use a SHIFT of **5**.\n- **Encryption:** Every letter moves **forward** by 5 spots in the alphabet (e.g., `A` becomes `F`).\n- **Decryption:** Every letter moves **backward** by 5 spots to reveal the original message.\n- **Wrap-Around:** If you shift past 'Z', you go back to 'A'. This is done using **Modulo Arithmetic** (`%`).\n\n---\n\n**Your Task:**\n1. **Complete the Model** \\\n **File:** `model/EncryptionResponse.java` This class acts as the \"box\" that holds the answer we send back to the user.\n - **Constructor:** Assign the incoming parameters (`originalText`, `transformedText`, `operation`) to the class fields.\n - **Getters:** Implement the methods to return the private field values so the system can convert them to JSON. \\\n**Docs:** Anatomy of a Java Class\n\n2. **Connect the Service (The Brain)** \\\n **File:** `service/EncryptionService.java` This is where the actual scrambling happens.\n - **Annotation:** Add the correct Spring annotation to mark this class as a Service.\n - **Process Method (The Loop):**\n - **Loop:** Convert the text to a char array and iterate through it.\n - **Base Logic:** Determine if the letter is Lowercase ('a') or Uppercase ('A') to select the correct base ASCII value (97 for 'a', 65 for 'A') needed to normalize the 0-25 index.\n - **The Math:** Apply the cipher formula using the `base` you just identified: `((character - base + shift) % 26) + base`\n - **Non-Letters:** In the `else` block (numbers, spaces, symbols), do **NOT** change the character. Append it directly to the result.\n - **Encrypt/Decrypt Methods:** \\\n Call the private `process()` helper method, passing the correct shift value.\n - *Hint for Decrypt:* call the `process()` function with the input `text`. For the second argument, you must reverse the shift using this formula: `26 - (SHIFT % 26)`. \\\n**Docs:** @Service Annotation | Java StringBuilder | ASCII Table\n\n3. **Define the API Endpoints (The Controller Layer)** \\\n **File:** `controller/EncryptionController.java` This class listens for requests from the outside world.\n - **Class Configuration:** Ensure this class is recognized as a **REST Controller** and handles requests starting with the base path `\"/api\"`.\n - **Dependency Injection:** Ensure the `EncryptionService` is correctly initialized via the constructor so the controller can use it.\n - **Endpoint 1: Encrypt a Message**\n - **Goal:** Create an endpoint that allows users to send plain text and receive the scrambled code. \n - **Mapping:** This method should handle GET requests at the path `\"/encrypt\"`.\n - **Input:** The method expects a value to be passed in the URL query string (e.g., `?message=Hello`). Use the appropriate Spring annotation to bind this parameter to a String variable.\n - **Logic:** Pass the captured input to your service layer to generate the encrypted text.\n - **Response:** Create and return a new instance of your `EncryptionResponse` model. Ensure the operation type is set to `\"encryption\"`.\n - **Endpoint 2: Decrypt a Message**\n - **Goal:** Create an endpoint that allows users to reverse the process and recover their original text.\n - **Mapping:** This method should handle GET requests at the path `\"/decrypt\"`.\n - **Input:** Similar to the encryption endpoint, capture the message parameter from the URL.\n - **Logic:** Pass the captured input to your service layer to retrieve the original text.\n - **Response:** Create and return a new instance of your `EncryptionResponse` model. Ensure the operation type is set to `\"decryption\"`. \\\n**Docs:** @RestController Annotation | Building a RESTful Web Service | Spring @RequestParam | Mapping Requests\n\n---\n\n**Expected Behaviour:**",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRB04",
+          "questionId": "SPRB04",
+          "title": "Mars Rover Navigator Project",
+          "difficulty": "Easy",
+          "description": "**Hey Learners!** Welcome to the **Mars Rover Navigator Project** \n\nIn this project, you will build the **backend logic** for a navigation system that guides a rover across the surface of Mars. The rover moves on a grid, and your code will determine where it ends up based on a series of commands.\n\n**Precision is key!** We need to ensure the rover stays within its exploration zone and doesn't drive off the map. Your system will track **Coordinates (X, Y)** and **Direction (N, E, S, W)**.\n\nYour **task** is to **complete the missing backend logic** to make this navigation system fully functional.\n\n---\n\n**Project Structure** \\\nYou are given **3 Java files** representing a **Layered Architecture**:\n1. `Rover.java` → **Model:** A simple object (POJO) that holds the state (Position X, Position Y, and Direction).\n2. `RoverService.java` → **Service** (Business Logic): The \"Brain\" that calculates turns, movement, and checks boundaries.\n3. `RoverController.java` → **Controller** (API Endpoints): The \"Doorway\" that listens for web requests and talks to the service.\n\n**Important Rules**\n- Do **NOT** change class names\n- Do **NOT** change method names\n- Complete the sections marked with **TODO**\n- The testing system relies on the existing structure\n\n---\n\n**The Logic: Navigation & Grid** \\\nThis project uses a **2D Cartesian Grid** (10x10).\n1. **The Grid:** Coordinates range from 0 to 9.\n2. **Starting Point:** The rover always starts at (0, 0) (Bottom-Left corner).\n3. **Default Direction:** North (\"N\").\n4. **Turning**\n - **Left ('L'):** Rotates the rover 90 degrees Counter-Clockwise (e.g., North → West).\n - **Right ('R'):** Rotates the rover 90 degrees Clockwise (e.g., North → East). \n5. **Moving ('F')** \\\nMoves the rover **one step forward** in the direction it is currently facing.\n - **North:** Increases Y (moves up).\n - **South:** Decreases Y (moves down).\n - **East:** Increases X (moves right).\n - **West:** Decreases X (moves left).\n6. **Safety Boundaries** \\\nThe exploration zone is limited! The rover **cannot** move to a coordinate less than **0** or greater than **9**. If a command tries to push it off the edge, the rover must **ignore that move** and stay put.\n\n---\n\n**Your Task:**\n1. **Complete the Model** \\\n **File:** `model/Rover.java` This class represents the \"body\" of the rover. It remembers where it is.\n - **Constructor:** Initialize the `x`, `y`, and `direction` fields. The default constructor should set them to `0`, `0`, and `\"N\"`.\n - **Getters & Setters:** Implement the methods to allow other classes to read and modify these values. \\\n**Docs:** Anatomy of a Java Class\n\n2. **Connect the Service (The Brain)** \\\n **File:** `service/RoverService.java` This is where the magic happens.\n - **Annotation:** Add the correct Spring annotation to mark this class as a Service.\n - **Initialization:** Instantiate the `rover` object in the constructor so it is ready to use.\n - **Command Processing:** Implement the `processCommands(String commands)` method\n - This method should take a string of characters (e.g., `\"FFR\"`). \n - Loop through each character and call the corresponding logic method (`turnLeft`, `turnRight`, or `moveForward`). \n - Ignore any characters that are not `'F'`, `'L'`, or `'R'`.\n - **Reset Logic:** Implement the `resetRover()` method to snap the rover back to **(0, 0)** facing **\"N\"**.\n - **Turning Logic:** Complete the switch statements in `turnLeft()` and `turnRight()`.\n - *Hint:* If you are facing **North** and turn **Left**, you are now facing **West**.\n - **Movement Logic:** Complete the `moveForward()` method.\n - Check the **Boundary Condition** first! Only update the coordinate if the new position is valid (between 0 and 9). \\\n**Docs:** @Service Annotation | Java Switch Statements\n\n3. **Define the API Endpoints (The Controller Layer)** \\\n **File:** `controller/RoverController.java` This class receives commands from the outside world (the frontend).\n - **Class Configuration:** Annotate the class to make it a **REST Controller** and define the base URL path as `\"/api\"`.\n - **Dependency Injection:** Ensure the `RoverService` is correctly assigned in the constructor.\n - **Endpoint 1: Get Status**\n - **Goal:** Retrieve the current coordinates and direction of the rover without moving it.\n - **HTTP Method:** Use **GET** because we are just reading data. \n - **Path:** Map this to `\"/status\"` (Combined URL: `/api/status`). \n - **Logic:** The Controller doesn't store data itself. **Ask your Service layer** to provide the current `Rover` object it is holding.\n - **Return:** The `Rover` object obtained from the service. Spring will automatically format it as JSON.\n - **Endpoint 2: Move Rover**\n - **Goal:** Accept a string of commands (e.g., `\"FFR\"`) and execute them.\n - **HTTP Method:** Use **POST** (since we are modifying the state).\n - **Path:** Map this to `\"/move\"`.\n - **Input:** The commands come in as a query parameter (e.g., `?commands=FF`). \n - *Hint:* Use the `@RequestParam` annotation to capture this string.\n - **Logic:** The Controller is just a messenger. **Pass the captured command string** to the Service layer method responsible for processing movement logic.\n - **Return:** The updated `Rover` object returned by the service.\n - **Endpoint 3: Reset**\n - **Goal:** Send the rover back to the starting position (0,0).\n - **HTTP Method:** Use **POST** (since this is an action). \n - **Path:** Map this to `\"/reset\"`.\n - **Logic:** Trigger the **method in your Service layer** designed to restore the rover to its default starting coordinates and direction.\n - **Return:** The `Rover` object, which should now reflect the starting position. \\\n**Docs:** @RestController Annotation | @GetMapping & @PostMapping | Spring @RequestParam\n\n---\n\n**Expected Behaviour:**",
+          "problemStatement": "**Hey Learners!** Welcome to the **Mars Rover Navigator Project** \n\nIn this project, you will build the **backend logic** for a navigation system that guides a rover across the surface of Mars. The rover moves on a grid, and your code will determine where it ends up based on a series of commands.\n\n**Precision is key!** We need to ensure the rover stays within its exploration zone and doesn't drive off the map. Your system will track **Coordinates (X, Y)** and **Direction (N, E, S, W)**.\n\nYour **task** is to **complete the missing backend logic** to make this navigation system fully functional.\n\n---\n\n**Project Structure** \\\nYou are given **3 Java files** representing a **Layered Architecture**:\n1. `Rover.java` → **Model:** A simple object (POJO) that holds the state (Position X, Position Y, and Direction).\n2. `RoverService.java` → **Service** (Business Logic): The \"Brain\" that calculates turns, movement, and checks boundaries.\n3. `RoverController.java` → **Controller** (API Endpoints): The \"Doorway\" that listens for web requests and talks to the service.\n\n**Important Rules**\n- Do **NOT** change class names\n- Do **NOT** change method names\n- Complete the sections marked with **TODO**\n- The testing system relies on the existing structure\n\n---\n\n**The Logic: Navigation & Grid** \\\nThis project uses a **2D Cartesian Grid** (10x10).\n1. **The Grid:** Coordinates range from 0 to 9.\n2. **Starting Point:** The rover always starts at (0, 0) (Bottom-Left corner).\n3. **Default Direction:** North (\"N\").\n4. **Turning**\n - **Left ('L'):** Rotates the rover 90 degrees Counter-Clockwise (e.g., North → West).\n - **Right ('R'):** Rotates the rover 90 degrees Clockwise (e.g., North → East). \n5. **Moving ('F')** \\\nMoves the rover **one step forward** in the direction it is currently facing.\n - **North:** Increases Y (moves up).\n - **South:** Decreases Y (moves down).\n - **East:** Increases X (moves right).\n - **West:** Decreases X (moves left).\n6. **Safety Boundaries** \\\nThe exploration zone is limited! The rover **cannot** move to a coordinate less than **0** or greater than **9**. If a command tries to push it off the edge, the rover must **ignore that move** and stay put.\n\n---\n\n**Your Task:**\n1. **Complete the Model** \\\n **File:** `model/Rover.java` This class represents the \"body\" of the rover. It remembers where it is.\n - **Constructor:** Initialize the `x`, `y`, and `direction` fields. The default constructor should set them to `0`, `0`, and `\"N\"`.\n - **Getters & Setters:** Implement the methods to allow other classes to read and modify these values. \\\n**Docs:** Anatomy of a Java Class\n\n2. **Connect the Service (The Brain)** \\\n **File:** `service/RoverService.java` This is where the magic happens.\n - **Annotation:** Add the correct Spring annotation to mark this class as a Service.\n - **Initialization:** Instantiate the `rover` object in the constructor so it is ready to use.\n - **Command Processing:** Implement the `processCommands(String commands)` method\n - This method should take a string of characters (e.g., `\"FFR\"`). \n - Loop through each character and call the corresponding logic method (`turnLeft`, `turnRight`, or `moveForward`). \n - Ignore any characters that are not `'F'`, `'L'`, or `'R'`.\n - **Reset Logic:** Implement the `resetRover()` method to snap the rover back to **(0, 0)** facing **\"N\"**.\n - **Turning Logic:** Complete the switch statements in `turnLeft()` and `turnRight()`.\n - *Hint:* If you are facing **North** and turn **Left**, you are now facing **West**.\n - **Movement Logic:** Complete the `moveForward()` method.\n - Check the **Boundary Condition** first! Only update the coordinate if the new position is valid (between 0 and 9). \\\n**Docs:** @Service Annotation | Java Switch Statements\n\n3. **Define the API Endpoints (The Controller Layer)** \\\n **File:** `controller/RoverController.java` This class receives commands from the outside world (the frontend).\n - **Class Configuration:** Annotate the class to make it a **REST Controller** and define the base URL path as `\"/api\"`.\n - **Dependency Injection:** Ensure the `RoverService` is correctly assigned in the constructor.\n - **Endpoint 1: Get Status**\n - **Goal:** Retrieve the current coordinates and direction of the rover without moving it.\n - **HTTP Method:** Use **GET** because we are just reading data. \n - **Path:** Map this to `\"/status\"` (Combined URL: `/api/status`). \n - **Logic:** The Controller doesn't store data itself. **Ask your Service layer** to provide the current `Rover` object it is holding.\n - **Return:** The `Rover` object obtained from the service. Spring will automatically format it as JSON.\n - **Endpoint 2: Move Rover**\n - **Goal:** Accept a string of commands (e.g., `\"FFR\"`) and execute them.\n - **HTTP Method:** Use **POST** (since we are modifying the state).\n - **Path:** Map this to `\"/move\"`.\n - **Input:** The commands come in as a query parameter (e.g., `?commands=FF`). \n - *Hint:* Use the `@RequestParam` annotation to capture this string.\n - **Logic:** The Controller is just a messenger. **Pass the captured command string** to the Service layer method responsible for processing movement logic.\n - **Return:** The updated `Rover` object returned by the service.\n - **Endpoint 3: Reset**\n - **Goal:** Send the rover back to the starting position (0,0).\n - **HTTP Method:** Use **POST** (since this is an action). \n - **Path:** Map this to `\"/reset\"`.\n - **Logic:** Trigger the **method in your Service layer** designed to restore the rover to its default starting coordinates and direction.\n - **Return:** The `Rover` object, which should now reflect the starting position. \\\n**Docs:** @RestController Annotation | @GetMapping & @PostMapping | Spring @RequestParam\n\n---\n\n**Expected Behaviour:**",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "springboot.json",
+      "_moduleTitle": "Clean Architecture & Full CRUD (In-Memory)"
+    }
+  ]
+}

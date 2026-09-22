@@ -4,7 +4,7 @@ import { FaBookOpen, FaLightbulb, FaCheck } from 'react-icons/fa';
 const NotesActivity = ({ topic, onCheckpointComplete }) => {
   const notesActivity = topic?.activities?.find(a => a.type === 'NOTES');
 
-  const content = notesActivity?.content;
+  const content = notesActivity?.content || topic?.lesson?.content || topic?.lessonContent?.textAndVisuals?.content || topic?.lesson?.summary || topic?.description || '';
   const sections = notesActivity?.sections || [];
   const complexityTable = notesActivity?.complexityTable || notesActivity?.complexities || [];
   const bestPractices = notesActivity?.bestPractices || notesActivity?.tips || [];
@@ -20,7 +20,7 @@ const NotesActivity = ({ topic, onCheckpointComplete }) => {
       </div>
 
       <div className="notes-card">
-        {notesActivity ? (
+        {(notesActivity || content) ? (
           <div className="notes-markdown-body">
             {/* 1. Overview or Content String */}
             {typeof content === 'string' && content.trim() && (

@@ -530,8 +530,12 @@ const CourseCodingPracticeView = ({
         // 2. Notify parent with primary ID and all alias IDs
         onProblemSolved?.(primaryId, candidateIds);
 
-        // 3. One-way sync to global Question Bank
-        syncPracticeProblemToQuestionBank(user?.uid, primaryId, selectedLang, 100);
+        // 3. One-way sync to global Question Bank & Practice Bank
+        const seedId = candidateIds.find(id => String(id).startsWith('Q')) || activeQMeta?.seedQuestionId || loadedQuestion?.seedQuestionId || primaryId;
+        syncPracticeProblemToQuestionBank(user?.uid, seedId, selectedLang, 100);
+        if (seedId && seedId !== primaryId) {
+          syncPracticeProblemToQuestionBank(user?.uid, primaryId, selectedLang, 100);
+        }
 
         // 3b. One-way sync to personal GitHub repository
         if (githubConfig.isConnected && githubConfig.autoSync) {

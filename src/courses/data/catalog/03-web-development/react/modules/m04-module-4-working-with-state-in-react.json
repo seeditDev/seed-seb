@@ -1,0 +1,110 @@
+{
+  "moduleId": "m04-module-4-working-with-state-in-react",
+  "title": "Module 4: Working With State in React",
+  "description": "Core concepts and hands-on practice in Module 4: Working With State in React.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-4-1-state-fundamentals-with-usestate",
+      "title": "4.1 State Fundamentals with useState",
+      "description": "Learn state declarations, updater functions, and re-rendering lifecycles.",
+      "mode": "REACT_INTERACTIVE",
+      "readingTimeMinutes": 15,
+      "lessonMarkdown": "# 4.1 State Fundamentals with useState\n\n## What is state?\n\nProps are values given to a component.\n\nState is information a component remembers and can update over time.\n\nExamples:\n\n- counter value\n- selected tab\n- open/closed menu\n- form input\n- logged-in user\n- cart quantity\n\n---\n\n## 1. Importing `useState`\n\n```jsx\nimport { useState } from \"react\";\n```\n\nThen:\n\n```jsx\nconst [count, setCount] = useState(0);\n```\n\nThis gives you two things:\n\n```text\ncount     → current value\nsetCount  → updater function\n```\n\n---\n\n## 2. First example\n\n```jsx\nfunction Counter() {\n  const [count, setCount] = useState(0);\n\n  return (\n    <button onClick={() => setCount(count + 1)}>\n      Clicked {count} times\n    </button>\n  );\n}\n```\n\nInitially:\n\n```text\ncount = 0\n```\n\nAfter one click:\n\n```text\ncount = 1\n```\n\nReact renders again.\n\n---\n\n## 3. State is preserved between renders\n\nA normal local variable does not work like React state:\n\n```jsx\nfunction App() {\n  let count = 0;\n\n  function increase() {\n    count += 1;\n  }\n\n  return <button onClick={increase}>{count}</button>;\n}\n```\n\nUpdating `count` does not tell React to render a new screen.\n\nState does:\n\n```jsx\nconst [count, setCount] = useState(0);\n```\n\n---\n\n## 4. Updater functions\n\nWhen the next state depends on the previous state, use the updater form:\n\n```javascript\nsetCount(previous => previous + 1);\n```\n\nThis is especially useful when several updates happen close together.\n\n```jsx\nsetCount(previous => previous + 1);\nsetCount(previous => previous + 1);\n```\n\nThe updates are based on the queued previous values.\n\n---\n\n## 5. State can be many types\n\nNumber:\n\n```javascript\nconst [count, setCount] = useState(0);\n```\n\nString:\n\n```javascript\nconst [name, setName] = useState(\"\");\n```\n\nBoolean:\n\n```javascript\nconst [open, setOpen] = useState(false);\n```\n\nArray:\n\n```javascript\nconst [items, setItems] = useState([]);\n```\n\nObject:\n\n```javascript\nconst [profile, setProfile] = useState({\n  name: \"\",\n  level: 1\n});\n```\n\n---\n\n## 6. Updating object state\n\nDo not overwrite unrelated fields accidentally.\n\nBad:\n\n```javascript\nsetProfile({ level: 2 });\n```\n\nGood:\n\n```javascript\nsetProfile(previous => ({\n  ...previous,\n  level: 2\n}));\n```\n\n---\n\n## 7. Updating array state\n\nAdd:\n\n```javascript\nsetItems(previous => [...previous, newItem]);\n```\n\nRemove:\n\n```javascript\nsetItems(previous =>\n  previous.filter(item => item.id !== id)\n);\n```\n\nUpdate:\n\n```javascript\nsetItems(previous =>\n  previous.map(item =>\n    item.id === id\n      ? { ...item, done: true }\n      : item\n  )\n);\n```\n\n---\n\n## 8. State does not update the variable immediately\n\nThis is an important concept.\n\n```javascript\nsetCount(count + 1);\nconsole.log(count);\n```\n\nThe `console.log` can still show the previous render's value.\n\nThink of the setter as requesting the next state and React then rendering again.\n\n---\n\n## 9. Event handlers change state\n\n```jsx\nconst handleIncrement = () => {\n  setCount(previous => previous + 1);\n};\n```\n\nThen:\n\n```jsx\n<button onClick={handleIncrement}>+1</button>\n```\n\nOther controls:\n\n```jsx\n<button onClick={() => setCount(0)}>Reset</button>\n```\n\n---\n\n## 10. Derived values should usually stay derived\n\nSuppose state is:\n\n```javascript\nconst [price, setPrice] = useState(100);\nconst taxRate = 0.08;\n```\n\nYou can calculate:\n\n```javascript\nconst finalPrice = price * (1 + taxRate);\n```\n\nYou usually do not need a second state variable just for `finalPrice`.\n\nKeep source-of-truth state minimal.\n\n---\n\n## Common mistakes\n\n- Calling hooks inside `if` or loops.\n- Mutating an array/object in state.\n- Replacing an object and accidentally deleting other properties.\n- Using state for values that can be calculated from existing state.\n- Using the current state value when an updater function is clearer for repeated updates.\n\n---\n\n## A complete beginner example\n\n```jsx\nimport { useState } from \"react\";\n\nexport default function App() {\n  const [count, setCount] = useState(0);\n\n  return (\n    <div>\n      <h1>{count}</h1>\n\n      <button onClick={() => setCount(previous => previous + 1)}>\n        +1\n      </button>\n\n      <button onClick={() => setCount(previous => previous - 1)}>\n        -1\n      </button>\n\n      <button onClick={() => setCount(0)}>\n        Reset\n      </button>\n    </div>\n  );\n}\n```\n\nRead it as:\n\n```text\nremember count\n↓\nshow count\n↓\nuser clicks\n↓\nupdate state\n↓\nReact renders again\n↓\nshow new count\n```\n\nFurther reading:\n- React: State — https://react.dev/learn/state-a-components-memory\n- React: Updating Objects in State — https://react.dev/learn/updating-objects-in-state\n- React: Updating Arrays in State — https://react.dev/learn/updating-arrays-in-state\n- W3Schools: React useState — https://www.w3schools.com/react/react_usestate.asp\n- GeeksforGeeks: React useState — https://www.geeksforgeeks.org/reactjs/reactjs-usestate-hook/",
+      "reactExercise": {
+        "title": "Exercise: Smart Step Counter",
+        "category": "State Management",
+        "difficulty": "Beginner",
+        "description": "Build an interactive counter with Step increment, decrement, and reset controls.",
+        "defaultCode": "import React, { useState } from 'react';\n\nexport default function App() {\n  const [count, setCount] = useState(0);\n\n  const handleIncrement = () => {\n    // TODO 1: Increment count by 1 using setCount\n  };\n\n  const handleDecrement = () => {\n    // TODO 2: Decrement count by 1 using setCount\n  };\n\n  const handleReset = () => {\n    // TODO 3: Reset count back to 0\n  };\n\n  return (\n    <div style={{ padding: '24px', fontFamily: 'sans-serif', textAlign: 'center' }}>\n      <h2>Counter Application</h2>\n      <h1 id=\"counter-value\" style={{ fontSize: '48px', margin: '16px 0', color: '#0f172a' }}>{count}</h1>\n      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>\n        <button id=\"dec-btn\" onClick={handleDecrement} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer' }}>-1</button>\n        <button id=\"reset-btn\" onClick={handleReset} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer' }}>Reset</button>\n        <button id=\"inc-btn\" onClick={handleIncrement} style={{ padding: '8px 16px', borderRadius: '6px', background: '#2563eb', color: '#fff', border: 'none', cursor: 'pointer' }}>+1</button>\n      </div>\n    </div>\n  );\n}\n",
+        "tasks": [
+          {
+            "id": 1,
+            "instruction": "Counter starts at 0 inside #counter-value.",
+            "domSelector": "#counter-value",
+            "expectedText": "0",
+            "failMessage": "Expected #counter-value to equal 0 initially."
+          },
+          {
+            "id": 2,
+            "instruction": "Clicking #inc-btn increments the counter from 0 to 1.",
+            "domSelector": "#inc-btn",
+            "simulateAction": "click",
+            "afterActionSelector": "#counter-value",
+            "afterActionExpectedText": "1",
+            "failMessage": "Clicking #inc-btn should increase count by 1."
+          },
+          {
+            "id": 3,
+            "instruction": "Clicking #dec-btn after the initial increment changes the counter back to 0.",
+            "domSelector": "#dec-btn",
+            "simulateAction": "click",
+            "afterActionSelector": "#counter-value",
+            "afterActionExpectedText": "0",
+            "failMessage": "Clicking #dec-btn should decrease the current count by 1."
+          },
+          {
+            "id": 4,
+            "instruction": "Clicking #reset-btn sets the counter to 0.",
+            "domSelector": "#reset-btn",
+            "simulateAction": "click",
+            "afterActionSelector": "#counter-value",
+            "afterActionExpectedText": "0",
+            "failMessage": "Expected reset to return the counter to 0."
+          }
+        ],
+        "solution": "import React, { useState } from 'react';\n\nexport default function App() {\n  const [count, setCount] = useState(0);\n\n  const handleIncrement = () => {\n    setCount(previous => previous + 1);\n  };\n\n  const handleDecrement = () => {\n    setCount(previous => previous - 1);\n  };\n\n  const handleReset = () => {\n    setCount(0);\n  };\n\n  return (\n    <div style={{ padding: '24px', fontFamily: 'sans-serif', textAlign: 'center' }}>\n      <h2>Counter Application</h2>\n      <h1 id=\"counter-value\" style={{ fontSize: '48px', margin: '16px 0' }}>\n        {count}\n      </h1>\n\n      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>\n        <button id=\"dec-btn\" onClick={handleDecrement}>-1</button>\n        <button id=\"reset-btn\" onClick={handleReset}>Reset</button>\n        <button id=\"inc-btn\" onClick={handleIncrement}>+1</button>\n      </div>\n    </div>\n  );\n}\n"
+      },
+      "_sourceFile": "react-js.json",
+      "_moduleTitle": "Module 4: Working With State in React",
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t02-4-2-controlled-forms-live-input-validation",
+      "title": "4.2 Controlled Forms & Live Input Validation",
+      "description": "Synchronize form inputs with component state and validate character requirements in real-time.",
+      "mode": "REACT_INTERACTIVE",
+      "readingTimeMinutes": 15,
+      "lessonMarkdown": "# 4.2 Controlled Forms & Live Input Validation\n\n## Why forms matter\n\nAlmost every real application collects information:\n\n- login forms\n- search boxes\n- feedback\n- registration\n- course enrollment\n- checkout\n- profile editing\n\nReact can keep the form value inside component state. This is called a **controlled input**.\n\n---\n\n## 1. The smallest controlled input\n\n```jsx\nimport { useState } from \"react\";\n\nexport default function App() {\n  const [name, setName] = useState(\"\");\n\n  return (\n    <input\n      value={name}\n      onChange={event => setName(event.target.value)}\n    />\n  );\n}\n```\n\nThere are two important parts:\n\n```text\nvalue    → React controls what is displayed\nonChange → React receives the user's new text\n```\n\n---\n\n## 2. What is `event.target.value`?\n\nSuppose the user types:\n\n```text\nAnu\n```\n\nThe browser event contains the input element.\n\n```javascript\nevent.target\n```\n\nis the `<input>`.\n\n```javascript\nevent.target.value\n```\n\nis the current text.\n\nSo:\n\n```javascript\nsetName(event.target.value);\n```\n\nstores that text in state.\n\n---\n\n## 3. Textarea\n\nExactly the same idea:\n\n```jsx\nconst [bio, setBio] = useState(\"\");\n\n<textarea\n  value={bio}\n  onChange={event => setBio(event.target.value)}\n/>\n```\n\nThe preview can use the same state:\n\n```jsx\n<p>{bio}</p>\n```\n\nNow the data has one source of truth.\n\n---\n\n## 4. Select inputs\n\n```jsx\nconst [theme, setTheme] = useState(\"Light Mode\");\n\n<select\n  value={theme}\n  onChange={event => setTheme(event.target.value)}\n>\n  <option value=\"Light Mode\">Light Mode</option>\n  <option value=\"Dark Mode\">Dark Mode</option>\n</select>\n```\n\n---\n\n## 5. Checkbox\n\nCheckboxes use `checked`, not `value`, for their on/off state.\n\n```jsx\nconst [accepted, setAccepted] = useState(false);\n\n<input\n  type=\"checkbox\"\n  checked={accepted}\n  onChange={event => setAccepted(event.target.checked)}\n/>\n```\n\n---\n\n## 6. Validation while typing\n\nBecause state updates on every change, you can validate immediately.\n\n```jsx\nconst [email, setEmail] = useState(\"\");\n\nconst isValidEmail = email.includes(\"@\");\n```\n\nThen:\n\n```jsx\n<p>\n  {email.length === 0\n    ? \"Enter your email\"\n    : isValidEmail\n      ? \"Looks good\"\n      : \"Email should contain @\"\n  }\n</p>\n```\n\nA production validator should check more than a single character, but the idea is the same.\n\n---\n\n## 7. Form submission\n\nUse a `<form>` and `onSubmit`.\n\n```jsx\nfunction handleSubmit(event) {\n  event.preventDefault();\n  console.log(\"Submitted\");\n}\n```\n\nThen:\n\n```jsx\n<form onSubmit={handleSubmit}>\n  ...\n  <button type=\"submit\">Save</button>\n</form>\n```\n\n`preventDefault()` stops the browser's normal full-page form submission so React can handle the flow.\n\n---\n\n## 8. Controlled vs uncontrolled\n\nControlled:\n\n```text\ninput\n ↓\nonChange\n ↓\nReact state\n ↓\nvalue prop\n ↓\ninput\n```\n\nThe React component is the source of truth.\n\nAn uncontrolled input lets the DOM hold the value and is accessed using refs or form APIs. Controlled inputs are especially useful when you need live validation, dependent fields, or state-driven UI.\n\n---\n\n## 9. Character count example\n\n```jsx\nconst [bio, setBio] = useState(\"\");\n\nreturn (\n  <div>\n    <textarea\n      value={bio}\n      onChange={event => setBio(event.target.value)}\n    />\n\n    <p>{bio.length} characters</p>\n  </div>\n);\n```\n\n---\n\n## 10. Validation checklist\n\nFor each input ask:\n\n1. Where is the value stored?\n2. What event changes it?\n3. What is the valid range?\n4. What message appears when it is invalid?\n5. What happens when the form is submitted?\n\n---\n\n## Complete beginner example\n\n```jsx\nimport { useState } from \"react\";\n\nexport default function App() {\n  const [bio, setBio] = useState(\"Passionate web developer building in SEED Lab.\");\n\n  const tooShort = bio.trim().length < 10;\n\n  return (\n    <div>\n      <h2>Edit Bio</h2>\n\n      <textarea\n        value={bio}\n        onChange={event => setBio(event.target.value)}\n      />\n\n      <p>{bio}</p>\n\n      <small>\n        {bio.length} characters\n      </small>\n\n      {tooShort && (\n        <p>Please write at least 10 characters.</p>\n      )}\n    </div>\n  );\n}\n```\n\nFurther reading:\n- React: Responding to Events — https://react.dev/learn/responding-to-events\n- W3Schools: React Forms — https://www.w3schools.com/react/react_forms.asp\n- W3Schools: Submitting Forms — https://www.w3schools.com/react/react_forms_submit.asp\n- Scrimba: React introduction — https://docs.scrimba.com/react/introduction",
+      "reactExercise": {
+        "title": "Exercise: Live Bio Previewer",
+        "category": "Controlled Forms",
+        "difficulty": "Beginner",
+        "description": "Bind a textarea input to live preview card.",
+        "defaultCode": "import React, { useState } from 'react';\n\nexport default function App() {\n  const [bio, setBio] = useState(\n    'Passionate web developer building in SEED Lab.'\n  );\n\n  const handleChange = (event) => {\n    // TODO: Update bio using event.target.value\n  };\n\n  return (\n    <div style={{ padding: '24px', fontFamily: 'sans-serif', maxWidth: '500px' }}>\n      <h2>User Bio Editor</h2>\n\n      <textarea\n        id=\"bio-input\"\n        value={bio}\n        onChange={handleChange}\n        placeholder=\"Type your bio...\"\n        style={{\n          width: '100%',\n          height: '80px',\n          padding: '8px',\n          borderRadius: '6px',\n          border: '1px solid #cbd5e1'\n        }}\n      />\n\n      <div style={{\n        marginTop: '16px',\n        padding: '16px',\n        background: '#f8fafc',\n        borderRadius: '8px',\n        border: '1px solid #e2e8f0'\n      }}>\n        <h4>Live Bio Preview:</h4>\n        <p id=\"bio-preview\">{bio}</p>\n      </div>\n    </div>\n  );\n}\n",
+        "tasks": [
+          {
+            "id": 1,
+            "instruction": "The preview initially displays 'Passionate web developer building in SEED Lab.' inside #bio-preview.",
+            "domSelector": "#bio-preview",
+            "expectedText": "Passionate web developer building in SEED Lab.",
+            "failMessage": "Expected the initial bio text in #bio-preview."
+          },
+          {
+            "id": 2,
+            "instruction": "Typing into #bio-input updates #bio-preview through React state.",
+            "domSelector": "#bio-input",
+            "simulateAction": "type",
+            "afterActionSelector": "#bio-preview",
+            "afterActionExpectedText": "SEED",
+            "failMessage": "Expected the live preview to update from the controlled textarea."
+          },
+          {
+            "id": 3,
+            "instruction": "Use event.target.value when updating the bio state.",
+            "testRegex": "setBio\\s*\\(\\s*event\\.target\\.value",
+            "failMessage": "Expected setBio(event.target.value) in the change handler."
+          }
+        ],
+        "solution": "import React, { useState } from 'react';\n\nexport default function App() {\n  const [bio, setBio] = useState(\n    'Passionate web developer building in SEED Lab.'\n  );\n\n  const handleChange = (event) => {\n    setBio(event.target.value);\n  };\n\n  return (\n    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '420px' }}>\n      <h2>Edit Bio</h2>\n\n      <textarea\n        id=\"bio-input\"\n        rows=\"3\"\n        value={bio}\n        onChange={handleChange}\n        style={{ width: '100%', marginBottom: '12px' }}\n      />\n\n      <div style={{ padding: '12px', borderRadius: '6px' }}>\n        <strong>Live Preview:</strong>\n        <p id=\"bio-preview\">{bio}</p>\n      </div>\n    </div>\n  );\n}\n"
+      },
+      "_sourceFile": "react-js.json",
+      "_moduleTitle": "Module 4: Working With State in React",
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": []
+    }
+  ]
+}

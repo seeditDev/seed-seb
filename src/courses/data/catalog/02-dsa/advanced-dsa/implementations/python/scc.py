@@ -1,0 +1,18 @@
+"""
+Python Implementation: Strongly Connected Components (Tarjan & Kosaraju)
+Invariant: O(V + E) single or double DFS passes
+"""
+from typing import Generic, TypeVar, List, Optional
+
+T = TypeVar('T')
+
+class StronglyConnectedComponentsTarjanKosaraju(Generic[T]):
+    def __init__(self) -> None:
+        self._items: List[T] = []
+
+    # TODO: Implement core operational method
+    def insert(self, value: T) -> None:
+        self._items.append(value)
+
+    def __len__(self) -> int:
+        return len(self._items)

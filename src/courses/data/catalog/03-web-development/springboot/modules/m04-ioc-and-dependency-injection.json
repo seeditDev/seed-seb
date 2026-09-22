@@ -1,0 +1,801 @@
+{
+  "moduleId": "m04-ioc-and-dependency-injection",
+  "title": "IoC and Dependency Injection",
+  "description": "Core concepts and hands-on practice in IoC and Dependency Injection.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-what-happens-in-a-traditional-app",
+      "title": "What Happens in a Traditional App",
+      "description": "Study concepts and solve targeted engineering problems for What Happens in a Traditional App.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-SPRPROB01",
+          "title": "What Happens in a Traditional Application",
+          "content": "- Let’s see how objects are created manually in a normal Java application\n- Let’s observe how one class creates and uses another class\n- Let’s set the context for why this approach is not ideal for backend applications\n\n---\n\nConsider a simple Java backend scenario where placing an order triggers a payment.\n\n```java\nclass PaymentService {\n public void pay() {\n System.out.println(\"Payment done using Credit Card\");\n }\n}\n\nclass OrderService {\n\n private PaymentService paymentService = new PaymentService();\n\n public void placeOrder() {\n paymentService.pay();\n System.out.println(\"Order placed\");\n }\n}\n\npublic class Main {\n public static void main(String[] args) {\n OrderService orderService = new OrderService();\n orderService.placeOrder();\n }\n}\n```\n\nIn this code, `OrderService` **manually creates** the `PaymentService` object using the `new` keyword.\n\nThis means:\n\n* `OrderService` decides which payment class to use\n* The object is created inside the class itself\n* The choice of dependency cannot be changed from outside the class\n\n---\n\n**Note**\n- This style of object creation is very common in basic Java programs and works well for small applications.\n- At this stage, the application behaves correctly and the design looks simple.\n- However, backend applications evolve continuously.\nNew requirements, new payment methods, and changing business rules are common.\n\n**In the next page, we’ll extend this same example and see what happens when change is introduced.**",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding What Happens in a Traditional Application in What Happens in a Traditional App is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB01",
+            "question": "In What Happens in a Traditional App, what is the key consideration regarding What Happens in a Traditional Application?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SPRPROB01X",
+          "title": "What Happens When Change Occurs",
+          "content": "- You are working on the same application from the previous page.\n- Currently: An order is placed, Payment is done using Credit Card\n\n--- \n\n**Now the business introduces a new requirement:** The application should support UPI payments. Later, more payment methods may be added.\n\n- You are asked to update the existing code to support this requirement.\n- A new payment class is available:\n\n```java\nclass UPIPaymentService {\n public void pay() {\n System.out.println(\"Payment done using UPI\");\n }\n}\n```\n\n\nThe rest of the application remains unchanged.\n\n---\n\n\n**To support UPI payments without removing Credit Card payments, the following changes were made:**\n - A new UPIPaymentService class was added\n - OrderService now creates both payment service objects\n - Conditional logic (if-else) is used to decide which payment method to use at runtime\n\nThis solution allows the application to support multiple payment methods at the same time, and it works correctly.\n\n**However, an important design issue still exists.**",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding What Happens When Change Occurs in What Happens in a Traditional App is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB01X",
+            "question": "In What Happens in a Traditional App, what is the key consideration regarding What Happens When Change Occurs?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SPRPROB03",
+          "title": "Problem with the Traditional Approach",
+          "content": "- The code works, but the design has an issue\n- Let’s understand what is wrong with the current approach\n- Let’s see why this becomes a problem as the application grows\n\n---\n\nFrom the previous page, the application now supports **Credit Card** and **UPI** payments.\n\n```java\nclass OrderService {\n\n private CreditCardPaymentService creditCardPaymentService =\n new CreditCardPaymentService();\n\n private UPIPaymentService upiPaymentService =\n new UPIPaymentService();\n\n public void placeOrder(String paymentType) {\n\n if (paymentType.equals(\"CREDIT_CARD\")) {\n creditCardPaymentService.pay();\n } else if (paymentType.equals(\"UPI\")) {\n upiPaymentService.pay();\n }\n\n System.out.println(\"Order placed\");\n }\n}\n```\n\nThe issue is **not** that multiple payment methods exist.\nThe issue is **where the payment logic lives**.\n\n`OrderService`:\n\n* Creates payment objects\n* Knows every payment type\n* Decides which payment to use\n\nThis makes `OrderService` **tightly coupled** to payment implementations.\n\n**Because of this:**\n\n* Adding a new payment method requires modifying `OrderService`\n* Existing code must be changed again and again\n* The class grows and becomes harder to manage\n\n---\n\n**Key Idea:** When a class is directly dependent on concrete implementations, it becomes **tightly coupled**.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Problem with the Traditional Approach in What Happens in a Traditional App is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB03",
+            "question": "In What Happens in a Traditional App, what is the key consideration regarding Problem with the Traditional Approach?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SPRPROB05",
+          "title": "Tight coupling to Loose coupling using Interface",
+          "content": "- Let’s remove direct dependency on payment implementations\n- Let’s allow multiple payment methods without changing `OrderService`\n- Let’s keep the design simple and flexible\n\n---\n\nThe problem in the previous design was that `OrderService` depended directly on concrete payment classes.\n\nTo fix this, we introduce an **interface** that represents a payment.\n\n```java\ninterface PaymentService {\n void pay();\n}\n```\n\nNow, each payment type implements this interface.\n\n```java\nclass CreditCardPaymentService implements PaymentService {\n public void pay() {\n System.out.println(\"Payment done using Credit Card\");\n }\n}\n\nclass UPIPaymentService implements PaymentService {\n public void pay() {\n System.out.println(\"Payment done using UPI\");\n }\n}\n```\n\n---\n\n**Updating OrderService**\n\n```java\nclass OrderService {\n\n private PaymentService paymentService;\n\n public OrderService(PaymentService paymentService) {\n this.paymentService = paymentService;\n }\n\n public void placeOrder() {\n paymentService.pay();\n System.out.println(\"Order placed\");\n }\n}\n```\n\nNow, `OrderService`:\n\n* Does not know which payment method is used\n* Depends only on the `PaymentService` interface\n* Does not need to change when new payment types are added\n\n---\n\n**Using the Application**\n\n```java\npublic class Main {\n public static void main(String[] args) {\n\n PaymentService payment = new UPIPaymentService();\n OrderService orderService = new OrderService(payment);\n\n orderService.placeOrder();\n }\n}\n```\n\nTo switch payment methods, only this line changes:\n\n```java\nPaymentService payment = new CreditCardPaymentService();\n```\n\n`OrderService` remains untouched.\n\n---\n\n**Key Idea:** `OrderService` depends on an **interface**, **NOT on a concrete payment class**.\n\nThis design is called **loose coupling**.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Tight coupling to Loose coupling using Interface in What Happens in a Traditional App is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB05",
+            "question": "In What Happens in a Traditional App, what is the key consideration regarding Tight coupling to Loose coupling using Interface?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-SPRPROB01-java",
+          "language": "java",
+          "label": "Java",
+          "title": "What Happens in a Traditional Application (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-SPRPROB01X-java",
+          "language": "java",
+          "label": "Java",
+          "title": "What Happens When Change Occurs (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-SPRPROB03-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Problem with the Traditional Approach (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-SPRPROB05-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Tight coupling to Loose coupling using Interface (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "SPRPROB04",
+          "questionId": "SPRPROB04",
+          "title": "How the Given Code Is Tightly Coupled",
+          "difficulty": "Easy",
+          "description": "In the previous section, we looked at the following `OrderService` code that supports Credit Card and UPI payments:\n\n**Scenario :** \\\nNow imagine the business introduces a new requirement:\n\n**“Add Net Banking as a new payment method.”**\n\nA new class is already available:\n```java\nclass NetBankingPaymentService {\n public void pay() {\n System.out.println(\"Payment done using Net Banking\");\n }\n}\n```\n\n---\n\nAnswer the following questions in a short paragraph\n\n**Question 1** \\\nWhich class must be modified to support Net Banking, and why?\n\n**Question 2** \\\nExplain in a short paragraph how this example demonstrates tight coupling.",
+          "problemStatement": "In the previous section, we looked at the following `OrderService` code that supports Credit Card and UPI payments:\n\n**Scenario :** \\\nNow imagine the business introduces a new requirement:\n\n**“Add Net Banking as a new payment method.”**\n\nA new class is already available:\n```java\nclass NetBankingPaymentService {\n public void pay() {\n System.out.println(\"Payment done using Net Banking\");\n }\n}\n```\n\n---\n\nAnswer the following questions in a short paragraph\n\n**Question 1** \\\nWhich class must be modified to support Net Banking, and why?\n\n**Question 2** \\\nExplain in a short paragraph how this example demonstrates tight coupling.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRPROB06",
+          "questionId": "SPRPROB06",
+          "title": "Loose Coupling Demonstration",
+          "difficulty": "Easy",
+          "description": "Run the given code and understand how the code works and how it solves the tight coupling problem we saw earlier.\n\n**1. Role of `PaymentServiceInterface`**\n```java\npublic interface PaymentServiceInterface {\n void pay();\n}\n```\n\nThis interface represents **any type of payment.**\n- `OrderService` depends on this interface\n- It does not depend on any specific payment implementation\n\nThis is the key step that **removes tight coupling.**\n\n**2. Payment Implementations**\n```js\nclass CreditCardPaymentService implements PaymentServiceInterface { ... }\nclass UPIPaymentService implements PaymentServiceInterface { ... }\n```\n**Each payment type:**\n- Implements the same interface i.e `PaymentServiceInterface`\n- Provides its own implementation of `pay()`\n\n**New payment methods can be added by creating new classes that implement the interface**.\n\n**3. `OrderService` (Loose Coupling)**\n```java\npublic class OrderService {\n private PaymentServiceInterface paymentService;\n\n public OrderService(PaymentServiceInterface paymentService) {\n this.paymentService = paymentService;\n }\n\n public void placeOrder() {\n paymentService.pay();\n System.out.println(\"Order placed\");\n }\n}\n```\n\n**Here:**\n- `OrderService` does not create payment objects\n- It receives the dependency from outside \n- It only knows about the interface, not the concrete class\n\n**This is what makes the design loosely coupled.**\n\n**4. Main Class (Dependency Injection)**\n```java\nPaymentServiceInterface payment = new UPIPaymentService();\nOrderService orderService = new OrderService(payment);\n```\n\n**Here:**\n- The payment method is chosen in `Main`\n- The selected payment object is passed into `OrderService`\n- This is manual Dependency Injection using Traditional Java Approach\n\n---\n\n\n**Your Task** \\\nOpen file : `Main.java` \\\nCurrently, the application uses UPI:\n```java\nPaymentServiceInterface payment = new UPIPaymentService();\n```\n**Change it to Credit Card**:\n```java\nPaymentServiceInterface payment = new CreditCardPaymentService();\n```\n**Run the application again and observe the output.**\n\n**Expected Output**\n```sss\nPayment done using Credit Card\nOrder placed\n```",
+          "problemStatement": "Run the given code and understand how the code works and how it solves the tight coupling problem we saw earlier.\n\n**1. Role of `PaymentServiceInterface`**\n```java\npublic interface PaymentServiceInterface {\n void pay();\n}\n```\n\nThis interface represents **any type of payment.**\n- `OrderService` depends on this interface\n- It does not depend on any specific payment implementation\n\nThis is the key step that **removes tight coupling.**\n\n**2. Payment Implementations**\n```js\nclass CreditCardPaymentService implements PaymentServiceInterface { ... }\nclass UPIPaymentService implements PaymentServiceInterface { ... }\n```\n**Each payment type:**\n- Implements the same interface i.e `PaymentServiceInterface`\n- Provides its own implementation of `pay()`\n\n**New payment methods can be added by creating new classes that implement the interface**.\n\n**3. `OrderService` (Loose Coupling)**\n```java\npublic class OrderService {\n private PaymentServiceInterface paymentService;\n\n public OrderService(PaymentServiceInterface paymentService) {\n this.paymentService = paymentService;\n }\n\n public void placeOrder() {\n paymentService.pay();\n System.out.println(\"Order placed\");\n }\n}\n```\n\n**Here:**\n- `OrderService` does not create payment objects\n- It receives the dependency from outside \n- It only knows about the interface, not the concrete class\n\n**This is what makes the design loosely coupled.**\n\n**4. Main Class (Dependency Injection)**\n```java\nPaymentServiceInterface payment = new UPIPaymentService();\nOrderService orderService = new OrderService(payment);\n```\n\n**Here:**\n- The payment method is chosen in `Main`\n- The selected payment object is passed into `OrderService`\n- This is manual Dependency Injection using Traditional Java Approach\n\n---\n\n\n**Your Task** \\\nOpen file : `Main.java` \\\nCurrently, the application uses UPI:\n```java\nPaymentServiceInterface payment = new UPIPaymentService();\n```\n**Change it to Credit Card**:\n```java\nPaymentServiceInterface payment = new CreditCardPaymentService();\n```\n**Run the application again and observe the output.**\n\n**Expected Output**\n```sss\nPayment done using Credit Card\nOrder placed\n```",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRPROB06A",
+          "questionId": "SPRPROB06A",
+          "title": "Practice - Loose Coupling",
+          "difficulty": "Easy",
+          "description": "You’ve seen how `OrderService` uses `PaymentServiceInterface` to place an order without worrying about the payment method. \\\nCurrently, our code has two payment methods:\n- `CreditCardPaymentService` → prints: \"Payment done using Credit Card\"\n- `UPIPaymentService` → prints: \"Payment done using UPI\"\n\nThe `OrderService` does not need to change when we switch payment methods. This is **loose coupling in action**.\n\n---\n\n**Your Task :**\n\n**Step 1 — Create a New Payment Method in `PaymentMethods.java`**\n- Create a new class called `PayPalPaymentService`.\n- Make it implement `PaymentServiceInterface`.\n- Implement the `pay()` method to print:\n```sss\nPayment done using PayPal\n```\nNote : To create new class `PayPalPaymentService` - You can take reference from other classes present in `PaymentMethods.java` \n\n**Step 2 — Update `Main.java`** \n- Change the line where `CreditCardPaymentService` is used\n- Replace it with your new service `PayPalPaymentService`\n- Do NOT change `OrderService.java`\n- After your change, `Main.java` should use your new payment method.\n\n**Step 3 — Run the Code**\n- When you run `Main.java`, the **expected output should be**:\n```sss\nPayment done using PayPal\nOrder placed\n```\n\n---\n\nNotice how the order service didn’t change at all, but we can now process payments using a completely new method. \\\n**That’s the power of loose coupling!**",
+          "problemStatement": "You’ve seen how `OrderService` uses `PaymentServiceInterface` to place an order without worrying about the payment method. \\\nCurrently, our code has two payment methods:\n- `CreditCardPaymentService` → prints: \"Payment done using Credit Card\"\n- `UPIPaymentService` → prints: \"Payment done using UPI\"\n\nThe `OrderService` does not need to change when we switch payment methods. This is **loose coupling in action**.\n\n---\n\n**Your Task :**\n\n**Step 1 — Create a New Payment Method in `PaymentMethods.java`**\n- Create a new class called `PayPalPaymentService`.\n- Make it implement `PaymentServiceInterface`.\n- Implement the `pay()` method to print:\n```sss\nPayment done using PayPal\n```\nNote : To create new class `PayPalPaymentService` - You can take reference from other classes present in `PaymentMethods.java` \n\n**Step 2 — Update `Main.java`** \n- Change the line where `CreditCardPaymentService` is used\n- Replace it with your new service `PayPalPaymentService`\n- Do NOT change `OrderService.java`\n- After your change, `Main.java` should use your new payment method.\n\n**Step 3 — Run the Code**\n- When you run `Main.java`, the **expected output should be**:\n```sss\nPayment done using PayPal\nOrder placed\n```\n\n---\n\nNotice how the order service didn’t change at all, but we can now process payments using a completely new method. \\\n**That’s the power of loose coupling!**",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRPROB07",
+          "questionId": "SPRPROB07",
+          "title": "Problem with Loose Coupling",
+          "difficulty": "Easy",
+          "description": "- Using interfaces, we improved the design and made `OrderService` loosely coupled.\n- This is a good design. But look at how the application starts(main function).\n\nWe are still **manually creating and selecting objects**.\n\n---\n\n**What Is the Issue?**\n\nAs the application grows:\n\n* More payment methods are added\n* More `if-else` logic is needed\n* Startup code becomes large and messy\n\nObject creation logic spreads across the codebase and becomes hard to manage.\n\n---\n\n**Key Idea:** The problem is no longer design, but **manual object management**.\n\nWe need a way to:\n\n* Create objects automatically\n* Inject the correct dependencies\n* Avoid writing wiring code ourselves\n\nThis is exactly what **Spring Boot Dependency Injection** provides.",
+          "problemStatement": "- Using interfaces, we improved the design and made `OrderService` loosely coupled.\n- This is a good design. But look at how the application starts(main function).\n\nWe are still **manually creating and selecting objects**.\n\n---\n\n**What Is the Issue?**\n\nAs the application grows:\n\n* More payment methods are added\n* More `if-else` logic is needed\n* Startup code becomes large and messy\n\nObject creation logic spreads across the codebase and becomes hard to manage.\n\n---\n\n**Key Idea:** The problem is no longer design, but **manual object management**.\n\nWe need a way to:\n\n* Create objects automatically\n* Inject the correct dependencies\n* Avoid writing wiring code ourselves\n\nThis is exactly what **Spring Boot Dependency Injection** provides.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRPROB08",
+          "questionId": "SPRPROB08",
+          "title": "Practice - Complete the Main Function",
+          "difficulty": "Easy",
+          "description": "You are given a payment system that follows loose coupling using interfaces.\n\nDifferent payment methods such as **Credit Card, UPI, Wallet, Net Banking, and Cash on Delivery** already exist and implement the same `PaymentService` interface.\n\nThe `OrderService` class depends only on the `PaymentService` interface and is already complete.\n\n---\n\n**Your Task**\n\nComplete the `main` function inside the `SEED-IT` class - \\\nso that **the order is placed using UPI payment**. \n\nFollow these steps:\n\n- Create a string variable `paymentType` and set its value to `\"UPI\"`\n- Use the `if-else` logic to check the value of `paymentType`.\n- When the value is `\"UPI\"`, create a `UPIPaymentService` object.\n- Assign this object to the `paymentService` variable.\n- Pass `paymentService` to `OrderService` and place the order.\n\n**Do NOT modify:**\n- `OrderService`\n- Any payment service classes\n- `PaymentService` interface\n\nYou should only write code inside the `main` method.\n\n---\n\n**Expected Output**\n\nAfter completing the `main` function and running the program, the output should be:\n```sss\nPayment done using UPI\nOrder placed\n```",
+          "problemStatement": "You are given a payment system that follows loose coupling using interfaces.\n\nDifferent payment methods such as **Credit Card, UPI, Wallet, Net Banking, and Cash on Delivery** already exist and implement the same `PaymentService` interface.\n\nThe `OrderService` class depends only on the `PaymentService` interface and is already complete.\n\n---\n\n**Your Task**\n\nComplete the `main` function inside the `SEED-IT` class - \\\nso that **the order is placed using UPI payment**. \n\nFollow these steps:\n\n- Create a string variable `paymentType` and set its value to `\"UPI\"`\n- Use the `if-else` logic to check the value of `paymentType`.\n- When the value is `\"UPI\"`, create a `UPIPaymentService` object.\n- Assign this object to the `paymentService` variable.\n- Pass `paymentService` to `OrderService` and place the order.\n\n**Do NOT modify:**\n- `OrderService`\n- Any payment service classes\n- `PaymentService` interface\n\nYou should only write code inside the `main` method.\n\n---\n\n**Expected Output**\n\nAfter completing the `main` function and running the program, the output should be:\n```sss\nPayment done using UPI\nOrder placed\n```",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "springboot.json",
+      "_moduleTitle": "IoC and Dependency Injection"
+    },
+    {
+      "topicId": "t02-object-creation-injection",
+      "title": "Object Creation & Injection",
+      "description": "Study concepts and solve targeted engineering problems for Object Creation & Injection.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 30,
+      "pages": [
+        {
+          "pageId": "p-SPRPROB09E",
+          "title": "Guess the Output",
+          "content": "What is the main purpose of Dependency Injection (DI)?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Guess the Output in Object Creation & Injection is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB09E",
+            "question": "In Object Creation & Injection, what is the key consideration regarding Guess the Output?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-SPRPROB09E-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Guess the Output (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "SPRPROB09",
+          "questionId": "SPRPROB09",
+          "title": "Spring Boot- Automatic Object Creation & Injection",
+          "difficulty": "Easy",
+          "description": "- In the previous page, the main problem was **manual object management**.\n- Spring Boot solves this by taking control of **object creation and dependency writng**.\n\n---\n\n**Project Structure**\n```SSS\ndemo\n└─ src\n └─ main\n └─ java/com/example/demo/service\n ├─ OrderService.java\n ├─ PaymentServiceInterface.java\n ├─ UPIPaymentService.java\n └─ DemoApplication.java\n```\n`service` → Contains all business logic and payment services. \\\n`DemoApplication.java` → Main Spring Boot application.\n\n---\n\n**1: Payment Interface : \\\n**`PaymentServiceInterface.java`****\n\n```java\npublic interface PaymentServiceInterface {\n void pay();\n}\n```\n\nThe interface defines **what** a payment is, not **how** it is done (No implementation details).\n\n---\n\n**2: Payment Implementation (Single Service) :** \\\n**`UPIPaymentService.java`**\n\n```java\n@Service\npublic class UPIPaymentService implements PaymentServiceInterface {\n\n @Override\n public void pay() {\n System.out.println(\"Payment done using UPI\");\n }\n}\n```\n\nHere:\n\n* There is **only one implementation** of `PaymentServiceInterface `\n* Spring Boot can easily decide which object to create\n* No extra configuration is required\n\n**`@Service`** tells Spring Boot: \\\n**“Create and manage an object of this class.**”\n\n---\n\n**3: `OrderService.java`(No `new` Keyword)**\n```java\n@Service\npublic class OrderService {\n\n private final PaymentServiceInterface paymentService;\n\n // Constructor Injection\n public OrderService(PaymentServiceInterface paymentService) {\n this.paymentService = paymentService;\n }\n\n public void placeOrder() {\n paymentService.pay();\n System.out.println(\"Order placed\");\n }\n}\n```\n\nHere:\n\n* `OrderService` does NOT create `new PaymentService()`\n* Spring Boot injects `UPIPaymentService` automatically\n* This is **Dependency Injection**\n\nBecause there is only one Payment Service, Spring knows exactly what to inject.\n\n---\n\n**4: Application Entry Point :**\n**`DemoApplication.java`**\n```java\n@SpringBootApplication\npublic class DemoApplication implements CommandLineRunner {\n\n private final OrderService orderService;\n\n public DemoApplication(OrderService orderService) {\n this.orderService = orderService;\n }\n\n @Override\n public void run(String... args) {\n orderService.placeOrder();\n }\n}\n```\n\n- No `new OrderService()`\n- No `if-else`\n\n**Spring Boot does everything.**\n\n---\n\n**Run the Application - You'll see below output:**\n```sss\nPayment done using UPI\nOrder placed\n```",
+          "problemStatement": "- In the previous page, the main problem was **manual object management**.\n- Spring Boot solves this by taking control of **object creation and dependency writng**.\n\n---\n\n**Project Structure**\n```SSS\ndemo\n└─ src\n └─ main\n └─ java/com/example/demo/service\n ├─ OrderService.java\n ├─ PaymentServiceInterface.java\n ├─ UPIPaymentService.java\n └─ DemoApplication.java\n```\n`service` → Contains all business logic and payment services. \\\n`DemoApplication.java` → Main Spring Boot application.\n\n---\n\n**1: Payment Interface : \\\n**`PaymentServiceInterface.java`****\n\n```java\npublic interface PaymentServiceInterface {\n void pay();\n}\n```\n\nThe interface defines **what** a payment is, not **how** it is done (No implementation details).\n\n---\n\n**2: Payment Implementation (Single Service) :** \\\n**`UPIPaymentService.java`**\n\n```java\n@Service\npublic class UPIPaymentService implements PaymentServiceInterface {\n\n @Override\n public void pay() {\n System.out.println(\"Payment done using UPI\");\n }\n}\n```\n\nHere:\n\n* There is **only one implementation** of `PaymentServiceInterface `\n* Spring Boot can easily decide which object to create\n* No extra configuration is required\n\n**`@Service`** tells Spring Boot: \\\n**“Create and manage an object of this class.**”\n\n---\n\n**3: `OrderService.java`(No `new` Keyword)**\n```java\n@Service\npublic class OrderService {\n\n private final PaymentServiceInterface paymentService;\n\n // Constructor Injection\n public OrderService(PaymentServiceInterface paymentService) {\n this.paymentService = paymentService;\n }\n\n public void placeOrder() {\n paymentService.pay();\n System.out.println(\"Order placed\");\n }\n}\n```\n\nHere:\n\n* `OrderService` does NOT create `new PaymentService()`\n* Spring Boot injects `UPIPaymentService` automatically\n* This is **Dependency Injection**\n\nBecause there is only one Payment Service, Spring knows exactly what to inject.\n\n---\n\n**4: Application Entry Point :**\n**`DemoApplication.java`**\n```java\n@SpringBootApplication\npublic class DemoApplication implements CommandLineRunner {\n\n private final OrderService orderService;\n\n public DemoApplication(OrderService orderService) {\n this.orderService = orderService;\n }\n\n @Override\n public void run(String... args) {\n orderService.placeOrder();\n }\n}\n```\n\n- No `new OrderService()`\n- No `if-else`\n\n**Spring Boot does everything.**\n\n---\n\n**Run the Application - You'll see below output:**\n```sss\nPayment done using UPI\nOrder placed\n```",
+          "constraints": [
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRPROB09A",
+          "questionId": "SPRPROB09A",
+          "title": "Implementing Multiple Payment Services",
+          "difficulty": "Easy",
+          "description": "Until now, our application worked smoothly because there was only one payment service. \\\nNow, let’s make a small change. \\\nWe will add two payment services that implement the same interface: \\\n**1. UPI payment**\n```java\n@Service\npublic class UPIPaymentService implements PaymentServiceInterface {\n public void pay() {\n System.out.println(\"Payment done using UPI\");\n }\n}\n```\n\n**2. Credit Card payment** \n```java\n@Service\npublic class CreditCardPaymentService implements PaymentServiceInterface {\n public void pay() {\n System.out.println(\"Payment done using Credit Card\");\n }\n}\n```\nBoth services are valid, but this creates a new situation for Spring Boot.\n\n---\n\n**When you run the application, Spring fails at startup**. \n\n**Why This Happens**\n```java\npublic OrderService(PaymentService paymentService) {\n this.paymentService = paymentService;\n}\n```\n**Spring asks:** \\\n“Which PaymentService should I inject?”\n\nBut it finds:\n- UPIPaymentService\n- CreditCardPaymentService\n\nNo clear answer → **application fails to start**\n\n---\n\n**Key Learning**\n- When only one implementation exists, Spring injects it automatically.\n- When multiple implementations exist, Spring needs extra information.\n\n\n---\n\n**The error you got here, is intentional for this demo**- Don’t Fix It Yet \\\nIn the next lesson, you’ll learn how to solve this using:\n`@Primary`\n`@Qualifier`",
+          "problemStatement": "Until now, our application worked smoothly because there was only one payment service. \\\nNow, let’s make a small change. \\\nWe will add two payment services that implement the same interface: \\\n**1. UPI payment**\n```java\n@Service\npublic class UPIPaymentService implements PaymentServiceInterface {\n public void pay() {\n System.out.println(\"Payment done using UPI\");\n }\n}\n```\n\n**2. Credit Card payment** \n```java\n@Service\npublic class CreditCardPaymentService implements PaymentServiceInterface {\n public void pay() {\n System.out.println(\"Payment done using Credit Card\");\n }\n}\n```\nBoth services are valid, but this creates a new situation for Spring Boot.\n\n---\n\n**When you run the application, Spring fails at startup**. \n\n**Why This Happens**\n```java\npublic OrderService(PaymentService paymentService) {\n this.paymentService = paymentService;\n}\n```\n**Spring asks:** \\\n“Which PaymentService should I inject?”\n\nBut it finds:\n- UPIPaymentService\n- CreditCardPaymentService\n\nNo clear answer → **application fails to start**\n\n---\n\n**Key Learning**\n- When only one implementation exists, Spring injects it automatically.\n- When multiple implementations exist, Spring needs extra information.\n\n\n---\n\n**The error you got here, is intentional for this demo**- Don’t Fix It Yet \\\nIn the next lesson, you’ll learn how to solve this using:\n`@Primary`\n`@Qualifier`",
+          "constraints": [
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRPROB09B",
+          "questionId": "SPRPROB09B",
+          "title": "Handling Multiple Implementations in Spring Boot",
+          "difficulty": "Easy",
+          "description": "In the previous demo, the application failed to start because Spring found two payment services and didn’t know which one to inject. \\\nNow let’s learn how to guide Spring.\n\n---\n\n**Solution 1: Using `@Primary`**\n- When multiple payment service classes exist, we tell Spring which one to use by default.\n- Spring will automatically use this default service unless we explicitly ask for another one.\n\n**Step 1**: Mark One Payment Service(`UPIPaymentService.java`) as **`Primary`** \\\nOpen `UPIPaymentService.java` and add this code in that\n```java\npackage com.example.demo.service;\nimport org.springframework.context.annotation.Primary;\nimport org.springframework.stereotype.Service;\n\n@Service\n@Primary\npublic class UPIPaymentService implements PaymentServiceInterface {\n\n @Override\n public void pay() {\n System.out.println(\"Payment done using UPI\");\n }\n}\n```\n`CreditCardPaymentService` remains unchanged:\n\n---\n\n**What Happens Now?**\n- Spring finds two `PaymentService` beans(objects)\n- Sees one marked as `@Primary`\n- Injects `UPIPaymentService`\n\n**Application starts successfully**\n\n---\n\n**Solution 2: Using `@Qualifier`** \\\nInstead of a default, explicitly tell Spring which bean you want.\n\n\n\n**Step 1: Name the Payment Service Bean(Object)** \\\nWhen multiple classes implement the same interface, Spring needs a name to identify each one.\n```java\npackage com.example.demo.service;\nimport org.springframework.stereotype.Service;\n\n@Service(\"UPIPaymentService\")\npublic class UPIPaymentService implements PaymentServiceInterface {\n\n @Override\n public void pay() {\n System.out.println(\"Payment done using UPI\");\n }\n}\n```\n\n- `@Service(\"UPIPaymentService\")` tells Spring: \\\n**“Register this class with the bean name UPIPaymentService”**\n\n\n\n\n**Step 2**: Use `@Qualifier` in `OrderService`\n```java\npackage com.example.demo.service;\nimport org.springframework.stereotype.Service;\nimport org.springframework.beans.factory.annotation.Qualifier;\n\n@Service\npublic class OrderService {\n\n private final PaymentServiceInterface paymentService;\n\n public OrderService( @Qualifier(\"UPIPaymentService\") PaymentServiceInterface paymentService) \n {\n this.paymentService = paymentService;\n }\n\n public void placeOrder() {\n paymentService.pay();\n System.out.println(\"Order placed\");\n }\n}\n```\n\n- `@Qualifier(\"UPIPaymentService\")` tells Spring:\n**“Inject the bean whose name is UPIPaymentService”** \n\n---\n\n**What Happens Now?**\n- Spring sees multiple implementations\n- Reads the qualifier name\n- Injects `UPIPaymentService` only\n\n**Application runs successfully**\n\n---\n\n\n**Expected Output After Applying both solutions:**\n```sss\nPayment done using UPI\nOrder placed\n```",
+          "problemStatement": "In the previous demo, the application failed to start because Spring found two payment services and didn’t know which one to inject. \\\nNow let’s learn how to guide Spring.\n\n---\n\n**Solution 1: Using `@Primary`**\n- When multiple payment service classes exist, we tell Spring which one to use by default.\n- Spring will automatically use this default service unless we explicitly ask for another one.\n\n**Step 1**: Mark One Payment Service(`UPIPaymentService.java`) as **`Primary`** \\\nOpen `UPIPaymentService.java` and add this code in that\n```java\npackage com.example.demo.service;\nimport org.springframework.context.annotation.Primary;\nimport org.springframework.stereotype.Service;\n\n@Service\n@Primary\npublic class UPIPaymentService implements PaymentServiceInterface {\n\n @Override\n public void pay() {\n System.out.println(\"Payment done using UPI\");\n }\n}\n```\n`CreditCardPaymentService` remains unchanged:\n\n---\n\n**What Happens Now?**\n- Spring finds two `PaymentService` beans(objects)\n- Sees one marked as `@Primary`\n- Injects `UPIPaymentService`\n\n**Application starts successfully**\n\n---\n\n**Solution 2: Using `@Qualifier`** \\\nInstead of a default, explicitly tell Spring which bean you want.\n\n\n\n**Step 1: Name the Payment Service Bean(Object)** \\\nWhen multiple classes implement the same interface, Spring needs a name to identify each one.\n```java\npackage com.example.demo.service;\nimport org.springframework.stereotype.Service;\n\n@Service(\"UPIPaymentService\")\npublic class UPIPaymentService implements PaymentServiceInterface {\n\n @Override\n public void pay() {\n System.out.println(\"Payment done using UPI\");\n }\n}\n```\n\n- `@Service(\"UPIPaymentService\")` tells Spring: \\\n**“Register this class with the bean name UPIPaymentService”**\n\n\n\n\n**Step 2**: Use `@Qualifier` in `OrderService`\n```java\npackage com.example.demo.service;\nimport org.springframework.stereotype.Service;\nimport org.springframework.beans.factory.annotation.Qualifier;\n\n@Service\npublic class OrderService {\n\n private final PaymentServiceInterface paymentService;\n\n public OrderService( @Qualifier(\"UPIPaymentService\") PaymentServiceInterface paymentService) \n {\n this.paymentService = paymentService;\n }\n\n public void placeOrder() {\n paymentService.pay();\n System.out.println(\"Order placed\");\n }\n}\n```\n\n- `@Qualifier(\"UPIPaymentService\")` tells Spring:\n**“Inject the bean whose name is UPIPaymentService”** \n\n---\n\n**What Happens Now?**\n- Spring sees multiple implementations\n- Reads the qualifier name\n- Injects `UPIPaymentService` only\n\n**Application runs successfully**\n\n---\n\n\n**Expected Output After Applying both solutions:**\n```sss\nPayment done using UPI\nOrder placed\n```",
+          "constraints": [
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRPROB09C",
+          "questionId": "SPRPROB09C",
+          "title": "Practice - Choose a Payment Method Using Primary",
+          "difficulty": "Easy",
+          "description": "Currently, your application has two payment services:\n- `UPIPaymentService`\n- `CreditCardPaymentService`\n\nPayment is working because `UPIPaymentService` is marked as `@Primary`, so Spring uses it by default. \\\nNow you will practice changing the default payment service.\n\n---\n\n**Your Task** :\n\n**1. Add one more payment service** \n- Create **`NetBankingPaymentService.java`**\n- It should implement the same payment interface i.e `PaymentServiceInterface`\n- The `pay()` method should print: - **\"Payment done using NetBanking\"**\n- You can refer to `UPIPaymentService` for guidance. \n\n**2. Make NetBanking the default payment method**\n- Add `@Primary` to `NetBankingPaymentService`\n- Remove `@Primary` from `UPIPaymentService` \n\n**3. Do not change `OrderService`**\n\n---\n\n**Expected Output**\n```sss\nPayment done using NetBanking\nOrder placed\n```",
+          "problemStatement": "Currently, your application has two payment services:\n- `UPIPaymentService`\n- `CreditCardPaymentService`\n\nPayment is working because `UPIPaymentService` is marked as `@Primary`, so Spring uses it by default. \\\nNow you will practice changing the default payment service.\n\n---\n\n**Your Task** :\n\n**1. Add one more payment service** \n- Create **`NetBankingPaymentService.java`**\n- It should implement the same payment interface i.e `PaymentServiceInterface`\n- The `pay()` method should print: - **\"Payment done using NetBanking\"**\n- You can refer to `UPIPaymentService` for guidance. \n\n**2. Make NetBanking the default payment method**\n- Add `@Primary` to `NetBankingPaymentService`\n- Remove `@Primary` from `UPIPaymentService` \n\n**3. Do not change `OrderService`**\n\n---\n\n**Expected Output**\n```sss\nPayment done using NetBanking\nOrder placed\n```",
+          "constraints": [
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "SPRPROB09D",
+          "questionId": "SPRPROB09D",
+          "title": "Practice - Choose a Payment Method Using Qualifier",
+          "difficulty": "Easy",
+          "description": "Currently, your application has two payment services:\n- `UPIPaymentService`\n- `CreditCardPaymentService` \\\nPayment is currently working using `UPIPaymentService` via `@Qualifier`. \\\nNow you will practice selecting a different payment service using `@Qualifier`.\n\n---\n\n**Your Task:**\n\n**1. Add one more payment service**\n- Create **`NetBankingPaymentService.java`**\n- It should implement the same payment interface, i.e., PaymentServiceInterface\n- The pay() method should print: \"Payment done using NetBanking\"\n- You can refer to UPIPaymentService for guidance\n\n**2. Use `@Qualifier` to select NetBanking**\n- Make sure `@Primary` removed from all services\n- In OrderService, use **`@Qualifier(\"NetBankingPaymentService\")`** in the constructor to inject `NetBankingPaymentService`\n\n3. Do not change other parts of `OrderService`\n\n---\n\n**Expected Output**\n```sss\nPayment done using NetBanking\nOrder placed\n```",
+          "problemStatement": "Currently, your application has two payment services:\n- `UPIPaymentService`\n- `CreditCardPaymentService` \\\nPayment is currently working using `UPIPaymentService` via `@Qualifier`. \\\nNow you will practice selecting a different payment service using `@Qualifier`.\n\n---\n\n**Your Task:**\n\n**1. Add one more payment service**\n- Create **`NetBankingPaymentService.java`**\n- It should implement the same payment interface, i.e., PaymentServiceInterface\n- The pay() method should print: \"Payment done using NetBanking\"\n- You can refer to UPIPaymentService for guidance\n\n**2. Use `@Qualifier` to select NetBanking**\n- Make sure `@Primary` removed from all services\n- In OrderService, use **`@Qualifier(\"NetBankingPaymentService\")`** in the constructor to inject `NetBankingPaymentService`\n\n3. Do not change other parts of `OrderService`\n\n---\n\n**Expected Output**\n```sss\nPayment done using NetBanking\nOrder placed\n```",
+          "constraints": [
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "springboot.json",
+      "_moduleTitle": "IoC and Dependency Injection"
+    },
+    {
+      "topicId": "t03-beans-annotations",
+      "title": "Beans & Annotations",
+      "description": "Study concepts and solve targeted engineering problems for Beans & Annotations.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 40,
+      "pages": [
+        {
+          "pageId": "p-SPRPROB11",
+          "title": "Beans & Annotations",
+          "content": "Now that we’ve seen how the order and payment flow works in previous example, it’s important to understand the main Spring components that made this possible. These are the building blocks Spring uses to manage objects, dependencies, and the application itself. \n\n---\n\n**What is beans:**\n- In Spring, a bean is simply an **object that Spring manages for you**.\n- Instead of manually creating objects with `new`, **Spring creates, manages, and provides these objects wherever they are needed**.\n- Beans are the building blocks of a Spring application — **services, repositories, controllers, or other components** can all be bean.\n\n---\n\n**In previous example, we have the following annotations:**\n1. **`@Service`**\n- Marks a class as a **service bean** (business logic).\n- Spring automatically creates an object (bean) of this class.\n\n2. **`@Primary`**\n- **Marks a bean as the default** when multiple implementations of an interface exist.\n\n3. **`@Autowired`**\n- Tells Spring to automatically inject a bean (object) into a class.\n- Spring finds the matching bean and provides it — no `new` keyword needed\n\n4. **`@Override`**\n- Java annotation\n- Marks that a method overrides a method from an interface or parent class.\n\n5. **`@SpringBootApplication`**\n- Marks the **main class** of a Spring Boot application — this is the starter of your app.\n\n---\n\n**Overview :**",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Beans & Annotations in Beans & Annotations is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB11",
+            "question": "In Beans & Annotations, what is the key consideration regarding Beans & Annotations?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SPRPROB12",
+          "title": "Use of Spring Beans",
+          "content": "Why do we use Spring Beans instead of creating objects with new?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Use of Spring Beans in Beans & Annotations is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB12",
+            "question": "In Beans & Annotations, what is the key consideration regarding Use of Spring Beans?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SPRPROB13",
+          "title": "Use of Primary",
+          "content": "When do we use `@Primary`?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Use of Primary in Beans & Annotations is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB13",
+            "question": "In Beans & Annotations, what is the key consideration regarding Use of Primary?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SPRPROB14",
+          "title": "ApplicationContext - The Brain Behind Beans",
+          "content": "You learned about Beans and Annotations:\n- What a bean is?\n- How annotations like `@Service`, `@Autowired`, and `@Primary` work?\n- That Spring creates objects for us instead of using `new`?\n\n**Now a very important question arises:** \n```sss\nWho creates these beans? \nWho keeps track of them? \nWho injects one bean into another? \n```\n**The answer is ApplicationContext.**\n\n---\n\n**What is ApplicationContext?** \\\nApplicationContext is the **Spring container**. \\\nIt is the core object in Spring that:\n- Creates beans\n- Stores beans\n- Injects beans into each other\n- Manages the application lifecycle\n\n**Think of it like** \\\nYou already know: \\\n`@Service` → tells Spring this class should be a bean \\\n`@Autowired` → tells Spring inject a bean here\n\nBut **Spring itself needs a manager to make this happen** - That manager is **`ApplicationContext`**.\n\n---\n\n**What Exactly Does ApplicationContext Do?** \\\nWhen the application starts, ApplicationContext: \\\n**1. Scans the project** \\\nLooks for annotations like `@Service`, `@Component`, `@Controller` \\\n**2. Creates Beans** \\\nCreates objects of all detected beans \\\n**3. Stores Beans** \\\nKeeps them in memory \\\n**4. Injects Dependencies** \\\nHandles `@Autowired` \\\nInjects the correct bean automatically \\\n**5. Manages Lifecycle** \\\nControls when beans are created and destroyed",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding ApplicationContext - The Brain Behind Beans in Beans & Annotations is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB14",
+            "question": "In Beans & Annotations, what is the key consideration regarding ApplicationContext - The Brain Behind Beans?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SPRPROB15",
+          "title": "Understand Application Context with example",
+          "content": "**Without ApplicationContext (Old Way)**\n```java\nBookService bookService = new BookService();\nEmailNotificationService emailService = new EmailNotificationService();\n```\n\n**Problems:**\n- You manage everything manually\n- Tight coupling\n- Hard to change implementations\n\n---\n\n**With ApplicationContext (Spring Way)**\n```java\n@Service\npublic class BookService {\n\n @Autowired\n private EmailNotificationService emailService;\n}\n```\n- No new\n- Spring injects dependencies\n- ApplicationContext handles everything\n\n---\n\n**ApplicationContext in Spring Boot** \n```java\n@SpringBootApplication\npublic class LibraryApplication {\n public static void main(String[] args) {\n SpringApplication.run(LibraryApplication.class, args);\n }\n}\n```\nIn Spring Boot, **you do NOT create ApplicationContext manually**.\n\n```java\nSpringApplication.run(LibraryApplication.class, args);\n```\n**This line:**\n- **Creates the `ApplicationContext`**\n- Scans all beans\n- Starts the application\n\n---\n\n**So in Spring Boot:** \\\nYou start the app using `run()` **→** \\\nSpring creates the `ApplicationContext` **→** \\\n`ApplicationContext` creates and manages all beans \n\n**This is why `ApplicationContext` is the heart of Spring Boot**.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Understand Application Context with example in Beans & Annotations is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB15",
+            "question": "In Beans & Annotations, what is the key consideration regarding Understand Application Context with example?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SPRPROB16",
+          "title": "ApplicationContext Creation in Spring Boot",
+          "content": "Which line actually creates the ApplicationContext in a Spring Boot application?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding ApplicationContext Creation in Spring Boot in Beans & Annotations is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB16",
+            "question": "In Beans & Annotations, what is the key consideration regarding ApplicationContext Creation in Spring Boot?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SPRPROB17",
+          "title": "Identify Spring Boot Startup Flow",
+          "content": "Which statement best describes the flow in Spring Boot startup?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Identify Spring Boot Startup Flow in Beans & Annotations is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB17",
+            "question": "In Beans & Annotations, what is the key consideration regarding Identify Spring Boot Startup Flow?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SPRPROB18",
+          "title": "Guess the Relation",
+          "content": "What is the relationship between ApplicationContext and beans?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Guess the Relation in Beans & Annotations is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SPRPROB18",
+            "question": "In Beans & Annotations, what is the key consideration regarding Guess the Relation?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Spring Boot for Back-end development",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Spring Boot for Back-end development, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-SPRPROB11-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Beans & Annotations (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-SPRPROB12-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Use of Spring Beans (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-SPRPROB13-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Use of Primary (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-SPRPROB14-java",
+          "language": "java",
+          "label": "Java",
+          "title": "ApplicationContext - The Brain Behind Beans (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-SPRPROB15-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Understand Application Context with example (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-SPRPROB16-java",
+          "language": "java",
+          "label": "Java",
+          "title": "ApplicationContext Creation in Spring Boot (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-SPRPROB17-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Identify Spring Boot Startup Flow (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-SPRPROB18-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Guess the Relation (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        }
+      ],
+      "practiceProblems": [],
+      "_sourceFile": "springboot.json",
+      "_moduleTitle": "IoC and Dependency Injection"
+    }
+  ]
+}

@@ -1,0 +1,1614 @@
+{
+  "moduleId": "m04-aggregate-functions-grouping-group-by-having",
+  "title": "Aggregate Functions & Grouping (GROUP BY & HAVING)",
+  "description": "COUNT, SUM, AVG, MIN, MAX aggregations, GROUP BY single and multiple columns, and filtering aggregated groups with HAVING.",
+  "estimatedHours": 4,
+  "topics": [
+    {
+      "topicId": "t01-sql-lesson-9-queries-with-expressions",
+      "title": "SQL Lesson 9: Queries with expressions",
+      "description": "Interactive lesson on SQL Lesson 9: Queries with expressions. Learn the concept, run worked queries against a resettable SQLite dataset, inspect results, then solve guided and challenge tasks.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 15,
+      "lessonMarkdown": "In addition to querying and referencing raw column data with SQL, you can also use *expressions* \nto write more complex logic on column values in a query.  These expressions can use mathematical \nand string functions along with basic arithmetic to transform values when the query is executed, \nas shown in this physics example.\n\n> **Example query with expressions**\n```sql\nSELECT **particle_speed / 2.0** AS half_particle_speed\nFROM physics_data\nWHERE **ABS(particle_position) * 10.0 > 500**;\n```\n\nEach database has its own supported set of mathematical, string, and date functions that can be used\nin a query, which you can find in their own respective docs.\nThe use of expressions can save time and extra post-processing of the result data, but can also make \nthe query harder to read, so we recommend that when expressions are used in the `SELECT` part of the \nquery, that they are also given a descriptive *alias* using the `AS` keyword.\n\n> **Select query with expression aliases**\n```sql\nSELECT ***col_expression* AS *expr_description***, ...\nFROM mytable;\n```\n\nIn addition to expressions, regular columns and even tables can also have aliases to make them easier\nto reference in the output and as a part of simplifying more complex queries.\n\n> **Example query with both column and table name aliases**\n```sql\nSELECT column **AS better_column_name**, ...\nFROM a_long_widgets_table_name **AS mywidgets**\nINNER JOIN widget_sales\n  ON mywidgets.id = widget_sales.widget_id;\n```\n\n### Exercise\n\nYou are going to have to use expressions to transform the **BoxOffice** data into something easier to \nunderstand for the tasks below.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "In addition to querying and referencing raw column data with SQL, you can also use *expressions* \nto write more complex logic on column values in a query.  These expressions can use mathematical \nand string functions along with basic arithmetic to transform values when the query is executed, \nas shown in this physics example.\n\n> **Example query with expressions**\n```sql\nSELECT **particle_speed / 2.0** AS half_particle_speed\nFROM physics_data\nWHERE **ABS(particle_position) * 10.0 > 500**;\n```\n\nEach database has its own supported set of mathematical, string, and date functions that can be used\nin a query, which you can find in their own respective docs.\nThe use of expressions can save time and extra post-processing of the result data, but can also make \nthe query harder to read, so we recommend that when expressions are used in the `SELECT` part of the \nquery, that they are also given a descriptive *alias* using the `AS` keyword.\n\n> **Select query with expression aliases**\n```sql\nSELECT ***col_expression* AS *expr_description***, ...\nFROM mytable;\n```\n\nIn addition to expressions, regular columns and even tables can also have aliases to make them easier\nto reference in the output and as a part of simplifying more complex queries.\n\n> **Example query with both column and table name aliases**\n```sql\nSELECT column **AS better_column_name**, ...\nFROM a_long_widgets_table_name **AS mywidgets**\nINNER JOIN widget_sales\n  ON mywidgets.id = widget_sales.widget_id;\n```\n\n### Exercise\n\nYou are going to have to use expressions to transform the **BoxOffice** data into something easier to \nunderstand for the tasks below."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE movies (\n    id integer primary key autoincrement,\n    title text,\n    director text,\n    year integer, \n    length_minutes integer\n);\nCREATE TABLE boxoffice (\n    -- id integer primary key autoincrement,\n    movie_id integer,\n    rating real,\n    domestic_sales real,\n    international_sales real\n);",
+        "seedSql": "INSERT INTO movies (id, title, director, year, length_minutes) VALUES\n(1, 'Toy Story', 'John Lasseter', 1995, 81),\n(2, 'A Bug''s Life', 'John Lasseter', 1998, 95),\n(3, 'Toy Story 2', 'John Lasseter', 1999, 93),\n(4, 'Monsters, Inc.', 'Pete Docter', 2001, 92),\n(5, 'Finding Nemo', 'Andrew Stanton', 2003, 107),\n(6, 'The Incredibles', 'Brad Bird', 2004, 116),\n(7, 'Cars', 'John Lasseter', 2006, 117),\n(8, 'Ratatouille', 'Brad Bird', 2007, 115),\n(9, 'WALL-E', 'Andrew Stanton', 2008, 104),\n(10, 'Up', 'Pete Docter', 2009, 101),\n(11, 'Toy Story 3', 'Lee Unkrich', 2010, 103),\n(12, 'Cars 2', 'John Lasseter', 2011, 120),\n(13, 'Brave', 'Brenda Chapman', 2012, 102),\n(14, 'Monsters University', 'Dan Scanlon', 2013, 110);\n\nINSERT INTO boxoffice (movie_id, rating, domestic_sales, international_sales) VALUES\n(5, 8.2, 380843261, 555900000),\n(14, 7.4, 268492764, 475066843),\n(8, 8, 206445654, 417277164),\n(12, 6.4, 191452396, 368400000),\n(3, 7.9, 245852179, 239163000),\n(6, 8, 261441092, 370001000),\n(9, 8.5, 223808164, 297503696),\n(11, 8.4, 415004880, 648167031),\n(1, 8.3, 191796233, 170162503),\n(7, 7.2, 244082982, 217900167),\n(10, 8.3, 293004164, 438338580),\n(4, 8.1, 289916256, 272900000),\n(2, 7.2, 162798565, 200600000),\n(13, 7.2, 237283207, 301700000);\n",
+        "defaultTable": "movies",
+        "defaultQuery": "-- Write your SQL statement below to solve the exercise tasks:\nSELECT * FROM movies LIMIT 10;",
+        "tasks": [
+          {
+            "instruction": "List all movies and their combined sales in millions of dollars",
+            "expectedQuery": "SELECT title, (domestic_sales + international_sales) / 1000000 AS gross_sales_millions\nFROM movies\n  JOIN boxoffice\n    ON movies.id = boxoffice.movie_id;",
+            "solution": "SELECT title, (domestic_sales + international_sales) / 1000000 AS gross_sales_millions\nFROM movies\n  JOIN boxoffice\n    ON movies.id = boxoffice.movie_id;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "JOIN",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 9: Queries with expressions concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t1-task-1"
+          },
+          {
+            "instruction": "List all movies and their ratings in percent",
+            "expectedQuery": "SELECT title, rating * 10 AS rating_percent\nFROM movies\n  JOIN boxoffice\n    ON movies.id = boxoffice.movie_id;",
+            "solution": "SELECT title, rating * 10 AS rating_percent\nFROM movies\n  JOIN boxoffice\n    ON movies.id = boxoffice.movie_id;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "JOIN",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 9: Queries with expressions concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t1-task-2"
+          },
+          {
+            "instruction": "List all movies that were released on even number years",
+            "expectedQuery": "SELECT title\nFROM movies\nWHERE year % 2 = 0;",
+            "solution": "SELECT title\nFROM movies\nWHERE year % 2 = 0;",
+            "orderSensitive": false,
+            "difficulty": "Medium",
+            "conceptTags": [
+              "SELECT",
+              "WHERE"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 9: Queries with expressions concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t1-task-3"
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m3-t1-challenge-1",
+            "instruction": "Show each movie's sales in billions",
+            "expectedQuery": "SELECT title, (domestic_sales + international_sales) / 1000000000.0 AS gross_billions FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;",
+            "solution": "SELECT title, (domestic_sales + international_sales) / 1000000000.0 AS gross_billions FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 9: Queries with expressions"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "title",
+                "gross_billions"
+              ],
+              "rows": [
+                [
+                  "Finding Nemo",
+                  0.936743261
+                ],
+                [
+                  "Monsters University",
+                  0.743559607
+                ],
+                [
+                  "Ratatouille",
+                  0.623722818
+                ],
+                [
+                  "Cars 2",
+                  0.559852396
+                ],
+                [
+                  "Toy Story 2",
+                  0.485015179
+                ],
+                [
+                  "The Incredibles",
+                  0.631442092
+                ],
+                [
+                  "WALL-E",
+                  0.52131186
+                ],
+                [
+                  "Toy Story 3",
+                  1.063171911
+                ]
+              ],
+              "rowCount": 14
+            }
+          },
+          {
+            "taskId": "sql-m3-t1-challenge-2",
+            "instruction": "Label each movie as 'High' when rating is at least 8.0, otherwise 'Standard'",
+            "expectedQuery": "SELECT title, CASE WHEN rating >= 8.0 THEN 'High' ELSE 'Standard' END AS rating_band FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;",
+            "solution": "SELECT title, CASE WHEN rating >= 8.0 THEN 'High' ELSE 'Standard' END AS rating_band FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 9: Queries with expressions"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "title",
+                "rating_band"
+              ],
+              "rows": [
+                [
+                  "Finding Nemo",
+                  "High"
+                ],
+                [
+                  "Monsters University",
+                  "Standard"
+                ],
+                [
+                  "Ratatouille",
+                  "High"
+                ],
+                [
+                  "Cars 2",
+                  "Standard"
+                ],
+                [
+                  "Toy Story 2",
+                  "Standard"
+                ],
+                [
+                  "The Incredibles",
+                  "High"
+                ],
+                [
+                  "WALL-E",
+                  "High"
+                ],
+                [
+                  "Toy Story 3",
+                  "High"
+                ]
+              ],
+              "rowCount": 14
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Compute values in a SELECT list.",
+        "Use arithmetic operators.",
+        "Create readable aliases with AS.",
+        "Use expressions across joined tables."
+      ],
+      "commonMistakes": [
+        "Integer-division surprises.",
+        "Forgetting aliases for calculated columns.",
+        "Repeating a long expression instead of giving it a name."
+      ],
+      "cheatSheet": "SELECT expression AS alias FROM table;",
+      "reflectionQuestions": [
+        "What changes if you remove one clause from the query?",
+        "Which part of the task is row-level filtering versus result shaping?",
+        "Can you explain the query to another learner without reading the SQL?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m3-t1-ex1",
+          "title": "Derived value",
+          "task": "Convert sales into millions.",
+          "query": "SELECT title, (domestic_sales + international_sales) / 1000000.0 AS gross_millions FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;",
+          "result": {
+            "columns": [
+              "title",
+              "gross_millions"
+            ],
+            "rows": [
+              [
+                "Finding Nemo",
+                936.743261
+              ],
+              [
+                "Monsters University",
+                743.559607
+              ],
+              [
+                "Ratatouille",
+                623.722818
+              ],
+              [
+                "Cars 2",
+                559.852396
+              ],
+              [
+                "Toy Story 2",
+                485.015179
+              ],
+              [
+                "The Incredibles",
+                631.442092
+              ],
+              [
+                "WALL-E",
+                521.31186
+              ],
+              [
+                "Toy Story 3",
+                1063.171911
+              ]
+            ],
+            "rowCount": 14
+          },
+          "explanation": "Arithmetic expressions can create calculated columns.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m3-t1-ex2",
+          "title": "Percentage",
+          "task": "Convert a 0-10 rating to a percentage scale.",
+          "query": "SELECT title, rating * 10 AS rating_percent FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;",
+          "result": {
+            "columns": [
+              "title",
+              "rating_percent"
+            ],
+            "rows": [
+              [
+                "Finding Nemo",
+                82
+              ],
+              [
+                "Monsters University",
+                74
+              ],
+              [
+                "Ratatouille",
+                80
+              ],
+              [
+                "Cars 2",
+                64
+              ],
+              [
+                "Toy Story 2",
+                79
+              ],
+              [
+                "The Incredibles",
+                80
+              ],
+              [
+                "WALL-E",
+                85
+              ],
+              [
+                "Toy Story 3",
+                84
+              ]
+            ],
+            "rowCount": 14
+          },
+          "explanation": "The alias documents the meaning of the result.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m3-t1-ex3",
+          "title": "CASE expression",
+          "task": "Classify movies by length.",
+          "query": "SELECT title, CASE WHEN length_minutes >= 110 THEN 'Long' ELSE 'Standard' END AS length_group FROM movies;",
+          "result": {
+            "columns": [
+              "title",
+              "length_group"
+            ],
+            "rows": [
+              [
+                "Toy Story",
+                "Standard"
+              ],
+              [
+                "A Bug's Life",
+                "Standard"
+              ],
+              [
+                "Toy Story 2",
+                "Standard"
+              ],
+              [
+                "Monsters, Inc.",
+                "Standard"
+              ],
+              [
+                "Finding Nemo",
+                "Standard"
+              ],
+              [
+                "The Incredibles",
+                "Long"
+              ],
+              [
+                "Cars",
+                "Long"
+              ],
+              [
+                "Ratatouille",
+                "Long"
+              ]
+            ],
+            "rowCount": 14
+          },
+          "explanation": "CASE turns business rules into row-level labels.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build a small report from this topic's dataset. Start with the simplest query that returns the required rows, then add only the clauses needed for filtering, relationships, aggregation, or presentation.",
+      "pages": [
+        {
+          "pageId": "p-sql-m3-t1-concept",
+          "title": "Concept: SQL Lesson 9: Queries with expressions",
+          "content": "### What you'll learn\n- Compute values in a SELECT list.\n- Use arithmetic operators.\n- Create readable aliases with AS.\n- Use expressions across joined tables.\n\n### Why this matters\nSQL is easiest to master when you connect each clause to a concrete change in the result set. This lesson uses the live database already attached to the exercise, so you can run the examples and inspect the result.\n\n### Rule of thumb\n`SELECT expression AS alias FROM table;`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT title, (domestic_sales + international_sales) / 1000000.0 AS gross_millions FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t1-concept",
+            "question": "Which approach best matches the goal of this lesson?",
+            "options": [
+              "SELECT title, (domestic_sales + international_sales) / 1000000.0 AS gross_millions FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;",
+              "Start by changing unrelated tables.",
+              "Return every column for every task.",
+              "Skip the live result and guess."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          }
+        },
+        {
+          "pageId": "p-sql-m3-t1-trace",
+          "title": "Worked example: trace the query",
+          "content": "Let's trace this example step by step.\n\n**Task:** Convert sales into millions.\n\n**Query:**\n```sql\nSELECT title, (domestic_sales + international_sales) / 1000000.0 AS gross_millions FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;\n```\n\n1. Identify the source.\n2. Identify the requested output columns.\n3. Apply filtering/grouping/sorting if present.\n4. Compare the returned rows with the task requirement.\n\n**Teaching point:** Arithmetic expressions can create calculated columns.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Start from the data and output contract, then add clauses deliberately."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT title, (domestic_sales + international_sales) / 1000000.0 AS gross_millions FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t1-trace",
+            "question": "What should you identify before adding advanced clauses?",
+            "options": [
+              "The required output and source data",
+              "A random index",
+              "A transaction log",
+              "An unrelated table"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Start from the data and output contract, then add clauses deliberately."
+          }
+        },
+        {
+          "pageId": "p-sql-m3-t1-check",
+          "title": "Common mistakes and challenge",
+          "content": "### Common mistakes\n- Integer-division surprises.\n- Forgetting aliases for calculated columns.\n- Repeating a long expression instead of giving it a name.\n\n### Try this before Submit\nRun the query with a small change and predict how the result should change. Then restore it and submit the exact task.\n\n### Self-check\nCan you explain why the query returns exactly the rows shown?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Prediction plus result inspection builds reliable query reasoning."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT title, (domestic_sales + international_sales) / 1000000.0 AS gross_millions FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t1-check",
+            "question": "What is the most useful self-check?",
+            "options": [
+              "Predict the result before running and explain any difference",
+              "Add SELECT * to every query",
+              "Ignore row counts",
+              "Only check whether the editor accepted the query"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Prediction plus result inspection builds reliable query reasoning."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m3-t1-code-1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Derived value",
+          "code": "SELECT title, (domestic_sales + international_sales) / 1000000.0 AS gross_millions FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;",
+          "description": "Arithmetic expressions can create calculated columns."
+        },
+        {
+          "exampleId": "sql-m3-t1-code-2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Percentage",
+          "code": "SELECT title, rating * 10 AS rating_percent FROM movies JOIN boxoffice ON movies.id = boxoffice.movie_id;",
+          "description": "The alias documents the meaning of the result."
+        },
+        {
+          "exampleId": "sql-m3-t1-code-3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "CASE expression",
+          "code": "SELECT title, CASE WHEN length_minutes >= 110 THEN 'Long' ELSE 'Standard' END AS length_group FROM movies;",
+          "description": "CASE turns business rules into row-level labels."
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Submit",
+        "Reflect"
+      ],
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 3: Aggregates, Expressions & Execution Order",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t02-sql-lesson-10-queries-with-aggregates-pt-1",
+      "title": "SQL Lesson 10: Queries with aggregates (Pt. 1)",
+      "description": "Interactive lesson on SQL Lesson 10: Queries with aggregates (Pt. 1). Learn the concept, run worked queries against a resettable SQLite dataset, inspect results, then solve guided and challenge tasks.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 18,
+      "lessonMarkdown": "In addition to the simple expressions that we introduced last lesson, SQL also supports the use of\naggregate expressions (or functions) that allow you to summarize information about a group of rows\nof data.  With the Pixar database that you've been using, aggregate functions can be used to answer \nquestions like, \"How many movies has Pixar produced?\", or \"What is the highest grossing Pixar film \neach year?\". \n\n> **Select query with aggregate functions over all rows**\n```sql\n**SELECT AGG_FUNC(*column_or_expression*) AS aggregate_description**, ...\nFROM mytable\nWHERE *constraint_expression*;\n```\n\nWithout a specified grouping, each aggregate function is going to run on the whole set of result \nrows and return a single value.  And like normal expressions, giving your aggregate functions an alias\nensures that the results will be easier to read and process.\n\n### Common aggregate functions\n\nHere are some common aggregate functions that we are going to use in our examples:\n\n    \n        \n            Function\n            Description\n        \n        \n            **COUNT(*****)**, **COUNT(**column**)**\n            A common function used to counts the number of rows in the group if no column name is specified. \n                Otherwise, count the number of rows in the group with non-NULL values in the specified column.\n        \n        \n            **MIN(**column**)**\n            Finds the smallest numerical value in the specified column for all rows in the group.\n        \n        \n            **MAX(**column**)**\n            Finds the largest numerical value in the specified column for all rows in the group.\n        \n        \n            **AVG(**column)\n            Finds the average numerical value in the specified column for all rows in the group.\n        \n        \n            **SUM(**column**)**\n            Finds the sum of all numerical values in the specified column for the rows in the group.\n        \n        \n            Docs:\n                MySQL,\n                Postgres,\n                SQLite,\n                Microsoft SQL Server\n            \n        \n    \n\n### Grouped aggregate functions\n\nIn addition to aggregating across all the rows, you can instead apply the aggregate functions to \nindividual groups of data within that group (ie. box office sales for Comedies vs Action movies).\nThis would then create as many results as there are unique groups defined as by the `GROUP BY` clause.\n\n> **Select query with aggregate functions over groups**\n```sql\nSELECT AGG_FUNC(*column_or_expression*) AS aggregate_description, ...\nFROM mytable\nWHERE *constraint_expression*\n**GROUP BY column**;\n```\n\nThe `GROUP BY` clause works by grouping rows that have the same value in the column specified.  \n\n    Did you know?\n    \n    If you aren't using aggregate functions with your `GROUP BY` clause, then the resulting\n    behavior will be similar to using the `DISTINCT` keyword.\n    \n\n-->\n\n### Exercise\n\nFor this exercise, we are going to work with our **Employees** table.  Notice how the rows in this \ntable have shared data, which will give us an opportunity to use aggregate functions to summarize \nsome high-level metrics about the teams.  Go ahead and give it a shot.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "In addition to the simple expressions that we introduced last lesson, SQL also supports the use of\naggregate expressions (or functions) that allow you to summarize information about a group of rows\nof data.  With the Pixar database that you've been using, aggregate functions can be used to answer \nquestions like, \"How many movies has Pixar produced?\", or \"What is the highest grossing Pixar film \neach year?\". \n\n> **Select query with aggregate functions over all rows**\n```sql\n**SELECT AGG_FUNC(*column_or_expression*) AS aggregate_description**, ...\nFROM mytable\nWHERE *constraint_expression*;\n```\n\nWithout a specified grouping, each aggregate function is going to run on the whole set of result \nrows and return a single value.  And like normal expressions, giving your aggregate functions an alias\nensures that the results will be easier to read and process.\n\n### Common aggregate functions\n\nHere are some common aggregate functions that we are going to use in our examples:\n\n    \n        \n            Function\n            Description\n        \n        \n            **COUNT(*****)**, **COUNT(**column**)**\n            A common function used to counts the number of rows in the group if no column name is specified. \n                Otherwise, count the number of rows in the group with non-NULL values in the specified column.\n        \n        \n            **MIN(**column**)**\n            Finds the smallest numerical value in the specified column for all rows in the group.\n        \n        \n            **MAX(**column**)**\n            Finds the largest numerical value in the specified column for all rows in the group.\n        \n        \n            **AVG(**column)\n            Finds the average numerical value in the specified column for all rows in the group.\n        \n        \n            **SUM(**column**)**\n            Finds the sum of all numerical values in the specified column for the rows in the group.\n        \n        \n            Docs:\n                MySQL,\n                Postgres,\n                SQLite,\n                Microsoft SQL Server\n            \n        \n    \n\n### Grouped aggregate functions\n\nIn addition to aggregating across all the rows, you can instead apply the aggregate functions to \nindividual groups of data within that group (ie. box office sales for Comedies vs Action movies).\nThis would then create as many results as there are unique groups defined as by the `GROUP BY` clause.\n\n> **Select query with aggregate functions over groups**\n```sql\nSELECT AGG_FUNC(*column_or_expression*) AS aggregate_description, ...\nFROM mytable\nWHERE *constraint_expression*\n**GROUP BY column**;\n```\n\nThe `GROUP BY` clause works by grouping rows that have the same value in the column specified.  \n\n    Did you know?\n    \n    If you aren't using aggregate functions with your `GROUP BY` clause, then the resulting\n    behavior will be similar to using the `DISTINCT` keyword.\n    \n\n-->\n\n### Exercise\n\nFor this exercise, we are going to work with our **Employees** table.  Notice how the rows in this \ntable have shared data, which will give us an opportunity to use aggregate functions to summarize \nsome high-level metrics about the teams.  Go ahead and give it a shot."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE employees (\n    -- id integer primary key autoincrement,\n    role text,\n    name text,\n    building text,\n    years_employed integer\n);",
+        "seedSql": "INSERT INTO employees (role, name, building, years_employed) VALUES\n('Engineer', 'Becky A.', '1e', 4),\n('Engineer', 'Dan B.', '1e', 2),\n('Engineer', 'Sharon F.', '1e', 6),\n('Engineer', 'Dan M.', '1e', 4),\n('Engineer', 'Malcom S.', '1e', 1),\n('Artist', 'Tylar S.', '2w', 2),\n('Artist', 'Sherman D.', '2w', 8),\n('Artist', 'Jakob J.', '2w', 6),\n('Artist', 'Lillia A.', '2w', 7),\n('Artist', 'Brandon J.', '2w', 7),\n('Manager', 'Scott K.', '1e', 9),\n('Manager', 'Shirlee M.', '1e', 3),\n('Manager', 'Daria O.', '2w', 6);\n",
+        "defaultTable": "employees",
+        "defaultQuery": "-- Write your SQL statement below to solve the exercise tasks:\nSELECT * FROM employees LIMIT 10;",
+        "tasks": [
+          {
+            "instruction": "Find the longest time that an employee has been at the studio",
+            "expectedQuery": "SELECT MAX(years_employed) as Max_years_employed\nFROM employees;",
+            "solution": "SELECT MAX(years_employed) as Max_years_employed\nFROM employees;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 10: Queries with aggregates (Pt. 1) concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t2-task-1"
+          },
+          {
+            "instruction": "For each role, find the average number of years employed by employees in that role",
+            "expectedQuery": "SELECT role, AVG(years_employed) as Average_years_employed\nFROM employees\nGROUP BY role;",
+            "solution": "SELECT role, AVG(years_employed) as Average_years_employed\nFROM employees\nGROUP BY role;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "GROUP BY",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 10: Queries with aggregates (Pt. 1) concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t2-task-2"
+          },
+          {
+            "instruction": "Find the total number of employee years worked in each building",
+            "expectedQuery": "SELECT building, SUM(years_employed) as Total_years_employed\nFROM employees\nGROUP BY building;",
+            "solution": "SELECT building, SUM(years_employed) as Total_years_employed\nFROM employees\nGROUP BY building;",
+            "orderSensitive": false,
+            "difficulty": "Medium",
+            "conceptTags": [
+              "GROUP BY",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 10: Queries with aggregates (Pt. 1) concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t2-task-3"
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m3-t2-challenge-1",
+            "instruction": "Find the minimum years employed by any employee",
+            "expectedQuery": "SELECT MIN(years_employed) AS min_years FROM employees;",
+            "solution": "SELECT MIN(years_employed) AS min_years FROM employees;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 10: Queries with aggregates (Pt. 1)"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "min_years"
+              ],
+              "rows": [
+                [
+                  1
+                ]
+              ],
+              "rowCount": 1
+            }
+          },
+          {
+            "taskId": "sql-m3-t2-challenge-2",
+            "instruction": "Find the average years employed across all employees",
+            "expectedQuery": "SELECT AVG(years_employed) AS avg_years FROM employees;",
+            "solution": "SELECT AVG(years_employed) AS avg_years FROM employees;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 10: Queries with aggregates (Pt. 1)"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "avg_years"
+              ],
+              "rows": [
+                [
+                  5
+                ]
+              ],
+              "rowCount": 1
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Explain aggregate functions.",
+        "Use MAX, MIN, AVG, SUM, and COUNT.",
+        "Know the difference between one-row aggregates and grouped aggregates."
+      ],
+      "commonMistakes": [
+        "Selecting a non-aggregated column without grouping it.",
+        "Confusing COUNT(*) with COUNT(column).",
+        "Rounding before aggregation when precision matters."
+      ],
+      "cheatSheet": "SELECT COUNT(*), AVG(x), MAX(x), MIN(x), SUM(x) FROM table;",
+      "reflectionQuestions": [
+        "What changes if you remove one clause from the query?",
+        "Which part of the task is row-level filtering versus result shaping?",
+        "Can you explain the query to another learner without reading the SQL?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m3-t2-ex1",
+          "title": "Maximum",
+          "task": "Find the longest employee tenure.",
+          "query": "SELECT MAX(years_employed) AS max_years FROM employees;",
+          "result": {
+            "columns": [
+              "max_years"
+            ],
+            "rows": [
+              [
+                9
+              ]
+            ],
+            "rowCount": 1
+          },
+          "explanation": "One scalar result summarizes the table.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m3-t2-ex2",
+          "title": "Average by role",
+          "task": "Calculate average tenure for each role.",
+          "query": "SELECT role, AVG(years_employed) AS avg_years FROM employees GROUP BY role;",
+          "result": {
+            "columns": [
+              "role",
+              "avg_years"
+            ],
+            "rows": [
+              [
+                "Artist",
+                6
+              ],
+              [
+                "Engineer",
+                3.4
+              ],
+              [
+                "Manager",
+                6
+              ]
+            ],
+            "rowCount": 3
+          },
+          "explanation": "GROUP BY creates one group per role.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m3-t2-ex3",
+          "title": "Total",
+          "task": "Sum years by building.",
+          "query": "SELECT building, SUM(years_employed) AS total_years FROM employees GROUP BY building;",
+          "result": {
+            "columns": [
+              "building",
+              "total_years"
+            ],
+            "rows": [
+              [
+                "1e",
+                29
+              ],
+              [
+                "2w",
+                36
+              ]
+            ],
+            "rowCount": 2
+          },
+          "explanation": "SUM aggregates values within each group.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build a small report from this topic's dataset. Start with the simplest query that returns the required rows, then add only the clauses needed for filtering, relationships, aggregation, or presentation.",
+      "pages": [
+        {
+          "pageId": "p-sql-m3-t2-concept",
+          "title": "Concept: SQL Lesson 10: Queries with aggregates (Pt. 1)",
+          "content": "### What you'll learn\n- Explain aggregate functions.\n- Use MAX, MIN, AVG, SUM, and COUNT.\n- Know the difference between one-row aggregates and grouped aggregates.\n\n### Why this matters\nSQL is easiest to master when you connect each clause to a concrete change in the result set. This lesson uses the live database already attached to the exercise, so you can run the examples and inspect the result.\n\n### Rule of thumb\n`SELECT COUNT(*), AVG(x), MAX(x), MIN(x), SUM(x) FROM table;`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT MAX(years_employed) AS max_years FROM employees;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t2-concept",
+            "question": "Which approach best matches the goal of this lesson?",
+            "options": [
+              "SELECT MAX(years_employed) AS max_years FROM employees;",
+              "Start by changing unrelated tables.",
+              "Return every column for every task.",
+              "Skip the live result and guess."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          }
+        },
+        {
+          "pageId": "p-sql-m3-t2-trace",
+          "title": "Worked example: trace the query",
+          "content": "Let's trace this example step by step.\n\n**Task:** Find the longest employee tenure.\n\n**Query:**\n```sql\nSELECT MAX(years_employed) AS max_years FROM employees;\n```\n\n1. Identify the source.\n2. Identify the requested output columns.\n3. Apply filtering/grouping/sorting if present.\n4. Compare the returned rows with the task requirement.\n\n**Teaching point:** One scalar result summarizes the table.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Start from the data and output contract, then add clauses deliberately."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT MAX(years_employed) AS max_years FROM employees;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t2-trace",
+            "question": "What should you identify before adding advanced clauses?",
+            "options": [
+              "The required output and source data",
+              "A random index",
+              "A transaction log",
+              "An unrelated table"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Start from the data and output contract, then add clauses deliberately."
+          }
+        },
+        {
+          "pageId": "p-sql-m3-t2-check",
+          "title": "Common mistakes and challenge",
+          "content": "### Common mistakes\n- Selecting a non-aggregated column without grouping it.\n- Confusing COUNT(*) with COUNT(column).\n- Rounding before aggregation when precision matters.\n\n### Try this before Submit\nRun the query with a small change and predict how the result should change. Then restore it and submit the exact task.\n\n### Self-check\nCan you explain why the query returns exactly the rows shown?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Prediction plus result inspection builds reliable query reasoning."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT MAX(years_employed) AS max_years FROM employees;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t2-check",
+            "question": "What is the most useful self-check?",
+            "options": [
+              "Predict the result before running and explain any difference",
+              "Add SELECT * to every query",
+              "Ignore row counts",
+              "Only check whether the editor accepted the query"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Prediction plus result inspection builds reliable query reasoning."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m3-t2-code-1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Maximum",
+          "code": "SELECT MAX(years_employed) AS max_years FROM employees;",
+          "description": "One scalar result summarizes the table."
+        },
+        {
+          "exampleId": "sql-m3-t2-code-2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Average by role",
+          "code": "SELECT role, AVG(years_employed) AS avg_years FROM employees GROUP BY role;",
+          "description": "GROUP BY creates one group per role."
+        },
+        {
+          "exampleId": "sql-m3-t2-code-3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Total",
+          "code": "SELECT building, SUM(years_employed) AS total_years FROM employees GROUP BY building;",
+          "description": "SUM aggregates values within each group."
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Submit",
+        "Reflect"
+      ],
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 3: Aggregates, Expressions & Execution Order",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t03-sql-lesson-11-queries-with-aggregates-pt-2",
+      "title": "SQL Lesson 11: Queries with aggregates (Pt. 2)",
+      "description": "Interactive lesson on SQL Lesson 11: Queries with aggregates (Pt. 2). Learn the concept, run worked queries against a resettable SQLite dataset, inspect results, then solve guided and challenge tasks.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 18,
+      "lessonMarkdown": "Our queries are getting fairly complex, but we have nearly introduced all the important parts of a \n`SELECT` query.  One thing that you might have noticed is that if the `GROUP BY` clause is executed\nafter the `WHERE` clause (which filters the rows which are to be grouped), then how exactly do we \nfilter the grouped rows?  \nLuckily, SQL allows us to do this by adding an additional `HAVING` clause which is used specifically \nwith the `GROUP BY` clause to allow us to filter grouped rows from the result set.\n\n> **Select query with HAVING constraint**\n```sql\nSELECT group_by_column, AGG_FUNC(*column_expression*) AS aggregate_result_alias, ...\nFROM mytable\nWHERE condition\nGROUP BY column\n**HAVING *group_condition***;\n```\n\nThe `HAVING` clause constraints are written the same way as the `WHERE` clause constraints, and are \napplied to the grouped rows.  With our examples, this might not seem like a particularly useful\nconstruct, but if you imagine data with millions of rows with different properties, being able to apply\nadditional constraints is often necessary to quickly make sense of the data.\n\n    Did you know?\n    \n    If you aren't using the `GROUP BY` clause, a simple `WHERE` clause will suffice.\n    \n\n### Exercise\n\nFor this exercise, you are going to dive deeper into **Employee** data at the film studio.  Think about\nthe different clauses you want to apply for each task.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "Our queries are getting fairly complex, but we have nearly introduced all the important parts of a \n`SELECT` query.  One thing that you might have noticed is that if the `GROUP BY` clause is executed\nafter the `WHERE` clause (which filters the rows which are to be grouped), then how exactly do we \nfilter the grouped rows?  \nLuckily, SQL allows us to do this by adding an additional `HAVING` clause which is used specifically \nwith the `GROUP BY` clause to allow us to filter grouped rows from the result set.\n\n> **Select query with HAVING constraint**\n```sql\nSELECT group_by_column, AGG_FUNC(*column_expression*) AS aggregate_result_alias, ...\nFROM mytable\nWHERE *condition*\nGROUP BY column\n**HAVING *group_condition***;\n```\n\nThe `HAVING` clause constraints are written the same way as the `WHERE` clause constraints, and are \napplied to the grouped rows.  With our examples, this might not seem like a particularly useful\nconstruct, but if you imagine data with millions of rows with different properties, being able to apply\nadditional constraints is often necessary to quickly make sense of the data.\n\n    Did you know?\n    \n    If you aren't using the `GROUP BY` clause, a simple `WHERE` clause will suffice.\n    \n\n### Exercise\n\nFor this exercise, you are going to dive deeper into **Employee** data at the film studio.  Think about\nthe different clauses you want to apply for each task."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE employees (\n    -- id integer primary key autoincrement,\n    role text,\n    name text,\n    building text,\n    years_employed integer\n);",
+        "seedSql": "INSERT INTO employees (role, name, building, years_employed) VALUES\n('Engineer', 'Becky A.', '1e', 4),\n('Engineer', 'Dan B.', '1e', 2),\n('Engineer', 'Sharon F.', '1e', 6),\n('Engineer', 'Dan M.', '1e', 4),\n('Engineer', 'Malcom S.', '1e', 1),\n('Artist', 'Tylar S.', '2w', 2),\n('Artist', 'Sherman D.', '2w', 8),\n('Artist', 'Jakob J.', '2w', 6),\n('Artist', 'Lillia A.', '2w', 7),\n('Artist', 'Brandon J.', '2w', 7),\n('Manager', 'Scott K.', '1e', 9),\n('Manager', 'Shirlee M.', '1e', 3),\n('Manager', 'Daria O.', '2w', 6);\n",
+        "defaultTable": "employees",
+        "defaultQuery": "-- Write your SQL statement below to solve the exercise tasks:\nSELECT * FROM employees LIMIT 10;",
+        "tasks": [
+          {
+            "instruction": "Find the number of Artists in the studio (without a HAVING clause)",
+            "expectedQuery": "SELECT COUNT(*) as Number_of_artists\nFROM employees\nWHERE role = 'Artist';",
+            "solution": "SELECT COUNT(*) as Number_of_artists\nFROM employees\nWHERE role = 'Artist';",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "HAVING",
+              "SELECT",
+              "WHERE"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 11: Queries with aggregates (Pt. 2) concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t3-task-1"
+          },
+          {
+            "instruction": "Find the number of Employees of each role in the studio",
+            "expectedQuery": "SELECT role, COUNT(*)\nFROM employees\nGROUP BY role;",
+            "solution": "SELECT role, COUNT(*)\nFROM employees\nGROUP BY role;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "GROUP BY",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 11: Queries with aggregates (Pt. 2) concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t3-task-2"
+          },
+          {
+            "instruction": "Find the total number of years employed by all Engineers",
+            "expectedQuery": "SELECT SUM(years_employed)\nFROM employees\nGROUP BY role\nHAVING role = 'Engineer';",
+            "solution": "SELECT SUM(years_employed)\nFROM employees\nGROUP BY role\nHAVING role = 'Engineer';",
+            "orderSensitive": false,
+            "difficulty": "Medium",
+            "conceptTags": [
+              "GROUP BY",
+              "HAVING",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 11: Queries with aggregates (Pt. 2) concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t3-task-3"
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m3-t3-challenge-1",
+            "instruction": "Find roles with more than one employee",
+            "expectedQuery": "SELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role HAVING COUNT(*) > 1;",
+            "solution": "SELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role HAVING COUNT(*) > 1;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 11: Queries with aggregates (Pt. 2)"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "role",
+                "employee_count"
+              ],
+              "rows": [
+                [
+                  "Artist",
+                  5
+                ],
+                [
+                  "Engineer",
+                  5
+                ],
+                [
+                  "Manager",
+                  3
+                ]
+              ],
+              "rowCount": 3
+            }
+          },
+          {
+            "taskId": "sql-m3-t3-challenge-2",
+            "instruction": "Find each building's longest employee tenure",
+            "expectedQuery": "SELECT building, MAX(years_employed) AS max_years FROM employees GROUP BY building;",
+            "solution": "SELECT building, MAX(years_employed) AS max_years FROM employees GROUP BY building;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 11: Queries with aggregates (Pt. 2)"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "building",
+                "max_years"
+              ],
+              "rows": [
+                [
+                  "1e",
+                  9
+                ],
+                [
+                  "2w",
+                  8
+                ]
+              ],
+              "rowCount": 2
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Count rows by category.",
+        "Filter groups with HAVING.",
+        "Distinguish WHERE from HAVING.",
+        "Build reports that summarize business metrics."
+      ],
+      "commonMistakes": [
+        "Using HAVING for row-level filters unnecessarily.",
+        "Putting aggregate conditions in WHERE.",
+        "Forgetting GROUP BY for grouped summaries."
+      ],
+      "cheatSheet": "SELECT group_col, COUNT(*) FROM table GROUP BY group_col HAVING COUNT(*) > n;",
+      "reflectionQuestions": [
+        "What changes if you remove one clause from the query?",
+        "Which part of the task is row-level filtering versus result shaping?",
+        "Can you explain the query to another learner without reading the SQL?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m3-t3-ex1",
+          "title": "Count roles",
+          "task": "Count employees in each role.",
+          "query": "SELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role;",
+          "result": {
+            "columns": [
+              "role",
+              "employee_count"
+            ],
+            "rows": [
+              [
+                "Artist",
+                5
+              ],
+              [
+                "Engineer",
+                5
+              ],
+              [
+                "Manager",
+                3
+              ]
+            ],
+            "rowCount": 3
+          },
+          "explanation": "Each role becomes one output group.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m3-t3-ex2",
+          "title": "HAVING",
+          "task": "Show roles with at least two employees.",
+          "query": "SELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role HAVING COUNT(*) >= 2;",
+          "result": {
+            "columns": [
+              "role",
+              "employee_count"
+            ],
+            "rows": [
+              [
+                "Artist",
+                5
+              ],
+              [
+                "Engineer",
+                5
+              ],
+              [
+                "Manager",
+                3
+              ]
+            ],
+            "rowCount": 3
+          },
+          "explanation": "HAVING filters groups after aggregation.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m3-t3-ex3",
+          "title": "WHERE then GROUP BY",
+          "task": "Count Artists only.",
+          "query": "SELECT role, COUNT(*) FROM employees WHERE role = 'Artist' GROUP BY role;",
+          "result": {
+            "columns": [
+              "role",
+              "COUNT(*)"
+            ],
+            "rows": [
+              [
+                "Artist",
+                5
+              ]
+            ],
+            "rowCount": 1
+          },
+          "explanation": "WHERE filters rows before grouping.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build a small report from this topic's dataset. Start with the simplest query that returns the required rows, then add only the clauses needed for filtering, relationships, aggregation, or presentation.",
+      "pages": [
+        {
+          "pageId": "p-sql-m3-t3-concept",
+          "title": "Concept: SQL Lesson 11: Queries with aggregates (Pt. 2)",
+          "content": "### What you'll learn\n- Count rows by category.\n- Filter groups with HAVING.\n- Distinguish WHERE from HAVING.\n- Build reports that summarize business metrics.\n\n### Why this matters\nSQL is easiest to master when you connect each clause to a concrete change in the result set. This lesson uses the live database already attached to the exercise, so you can run the examples and inspect the result.\n\n### Rule of thumb\n`SELECT group_col, COUNT(*) FROM table GROUP BY group_col HAVING COUNT(*) > n;`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t3-concept",
+            "question": "Which approach best matches the goal of this lesson?",
+            "options": [
+              "SELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role;",
+              "Start by changing unrelated tables.",
+              "Return every column for every task.",
+              "Skip the live result and guess."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          }
+        },
+        {
+          "pageId": "p-sql-m3-t3-trace",
+          "title": "Worked example: trace the query",
+          "content": "Let's trace this example step by step.\n\n**Task:** Count employees in each role.\n\n**Query:**\n```sql\nSELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role;\n```\n\n1. Identify the source.\n2. Identify the requested output columns.\n3. Apply filtering/grouping/sorting if present.\n4. Compare the returned rows with the task requirement.\n\n**Teaching point:** Each role becomes one output group.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Start from the data and output contract, then add clauses deliberately."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t3-trace",
+            "question": "What should you identify before adding advanced clauses?",
+            "options": [
+              "The required output and source data",
+              "A random index",
+              "A transaction log",
+              "An unrelated table"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Start from the data and output contract, then add clauses deliberately."
+          }
+        },
+        {
+          "pageId": "p-sql-m3-t3-check",
+          "title": "Common mistakes and challenge",
+          "content": "### Common mistakes\n- Using HAVING for row-level filters unnecessarily.\n- Putting aggregate conditions in WHERE.\n- Forgetting GROUP BY for grouped summaries.\n\n### Try this before Submit\nRun the query with a small change and predict how the result should change. Then restore it and submit the exact task.\n\n### Self-check\nCan you explain why the query returns exactly the rows shown?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Prediction plus result inspection builds reliable query reasoning."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t3-check",
+            "question": "What is the most useful self-check?",
+            "options": [
+              "Predict the result before running and explain any difference",
+              "Add SELECT * to every query",
+              "Ignore row counts",
+              "Only check whether the editor accepted the query"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Prediction plus result inspection builds reliable query reasoning."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m3-t3-code-1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Count roles",
+          "code": "SELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role;",
+          "description": "Each role becomes one output group."
+        },
+        {
+          "exampleId": "sql-m3-t3-code-2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "HAVING",
+          "code": "SELECT role, COUNT(*) AS employee_count FROM employees GROUP BY role HAVING COUNT(*) >= 2;",
+          "description": "HAVING filters groups after aggregation."
+        },
+        {
+          "exampleId": "sql-m3-t3-code-3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "WHERE then GROUP BY",
+          "code": "SELECT role, COUNT(*) FROM employees WHERE role = 'Artist' GROUP BY role;",
+          "description": "WHERE filters rows before grouping."
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Submit",
+        "Reflect"
+      ],
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 3: Aggregates, Expressions & Execution Order",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t04-sql-lesson-12-order-of-execution-of-a-query",
+      "title": "SQL Lesson 12: Order of execution of a Query",
+      "description": "Interactive lesson on SQL Lesson 12: Order of execution of a Query. Learn the concept, run worked queries against a resettable SQLite dataset, inspect results, then solve guided and challenge tasks.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 15,
+      "lessonMarkdown": "Now that we have an idea of all the parts of a query, we can now talk about how they all fit together \nin the context of a complete query.\n\n> **Complete SELECT query**\n```sql\nSELECT DISTINCT column, AGG_FUNC(*column_or_expression*), ...\nFROM mytable\n    JOIN another_table\n      ON mytable.column = another_table.column\n    WHERE *constraint_expression*\n    GROUP BY column\n    HAVING *constraint_expression*\n    ORDER BY *column* ASC/DESC\n    LIMIT *count* OFFSET *COUNT*;\n```\n\nEach query begins with finding the data that we need in a database, and then filtering that data down\ninto something that can be processed and understood as quickly as possible.  Because each part of the\nquery is executed sequentially, it's important to understand the order of execution so that you know\nwhat results are accessible where.\n\n### Query order of execution\n\n#### 1. `FROM` and `JOIN`s\n\nThe `FROM` clause, and subsequent `JOIN`s are first executed to determine the total working set of\ndata that is being queried.  This includes subqueries in this clause, and can cause temporary tables\nto be created under the hood containing all the columns and rows of the tables being joined.\n\n#### 2. `WHERE`\n\nOnce we have the total working set of data, the first-pass `WHERE` constraints are applied to the \nindividual rows, and rows that do not satisfy the constraint are discarded.  Each of the constraints\ncan only access columns directly from the tables requested in the `FROM` clause.  Aliases in the\n`SELECT` part of the query are not accessible in most databases since they may include \nexpressions dependent on parts of the query that have not yet executed.\n\n#### 3. `GROUP BY`\n\nThe remaining rows after the `WHERE` constraints are applied are then grouped based on common values\nin the column specified in the `GROUP BY` clause.  As a result of the grouping, there will only be as \nmany rows as there are unique values in that column.  Implicitly, this means that you should only need \nto use this when you have aggregate functions in your query.\n\n#### 4. `HAVING`\n\nIf the query has a `GROUP BY` clause, then the constraints in the `HAVING` clause are then applied\nto the grouped rows, discard the grouped rows that don't satisfy the constraint.  Like the `WHERE` \nclause, aliases are also not accessible from this step in most databases.\n\n#### 5. `SELECT`\n\nAny expressions in the `SELECT` part of the query are finally computed.\n\n#### 6. `DISTINCT`\n\nOf the remaining rows, rows with duplicate values in the column marked as `DISTINCT` will be discarded.\n\n#### 7. `ORDER BY`\n\nIf an order is specified by the `ORDER BY` clause, the rows are then sorted by the specified data in \neither ascending or descending order.  Since all the expressions in the `SELECT` part of the query \nhave been computed, you can reference aliases in this clause.\n\n#### 8. `LIMIT` / `OFFSET`\n\nFinally, the rows that fall outside the range specified by the `LIMIT` and `OFFSET` are discarded, \nleaving the final set of rows to be returned from the query.\n\n#### Conclusion\n\nNot every query needs to have all the parts we listed above, but a part of why SQL is so flexible is\nthat it allows developers and data analysts to quickly manipulate data without having to write additional\ncode, all just by using the above clauses.\n\n### Exercise\n\nHere ends our lessons on `SELECT` queries, congrats of making it this far!  This exercise will try\nand test your understanding of queries, so don't be discouraged if you find them challenging.  Just\ntry your best.\n\n### Important distinction\nThe sequence taught here is the **logical query-processing model** used for reasoning about SQL. A database engine may choose a different physical execution plan when it optimizes a query.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "Now that we have an idea of all the parts of a query, we can now talk about how they all fit together \nin the context of a complete query.\n\n> **Complete SELECT query**\n```sql\nSELECT DISTINCT column, AGG_FUNC(*column_or_expression*), ...\nFROM mytable\n    JOIN another_table\n      ON mytable.column = another_table.column\n    WHERE *constraint_expression*\n    GROUP BY column\n    HAVING *constraint_expression*\n    ORDER BY *column* ASC/DESC\n    LIMIT *count* OFFSET *COUNT*;\n```\n\nEach query begins with finding the data that we need in a database, and then filtering that data down\ninto something that can be processed and understood as quickly as possible.  Because each part of the\nquery is executed sequentially, it's important to understand the order of execution so that you know\nwhat results are accessible where.\n\n### Query order of execution\n\n#### 1. `FROM` and `JOIN`s\n\nThe `FROM` clause, and subsequent `JOIN`s are first executed to determine the total working set of\ndata that is being queried.  This includes subqueries in this clause, and can cause temporary tables\nto be created under the hood containing all the columns and rows of the tables being joined.\n\n#### 2. `WHERE`\n\nOnce we have the total working set of data, the first-pass `WHERE` constraints are applied to the \nindividual rows, and rows that do not satisfy the constraint are discarded.  Each of the constraints\ncan only access columns directly from the tables requested in the `FROM` clause.  Aliases in the\n`SELECT` part of the query are not accessible in most databases since they may include \nexpressions dependent on parts of the query that have not yet executed.\n\n#### 3. `GROUP BY`\n\nThe remaining rows after the `WHERE` constraints are applied are then grouped based on common values\nin the column specified in the `GROUP BY` clause.  As a result of the grouping, there will only be as \nmany rows as there are unique values in that column.  Implicitly, this means that you should only need \nto use this when you have aggregate functions in your query.\n\n#### 4. `HAVING`\n\nIf the query has a `GROUP BY` clause, then the constraints in the `HAVING` clause are then applied\nto the grouped rows, discard the grouped rows that don't satisfy the constraint.  Like the `WHERE` \nclause, aliases are also not accessible from this step in most databases.\n\n#### 5. `SELECT`\n\nAny expressions in the `SELECT` part of the query are finally computed.\n\n#### 6. `DISTINCT`\n\nOf the remaining rows, rows with duplicate values in the column marked as `DISTINCT` will be discarded.\n\n#### 7. `ORDER BY`\n\nIf an order is specified by the `ORDER BY` clause, the rows are then sorted by the specified data in \neither ascending or descending order.  Since all the expressions in the `SELECT` part of the query \nhave been computed, you can reference aliases in this clause.\n\n#### 8. `LIMIT` / `OFFSET`\n\nFinally, the rows that fall outside the range specified by the `LIMIT` and `OFFSET` are discarded, \nleaving the final set of rows to be returned from the query.\n\n#### Conclusion\n\nNot every query needs to have all the parts we listed above, but a part of why SQL is so flexible is\nthat it allows developers and data analysts to quickly manipulate data without having to write additional\ncode, all just by using the above clauses.\n\n### Exercise\n\nHere ends our lessons on `SELECT` queries, congrats of making it this far!  This exercise will try\nand test your understanding of queries, so don't be discouraged if you find them challenging.  Just\ntry your best."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE movies (\n    id integer primary key autoincrement,\n    title text,\n    director text,\n    year integer, \n    length_minutes integer\n);\nCREATE TABLE boxoffice (\n    -- id integer primary key autoincrement,\n    movie_id integer,\n    rating real,\n    domestic_sales real,\n    international_sales real\n);",
+        "seedSql": "INSERT INTO movies (id, title, director, year, length_minutes) VALUES\n(1, 'Toy Story', 'John Lasseter', 1995, 81),\n(2, 'A Bug''s Life', 'John Lasseter', 1998, 95),\n(3, 'Toy Story 2', 'John Lasseter', 1999, 93),\n(4, 'Monsters, Inc.', 'Pete Docter', 2001, 92),\n(5, 'Finding Nemo', 'Andrew Stanton', 2003, 107),\n(6, 'The Incredibles', 'Brad Bird', 2004, 116),\n(7, 'Cars', 'John Lasseter', 2006, 117),\n(8, 'Ratatouille', 'Brad Bird', 2007, 115),\n(9, 'WALL-E', 'Andrew Stanton', 2008, 104),\n(10, 'Up', 'Pete Docter', 2009, 101),\n(11, 'Toy Story 3', 'Lee Unkrich', 2010, 103),\n(12, 'Cars 2', 'John Lasseter', 2011, 120),\n(13, 'Brave', 'Brenda Chapman', 2012, 102),\n(14, 'Monsters University', 'Dan Scanlon', 2013, 110);\n\nINSERT INTO boxoffice (movie_id, rating, domestic_sales, international_sales) VALUES\n(5, 8.2, 380843261, 555900000),\n(14, 7.4, 268492764, 475066843),\n(8, 8, 206445654, 417277164),\n(12, 6.4, 191452396, 368400000),\n(3, 7.9, 245852179, 239163000),\n(6, 8, 261441092, 370001000),\n(9, 8.5, 223808164, 297503696),\n(11, 8.4, 415004880, 648167031),\n(1, 8.3, 191796233, 170162503),\n(7, 7.2, 244082982, 217900167),\n(10, 8.3, 293004164, 438338580),\n(4, 8.1, 289916256, 272900000),\n(2, 7.2, 162798565, 200600000),\n(13, 7.2, 237283207, 301700000);\n",
+        "defaultTable": "movies",
+        "defaultQuery": "-- Write your SQL statement below to solve the exercise tasks:\nSELECT * FROM movies LIMIT 10;",
+        "tasks": [
+          {
+            "instruction": "Find the number of movies each director has directed",
+            "expectedQuery": "SELECT director, COUNT(id) as Num_movies_directed\nFROM movies\nGROUP BY director;",
+            "solution": "SELECT director, COUNT(id) as Num_movies_directed\nFROM movies\nGROUP BY director;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "GROUP BY",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 12: Order of execution of a Query concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t4-task-1"
+          },
+          {
+            "instruction": "Find the total domestic and international sales that can be attributed to each director",
+            "expectedQuery": "SELECT director, SUM(domestic_sales + international_sales) as Cumulative_sales_from_all_movies\nFROM movies\n    INNER JOIN boxoffice\n        ON movies.id = boxoffice.movie_id\nGROUP BY director;",
+            "solution": "SELECT director, SUM(domestic_sales + international_sales) as Cumulative_sales_from_all_movies\nFROM movies\n    INNER JOIN boxoffice\n        ON movies.id = boxoffice.movie_id\nGROUP BY director;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "GROUP BY",
+              "JOIN",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 12: Order of execution of a Query concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m3-t4-task-2"
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m3-t4-challenge-1",
+            "instruction": "Find directors with at least two movies released before 2010",
+            "expectedQuery": "SELECT director, COUNT(*) AS movie_count FROM movies WHERE year < 2010 GROUP BY director HAVING COUNT(*) >= 2;",
+            "solution": "SELECT director, COUNT(*) AS movie_count FROM movies WHERE year < 2010 GROUP BY director HAVING COUNT(*) >= 2;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 12: Order of execution of a Query"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "director",
+                "movie_count"
+              ],
+              "rows": [
+                [
+                  "Andrew Stanton",
+                  2
+                ],
+                [
+                  "Brad Bird",
+                  2
+                ],
+                [
+                  "John Lasseter",
+                  4
+                ],
+                [
+                  "Pete Docter",
+                  2
+                ]
+              ],
+              "rowCount": 4
+            }
+          },
+          {
+            "taskId": "sql-m3-t4-challenge-2",
+            "instruction": "Show the two most prolific directors by movie count",
+            "expectedQuery": "SELECT director, COUNT(*) AS movie_count FROM movies GROUP BY director ORDER BY movie_count DESC, director ASC LIMIT 2;",
+            "solution": "SELECT director, COUNT(*) AS movie_count FROM movies GROUP BY director ORDER BY movie_count DESC, director ASC LIMIT 2;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 12: Order of execution of a Query"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "director",
+                "movie_count"
+              ],
+              "rows": [
+                [
+                  "John Lasseter",
+                  5
+                ],
+                [
+                  "Andrew Stanton",
+                  2
+                ]
+              ],
+              "rowCount": 2
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Reason about the logical order of SQL query evaluation.",
+        "Understand FROM/JOIN, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT.",
+        "Use aliases and aggregates without confusing evaluation order."
+      ],
+      "commonMistakes": [
+        "Trying to use SELECT aliases in WHERE.",
+        "Filtering aggregated results with WHERE.",
+        "Assuming the physical execution plan is identical to the logical query order."
+      ],
+      "cheatSheet": "Logical model: FROM/JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT/OFFSET.",
+      "reflectionQuestions": [
+        "What changes if you remove one clause from the query?",
+        "Which part of the task is row-level filtering versus result shaping?",
+        "Can you explain the query to another learner without reading the SQL?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m3-t4-ex1",
+          "title": "Filter then aggregate",
+          "task": "Count movies per director after 2000.",
+          "query": "SELECT director, COUNT(*) AS movie_count FROM movies WHERE year > 2000 GROUP BY director;",
+          "result": {
+            "columns": [
+              "director",
+              "movie_count"
+            ],
+            "rows": [
+              [
+                "Andrew Stanton",
+                2
+              ],
+              [
+                "Brad Bird",
+                2
+              ],
+              [
+                "Brenda Chapman",
+                1
+              ],
+              [
+                "Dan Scanlon",
+                1
+              ],
+              [
+                "John Lasseter",
+                2
+              ],
+              [
+                "Lee Unkrich",
+                1
+              ],
+              [
+                "Pete Docter",
+                2
+              ]
+            ],
+            "rowCount": 7
+          },
+          "explanation": "WHERE removes rows before grouping.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m3-t4-ex2",
+          "title": "Aggregate then filter",
+          "task": "Find directors with at least two movies.",
+          "query": "SELECT director, COUNT(*) AS movie_count FROM movies GROUP BY director HAVING COUNT(*) >= 2;",
+          "result": {
+            "columns": [
+              "director",
+              "movie_count"
+            ],
+            "rows": [
+              [
+                "Andrew Stanton",
+                2
+              ],
+              [
+                "Brad Bird",
+                2
+              ],
+              [
+                "John Lasseter",
+                5
+              ],
+              [
+                "Pete Docter",
+                2
+              ]
+            ],
+            "rowCount": 4
+          },
+          "explanation": "HAVING sees grouped results.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m3-t4-ex3",
+          "title": "Top groups",
+          "task": "Rank directors by movie count.",
+          "query": "SELECT director, COUNT(*) AS movie_count FROM movies GROUP BY director ORDER BY movie_count DESC;",
+          "result": {
+            "columns": [
+              "director",
+              "movie_count"
+            ],
+            "rows": [
+              [
+                "John Lasseter",
+                5
+              ],
+              [
+                "Pete Docter",
+                2
+              ],
+              [
+                "Brad Bird",
+                2
+              ],
+              [
+                "Andrew Stanton",
+                2
+              ],
+              [
+                "Lee Unkrich",
+                1
+              ],
+              [
+                "Dan Scanlon",
+                1
+              ],
+              [
+                "Brenda Chapman",
+                1
+              ]
+            ],
+            "rowCount": 7
+          },
+          "explanation": "ORDER BY can use the selected alias after aggregation.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build a small report from this topic's dataset. Start with the simplest query that returns the required rows, then add only the clauses needed for filtering, relationships, aggregation, or presentation.",
+      "pages": [
+        {
+          "pageId": "p-sql-m3-t4-concept",
+          "title": "Concept: SQL Lesson 12: Order of execution of a Query",
+          "content": "### What you'll learn\n- Reason about the logical order of SQL query evaluation.\n- Understand FROM/JOIN, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT.\n- Use aliases and aggregates without confusing evaluation order.\n\n### Why this matters\nSQL is easiest to master when you connect each clause to a concrete change in the result set. This lesson uses the live database already attached to the exercise, so you can run the examples and inspect the result.\n\n### Rule of thumb\n`Logical model: FROM/JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT/OFFSET.`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT director, COUNT(*) AS movie_count FROM movies WHERE year > 2000 GROUP BY director;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t4-concept",
+            "question": "Which approach best matches the goal of this lesson?",
+            "options": [
+              "SELECT director, COUNT(*) AS movie_count FROM movies WHERE year > 2000 GROUP BY director;",
+              "Start by changing unrelated tables.",
+              "Return every column for every task.",
+              "Skip the live result and guess."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          }
+        },
+        {
+          "pageId": "p-sql-m3-t4-trace",
+          "title": "Worked example: trace the query",
+          "content": "Let's trace this example step by step.\n\n**Task:** Count movies per director after 2000.\n\n**Query:**\n```sql\nSELECT director, COUNT(*) AS movie_count FROM movies WHERE year > 2000 GROUP BY director;\n```\n\n1. Identify the source.\n2. Identify the requested output columns.\n3. Apply filtering/grouping/sorting if present.\n4. Compare the returned rows with the task requirement.\n\n**Teaching point:** WHERE removes rows before grouping.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Start from the data and output contract, then add clauses deliberately."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT director, COUNT(*) AS movie_count FROM movies WHERE year > 2000 GROUP BY director;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t4-trace",
+            "question": "What should you identify before adding advanced clauses?",
+            "options": [
+              "The required output and source data",
+              "A random index",
+              "A transaction log",
+              "An unrelated table"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Start from the data and output contract, then add clauses deliberately."
+          }
+        },
+        {
+          "pageId": "p-sql-m3-t4-check",
+          "title": "Common mistakes and challenge",
+          "content": "### Common mistakes\n- Trying to use SELECT aliases in WHERE.\n- Filtering aggregated results with WHERE.\n- Assuming the physical execution plan is identical to the logical query order.\n\n### Try this before Submit\nRun the query with a small change and predict how the result should change. Then restore it and submit the exact task.\n\n### Self-check\nCan you explain why the query returns exactly the rows shown?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Prediction plus result inspection builds reliable query reasoning."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT director, COUNT(*) AS movie_count FROM movies WHERE year > 2000 GROUP BY director;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m3-t4-check",
+            "question": "What is the most useful self-check?",
+            "options": [
+              "Predict the result before running and explain any difference",
+              "Add SELECT * to every query",
+              "Ignore row counts",
+              "Only check whether the editor accepted the query"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Prediction plus result inspection builds reliable query reasoning."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m3-t4-code-1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Filter then aggregate",
+          "code": "SELECT director, COUNT(*) AS movie_count FROM movies WHERE year > 2000 GROUP BY director;",
+          "description": "WHERE removes rows before grouping."
+        },
+        {
+          "exampleId": "sql-m3-t4-code-2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Aggregate then filter",
+          "code": "SELECT director, COUNT(*) AS movie_count FROM movies GROUP BY director HAVING COUNT(*) >= 2;",
+          "description": "HAVING sees grouped results."
+        },
+        {
+          "exampleId": "sql-m3-t4-code-3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Top groups",
+          "code": "SELECT director, COUNT(*) AS movie_count FROM movies GROUP BY director ORDER BY movie_count DESC;",
+          "description": "ORDER BY can use the selected alias after aggregation."
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Submit",
+        "Reflect"
+      ],
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 3: Aggregates, Expressions & Execution Order",
+      "practiceProblems": []
+    }
+  ]
+}

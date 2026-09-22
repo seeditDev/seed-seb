@@ -1,0 +1,1628 @@
+{
+  "moduleId": "m03-templates-and-routing-continued",
+  "title": "Templates and Routing continued",
+  "description": "Core concepts and hands-on practice in Templates and Routing continued.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-jinja2-templating",
+      "title": "Jinja2 Templating",
+      "description": "Study concepts and solve targeted engineering problems for Introduction to Jinja2 Templating.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-QMGMPX01",
+          "title": "Placeholders, Expressions, and Variable Interpolation in Jinja2 Templates",
+          "content": "In this lesson, we'll explore how to use Jinja2 templating in Flask to make our HTML pages more dynamic and reusable. Jinja2 is a powerful templating engine that allows us to insert Python-like code directly into our HTML files.\n\nPlaceholders and Variable Interpolation:\nJinja2 uses double curly braces {{ }} to denote placeholders where we can insert variables or expressions. This process is called variable interpolation. When Flask renders the template, it replaces these placeholders with actual values.\n\nFor example, if we have a variable 'name' in our Flask route:\n```python\n@app.route('/greet')\ndef greet():\n name = \"Alice\"\n return render_template('greet.html', name=name)\n```\nIn our 'greet.html' template, we can use:\n```html\nHello, {{ name }}!\n```\n**When rendered, this will display: \"Hello, Alice!\"**\n\nExpressions:\nInside the double curly braces, we can also use simple Python-like expressions. For instance:\n```html\nThe result of 2 + 2 is {{ 2 + 2 }}\n```\nThis will output: \"The result of 2 + 2 is 4\"\n\nWe can also use variables in expressions:\n```python\n@app.route('/calculate')\ndef calculate():\n x = 10\n y = 5\n return render_template('calculate.html', x=x, y=y)\n```\nIn 'calculate.html':\n```html\n{{ x }} plus {{ y }} equals {{ x + y }}\n```\n**This will display: \"10 plus 5 equals 15\"**\n\nAccessing Dictionary Values:\nIf we pass a dictionary to the template, we can access its values using dot notation or square brackets:\n```html\n@app.route('/user')\ndef user_info():\n user = {'name': 'Bob', 'age': 30}\n return render_template('user.html', user=user)\n```\nIn 'user.html':\n```html\nName: {{ user.name }} or {{ user['name'] }}\nAge: {{ user.age }} or {{ user['age'] }}\n```\nBoth ways of accessing dictionary values will work in Jinja2 templates.\n\n### Notes:\nThe html files that are being used with jinja2 should always be stored in `templates` folder.\n```html\n project-root/\n├── main.py # Contains your Flask app logic\n├── templates/ # Default Jinja2 templates folder\n│ └── index.html # Rendered by Jinja2 via render_template()\n```\n\nRemember, Jinja2 templating allows us to separate our Python logic (in route handlers) from our presentation logic (in HTML templates), making our Flask applications more organized and easier to maintain.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Placeholders, Expressions, and Variable Interpolation in Jinja2 Templates: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "@app.route('/greet')\ndef greet():\n name = \"Alice\"\n return render_template('greet.html', name=name)"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-QMGMPX01",
+            "question": "Which statement best captures the main idea of Placeholders, Expressions, and Variable Interpolation in Jinja2 Templates?",
+            "options": [
+              "It applies Introduction to Jinja2 Templating to a Flask/Python application.",
+              "It bypasses Flask request handling.",
+              "It replaces application logic with CSS.",
+              "It disables validation and error handling."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The lesson focuses on Introduction to Jinja2 Templating as part of building Flask applications."
+          }
+        },
+        {
+          "pageId": "p-QMGMPX04",
+          "title": "Control Structures in Jinja2 Templates",
+          "content": "In this lesson, we'll explore how to use control structures in Jinja2 templates within Flask applications. \n\nControl structures allow you to add logic and dynamic behavior to your HTML templates, making them more powerful and flexible.\n1. Loops: \\\nJinja2 provides a 'for' loop to iterate over sequences like lists or dictionaries. \\\nThis is useful for rendering dynamic content, such as displaying items from a database. \\\nSyntax: \n```html\n{% for user in users %}\n {{ user.name }}\n{% endfor %}\n```\n2. Conditionals: \\\nYou can use 'if' statements to add conditional logic to your templates. \\\nThis allows you to display different content based on certain conditions. \\\nSyntax:\n```html\n{% if user.is_admin %}\n Welcome, Admin!\n{% else %}\n Welcome, User!\n{% endif %}\n```\n3. Filters: \\\nFilters in Jinja2 allow you to modify variables before they are displayed. \\\nThey are applied using the pipe symbol (|).\n\nSyntax:\n```html\n{{ username | upper }} \n{{ price | round(2) }} \n```\n\nRemember, when using these control structures, make sure to pass the necessary data from your Flask route to the template using the render_template() function, as we learned in earlier lessons.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Control Structures in Jinja2 Templates: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from flask import Flask, render_template\napp = Flask(__name__)\n\n@app.route(\"/\")\ndef home():\n return render_template(\"index.html\", name=\"Flask User\")"
+          }
+        },
+        {
+          "pageId": "p-QMGMPX07",
+          "title": "Dynamically Rendering Lists, Tables, and Other HTML Elements with Jinja2 in Flask",
+          "content": "In this lesson, we'll explore how to use Jinja2 templating in Flask to dynamically render HTML elements such as lists and tables. \\\n\nTo render dynamic content, we'll use Jinja2's control structures, particularly loops, to iterate over data and generate HTML elements. Here's how you can do it:\n\n1. Lists:\nTo create a dynamic list, you can use a Jinja2 for loop to iterate over a list of items passed from your Flask route:\n\n```html\n\n {% for item in items %}\n {{ item }}\n {% endfor %}\n\n```\n\nIn your Flask route, you would pass the 'items' list:\n\n```python\n@app.route('/list')\ndef show_list():\n items = ['Apple', 'Banana', 'Cherry']\n return render_template('list.html', items=items)\n```\n\n2. Tables:\nSimilarly, you can create dynamic tables by nesting loops:\n\n```html\n\n \n Name\n Age\n \n {% for person in people %}\n \n {{ person.name }}\n {{ person.age }}\n \n {% endfor %}\n\n```\n\nIn your Flask route:\n\n```python\n@app.route('/table')\ndef show_table():\n people = [\n {'name': 'Alice', 'age': 25},\n {'name': 'Bob', 'age': 30},\n {'name': 'Charlie', 'age': 35}\n ]\n return render_template('table.html', people=people)\n```\n\n3. Other HTML elements:\nYou can dynamically generate any HTML element using similar techniques. For example, creating a series of divs:\n\n```html\n{% for product in products %}\n \n {{ product.name }}\n Price: ${{ product.price }}\n \n{% endfor %}\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Dynamically Rendering Lists, Tables, and Other HTML Elements with Jinja2 in Flask: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "@app.route('/list')\ndef show_list():\n items = ['Apple', 'Banana', 'Cherry']\n return render_template('list.html', items=items)"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-QMGMPX01-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Placeholders, Expressions, and Variable Interpolation in Jinja2 Templates",
+          "code": "@app.route('/greet')\ndef greet():\n name = \"Alice\"\n return render_template('greet.html', name=name)"
+        },
+        {
+          "exampleId": "ex-QMGMPX04-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Control Structures in Jinja2 Templates",
+          "code": "from flask import Flask, render_template\napp = Flask(__name__)\n\n@app.route(\"/\")\ndef home():\n return render_template(\"index.html\", name=\"Flask User\")"
+        },
+        {
+          "exampleId": "ex-QMGMPX07-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Dynamically Rendering Lists, Tables, and Other HTML Elements with Jinja2 in Flask",
+          "code": "@app.route('/list')\ndef show_list():\n items = ['Apple', 'Banana', 'Cherry']\n return render_template('list.html', items=items)"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "QMGMPX02",
+          "questionId": "QMGMPX02",
+          "title": "Dynamic Recipe Card Generator",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "QMGMPX03",
+          "questionId": "QMGMPX03",
+          "title": "Create a personalized greeting card",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "QMGMPX12",
+          "questionId": "QMGMPX12",
+          "title": "Display the product details",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "QMGMPX05",
+          "questionId": "QMGMPX05",
+          "title": "Create a dynamic todo list",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "QMGMPX06",
+          "questionId": "QMGMPX06",
+          "title": "Create a simple grade calculator",
+          "difficulty": "Medium",
+          "description": "Read two integers and an operator (`+`, `-`, `*`, `/`). Print the integer arithmetic result. Division uses floor division for integer operands and assumes the divisor is non-zero.",
+          "problemStatement": "Read two integers and an operator (`+`, `-`, `*`, `/`). Print the integer arithmetic result. Division uses floor division for integer operands and assumes the divisor is non-zero.",
+          "constraints": [
+            "-10^9 <= a,b <= 10^9",
+            "operator is one of +,-,*,/",
+            "b != 0 for /"
+          ],
+          "inputFormat": "One line: a b op.",
+          "outputFormat": "Print the result as an integer.",
+          "sampleTestCases": [
+            {
+              "input": "1 2 +",
+              "output": "3",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1 2 +",
+              "output": "3",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "9 4 -",
+              "output": "5",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "7 6 *",
+              "output": "42",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "20 3 /",
+              "output": "6",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "-8 2 /",
+              "output": "-4",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "QMGMPX08",
+          "questionId": "QMGMPX08",
+          "title": "Dynamic Book Library Display",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "QMGMPX09",
+          "questionId": "QMGMPX09",
+          "title": "Create a Dynamic Book Library Catalog",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "QMGMPX11",
+          "questionId": "QMGMPX11",
+          "title": "Worked example - Create a dynamic user profile",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "flask.json",
+      "_moduleTitle": "Templates and Routing continued"
+    },
+    {
+      "topicId": "t02-http-methods-and-request-handling",
+      "title": "HTTP Methods and Request handling",
+      "description": "Study concepts and solve targeted engineering problems for HTTP Methods and Request handling.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-KQKSCP01",
+          "title": "HTTP Methods: Detailed look at GET and where to use it",
+          "content": "In this lesson, we'll dive deeper into HTTP methods, specifically focusing on the GET method and its use in Flask applications.\n\nHTTP (Hypertext Transfer Protocol) is the foundation of data communication on the web. \\\nWhen you build web applications using Flask, understanding HTTP methods is crucial for handling requests and responses effectively. \\\nThe GET method is one of the most common HTTP methods used in web applications. \\\nIt is primarily used to retrieve information from the server without modifying any data. \n\nIn Flask, you can handle GET requests using the @app.route decorator or the methods parameter. \\\nFor example:\n\n```python\n@app.route('/')\ndef hello():\n return \"Hello, World!\"\n\n@app.route('/greet', methods=['GET'])\ndef greet():\n name = request.args.get('name', 'Guest')\n return f\"Hello, {name}!\"\n```\n\nIn this example, both routes handle GET requests. \\\nThe '/greet' route explicitly specifies the GET method and uses `request.args` to access query parameters.\n\n### Code Explanation:\n\n1. When we run the above code, we see the respective output\n\n\n2. When we try to change the URL to `/greet`\n\n\n3. When we pass the query parameters as `/greet?name=John` we can see the change in the output\n\n\nHere are some key points about the GET method:\n1. Purpose: GET requests are used to fetch data from the server. They should not have any side effects on the server's data.\n2. Data transmission: GET requests send data as part of the URL in the form of query parameters. \n3. Visibility: Since GET parameters are part of the URL, they are visible in the browser's address bar and can be bookmarked.\n4. Caching: GET requests can be cached by browsers and intermediate servers, which can improve performance for frequently accessed resources.\n5. Length limitations: URLs have a maximum length, so GET requests are not suitable for sending large amounts of data.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on HTTP Methods: Detailed look at GET and where to use it: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "@app.route('/')\ndef hello():\n return \"Hello, World!\"\n\n@app.route('/greet', methods=['GET'])\ndef greet():\n name = request.args.get('name', 'Guest')\n return f\"Hello, {name}!\""
+          },
+          "checkpoint": {
+            "checkpointId": "cp-KQKSCP01",
+            "question": "Which statement best captures the main idea of HTTP Methods: Detailed look at GET and where to use it?",
+            "options": [
+              "It applies HTTP Methods and Request handling to a Flask/Python application.",
+              "It bypasses Flask request handling.",
+              "It replaces application logic with CSS.",
+              "It disables validation and error handling."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The lesson focuses on HTTP Methods and Request handling as part of building Flask applications."
+          }
+        },
+        {
+          "pageId": "p-KQKSCP02C",
+          "title": "Dynamic routing vs GET requests",
+          "content": "Dynamic routes are used when part of the URL can change depending on what you want to access.\n- The URL path includes a variable (like a user ID, product name, etc.)\n- You want to show different data based on the path\n\nA GET request is a type of HTTP request. \\\nIt’s the default method used when visiting a page in a browser. It's used to retrieve data.\n- You want to get data from query parameters (like search or filters)\n- You’re not changing any data on the server\n\n\n### So when to use which?\n| Use Case | Use Dynamic Routing | Use GET (Query Params) |\n|----------|---------------------|-------------------------|\n| Show profile for a user | `/user/alice` | |\n| Search for something | | `/search?q=flask` |\n| Show product by ID | `/product/123` | |\n| Filter items by category or price | | `/items?category=books&price=low` |",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Dynamic routing vs GET requests: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from flask import Flask, request, jsonify\napp = Flask(__name__)\n\n@app.route(\"/echo\", methods=[\"GET\", \"POST\"])\ndef echo():\n value = request.values.get(\"value\", \"\")\n return jsonify({\"method\": request.method, \"value\": value})"
+          }
+        },
+        {
+          "pageId": "p-KQKSCP04",
+          "title": "HTTP Methods: Detailed look at POST & PUT and where to use them",
+          "content": "In this lesson, we'll explore two important HTTP methods: POST and PUT. These methods are crucial for sending data to the server and creating or updating resources.\n\nPOST Method:\nThe POST method is used to submit data to be processed by the server. It's commonly used for:\n1. Submitting form data\n2. Creating new resources on the server\n3. Sending data that doesn't fit well in the URL\n\nIn Flask, you can handle POST requests using the @app.route decorator with the methods parameter:\n\n```python\n@app.route('/submit', methods=['POST'])\ndef submit_data():\n # Handle the POST request here\n return \"Data received\"\n```\n\nPUT Method:\nThe PUT method is used to update existing resources on the server. It's typically used when:\n1. Updating an entire resource\n2. Replacing existing data with new data\n\nHere's how you can handle PUT requests in Flask:\n\n```python\n@app.route('/update/', methods=['PUT'])\ndef update_data(id):\n # Handle the PUT request here\n return f\"Data updated for ID: {id}\"\n```\n\nWhen to use POST vs PUT:\n- Use POST when creating new resources or submitting form data\n- Use PUT when updating existing resources or replacing data\n\nRemember, in your Flask routes, you can specify multiple HTTP methods for a single route:\n\n```python\n@app.route('/resource', methods=['GET', 'POST', 'PUT'])\ndef handle_resource():\n if request.method == 'GET':\n # Handle GET request\n elif request.method == 'POST':\n # Handle POST request\n elif request.method == 'PUT':\n # Handle PUT request\n```\n\nThis approach allows you to handle different HTTP methods for the same URL, making your API more RESTful and following best practices for web development.\n\n### Note\nHTML forms only support `GET` and `POST` methods natively. \\\nTo learn more about `PUT` - we will need working knowledge of JavaScript - this will be covered later.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on HTTP Methods: Detailed look at POST & PUT and where to use them: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "@app.route('/submit', methods=['POST'])\ndef submit_data():\n # Handle the POST request here\n return \"Data received\""
+          }
+        },
+        {
+          "pageId": "p-KQKSCP07",
+          "title": "HTTP Methods: DELETE and When to Use It",
+          "content": "In this lesson, we'll explore the DELETE HTTP method and understand when to use it in your Flask applications.\n\nKey points about the DELETE method:\n\n1. Purpose: It's used to request the removal of a resource from the server.\n\n2. No request body: Typically, DELETE requests don't have a request body. The resource to be deleted is usually specified in the URL.\n\nWhen to use DELETE:\n- Removing a user account\n- Deleting a blog post\n- Removing an item from a database\n\nIn Flask, you can handle DELETE requests using the @app.route decorator with the methods parameter:\n\n```python\nfrom flask import Flask\n\napp = Flask(__name__)\n\n@app.route('/user/', methods=['DELETE'])\ndef delete_user(user_id):\n # Code to delete the user with the given user_id\n return f\"User {user_id} has been deleted\", 200\n```\n\nIn this example, when a DELETE request is made to a URL like '/user/123', Flask will call the delete_user function, passing 123 as the user_id parameter.\n\n### NOTE:\nGET requests can be easily made through a web browser's address bar, DELETE requests typically require special tools (like cURL) or JavaScript in a web application to be executed.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on HTTP Methods: DELETE and When to Use It: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from flask import Flask\n\napp = Flask(__name__)\n\n@app.route('/user/', methods=['DELETE'])\ndef delete_user(user_id):\n # Code to delete the user with the given user_id\n return f\"User {user_id} has been deleted\", 200"
+          }
+        },
+        {
+          "pageId": "p-TPQGVS01A",
+          "title": "Data Formats in Web Communication",
+          "content": "**Building on What We Know:**\n\nYou've learned how to send data to a Flask server using the `POST` method, often using HTML forms. Remember how we accessed that data using `request.form`?\n\n```python\n# Previous example using form data\n@app.route('/set-temperature', methods=['POST'])\ndef set_temperature():\n new_temp_str = request.form['temperature'] # Accessing data from a form post\n # ... process data ...\n return redirect(url_for('show_thermostat'))\n```\n\nThis works perfectly well for simple browser-based forms. But what happens when:\n\n1. Your \"client\" isn't a web browser form, but another program, a mobile app, or a different web service?\n2. The data you need to send is more complex than simple key-value pairs (e.g., lists within dictionaries, nested structures)?\n\nThis is where choosing a standardized **data format** becomes crucial. We know *how* to send the request (e.g., using `POST`), but we need an agreement on the *structure* of the data being sent inside that request.\n\n\n**JSON(JavaScript Object Notation)**: is the standard for modern web APIs because it provides the best balance of:\n\n* **Human Readability**\n* **Easy Machine Parsing**\n* **Network Efficiency (Lightweight)**\n* **Compatibility** with data structures across different programming languages.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Data Formats in Web Communication: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "# Previous example using form data\n@app.route('/set-temperature', methods=['POST'])\ndef set_temperature():\n new_temp_str = request.form['temperature'] # Accessing data from a form post\n # ... process data ...\n return redirect(url_for('show_thermostat'))"
+          }
+        },
+        {
+          "pageId": "p-TPQGVS01",
+          "title": "Understanding Json and jsoinfy in Flask",
+          "content": "## 1. What is JSON?\n\n**JavaScript Object Notation (JSON)** is a lightweight data-interchange format. It is easy for humans to read and write and for machines to parse and generate. JSON is widely used to exchange data between a client and a server in web applications.\n\n### Key Points:\n- **Text-based:** JSON is a plain text format.\n- **Structure:** Data is represented as key/value pairs (similar to Python dictionaries) and arrays (similar to Python lists).\n- **Usage:** It’s the standard format for RESTful APIs.\n\n---\n\n## 2. Using JSON in Flask\n\nFlask provides excellent support for JSON. When building an API, you often need to:\n- **Parse JSON:** Convert JSON data received in requests into Python objects.\n- **Return JSON:** Convert Python objects into JSON formatted responses.\n\n### Parsing JSON:\nTo parse incoming JSON data from a request, use the `request.get_json()` method.\n\n```python\nfrom flask import Flask, request, jsonify\n\napp = Flask(__name__)\n\n@app.route('/parse', methods=['POST'])\ndef parse_json():\n # Parse JSON from the incoming request\n data = request.get_json()\n # Assume data is a dictionary with a \"name\" key\n name = data.get('name', 'Guest')\n return jsonify({\"message\": f\"Hello, {name}!\"})\n```\n\n*Explanation:* \n- The client sends a POST request with JSON data.\n- The `request.get_json()` function converts the incoming JSON to a Python dictionary.\n- A JSON response is then generated using `jsonify`.\n\n---\n\n## 3. Returning JSON with jsonify\n\nThe `jsonify` function in Flask helps to convert Python dictionaries or lists to JSON and automatically sets the response’s content type to `application/json`.\n\n### Basic Example:\n\n```python\n@app.route('/info', methods=['GET'])\ndef info():\n data = {\n \"status\": \"success\",\n \"data\": {\n \"version\": \"1.0\",\n \"description\": \"This is a JSON response using Flask's jsonify.\"\n }\n }\n return jsonify(data)\n```\n\n*Explanation:* \n- A GET endpoint `/info` returns a JSON response.\n- The `jsonify` function converts the Python dictionary `data` to a JSON-formatted response.\n- The correct content type is automatically set.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Understanding Json and jsoinfy in Flask: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from flask import Flask, request, jsonify\n\napp = Flask(__name__)\n\n@app.route('/parse', methods=['POST'])\ndef parse_json():\n # Parse JSON from the incoming request\n data = request.get_json()\n # Assume data is a dictionary with a \"name\" key\n name = data.get('name', 'Guest')\n return jsonify({\"message\": f\"Hello, {name}!\"})"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-KQKSCP01-java",
+          "language": "python",
+          "label": "Python",
+          "title": "HTTP Methods: Detailed look at GET and where to use it",
+          "code": "@app.route('/')\ndef hello():\n return \"Hello, World!\"\n\n@app.route('/greet', methods=['GET'])\ndef greet():\n name = request.args.get('name', 'Guest')\n return f\"Hello, {name}!\""
+        },
+        {
+          "exampleId": "ex-KQKSCP02C-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Dynamic routing vs GET requests",
+          "code": "from flask import Flask, request, jsonify\napp = Flask(__name__)\n\n@app.route(\"/echo\", methods=[\"GET\", \"POST\"])\ndef echo():\n value = request.values.get(\"value\", \"\")\n return jsonify({\"method\": request.method, \"value\": value})"
+        },
+        {
+          "exampleId": "ex-KQKSCP04-java",
+          "language": "python",
+          "label": "Python",
+          "title": "HTTP Methods: Detailed look at POST & PUT and where to use them",
+          "code": "@app.route('/submit', methods=['POST'])\ndef submit_data():\n # Handle the POST request here\n return \"Data received\""
+        },
+        {
+          "exampleId": "ex-KQKSCP07-java",
+          "language": "python",
+          "label": "Python",
+          "title": "HTTP Methods: DELETE and When to Use It",
+          "code": "from flask import Flask\n\napp = Flask(__name__)\n\n@app.route('/user/', methods=['DELETE'])\ndef delete_user(user_id):\n # Code to delete the user with the given user_id\n return f\"User {user_id} has been deleted\", 200"
+        },
+        {
+          "exampleId": "ex-TPQGVS01A-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Data Formats in Web Communication",
+          "code": "# Previous example using form data\n@app.route('/set-temperature', methods=['POST'])\ndef set_temperature():\n new_temp_str = request.form['temperature'] # Accessing data from a form post\n # ... process data ...\n return redirect(url_for('show_thermostat'))"
+        },
+        {
+          "exampleId": "ex-TPQGVS01-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Understanding Json and jsoinfy in Flask",
+          "code": "from flask import Flask, request, jsonify\n\napp = Flask(__name__)\n\n@app.route('/parse', methods=['POST'])\ndef parse_json():\n # Parse JSON from the incoming request\n data = request.get_json()\n # Assume data is a dictionary with a \"name\" key\n name = data.get('name', 'Guest')\n return jsonify({\"message\": f\"Hello, {name}!\"})"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "KQKSCP02",
+          "questionId": "KQKSCP02",
+          "title": "Create a Simple Book Catalog API",
+          "difficulty": "Medium",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "KQKSCP03",
+          "questionId": "KQKSCP03",
+          "title": "Famous Landmarks Information Service",
+          "difficulty": "Easy",
+          "description": "Given a whitespace-separated list of field values, print `VALID` when every field is non-empty after stripping whitespace; otherwise print `INVALID`.",
+          "problemStatement": "Given a whitespace-separated list of field values, print `VALID` when every field is non-empty after stripping whitespace; otherwise print `INVALID`.",
+          "constraints": [
+            "1 <= number of fields <= 10",
+            "field length <= 50"
+          ],
+          "inputFormat": "One line containing space-separated field values.",
+          "outputFormat": "Print VALID or INVALID.",
+          "sampleTestCases": [
+            {
+              "input": "x",
+              "output": "VALID",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "x",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice example.com",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice ",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": " ",
+              "output": "INVALID",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "KQKSCP05",
+          "questionId": "KQKSCP05",
+          "title": "Simple Task Manager with POST",
+          "difficulty": "Easy",
+          "description": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "problemStatement": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "constraints": [
+            "1 <= N <= 100",
+            "title length <= 100"
+          ],
+          "inputFormat": "First line N. Next N lines contain titles.",
+          "outputFormat": "Print the N titles unchanged, one per line.",
+          "sampleTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "A\nB",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nIntro\nModels\nForms",
+              "output": "Intro\nModels\nForms",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nA long post title",
+              "output": "A long post title",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nPost1\nPost2\nPost3\nPost4",
+              "output": "Post1\nPost2\nPost3\nPost4",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "KQKSCP06",
+          "questionId": "KQKSCP06",
+          "title": "Thermostat webpage",
+          "difficulty": "Easy",
+          "description": "Read an HTTP method name and print `READ` for GET, `CREATE` for POST, `UPDATE` for PUT/PATCH, and `DELETE` for DELETE. Print `UNKNOWN` for anything else.",
+          "problemStatement": "Read an HTTP method name and print `READ` for GET, `CREATE` for POST, `UPDATE` for PUT/PATCH, and `DELETE` for DELETE. Print `UNKNOWN` for anything else.",
+          "constraints": [
+            "method length <= 10"
+          ],
+          "inputFormat": "One line containing the HTTP method.",
+          "outputFormat": "Print the mapped action.",
+          "sampleTestCases": [
+            {
+              "input": "POST",
+              "output": "CREATE",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "POST",
+              "output": "CREATE",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "PUT",
+              "output": "UPDATE",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "PATCH",
+              "output": "UPDATE",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "DELETE",
+              "output": "DELETE",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "OPTIONS",
+              "output": "UNKNOWN",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "TPQGVS02",
+          "questionId": "TPQGVS02",
+          "title": "Build a JSON Transformation API with Flask",
+          "difficulty": "Medium",
+          "description": "Given a whitespace-separated list of field values, print `VALID` when every field is non-empty after stripping whitespace; otherwise print `INVALID`.",
+          "problemStatement": "Given a whitespace-separated list of field values, print `VALID` when every field is non-empty after stripping whitespace; otherwise print `INVALID`.",
+          "constraints": [
+            "1 <= number of fields <= 10",
+            "field length <= 50"
+          ],
+          "inputFormat": "One line containing space-separated field values.",
+          "outputFormat": "Print VALID or INVALID.",
+          "sampleTestCases": [
+            {
+              "input": "x",
+              "output": "VALID",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "x",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice example.com",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice ",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": " ",
+              "output": "INVALID",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "TPQGVS03",
+          "questionId": "TPQGVS03",
+          "title": "Build a Basic Product website using JSON",
+          "difficulty": "Easy",
+          "description": "Read an HTTP method name and print `READ` for GET, `CREATE` for POST, `UPDATE` for PUT/PATCH, and `DELETE` for DELETE. Print `UNKNOWN` for anything else.",
+          "problemStatement": "Read an HTTP method name and print `READ` for GET, `CREATE` for POST, `UPDATE` for PUT/PATCH, and `DELETE` for DELETE. Print `UNKNOWN` for anything else.",
+          "constraints": [
+            "method length <= 10"
+          ],
+          "inputFormat": "One line containing the HTTP method.",
+          "outputFormat": "Print the mapped action.",
+          "sampleTestCases": [
+            {
+              "input": "POST",
+              "output": "CREATE",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "POST",
+              "output": "CREATE",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "PUT",
+              "output": "UPDATE",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "PATCH",
+              "output": "UPDATE",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "DELETE",
+              "output": "DELETE",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "OPTIONS",
+              "output": "UNKNOWN",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "flask.json",
+      "_moduleTitle": "Templates and Routing continued"
+    },
+    {
+      "topicId": "t03-template-inheritance-modularizing-views",
+      "title": "Template Inheritance & Modularizing Views",
+      "description": "Study concepts and solve targeted engineering problems for Template Inheritance & Modularizing Views.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-EEEKER01",
+          "title": "Creating Base Templates: Establishing a consistent layout across pages using base templates",
+          "content": "In Flask web development, creating a consistent layout across multiple pages is crucial for maintaining a cohesive user experience. \\\nThis is where base templates come into play. \\\nA base template serves as a foundation for other templates, allowing you to define a common structure that can be shared across different pages of your website.\n\nBuilding on your knowledge of Jinja2 templating, which we covered earlier, base templates take advantage of template inheritance to create a modular and efficient approach to structuring your views.\n\nHere's how base templates work:\n\n1. Create a base template: \\\nStart by creating a file, typically named \"base.html\", which will contain the common elements of your website such as the HTML structure, head section, navigation bar, and footer.\n\n2. Use placeholder blocks: \\\nWithin your base template, you'll define placeholder blocks using Jinja2 syntax. \\\nThese blocks represent areas that can be customized in child templates. \\\nFor example:\n\n ```html\n \n \n \n {% block title %}Default Title{% endblock %}\n \n \n \n \n \n \n {% block content %}\n \n {% endblock %}\n \n \n \n \n \n \n ```\n\n3. Extend the base template: \\\nIn your child templates, you'll extend the base template and override the blocks as needed.\\\nFor example, in a \"home.html\" template:\n\n ```html\n {% extends \"base.html\" %}\n\n {% block title %}Home Page{% endblock %}\n\n {% block content %}\n Welcome to our website!\n This is the home page content.\n {% endblock %}\n ```\n\n4. Render the template:\nIn your Flask routes, you'll render these child templates as usual. \\\nFlask and Jinja2 will automatically combine the base template with the child template:\n\n ```python\n @app.route('/')\n def home():\n return render_template('home.html')\n ```\n\nBy using base templates, you ensure that common elements remain consistent across your website while allowing for easy customization of specific sections on individual pages. \\\nRemember, you can have multiple levels of template inheritance, allowing for even more flexibility in structuring your views.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Creating Base Templates: Establishing a consistent layout across pages using base templates: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from flask import Flask, render_template\napp = Flask(__name__)\n\n@app.route(\"/about\")\ndef about():\n return render_template(\"about.html\")"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-EEEKER01",
+            "question": "Which statement best captures the main idea of Creating Base Templates: Establishing a consistent layout across pages using base templates?",
+            "options": [
+              "It applies Template Inheritance & Modularizing Views to a Flask/Python application.",
+              "It bypasses Flask request handling.",
+              "It replaces application logic with CSS.",
+              "It disables validation and error handling."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The lesson focuses on Template Inheritance & Modularizing Views as part of building Flask applications."
+          }
+        },
+        {
+          "pageId": "p-EEEKER04",
+          "title": "Defining blocks and overriding multiple blocks",
+          "content": "We'll focus on defining and overriding multiple blocks in base templates.\n\nFirst, let's create a base template (e.g., base.html) that includes the common structure of our web pages:\n\n```html\n\n\n\n \n {% block title %}My Flask App{% endblock %}\n\n\n \n {% block header %}\n Welcome to My Flask App\n {% endblock %}\n \n \n \n {% block content %}\n {% endblock %}\n \n \n \n {% block footer %}\n &copy; 2023 My Flask App\n {% endblock %}\n \n\n\n```\n\nIn this base template, we've defined several blocks using the {% block %} tag. These blocks act as placeholders that can be filled or overridden by child templates.\n\nNow, let's create a child template (e.g., home.html) that extends the base template:\n\n```html\n{% extends \"base.html\" %}\n\n{% block title %}Home Page{% endblock %}\n\n{% block content %}\n Welcome to the Home Page\n This is the content of the home page.\n{% endblock %}\n```\n\nIn the child template, we use the {% extends %} tag to inherit from the base template. \\\nWe then override specific blocks to customize the content for this particular page.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Defining blocks and overriding multiple blocks: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from flask import Flask, render_template\napp = Flask(__name__)\n\n@app.route(\"/about\")\ndef about():\n return render_template(\"about.html\")"
+          }
+        },
+        {
+          "pageId": "p-EEEKER07",
+          "title": "Reusable Components: Organizing Header, Footer, and Navigation as Separate Template Files",
+          "content": "In this lesson, we'll learn how to create reusable components in Flask by organizing header, footer, and navigation as separate template files. \\\nThis technique allows us to:\n1. Keep our code DRY (Don't Repeat Yourself)\n2. Maintain consistency across pages\n3. Easily update shared components in one place\n\nHere's how we can organize our templates:\n\n1. Create a 'components' folder inside your 'templates' directory.\n\n2. Create separate files for each component:\n - header.html\n - footer.html\n - navigation.html\n\n3. In each component file, add the relevant HTML code. \\\nFor example, in header.html:\n\n ```html\n \n My Flask App\n \n ```\n\n4. In your base template or individual page templates, you can now include these components using Jinja2's include statement:\n\n ```html\n {% include 'components/header.html' %}\n {% include 'components/navigation.html' %}\n \n \n \n {% include 'components/footer.html' %}\n ```\n\nBy organizing your templates this way, you can easily maintain and update shared components across your entire Flask application. \\\nIf you need to change the header, you only need to modify the header.html file, and the changes will be reflected on all pages that include it.\n\nRemember, this approach works well with the URL routing we learned earlier. \\\nYou can still use your route decorators in your Flask application to render these modular templates for different URLs.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Reusable Components: Organizing Header, Footer, and Navigation as Separate Template Files: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from flask import Flask, render_template\napp = Flask(__name__)\n\n@app.route(\"/about\")\ndef about():\n return render_template(\"about.html\")"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-EEEKER01-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Creating Base Templates: Establishing a consistent layout across pages using base templates",
+          "code": "from flask import Flask, render_template\napp = Flask(__name__)\n\n@app.route(\"/about\")\ndef about():\n return render_template(\"about.html\")"
+        },
+        {
+          "exampleId": "ex-EEEKER04-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Defining blocks and overriding multiple blocks",
+          "code": "from flask import Flask, render_template\napp = Flask(__name__)\n\n@app.route(\"/about\")\ndef about():\n return render_template(\"about.html\")"
+        },
+        {
+          "exampleId": "ex-EEEKER07-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Reusable Components: Organizing Header, Footer, and Navigation as Separate Template Files",
+          "code": "from flask import Flask, render_template\napp = Flask(__name__)\n\n@app.route(\"/about\")\ndef about():\n return render_template(\"about.html\")"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "EEEKER02",
+          "questionId": "EEEKER02",
+          "title": "Create a Personal Blog Template",
+          "difficulty": "Easy",
+          "description": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "problemStatement": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "constraints": [
+            "1 <= N <= 100",
+            "title length <= 100"
+          ],
+          "inputFormat": "First line N. Next N lines contain titles.",
+          "outputFormat": "Print the N titles unchanged, one per line.",
+          "sampleTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "A\nB",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nIntro\nModels\nForms",
+              "output": "Intro\nModels\nForms",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nA long post title",
+              "output": "A long post title",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nPost1\nPost2\nPost3\nPost4",
+              "output": "Post1\nPost2\nPost3\nPost4",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "EEEKER03",
+          "questionId": "EEEKER03",
+          "title": "Create a Recipe Book Template",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "EEEKER05",
+          "questionId": "EEEKER05",
+          "title": "Create a blog template system",
+          "difficulty": "Easy",
+          "description": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "problemStatement": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "constraints": [
+            "1 <= N <= 100",
+            "title length <= 100"
+          ],
+          "inputFormat": "First line N. Next N lines contain titles.",
+          "outputFormat": "Print the N titles unchanged, one per line.",
+          "sampleTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "A\nB",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nIntro\nModels\nForms",
+              "output": "Intro\nModels\nForms",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nA long post title",
+              "output": "A long post title",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nPost1\nPost2\nPost3\nPost4",
+              "output": "Post1\nPost2\nPost3\nPost4",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "EEEKER06",
+          "questionId": "EEEKER06",
+          "title": "Creating a Simple News Website Layout",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "EEEKER08",
+          "questionId": "EEEKER08",
+          "title": "Create a Flask app with modular header and footer",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "EEEKER09",
+          "questionId": "EEEKER09",
+          "title": "Create a recipe website with reusable components",
+          "difficulty": "Easy",
+          "description": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "problemStatement": "Read N strings and render them as an HTML unordered list. Each item must appear as `<li>ITEM</li>`.",
+          "constraints": [
+            "1 <= N <= 100",
+            "item contains no newline"
+          ],
+          "inputFormat": "First line N. Next N lines contain items.",
+          "outputFormat": "Print `<ul>`, then each item wrapped in `<li>`, then `</ul>`.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "<ul>\n<li>A</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nOne\nTwo\nThree",
+              "output": "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nFlask User",
+              "output": "<ul>\n<li>Flask User</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA\nB\nC\nD",
+              "output": "<ul>\n<li>A</li>\n<li>B</li>\n<li>C</li>\n<li>D</li>\n</ul>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "flask.json",
+      "_moduleTitle": "Templates and Routing continued"
+    },
+    {
+      "topicId": "t04-project-portfolio-website",
+      "title": "project: Portfolio website",
+      "description": "Study concepts and solve targeted engineering problems for Practice project: Portfolio website.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 20,
+      "pages": [
+        {
+          "pageId": "p-FLASKPROJ1A",
+          "title": "Portfolio website - introduction",
+          "content": "In this module, we will build a simple Portfolio Website using Flask. \\\nFirst, you will see a demonstration of the final application. Then in each problem, we will implement one piece of functionality at a time until the full project is complete. \n\nClick the Run button to start the Flask development server and explore the application in your browser.\n\n### Overview of the application:\n\n 1. **Home page**: A welcome message and brief introduction.\n 2. **About page**: A profile of John Doe, a Computer Science and Engineering student.\n 3. **Projects page**: A list of sample projects rendered from Python data.\n\n### Steps to build this project:\n\n1. Setting up the back-end file with working APIs.\n2. Basic HTML based front-end.\n3. Connecting the back-end and front-end using jinja2 templates.\n\n\nWhen you are ready to begin implementation click on `run` to see the working of the website, click `submit` to start building the portfolio step by step.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Portfolio website - introduction: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "def demonstrate(value):\n return value"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-FLASKPROJ1A",
+            "question": "Which statement best captures the main idea of Portfolio website - introduction?",
+            "options": [
+              "It applies Practice project: Portfolio website to a Flask/Python application.",
+              "It bypasses Flask request handling.",
+              "It replaces application logic with CSS.",
+              "It disables validation and error handling."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The lesson focuses on Practice project: Portfolio website as part of building Flask applications."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-FLASKPROJ1A-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Portfolio website - introduction",
+          "code": "def demonstrate(value):\n return value"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "FLASKPROJ1B",
+          "questionId": "FLASKPROJ1B",
+          "title": "Basic API endpoints",
+          "difficulty": "Medium",
+          "description": "Read N endpoint names and print them with a `/api/` prefix, one per line.",
+          "problemStatement": "Read N endpoint names and print them with a `/api/` prefix, one per line.",
+          "constraints": [
+            "1 <= N <= 100",
+            "endpoint length <= 50"
+          ],
+          "inputFormat": "First line N, followed by N endpoint names.",
+          "outputFormat": "Print /api/<endpoint> for each.",
+          "sampleTestCases": [
+            {
+              "input": "1\nhealth",
+              "output": "/api/health",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nhealth",
+              "output": "/api/health",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nusers\nposts",
+              "output": "/api/users\n/api/posts",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nlogin\nlogout\nprofile",
+              "output": "/api/login\n/api/logout\n/api/profile",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nstatus",
+              "output": "/api/status",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\na\nb\nc\nd",
+              "output": "/api/a\n/api/b\n/api/c\n/api/d",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "FLASKPROJ1C",
+          "questionId": "FLASKPROJ1C",
+          "title": "Basic HTML based front-end",
+          "difficulty": "Easy",
+          "description": "Given a title and body, print a minimal HTML page containing `<h1>TITLE</h1>` and `<p>BODY</p>`.",
+          "problemStatement": "Given a title and body, print a minimal HTML page containing `<h1>TITLE</h1>` and `<p>BODY</p>`.",
+          "constraints": [
+            "title/body length <= 200"
+          ],
+          "inputFormat": "First line title. Second line body.",
+          "outputFormat": "Print `<h1>...` then `<p>...`.",
+          "sampleTestCases": [
+            {
+              "input": "A\nB",
+              "output": "<h1>A</h1>\n<p>B</p>",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "A\nB",
+              "output": "<h1>A</h1>\n<p>B</p>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Flask\nPython web development",
+              "output": "<h1>Flask</h1>\n<p>Python web development</p>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Title\nBody text",
+              "output": "<h1>Title</h1>\n<p>Body text</p>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Home\nWelcome home",
+              "output": "<h1>Home</h1>\n<p>Welcome home</p>",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Portfolio\nProjects and skills",
+              "output": "<h1>Portfolio</h1>\n<p>Projects and skills</p>",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "FLASKPROJ1D",
+          "questionId": "FLASKPROJ1D",
+          "title": "Connecting with jinja2",
+          "difficulty": "Easy",
+          "description": "Given a name, print `Hello, {{ name }}!` to represent the Jinja template output expression.",
+          "problemStatement": "Given a name, print `Hello, {{ name }}!` to represent the Jinja template output expression.",
+          "constraints": [
+            "name length <= 100"
+          ],
+          "inputFormat": "One line containing a name.",
+          "outputFormat": "Print the Jinja expression with the supplied name.",
+          "sampleTestCases": [
+            {
+              "input": "A",
+              "output": "Hello, {{ A }}!",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "A",
+              "output": "Hello, {{ A }}!",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Bob",
+              "output": "Hello, {{ Bob }}!",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Flask User",
+              "output": "Hello, {{ Flask User }}!",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "John Doe",
+              "output": "Hello, {{ John Doe }}!",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "SEED-IT",
+              "output": "Hello, {{ SEED-IT }}!",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "flask.json",
+      "_moduleTitle": "Templates and Routing continued"
+    }
+  ]
+}

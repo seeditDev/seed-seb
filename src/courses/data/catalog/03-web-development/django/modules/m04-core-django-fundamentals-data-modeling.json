@@ -1,0 +1,1933 @@
+{
+  "moduleId": "m04-core-django-fundamentals-data-modeling",
+  "title": "Core Django Fundamentals – Data Modeling",
+  "description": "Core concepts and hands-on practice in Core Django Fundamentals – Data Modeling.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-models-fundamentals",
+      "title": "Models Fundamentals",
+      "description": "Study concepts and solve targeted engineering problems for Models Fundamentals.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 35,
+      "pages": [
+        {
+          "pageId": "p-KNVELN01",
+          "title": "Models in Django",
+          "content": "In Django, models are a crucial component that define the structure of your database. They act as a bridge between your Python code and your database, allowing you to interact with your data using Python objects instead of writing raw SQL queries.\n\n### How do Models work in Django?\nThink of models in Django as Python code that describes your database tables.\n\nIf you’ve worked with SQL before, you know we write things like:\n```sql\nCREATE TABLE Book (\n title VARCHAR(200),\n author VARCHAR(100),\n publication_date DATE\n);\n```\nInstead of writing SQL like this, Django lets you write the same thing using Python classes. This is done using Django’s ORM (Object-Relational Mapping), which means:\n\n`You write Python code Django translates it into SQL The database is created/updated.`\n\nTo create a model, you'll typically work in the `models.py` file within your Django app. \nHere's a simple example of what a model might look like:\n\n```python\nfrom django.db import models\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n author = models.CharField(max_length=100)\n publication_date = models.DateField()\n\n def __str__(self):\n return self.title\n```\nThis code defines a model called `Book`, which Django will use to create a corresponding database table.\n\n`models.Model`: This means Book is a Django model and inherits built-in database behavior.\n\n`title`: A text field (max 200 characters) to store the book's title.\n\n`author`: A text field (max 100 characters) to store the author's name.\n\n`publication_date`: A date field to store when the book was published.\n\n```\ndef __str__(self):\n return self.title\n```\n`__str__` is a special method in Python used to define how an object should be represented as a string.\n\nWhy return `self.title?` \nWe are returning the book's title, so when you do something like `print(book)`, you'll see the book title like `The Alchemist` instead of something like `Book object (1)`\n\n**Each attribute becomes a column in the Book table, and each instance of Book becomes a row in the database.** \nNo need to manually write SQL like INSERT, SELECT, or UPDATE. Django handles it all.\n\nWhat happens after I write a model?\nYou do two things:\n\n- Run python `manage.py makemigrations` – Django prepares SQL commands.\n\n- Run python `manage.py migrate` – Django runs those commands and creates the actual table in the database. \n*(We will look into the topic of `migrations` in detail in the following lessons)*\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django models define persistent data as Python classes. Field definitions become database columns, and migrations record schema changes. The key implementation detail in **Models in Django** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.db import models\nfrom django.contrib import admin\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n published_year = models.PositiveIntegerField()\n\n@admin.register(Book)\nclass BookAdmin(admin.ModelAdmin):\n list_display = (\"title\", \"published_year\")"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-KNVELN01",
+            "question": "Which statement best describes **Models in Django** in the Django topic **Models Fundamentals**?",
+            "options": [
+              "Django models define persistent data as Python classes. Field definitions become database columns, and migrations record schema changes.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Models in Django within Models Fundamentals."
+          }
+        },
+        {
+          "pageId": "p-KNVELN01A",
+          "title": "Where and How the Database is Created",
+          "content": "Let’s look at how Django organizes your files, and where the database is actually created and stored.\n\n```\nmysite/\n├── db.sqlite3 ←This is your actual database file -created after running migrations\n├── manage.py\n├── mysite/\n│ ├── ...\n│ ├── settings.py\n│ ├── urls.py\n│ └── ....\n└── library/ ← Your Django app\n ├── ....\n ├── models.py ← Define your database models here (e.g., Book)\n ├── views.py ← Use models to fetch data and pass to templates\n ├── urls.py ← Define URL patterns for this app\n ├── templates/\n │ └── library/\n │ ├── book_list.html ← Templates display model data\n └── migrations/ ← Auto-generated scripts that tell Django how to create/update tables\n └── __init__.py ← First migration file – like a blueprint for your database tables\n\n```\n### What’s Happening Step-by-Step?\n- You define models in `models.py` \nThink of this as writing the structure of your table in Python (like Book, Author, etc.).\n\n- You make migrations \nDjango reads your models and creates a file in the `migrations/` folder. This file contains SQL-like instructions in Python.\n\n- You apply migrations \nDjango executes those instructions and actually creates the tables in your database.\n\n- Your database file appears \n `db.sqlite3` is created in the root of your project. It stores all your tables and data.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django models define persistent data as Python classes. Field definitions become database columns, and migrations record schema changes. The key implementation detail in **Where and How the Database is Created** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.db import models\nfrom django.contrib import admin\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n published_year = models.PositiveIntegerField()\n\n@admin.register(Book)\nclass BookAdmin(admin.ModelAdmin):\n list_display = (\"title\", \"published_year\")"
+          }
+        },
+        {
+          "pageId": "p-KNVELN07",
+          "title": "Database Migrations in Django",
+          "content": "Database migrations allow you to make changes to your database schema over time, keeping it in sync with your Django models.\n\nWhen you create or modify models in Django, you're essentially defining the structure of your database tables. However, these changes don't automatically apply to your database. This is where migrations come in.\n\nMigrations are Python files that describe the changes you want to make to your database. They serve as a version control system for your database schema, allowing you to:\n\n1. Create new tables\n2. Modify existing tables (add, remove, or change columns)\n3. Rename models or fields\n4. And more\n\nTo work with migrations, Django provides two main commands:\n\n1. \n```python\npython manage.py makemigrations\n```\nThis command looks at your models and creates new migration files based on the changes it detects. These files are stored in a \"migrations\" folder within your app directory.\n\n2. \n```python\npython manage.py migrate\n```\nThis command applies the pending migrations to your database, actually making the changes to your database schema.\n\nHere's a typical workflow:\n\n1. You make changes to your models in `models.py`.\n2. Run `python manage.py makemigrations` to create a new migration file.\n3. Django generates a new migration file in your app's migrations folder.\n4. Run `python manage.py migrate` to apply the changes to your database.\n\nFolder structure (when you apply `migrations` for the first time):\n```python\nbook_app/\n├── models.py\n├── views.py\n├── migrations/\n│ ├── __init__.py\n│ └── 0001_initial.py ← Generated when you first run makemigrations\n```\nFolder structure after you made some changes to your schema i.e. table (in models.py)\n\n```python\nbook_app/\n├── models.py\n├── views.py\n├── migrations/\n│ ├── __init__.py\n│ ├── 0001_initial.py ← For the original model\n│ └── 0002_add_genre.py ← For the new change\n```\nNotice how another file gets created in the `migrations` folder after some change was made in the schema (e.g. a new field `genre` was added)\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django models define persistent data as Python classes. Field definitions become database columns, and migrations record schema changes. The key implementation detail in **Database Migrations in Django** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.db import models\nfrom django.contrib import admin\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n published_year = models.PositiveIntegerField()\n\n@admin.register(Book)\nclass BookAdmin(admin.ModelAdmin):\n list_display = (\"title\", \"published_year\")"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-KNVELN01-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Models in Django (Python)",
+          "code": "from django.db import models\nfrom django.contrib import admin\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n published_year = models.PositiveIntegerField()\n\n@admin.register(Book)\nclass BookAdmin(admin.ModelAdmin):\n list_display = (\"title\", \"published_year\")"
+        },
+        {
+          "exampleId": "ex-KNVELN01A-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Where and How the Database is Created (Python)",
+          "code": "from django.db import models\nfrom django.contrib import admin\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n published_year = models.PositiveIntegerField()\n\n@admin.register(Book)\nclass BookAdmin(admin.ModelAdmin):\n list_display = (\"title\", \"published_year\")"
+        },
+        {
+          "exampleId": "ex-KNVELN07-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Database Migrations in Django (Python)",
+          "code": "from django.db import models\nfrom django.contrib import admin\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n published_year = models.PositiveIntegerField()\n\n@admin.register(Book)\nclass BookAdmin(admin.ModelAdmin):\n list_display = (\"title\", \"published_year\")"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "KNVELN02",
+          "questionId": "KNVELN02",
+          "title": "Create a Book Model",
+          "difficulty": "Medium",
+          "description": "Practice Django model field validation rules.",
+          "problemStatement": "Validate one simplified model field. `name` and `title` must be non-empty; numeric fields must be at least the supplied minimum.",
+          "constraints": [
+            "Numeric values fit 32-bit signed integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "Print `VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=17|13",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=9|13",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title=|1",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "year=2026|1900",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN03",
+          "questionId": "KNVELN03",
+          "title": "Create a Movie model and add a new movie",
+          "difficulty": "Medium",
+          "description": "Practice Django model field validation rules.",
+          "problemStatement": "Validate one simplified model field. `name` and `title` must be non-empty; numeric fields must be at least the supplied minimum.",
+          "constraints": [
+            "Numeric values fit 32-bit signed integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "Print `VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=17|13",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=9|13",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title=|1",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "year=2026|1900",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN08",
+          "questionId": "KNVELN08",
+          "title": "Create and Update a Recipe Model with Migrations",
+          "difficulty": "Medium",
+          "description": "Practice Django relationships by counting related objects per parent.",
+          "problemStatement": "Each token represents `parent-child`. Count children for each parent and print `parent:count` pairs in alphabetical parent order.",
+          "constraints": [
+            "0 <= N <= 50",
+            "Parent and child names contain no `-` or spaces."
+          ],
+          "inputFormat": "One line containing N relationship tokens; `N=0` is represented by `0` alone.",
+          "outputFormat": "Print sorted parent counts separated by spaces.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a-x a-y b-z c-k a-q",
+              "output": "4:1 a:3 b:1 c:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 u-r u-s",
+              "output": "2:1 u:2",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "0",
+              "output": "",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 red-1 blue-2 red-3 blue-4 red-5",
+              "output": "5:1 blue:2 red:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN09",
+          "questionId": "KNVELN09",
+          "title": "Create and Update Product Model",
+          "difficulty": "Medium",
+          "description": "Practice Django relationships by counting related objects per parent.",
+          "problemStatement": "Each token represents `parent-child`. Count children for each parent and print `parent:count` pairs in alphabetical parent order.",
+          "constraints": [
+            "0 <= N <= 50",
+            "Parent and child names contain no `-` or spaces."
+          ],
+          "inputFormat": "One line containing N relationship tokens; `N=0` is represented by `0` alone.",
+          "outputFormat": "Print sorted parent counts separated by spaces.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a-x a-y b-z c-k a-q",
+              "output": "4:1 a:3 b:1 c:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 u-r u-s",
+              "output": "2:1 u:2",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "0",
+              "output": "",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 red-1 blue-2 red-3 blue-4 red-5",
+              "output": "5:1 blue:2 red:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "Core Django Fundamentals – Data Modeling"
+    },
+    {
+      "topicId": "t02-crud-operations-with-django-orm",
+      "title": "CRUD Operations with Django ORM",
+      "description": "Study concepts and solve targeted engineering problems for CRUD Operations with Django ORM.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-DNMOZG01",
+          "title": "Creating Records with Django ORM",
+          "content": "So far, we've been adding data to our database using the Django shell. While that's a great way to understand how things work behind the scenes, it's not practical for real-world applications.\n\nIn this lesson, we'll start exploring CRUD operations using Django's ORM (Object-Relational Mapping) system. \nCRUD stands for Create, Read, Update, and Delete — the four basic operations you can perform on a database.\n\nWe'll begin with the \"C\" — Create:\n\nLet's say we have a simple model called 'Book' in our models.py file:\n\n```python\nfrom django.db import models\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n author = models.CharField(max_length=100)\n publication_date = models.DateField()\n```\n\nTo create a new book record, we can use either the `.create()` method or the `.save()` method in our `views.py` file\n\n#### Method:1 Using `.create()`:\nThis method creates and saves the object in one step.\n\n```python\nfrom django.http import HttpResponse\nfrom .models import Book\n\ndef add_book(request):\n Book.objects.create(\n title=\"Django for Beginners\",\n author=\"William S. Vincent\",\n publication_date=\"2020-01-01\"\n )\n return HttpResponse(\"Book added successfully!\")\n```\n- Book.objects.create(...) creates a new Book object and immediately saves it to the database.\n- This is the most concise way to create a new record when all data is available at once.\n\n#### Method:2 Using `.save()`:\nThis method separates object creation and saving into two steps.\n```python\nfrom django.http import HttpResponse\nfrom .models import Book\n\ndef add_book(request):\n # Step 1: Create an instance (not yet saved)\n new_book = Book(\n title=\"Django for Beginners\",\n author=\"William S. Vincent\",\n publication_date=\"2020-01-01\"\n )\n\n # Step 2: Save the instance to the database\n new_book.save()\n\n return HttpResponse(\"Book added using .save()\")\n```\n- This approach is useful when you want to set values dynamically or modify the object before saving it.\n- It's like saying: \"Let me prepare the record, then I’ll decide when to store it in the database.\"\n\n#### When to use which?\n\n| **Use .create() when...** | **Use .save() when...** |\n|:-----------------------------------------------------------:|:--------------------------------------------------:|\n| You want a quick one-liner and already have all the values. | You're not doing any custom logic before saving. |\n| You're not doing any custom logic before saving. | You plan to modify or validate data before saving. |\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "The ORM represents database rows as Python objects. QuerySets support creating, reading, updating, and deleting records without embedding raw SQL in routine application code. The key implementation detail in **Creating Records with Django ORM** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from .models import Book\n\nbooks = Book.objects.filter(published_year__gte=2020).order_by(\"title\")\nfor book in books:\n print(book.title)"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DNMOZG01",
+            "question": "Which statement best describes **Creating Records with Django ORM** in the Django topic **CRUD Operations with Django ORM**?",
+            "options": [
+              "The ORM represents database rows as Python objects. QuerySets support creating, reading, updating, and deleting records without embedding raw SQL in routine application code.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Creating Records with Django ORM within CRUD Operations with Django ORM."
+          }
+        },
+        {
+          "pageId": "p-DNMOZG04",
+          "title": "Reading Records with Django ORM",
+          "content": "In this lesson, we'll explore how to read records from the database using Django's Object-Relational Mapping (ORM). This is a crucial part of CRUD operations, where we retrieve data to display or manipulate in our Django application.\n\nBuilding on our knowledge of Models Fundamentals, we'll use the models we've created to query the database. Django ORM provides a powerful and intuitive way to fetch data without writing raw SQL queries.\n\nHere are the main methods to read records:\n\n1. Retrieving all objects:\n To get all objects of a particular model, use the `all()` method:\n ```python\n all_books = Book.objects.all()\n ```\n This returns a QuerySet containing all Book objects in the database.\n\n2. Filtering objects:\n To get specific objects based on certain criteria, use the `filter()` method:\n ```python\n fiction_books = Book.objects.filter(genre='Fiction')\n ```\n This returns a QuerySet of Book objects where the genre is 'Fiction'.\n\n3. Getting a single object:\n To retrieve a single object, use the `get()` method:\n ```python\n book = Book.objects.get(id=1)\n ```\n This returns a single Book object with the specified id.\n\n4. Ordering results:\n To order the results, use the `order_by()` method:\n ```python\n books_by_title = Book.objects.all().order_by('title')\n ```\n This returns a QuerySet of all Book objects, ordered by their titles.\n\n5. Limiting results:\n To limit the number of results, use Python's slicing syntax:\n ```python\n first_five_books = Book.objects.all()[:5]\n ```\n This returns a QuerySet of the first five Book objects.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "The ORM represents database rows as Python objects. QuerySets support creating, reading, updating, and deleting records without embedding raw SQL in routine application code. The key implementation detail in **Reading Records with Django ORM** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from .models import Book\n\nbooks = Book.objects.filter(published_year__gte=2020).order_by(\"title\")\nfor book in books:\n print(book.title)"
+          }
+        },
+        {
+          "pageId": "p-DNMOZG07",
+          "title": "Updating Records with Django ORM",
+          "content": "In this lesson, we'll explore how to update existing records in your database using Django's Object-Relational Mapping (ORM). This is a crucial part of CRUD operations, where CRUD stands for Create, Read, Update, and Delete.\n\n\nLet's say we have a simple model called 'Book' that we defined in our models.py file:\n\n```python\nfrom django.db import models\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n author = models.CharField(max_length=100)\n publication_year = models.IntegerField()\n```\n\nNow, let's look at different ways to update records:\n\n1. Updating a single instance:\n To update a single record, first retrieve the object, modify its attributes, and then save it:\n\n ```python\n # In your view function\n book = Book.objects.get(id=1) # Get the book with id 1\n book.title = \"New Title\" # Update the title\n book.save() # Save the changes to the database\n ```\n\n2. Updating multiple records:\n To update multiple records at once, use the `update()` method on a queryset:\n\n ```python\n # Update all books published before 2000\n Book.objects.filter(publication_year__lt=2000).update(title=\"Classic Book\")\n ```\n\n3. Updating or creating (Upsert):\n Sometimes you want to update a record if it exists, or create it if it doesn't. Use `update_or_create()` for this:\n\n ```python\n Book.objects.update_or_create(\n title=\"Existing Title\",\n defaults={'author': 'New Author', 'publication_year': 2023}\n )\n ```\n\nRemember to handle exceptions and validate data before updating records. You can use try-except blocks to catch potential errors:\n\n```python\ntry:\n book = Book.objects.get(id=1)\n book.title = \"New Title\"\n book.save()\nexcept Book.DoesNotExist:\n # Handle the case where the book doesn't exist\n pass\n```\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "The ORM represents database rows as Python objects. QuerySets support creating, reading, updating, and deleting records without embedding raw SQL in routine application code. The key implementation detail in **Updating Records with Django ORM** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from .models import Book\n\nbooks = Book.objects.filter(published_year__gte=2020).order_by(\"title\")\nfor book in books:\n print(book.title)"
+          }
+        },
+        {
+          "pageId": "p-DNMOZG10",
+          "title": "Deleting Records with Django ORM",
+          "content": "In this lesson, we'll learn how to delete records from our database using Django's Object-Relational Mapping (ORM). \n\nHere's how to delete records:\n\n1. Single Record Deletion:\n To delete a single record, first retrieve the object you want to delete, then call the `delete()` method on it. For example:\n\n ```python\n # In a view function\n from .models import YourModel\n\n def delete_record(request, record_id):\n record = YourModel.objects.get(id=record_id)\n record.delete()\n # Redirect or render a response\n ```\n\n2. Multiple Record Deletion:\n To delete multiple records that match certain criteria, you can use the `delete()` method on a queryset. For example:\n\n ```python\n # Delete all records where a field equals a specific value\n YourModel.objects.filter(field_name='value').delete()\n ```\n\n3. Deleting All Records:\n To delete all records from a model, you can use the `delete()` method on all objects:\n\n ```python\n YourModel.objects.all().delete()\n ```\n\nRemember to be cautious when deleting records, as this action is irreversible. \nIt's often a good practice to implement confirmation steps in your views or templates before performing delete operations.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "The ORM represents database rows as Python objects. QuerySets support creating, reading, updating, and deleting records without embedding raw SQL in routine application code. The key implementation detail in **Deleting Records with Django ORM** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from .models import Book\n\nbooks = Book.objects.filter(published_year__gte=2020).order_by(\"title\")\nfor book in books:\n print(book.title)"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-DNMOZG01-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Creating Records with Django ORM (Python)",
+          "code": "from .models import Book\n\nbooks = Book.objects.filter(published_year__gte=2020).order_by(\"title\")\nfor book in books:\n print(book.title)"
+        },
+        {
+          "exampleId": "ex-DNMOZG04-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Reading Records with Django ORM (Python)",
+          "code": "from .models import Book\n\nbooks = Book.objects.filter(published_year__gte=2020).order_by(\"title\")\nfor book in books:\n print(book.title)"
+        },
+        {
+          "exampleId": "ex-DNMOZG07-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Updating Records with Django ORM (Python)",
+          "code": "from .models import Book\n\nbooks = Book.objects.filter(published_year__gte=2020).order_by(\"title\")\nfor book in books:\n print(book.title)"
+        },
+        {
+          "exampleId": "ex-DNMOZG10-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Deleting Records with Django ORM (Python)",
+          "code": "from .models import Book\n\nbooks = Book.objects.filter(published_year__gte=2020).order_by(\"title\")\nfor book in books:\n print(book.title)"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "DNMOZG02",
+          "questionId": "DNMOZG02",
+          "title": "Create a Book Library Management System",
+          "difficulty": "Medium",
+          "description": "Practice Django model field validation rules.",
+          "problemStatement": "Validate one simplified model field. `name` and `title` must be non-empty; numeric fields must be at least the supplied minimum.",
+          "constraints": [
+            "Numeric values fit 32-bit signed integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "Print `VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=17|13",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=9|13",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title=|1",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "year=2026|1900",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "DNMOZG03",
+          "questionId": "DNMOZG03",
+          "title": "Create a Movie Collection Manager using Django ORM",
+          "difficulty": "Medium",
+          "description": "Practice Django model field validation rules.",
+          "problemStatement": "Validate one simplified model field. `name` and `title` must be non-empty; numeric fields must be at least the supplied minimum.",
+          "constraints": [
+            "Numeric values fit 32-bit signed integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "Print `VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=17|13",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=9|13",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title=|1",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "year=2026|1900",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "DNMOZG05",
+          "questionId": "DNMOZG05",
+          "title": "Retrieve and Display Book Details",
+          "difficulty": "Medium",
+          "description": "Practice Django relationships by counting related objects per parent.",
+          "problemStatement": "Each token represents `parent-child`. Count children for each parent and print `parent:count` pairs in alphabetical parent order.",
+          "constraints": [
+            "0 <= N <= 50",
+            "Parent and child names contain no `-` or spaces."
+          ],
+          "inputFormat": "One line containing N relationship tokens; `N=0` is represented by `0` alone.",
+          "outputFormat": "Print sorted parent counts separated by spaces.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a-x a-y b-z c-k a-q",
+              "output": "4:1 a:3 b:1 c:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 u-r u-s",
+              "output": "2:1 u:2",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "0",
+              "output": "",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 red-1 blue-2 red-3 blue-4 red-5",
+              "output": "5:1 blue:2 red:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "DNMOZG06",
+          "questionId": "DNMOZG06",
+          "title": "Hotel Rooms Manager",
+          "difficulty": "Medium",
+          "description": "Practice Django relationships by counting related objects per parent.",
+          "problemStatement": "Each token represents `parent-child`. Count children for each parent and print `parent:count` pairs in alphabetical parent order.",
+          "constraints": [
+            "0 <= N <= 50",
+            "Parent and child names contain no `-` or spaces."
+          ],
+          "inputFormat": "One line containing N relationship tokens; `N=0` is represented by `0` alone.",
+          "outputFormat": "Print sorted parent counts separated by spaces.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a-x a-y b-z c-k a-q",
+              "output": "4:1 a:3 b:1 c:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 u-r u-s",
+              "output": "2:1 u:2",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "0",
+              "output": "",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 red-1 blue-2 red-3 blue-4 red-5",
+              "output": "5:1 blue:2 red:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "DNMOZG08",
+          "questionId": "DNMOZG08",
+          "title": "Update Book Publication Year",
+          "difficulty": "Medium",
+          "description": "Practice creating records with a deterministic in-memory representation.",
+          "problemStatement": "Read N `key:value` records and print them in the same insertion order separated by semicolons.",
+          "constraints": [
+            "1 <= N <= 20",
+            "Keys are unique."
+          ],
+          "inputFormat": "N followed by N `key:value` tokens.",
+          "outputFormat": "Joined records in insertion order.",
+          "sampleTestCases": [
+            {
+              "input": "2 alice:100 bob:200 carol:300",
+              "output": "alice:100;bob:200",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "2 alice:100 bob:200 carol:300",
+              "output": "alice:100;bob:200",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "1 book:50 title:20",
+              "output": "book:50",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "3 a:1 b:2 c:3",
+              "output": "a:1;b:2;c:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 django:5 flask:3",
+              "output": "django:5;flask:3",
+              "explanation": "Additional distinct case for the same documented rule."
+            },
+            {
+              "input": "4 a:1 b:2 c:3 d:4",
+              "output": "a:1;b:2;c:3;d:4",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        },
+        {
+          "problemId": "DNMOZG09",
+          "questionId": "DNMOZG09",
+          "title": "Update Movie Rating",
+          "difficulty": "Medium",
+          "description": "Practice reading records with a filter.",
+          "problemStatement": "Given `key:value` records, select keys whose numeric value is at least the supplied threshold. Preserve insertion order and print `NONE` if nothing matches.",
+          "constraints": [
+            "1 <= N <= 50",
+            "Values are integers."
+          ],
+          "inputFormat": "N, N records, then threshold.",
+          "outputFormat": "Matching keys separated by spaces or `NONE`.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice:100 bob:200 carol:150 150",
+              "output": "bob carol",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice:100 bob:200 carol:150 150",
+              "output": "bob carol",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 book:50 pen:10 bag:70 cup:20 50",
+              "output": "book bag",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 a:5 b:9 c:1 d:7 e:3 6",
+              "output": "b d",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 a:1 b:10 11",
+              "output": "NONE",
+              "explanation": "Additional distinct case for the same documented rule."
+            },
+            {
+              "input": "3 x:20 y:21 z:5 20",
+              "output": "x y",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        },
+        {
+          "problemId": "DNMOZG11",
+          "questionId": "DNMOZG11",
+          "title": "Delete Completed Tasks from To-Do List",
+          "difficulty": "Medium",
+          "description": "Practice updating one ORM record deterministically.",
+          "problemStatement": "Given N `key:value` records followed by one updated `key:value`, replace the value for that key and print the full record set in original order.",
+          "constraints": [
+            "1 <= N <= 50",
+            "The target key exists."
+          ],
+          "inputFormat": "N, N records, then one updated record.",
+          "outputFormat": "Updated records joined by semicolons.",
+          "sampleTestCases": [
+            {
+              "input": "3 a:1 b:2 c:3 b:20",
+              "output": "a:1;b:20;c:3",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 a:1 b:2 c:3 b:20",
+              "output": "a:1;b:20;c:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 title:10 year:2020 title:15",
+              "output": "title:15;year:2020",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "1 score:7 score:9",
+              "output": "score:9",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "3 x:1 y:2 z:3 z:8",
+              "output": "x:1;y:2;z:8",
+              "explanation": "Additional distinct case for the same documented rule."
+            },
+            {
+              "input": "2 name:1 age:20 name:4",
+              "output": "name:4;age:20",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        },
+        {
+          "problemId": "DNMOZG12",
+          "questionId": "DNMOZG12",
+          "title": "Delete expired blog posts",
+          "difficulty": "Medium",
+          "description": "Practice deleting a record from an ORM-style collection.",
+          "problemStatement": "Remove every record whose key equals the target and print the remaining records in order; print `EMPTY` if none remain.",
+          "constraints": [
+            "1 <= N <= 50"
+          ],
+          "inputFormat": "N followed by N keys and a target key.",
+          "outputFormat": "Remaining keys or `EMPTY`.",
+          "sampleTestCases": [
+            {
+              "input": "3 a b c b",
+              "output": "a;c",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 a b c b",
+              "output": "a;c",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 book pen bag cup bag",
+              "output": "book;pen;cup",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 x y z",
+              "output": "x;y",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "3 a b c a",
+              "output": "b;c",
+              "explanation": "Additional distinct case for the same documented rule."
+            },
+            {
+              "input": "4 w x y z y",
+              "output": "w;x;z",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "Core Django Fundamentals – Data Modeling"
+    },
+    {
+      "topicId": "t03-field-validations-relationships",
+      "title": "Field validations & relationships",
+      "description": "Study concepts and solve targeted engineering problems for Field validations & relationships.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-KNVELN16",
+          "title": "Built-in Field Validation in Django Models",
+          "content": "In Django, field validations refer to the checks that are performed to ensure that the data entered into a model or form field is valid and meets certain rules or constraints before it gets saved to the database.\n\nHere are some common built-in validations:\n1. Required fields: By default, all fields are optional. To make a field required, use the `null=False` and `blank=False` parameters when defining the field.\n2. Max length: For CharField and TextField, you can specify a maximum length using the `max_length` parameter.\n3. Unique values: To ensure a field contains unique values across all records, use the `unique=True` parameter.\n4. Choices: You can limit the possible values for a field by providing a list of choices using the `choices` parameter.\n5. Numeric range: For IntegerField and FloatField in forms, you can set minimum and maximum values using the `min_value` and `max_value` parameters. \nIn models, you must use **validators** like `MinValueValidator` and `MaxValueValidator` to enforce numeric limits. (Make sure you import it before using as: `from django.core.validators import MinValueValidator, MaxValueValidator\n`)\n6. Date and time validation: DateField and DateTimeField automatically validate that the input is a valid date or datetime.\n7. Email validation: EmailField ensures that the input is a valid email address format.\n8. URL validation: URLField checks if the input is a valid URL format.\n\n**Note:** When we add / update the data in the database, these validations **DO NOT** run automatically. \nWe have to add a function `full_clean()` to our `views.py` file before `save()` to enforce validation.\n\nLet's look at an example using some of these validations:\n\n```python\nfrom django.db import models\nfrom django.core.validators import MinValueValidator, MaxValueValidator\n\nclass Book(models.Model):\n title = models.CharField(max_length=200, blank=False)\n author = models.CharField(max_length=100)\n publication_year = models.IntegerField(validators=[MinValueValidator(1800), MaxValueValidator(2023)]\n isbn = models.CharField(max_length=13, unique=True)\n genre = models.CharField(max_length=50, choices=[\n ('FIC', 'Fiction'),\n ('NON', 'Non-Fiction'),\n ('SCI', 'Science'),\n ('HIS', 'History')\n ])\n website = models.URLField(blank=True)\n```\n\nIn this example, we've applied various built-in validations:\n- The title is required (blank=False) and has a maximum length of 200 characters.\n- The publication year must be between 1800 and 2023.\n- The ISBN must be unique across all books.\n- The genre is limited to predefined choices.\n- The website, if provided, must be a valid URL.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Model fields can enforce validation and relationships. ForeignKey, ManyToManyField, and OneToOneField model different cardinalities and help keep domain rules explicit. The key implementation detail in **Built-in Field Validation in Django Models** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-KNVELN16",
+            "question": "Which statement best describes **Built-in Field Validation in Django Models** in the Django topic **Field validations & relationships**?",
+            "options": [
+              "Model fields can enforce validation and relationships. ForeignKey, ManyToManyField, and OneToOneField model different cardinalities and help keep domain rules explicit.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Built-in Field Validation in Django Models within Field validations & relationships."
+          }
+        },
+        {
+          "pageId": "p-KNVELN19",
+          "title": "Many-to-One Relationships in Django Models",
+          "content": "In Django, a Many-to-One relationship is a common type of database relationship where multiple instances of one model can be associated with a single instance of another model. \nTo understand Many-to-One relationships, let's build upon our knowledge of models and consider a practical example:\n\n\n\nImagine we're creating a blog application. We have two main entities: Blog Posts and Authors. Each blog post is written by one author, but an author can write multiple blog posts. This is a classic Many-to-One relationship.\n\nHere's how we can define these models:\n\n```python\nfrom django.db import models\n\nclass Author(models.Model):\n name = models.CharField(max_length=100)\n email = models.EmailField()\n\n def __str__(self):\n return self.name\n\nclass BlogPost(models.Model):\n title = models.CharField(max_length=200)\n content = models.TextField()\n author = models.ForeignKey(Author, on_delete=models.CASCADE)\n pub_date = models.DateTimeField(auto_now_add=True)\n\n def __str__(self):\n return self.title\n```\n\nThe key to establishing this Many-to-One relationship is the `ForeignKey` field in the `BlogPost` model. Let's break it down:\n\n1. `author = models.ForeignKey(Author, on_delete=models.CASCADE)`:\n - This line creates a foreign key relationship between `BlogPost` and `Author`.\n - It means each `BlogPost` instance is associated with one `Author` instance.\n - The `on_delete=models.CASCADE` argument specifies that if an `Author` is deleted, all their associated `BlogPost` instances will also be deleted.\n\n2. Django automatically creates a reverse relationship from `Author` to `BlogPost`. You can access all blog posts of an author using `author.blogpost_set.all()`.\n\n3. When you create a new `BlogPost`, you'll need to specify an `Author` instance:\n ```python\n author = Author.objects.create(name=\"Jane Doe\", email=\"jane@example.com\")\n post = BlogPost.objects.create(title=\"My First Post\", content=\"Hello, World!\", author=author)\n ```\n\n4. To query related objects:\n - Get the author of a post: `post.author`\n - Get all posts by an author: `author.blogpost_set.all()`\n - Efficiently get a list of blog posts with their authors (in one database query): `BlogPost.objects.select_related(\"author\").all()`\n This tells Django: “When fetching each BlogPost, also fetch its related Author in the same query.”\n\n *Normally, without select_related, Django fetches each post and then does a separate query to get the author for each post (which can be slow).\nWith select_related, Django uses a SQL JOIN behind the scenes to fetch all blog posts and their authors in a single query, which is much faster when displaying many posts and their authors.*\n\nRemember, when you define these models, you'll need to create and apply migrations to update your database schema. Use the `python manage.py makemigrations` and `python manage.py migrate` commands as we learned in the Database Migrations lesson.\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Model fields can enforce validation and relationships. ForeignKey, ManyToManyField, and OneToOneField model different cardinalities and help keep domain rules explicit. The key implementation detail in **Many-to-One Relationships in Django Models** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+          }
+        },
+        {
+          "pageId": "p-KNVELN22",
+          "title": "Many To Many Relationship in Django Models",
+          "content": "In Django models, a Many-to-Many relationship is used when multiple instances of one model can be associated with multiple instances of another model. This type of relationship is common in real-world scenarios and can be easily implemented in Django.\n\nLet's explain this concept using an example:\n\n\n\nImagine we're building a library management system. We have two main models: Book and Author. In reality, a book can have multiple authors, and an author can write multiple books. This is a perfect scenario for a Many-to-Many relationship.\n\nHere's how we can define these models:\n\n```python\nfrom django.db import models\n\nclass Author(models.Model):\n name = models.CharField(max_length=100)\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n authors = models.ManyToManyField(Author)\n```\n\nIn this example, we use the `ManyToManyField` in the Book model to establish the relationship with the Author model. Django will automatically create an intermediate table to manage this relationship.\n\nNow, we can easily associate books with authors and vice versa:\n\n```python\n# Creating authors\nauthor1 = Author.objects.create(name=\"J.K. Rowling\")\nauthor2 = Author.objects.create(name=\"J.R.R. Tolkien\")\n\n# Creating a book and adding authors\nbook = Book.objects.create(title=\"Fantasy Collaboration\")\nbook.authors.add(author1, author2)\n\n# Accessing related objects\nfor author in book.authors.all():\n print(author.name)\n\nfor book in author1.book_set.all():\n print(book.title)\n```\n\nThe `ManyToManyField` provides methods like `add()`, `remove()`, and `clear()` to manage the relationships. You can also use the `set()` method to replace all existing relationships with new ones.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Model fields can enforce validation and relationships. ForeignKey, ManyToManyField, and OneToOneField model different cardinalities and help keep domain rules explicit. The key implementation detail in **Many To Many Relationship in Django Models** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+          }
+        },
+        {
+          "pageId": "p-KNVELN25",
+          "title": "One-to-One Relationships in Django Models",
+          "content": "In Django, a one-to-one relationship is a type of model relationship where one instance of a model is associated with exactly one instance of another model, and vice versa. \n\n\n\n\nTo create a one-to-one relationship, we use the **OneToOneField** in our model definition. Here's how it works:\n\n1. First, let's define two models in our models.py file:\n\n```python\nfrom django.db import models\n\nclass User(models.Model):\n username = models.CharField(max_length=100)\n email = models.EmailField()\n\nclass Profile(models.Model):\n user = models.OneToOneField(User, on_delete=models.CASCADE)\n bio = models.TextField()\n birth_date = models.DateField(null=True, blank=True)\n```\n\nIn this example, we have a User model and a Profile model. The Profile model has a one-to-one relationship with the User model.\n\n2. The OneToOneField is defined in the Profile model:\n - 'user' is the name of the field\n - 'User' is the model we're relating to\n - 'on_delete=models.CASCADE' means if the related User is deleted, the Profile will also be deleted\n\n3. This relationship means:\n - Each User can have only one Profile\n - Each Profile is associated with only one User\n\n4. To access the related objects:\n - From a User instance: user.profile\n - From a Profile instance: profile.user\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Model fields can enforce validation and relationships. ForeignKey, ManyToManyField, and OneToOneField model different cardinalities and help keep domain rules explicit. The key implementation detail in **One-to-One Relationships in Django Models** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+          }
+        },
+        {
+          "pageId": "p-KNVELN28",
+          "title": "Field Types and Options in Django Models",
+          "content": "In Django models, field types and options define the structure and behavior of your database tables. You must have already seen some of the field types that we used in the previous examples/ problems as we dealt with models. \nIn this lesson we will go through the various field types and options available in Django models.\n\n#### Field Types:\nSome common field types provided by Django include:\n\n1. CharField: For storing short strings (e.g., names, titles)\n2. TextField: For longer text content\n3. IntegerField: For storing whole numbers\n4. FloatField: For decimal numbers\n5. BooleanField: For true/false values\n6. DateTimeField: For date and time information\n7. ForeignKey: For creating relationships between models (as we learned in Many-to-One relationships)\n\n#### Field Options:\nField options allow you to customize the behavior of your fields. Some common options include:\n\n1. null: Allows the field to store NULL values in the database\n2. blank: Allows the field to be left empty in forms\n3. default: Sets a default value for the field\n4. unique: Ensures that each value in this field is unique across the table\n5. verbose_name: A human-readable name for the field (used in the admin interface)\n\nWe will see how to use field types and options in a models in the following examples.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Model fields can enforce validation and relationships. ForeignKey, ManyToManyField, and OneToOneField model different cardinalities and help keep domain rules explicit. The key implementation detail in **Field Types and Options in Django Models** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-KNVELN16-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Built-in Field Validation in Django Models (Python)",
+          "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+        },
+        {
+          "exampleId": "ex-KNVELN19-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Many-to-One Relationships in Django Models (Python)",
+          "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+        },
+        {
+          "exampleId": "ex-KNVELN22-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Many To Many Relationship in Django Models (Python)",
+          "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+        },
+        {
+          "exampleId": "ex-KNVELN25-go",
+          "language": "python",
+          "label": "Python",
+          "title": "One-to-One Relationships in Django Models (Python)",
+          "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+        },
+        {
+          "exampleId": "ex-KNVELN28-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Field Types and Options in Django Models (Python)",
+          "code": "from django import forms\n\nclass SignupForm(forms.Form):\n username = forms.CharField(max_length=30)\n age = forms.IntegerField(min_value=13)\n\n def clean_username(self):\n value = self.cleaned_data[\"username\"].strip()\n if not value:\n raise forms.ValidationError(\"Username is required.\")\n return value"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "KNVELN17",
+          "questionId": "KNVELN17",
+          "title": "Create and View Books with Validations",
+          "difficulty": "Medium",
+          "description": "Practice Django model field validation rules.",
+          "problemStatement": "Validate one simplified model field. `name` and `title` must be non-empty; numeric fields must be at least the supplied minimum.",
+          "constraints": [
+            "Numeric values fit 32-bit signed integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "Print `VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=17|13",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=9|13",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title=|1",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "year=2026|1900",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN18",
+          "questionId": "KNVELN18",
+          "title": "Register Students with Field Validations",
+          "difficulty": "Medium",
+          "description": "Practice Django model field validation rules.",
+          "problemStatement": "Validate one simplified model field. `name` and `title` must be non-empty; numeric fields must be at least the supplied minimum.",
+          "constraints": [
+            "Numeric values fit 32-bit signed integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "Print `VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=17|13",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=9|13",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title=|1",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "year=2026|1900",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN20",
+          "questionId": "KNVELN20",
+          "title": "Create a Library Management System",
+          "difficulty": "Medium",
+          "description": "Practice Django relationships by counting related objects per parent.",
+          "problemStatement": "Each token represents `parent-child`. Count children for each parent and print `parent:count` pairs in alphabetical parent order.",
+          "constraints": [
+            "0 <= N <= 50",
+            "Parent and child names contain no `-` or spaces."
+          ],
+          "inputFormat": "One line containing N relationship tokens; `N=0` is represented by `0` alone.",
+          "outputFormat": "Print sorted parent counts separated by spaces.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a-x a-y b-z c-k a-q",
+              "output": "4:1 a:3 b:1 c:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 u-r u-s",
+              "output": "2:1 u:2",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "0",
+              "output": "",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 red-1 blue-2 red-3 blue-4 red-5",
+              "output": "5:1 blue:2 red:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN21",
+          "questionId": "KNVELN21",
+          "title": "Music Album and Tracks Catalog",
+          "difficulty": "Medium",
+          "description": "Practice Django relationships by counting related objects per parent.",
+          "problemStatement": "Each token represents `parent-child`. Count children for each parent and print `parent:count` pairs in alphabetical parent order.",
+          "constraints": [
+            "0 <= N <= 50",
+            "Parent and child names contain no `-` or spaces."
+          ],
+          "inputFormat": "One line containing N relationship tokens; `N=0` is represented by `0` alone.",
+          "outputFormat": "Print sorted parent counts separated by spaces.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a-x a-y b-z c-k a-q",
+              "output": "4:1 a:3 b:1 c:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 u-r u-s",
+              "output": "2:1 u:2",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "0",
+              "output": "",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 red-1 blue-2 red-3 blue-4 red-5",
+              "output": "5:1 blue:2 red:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN23",
+          "questionId": "KNVELN23",
+          "title": "Student-Course Registration System",
+          "difficulty": "Medium",
+          "description": "Practice creating records with a deterministic in-memory representation.",
+          "problemStatement": "Read N `key:value` records and print them in the same insertion order separated by semicolons.",
+          "constraints": [
+            "1 <= N <= 20",
+            "Keys are unique."
+          ],
+          "inputFormat": "N followed by N `key:value` tokens.",
+          "outputFormat": "Joined records in insertion order.",
+          "sampleTestCases": [
+            {
+              "input": "2 alice:100 bob:200 carol:300",
+              "output": "alice:100;bob:200",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "2 alice:100 bob:200 carol:300",
+              "output": "alice:100;bob:200",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "1 book:50 title:20",
+              "output": "book:50",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "3 a:1 b:2 c:3",
+              "output": "a:1;b:2;c:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 django:5 flask:3",
+              "output": "django:5;flask:3",
+              "explanation": "Additional distinct case for the same documented rule."
+            },
+            {
+              "input": "4 a:1 b:2 c:3 d:4",
+              "output": "a:1;b:2;c:3;d:4",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN24",
+          "questionId": "KNVELN24",
+          "title": "Recipe-Ingredient Database",
+          "difficulty": "Medium",
+          "description": "Practice reading records with a filter.",
+          "problemStatement": "Given `key:value` records, select keys whose numeric value is at least the supplied threshold. Preserve insertion order and print `NONE` if nothing matches.",
+          "constraints": [
+            "1 <= N <= 50",
+            "Values are integers."
+          ],
+          "inputFormat": "N, N records, then threshold.",
+          "outputFormat": "Matching keys separated by spaces or `NONE`.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice:100 bob:200 carol:150 150",
+              "output": "bob carol",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice:100 bob:200 carol:150 150",
+              "output": "bob carol",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 book:50 pen:10 bag:70 cup:20 50",
+              "output": "book bag",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 a:5 b:9 c:1 d:7 e:3 6",
+              "output": "b d",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 a:1 b:10 11",
+              "output": "NONE",
+              "explanation": "Additional distinct case for the same documented rule."
+            },
+            {
+              "input": "3 x:20 y:21 z:5 20",
+              "output": "x y",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN26",
+          "questionId": "KNVELN26",
+          "title": "Create a Library Card System",
+          "difficulty": "Medium",
+          "description": "Practice updating one ORM record deterministically.",
+          "problemStatement": "Given N `key:value` records followed by one updated `key:value`, replace the value for that key and print the full record set in original order.",
+          "constraints": [
+            "1 <= N <= 50",
+            "The target key exists."
+          ],
+          "inputFormat": "N, N records, then one updated record.",
+          "outputFormat": "Updated records joined by semicolons.",
+          "sampleTestCases": [
+            {
+              "input": "3 a:1 b:2 c:3 b:20",
+              "output": "a:1;b:20;c:3",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 a:1 b:2 c:3 b:20",
+              "output": "a:1;b:20;c:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 title:10 year:2020 title:15",
+              "output": "title:15;year:2020",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "1 score:7 score:9",
+              "output": "score:9",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "3 x:1 y:2 z:3 z:8",
+              "output": "x:1;y:2;z:8",
+              "explanation": "Additional distinct case for the same documented rule."
+            },
+            {
+              "input": "2 name:1 age:20 name:4",
+              "output": "name:4;age:20",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN27",
+          "questionId": "KNVELN27",
+          "title": "Student and Locker Assignment System",
+          "difficulty": "Medium",
+          "description": "Practice deleting a record from an ORM-style collection.",
+          "problemStatement": "Remove every record whose key equals the target and print the remaining records in order; print `EMPTY` if none remain.",
+          "constraints": [
+            "1 <= N <= 50"
+          ],
+          "inputFormat": "N followed by N keys and a target key.",
+          "outputFormat": "Remaining keys or `EMPTY`.",
+          "sampleTestCases": [
+            {
+              "input": "3 a b c b",
+              "output": "a;c",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 a b c b",
+              "output": "a;c",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 book pen bag cup bag",
+              "output": "book;pen;cup",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 x y z",
+              "output": "x;y",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "3 a b c a",
+              "output": "b;c",
+              "explanation": "Additional distinct case for the same documented rule."
+            },
+            {
+              "input": "4 w x y z y",
+              "output": "w;x;z",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN29",
+          "questionId": "KNVELN29",
+          "title": "Create a Product Review System",
+          "difficulty": "Medium",
+          "description": "Practice Django model field validation rules.",
+          "problemStatement": "Validate one simplified model field. `name` and `title` must be non-empty; numeric fields must be at least the supplied minimum.",
+          "constraints": [
+            "Numeric values fit 32-bit signed integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "Print `VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=17|13",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=9|13",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title=|1",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "year=2026|1900",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN30",
+          "questionId": "KNVELN30",
+          "title": "Create an Event and Registration System",
+          "difficulty": "Medium",
+          "description": "Practice Django relationships by counting related objects per parent.",
+          "problemStatement": "Each token represents `parent-child`. Count children for each parent and print `parent:count` pairs in alphabetical parent order.",
+          "constraints": [
+            "0 <= N <= 50",
+            "Parent and child names contain no `-` or spaces."
+          ],
+          "inputFormat": "One line containing N relationship tokens; `N=0` is represented by `0` alone.",
+          "outputFormat": "Print sorted parent counts separated by spaces.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a-x a-y b-z c-k a-q",
+              "output": "4:1 a:3 b:1 c:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 u-r u-s",
+              "output": "2:1 u:2",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "0",
+              "output": "",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 red-1 blue-2 red-3 blue-4 red-5",
+              "output": "5:1 blue:2 red:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "Core Django Fundamentals – Data Modeling"
+    },
+    {
+      "topicId": "t04-applying-rolling-back-migrations",
+      "title": "Applying & Rolling Back Migrations",
+      "description": "Study concepts and solve targeted engineering problems for Applying & Rolling Back Migrations.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 30,
+      "pages": [
+        {
+          "pageId": "p-KNVELN10",
+          "title": "Admin Interface in Django Models",
+          "content": "Django's Admin Interface is a powerful built-in feature that allows you to manage your application's data through a web-based interface. It's automatically generated based on your models, making it easy to perform CRUD (Create, Read, Update, Delete) operations on your data without writing additional code.\n\nTo use the Admin Interface for your models:\n\n1. First, ensure that 'django.contrib.admin' is included in your INSTALLED_APPS in the settings.py file. This should be done by default when you create a new Django project.\n\n2. In your app's admin.py file, import your model (that is already created) and register it with the admin site:\n```python\n from django.contrib import admin\n from .models import YourModel\n\n admin.site.register(YourModel)\n```\n3. Create a superuser account (via the terminal) to access the admin interface:\n``` \n python manage.py createsuperuser\n```\nProvide the username, email and password to be used for the admin login.\n\n4. Run your development server:\n```\n python manage.py runserver\n```\n5. Access the admin interface by navigating to http://localhost:3000/admin in your web browser.\n\n6. Log in using your superuser credentials.\n\nOnce logged in, you'll see a dashboard where you can manage your registered models. The Admin Interface automatically creates forms based on your model fields, allowing you to add, edit, and delete records easily.\n\nRemember that the Admin Interface is connected to your project's URL configuration (urls.py) and uses Django's built-in authentication system, which we covered in previous topics.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Migrations make schema changes reproducible. They should be reviewed, applied in order, and reversed deliberately when a rollback is required. The key implementation detail in **Admin Interface in Django Models** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.db import models\nfrom django.contrib import admin\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n published_year = models.PositiveIntegerField()\n\n@admin.register(Book)\nclass BookAdmin(admin.ModelAdmin):\n list_display = (\"title\", \"published_year\")"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-KNVELN10",
+            "question": "Which statement best describes **Admin Interface in Django Models** in the Django topic **Applying & Rolling Back Migrations**?",
+            "options": [
+              "Migrations make schema changes reproducible. They should be reviewed, applied in order, and reversed deliberately when a rollback is required.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Admin Interface in Django Models within Applying & Rolling Back Migrations."
+          }
+        },
+        {
+          "pageId": "p-KNVELN31",
+          "title": "Applying & Rolling Back Migrations",
+          "content": "In the previous lessons, we learned how to apply migrations using:\n```python\npython manage.py makemigrations\npython manage.py migrate\n```\nIn this lesson, we’ll focus on rolling back migrations — undoing changes made to the database schema.\n\n#### Rolling Back Migrations:\nSometimes, you may need to revert your database schema to a previous state. Django allows you to roll back migrations using:\n```python\npython manage.py migrate app_name migration_name\n```\n- Replace `app_name` with the name of your Django app.\n- Replace `migration_name` with the name (or number) of the migration you want to roll back to.\n\nExample:\nTo roll back all migrations for an app named `myapp` and reset it to the initial state, use:\n```python\npython manage.py migrate myapp zero\n```\nThis command undoes all migrations for `myapp`\n\nNote: Rolling back migrations can lead to data loss, especially if the reversed migrations involve deleting tables or columns. Use with caution, especially in production environments.\n\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Migrations make schema changes reproducible. They should be reviewed, applied in order, and reversed deliberately when a rollback is required. The key implementation detail in **Applying & Rolling Back Migrations** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.db import models\nfrom django.contrib import admin\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n published_year = models.PositiveIntegerField()\n\n@admin.register(Book)\nclass BookAdmin(admin.ModelAdmin):\n list_display = (\"title\", \"published_year\")"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-KNVELN10-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Admin Interface in Django Models (Python)",
+          "code": "from django.db import models\nfrom django.contrib import admin\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n published_year = models.PositiveIntegerField()\n\n@admin.register(Book)\nclass BookAdmin(admin.ModelAdmin):\n list_display = (\"title\", \"published_year\")"
+        },
+        {
+          "exampleId": "ex-KNVELN31-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Applying & Rolling Back Migrations (Python)",
+          "code": "from django.db import models\nfrom django.contrib import admin\n\nclass Book(models.Model):\n title = models.CharField(max_length=200)\n published_year = models.PositiveIntegerField()\n\n@admin.register(Book)\nclass BookAdmin(admin.ModelAdmin):\n list_display = (\"title\", \"published_year\")"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "KNVELN11",
+          "questionId": "KNVELN11",
+          "title": "Create a Book Model and Register in Admin",
+          "difficulty": "Medium",
+          "description": "Practice Django model field validation rules.",
+          "problemStatement": "Validate one simplified model field. `name` and `title` must be non-empty; numeric fields must be at least the supplied minimum.",
+          "constraints": [
+            "Numeric values fit 32-bit signed integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "Print `VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=17|13",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=9|13",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title=|1",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "year=2026|1900",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN12",
+          "questionId": "KNVELN12",
+          "title": "Create a Movie Review Model",
+          "difficulty": "Medium",
+          "description": "Practice Django model field validation rules.",
+          "problemStatement": "Validate one simplified model field. `name` and `title` must be non-empty; numeric fields must be at least the supplied minimum.",
+          "constraints": [
+            "Numeric values fit 32-bit signed integers."
+          ],
+          "inputFormat": "One line: `field=value|minimum`.",
+          "outputFormat": "Print `VALID` or `INVALID`.",
+          "sampleTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "name=Alice|1",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=17|13",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "age=9|13",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "title=|1",
+              "output": "INVALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "year=2026|1900",
+              "output": "VALID",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN32",
+          "questionId": "KNVELN32",
+          "title": "Create and Roll Back a Blog Post Model",
+          "difficulty": "Medium",
+          "description": "Practice Django relationships by counting related objects per parent.",
+          "problemStatement": "Each token represents `parent-child`. Count children for each parent and print `parent:count` pairs in alphabetical parent order.",
+          "constraints": [
+            "0 <= N <= 50",
+            "Parent and child names contain no `-` or spaces."
+          ],
+          "inputFormat": "One line containing N relationship tokens; `N=0` is represented by `0` alone.",
+          "outputFormat": "Print sorted parent counts separated by spaces.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a-x a-y b-z c-k a-q",
+              "output": "4:1 a:3 b:1 c:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 u-r u-s",
+              "output": "2:1 u:2",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "0",
+              "output": "",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 red-1 blue-2 red-3 blue-4 red-5",
+              "output": "5:1 blue:2 red:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "KNVELN33",
+          "questionId": "KNVELN33",
+          "title": "Create a Recipe Database with Migrations",
+          "difficulty": "Medium",
+          "description": "Practice Django relationships by counting related objects per parent.",
+          "problemStatement": "Each token represents `parent-child`. Count children for each parent and print `parent:count` pairs in alphabetical parent order.",
+          "constraints": [
+            "0 <= N <= 50",
+            "Parent and child names contain no `-` or spaces."
+          ],
+          "inputFormat": "One line containing N relationship tokens; `N=0` is represented by `0` alone.",
+          "outputFormat": "Print sorted parent counts separated by spaces.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice-book1 bob-book2 alice-book3",
+              "output": "3:1 alice:2 bob:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a-x a-y b-z c-k a-q",
+              "output": "4:1 a:3 b:1 c:1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 u-r u-s",
+              "output": "2:1 u:2",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "0",
+              "output": "",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 red-1 blue-2 red-3 blue-4 red-5",
+              "output": "5:1 blue:2 red:3",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "Core Django Fundamentals – Data Modeling"
+    }
+  ]
+}

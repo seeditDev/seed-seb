@@ -1,0 +1,745 @@
+{
+  "moduleId": "m13-transactions-acid-properties-concurrency",
+  "title": "Transactions, ACID Properties & Concurrency",
+  "description": "Transaction lifecycle, COMMIT, ROLLBACK, SAVEPOINT, ACID guarantees, dirty reads, non-repeatable reads, phantom reads, and isolation levels.",
+  "estimatedHours": 4,
+  "topics": [
+    {
+      "topicId": "t01-constraints-transactions-acid-and-normalization-basics",
+      "title": "Constraints, Transactions, ACID and Normalization Basics",
+      "description": "Interactive lesson on Constraints, Transactions, ACID and Normalization Basics. Learn the concept, run worked queries against a resettable SQLite dataset, inspect results, then solve guided and challenge tasks.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 40,
+      "lessonMarkdown": "## Data integrity with constraints\n\nConstraints help the database reject invalid data rather than relying entirely on application code. Common constraints include:\n\n- `PRIMARY KEY` — uniquely identifies rows\n- `FOREIGN KEY` — enforces valid references between tables\n- `NOT NULL` — requires a value\n- `UNIQUE` — prevents duplicate constrained values\n- `CHECK` — enforces a condition\n- `DEFAULT` — supplies a value when one is not explicitly provided\n\n## Transactions\n\nA **transaction** groups related database operations into a logical unit of work. A typical transaction may either complete successfully or be rolled back when a failure occurs.\n\nFor example, transferring money from account A to account B conceptually requires both a debit and a credit. Committing only one side would leave the data inconsistent.\n\n## ACID properties\n\n**Atomicity:** all operations in a transaction happen as one unit, or the transaction is rolled back.\n\n**Consistency:** a successful transaction takes the database from one valid state to another valid state, respecting defined integrity rules.\n\n**Isolation:** concurrent transactions are controlled so that intermediate work does not produce unacceptable interference.\n\n**Durability:** once a transaction is committed, its changes are intended to survive failures according to the database system's durability guarantees.\n\n## Normalization basics\n\nNormalization is a design technique used to reduce unnecessary duplication and update anomalies.\n\n**1NF:** values are atomic and repeating groups are removed.\n\n**2NF:** the table is in 1NF and non-key attributes depend on the whole key, which is especially important for composite keys.\n\n**3NF:** the table is in 2NF and non-key attributes do not depend transitively on another non-key attribute.\n\nNormalization is a design choice, not a rule that every database must maximize at all costs. Some systems intentionally denormalize selected data for performance or reporting, while maintaining correctness carefully.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "## Data integrity with constraints\n\nConstraints help the database reject invalid data rather than relying entirely on application code. Common constraints include:\n\n- `PRIMARY KEY` — uniquely identifies rows\n- `FOREIGN KEY` — enforces valid references between tables\n- `NOT NULL` — requires a value\n- `UNIQUE` — prevents duplicate constrained values\n- `CHECK` — enforces a condition\n- `DEFAULT` — supplies a value when one is not explicitly provided\n\n## Transactions\n\nA **transaction** groups related database operations into a logical unit of work. A typical transaction may either complete successfully or be rolled back when a failure occurs.\n\nFor example, transferring money from account A to account B conceptually requires both a debit and a credit. Committing only one side would leave the data inconsistent.\n\n## ACID properties\n\n**Atomicity:** all operations in a transaction happen as one unit, or the transaction is rolled back.\n\n**Consistency:** a successful transaction takes the database from one valid state to another valid state, respecting defined integrity rules.\n\n**Isolation:** concurrent transactions are controlled so that intermediate work does not produce unacceptable interference.\n\n**Durability:** once a transaction is committed, its changes are intended to survive failures according to the database system's durability guarantees.\n\n## Normalization basics\n\nNormalization is a design technique used to reduce unnecessary duplication and update anomalies.\n\n**1NF:** values are atomic and repeating groups are removed.\n\n**2NF:** the table is in 1NF and non-key attributes depend on the whole key, which is especially important for composite keys.\n\n**3NF:** the table is in 2NF and non-key attributes do not depend transitively on another non-key attribute.\n\nNormalization is a design choice, not a rule that every database must maximize at all costs. Some systems intentionally denormalize selected data for performance or reporting, while maintaining correctness carefully."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE accounts (\n    account_id INTEGER PRIMARY KEY,\n    account_holder TEXT NOT NULL,\n    balance REAL NOT NULL CHECK (balance >= 0)\n);\nCREATE TABLE payments (\n    payment_id INTEGER PRIMARY KEY,\n    account_id INTEGER NOT NULL,\n    amount REAL NOT NULL CHECK (amount > 0),\n    status TEXT NOT NULL DEFAULT 'PENDING'\n);",
+        "seedSql": "INSERT INTO accounts (account_id, account_holder, balance) VALUES\n(1, 'Arun', 25000.00),\n(2, 'Bhavya', 18000.00),\n(3, 'Charan', 32000.00);\nINSERT INTO payments (payment_id, account_id, amount, status) VALUES\n(9001, 1, 1500.00, 'PAID'),\n(9002, 1, 700.00, 'PENDING'),\n(9003, 2, 2500.00, 'PAID');",
+        "defaultTable": "accounts",
+        "defaultQuery": "SELECT * FROM accounts;",
+        "tasks": [
+          {
+            "instruction": "List all account holders with their balances.",
+            "expectedQuery": "SELECT account_holder, balance FROM accounts ORDER BY account_id ASC;",
+            "solution": "SELECT account_holder, balance FROM accounts ORDER BY account_id ASC;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "Constraints",
+              "ORDER BY",
+              "SELECT",
+              "Transactions"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the Constraints, Transactions, ACID and Normalization Basics concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m6-t5-task-1"
+          },
+          {
+            "instruction": "Find all pending payments and their amounts.",
+            "expectedQuery": "SELECT payment_id, amount FROM payments WHERE status = 'PENDING' ORDER BY payment_id ASC;",
+            "solution": "SELECT payment_id, amount FROM payments WHERE status = 'PENDING' ORDER BY payment_id ASC;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "Constraints",
+              "ORDER BY",
+              "SELECT",
+              "Transactions",
+              "WHERE"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the Constraints, Transactions, ACID and Normalization Basics concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m6-t5-task-2"
+          },
+          {
+            "instruction": "Calculate the total value of paid payments for each account.",
+            "expectedQuery": "SELECT account_id, SUM(amount) AS paid_total FROM payments WHERE status = 'PAID' GROUP BY account_id ORDER BY account_id ASC;",
+            "solution": "SELECT account_id, SUM(amount) AS paid_total FROM payments WHERE status = 'PAID' GROUP BY account_id ORDER BY account_id ASC;",
+            "orderSensitive": false,
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Constraints",
+              "GROUP BY",
+              "ORDER BY",
+              "SELECT",
+              "Transactions",
+              "WHERE"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the Constraints, Transactions, ACID and Normalization Basics concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m6-t5-task-3"
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m6-t5-challenge-1",
+            "instruction": "Find accounts whose balance is at least 20000",
+            "expectedQuery": "SELECT account_holder, balance FROM accounts WHERE balance >= 20000 ORDER BY balance DESC;",
+            "solution": "SELECT account_holder, balance FROM accounts WHERE balance >= 20000 ORDER BY balance DESC;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Challenge",
+              "Constraints, Transactions, ACID and Normalization Basics"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "account_holder",
+                "balance"
+              ],
+              "rows": [
+                [
+                  "Charan",
+                  32000
+                ],
+                [
+                  "Arun",
+                  25000
+                ]
+              ],
+              "rowCount": 2
+            }
+          },
+          {
+            "taskId": "sql-m6-t5-challenge-2",
+            "instruction": "Calculate paid payment totals for each account, including accounts with no paid payment",
+            "expectedQuery": "SELECT a.account_id, COALESCE(SUM(CASE WHEN p.status = 'PAID' THEN p.amount ELSE 0 END), 0) AS paid_total FROM accounts a LEFT JOIN payments p ON a.account_id = p.account_id GROUP BY a.account_id ORDER BY a.account_id;",
+            "solution": "SELECT a.account_id, COALESCE(SUM(CASE WHEN p.status = 'PAID' THEN p.amount ELSE 0 END), 0) AS paid_total FROM accounts a LEFT JOIN payments p ON a.account_id = p.account_id GROUP BY a.account_id ORDER BY a.account_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Challenge",
+              "Constraints, Transactions, ACID and Normalization Basics"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "account_id",
+                "paid_total"
+              ],
+              "rows": [
+                [
+                  1,
+                  1500
+                ],
+                [
+                  2,
+                  2500
+                ],
+                [
+                  3,
+                  0
+                ]
+              ],
+              "rowCount": 3
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Explain constraints as data-integrity rules.",
+        "Understand transaction boundaries.",
+        "Describe atomicity, consistency, isolation, and durability.",
+        "Recognize why normalization reduces unnecessary duplication."
+      ],
+      "commonMistakes": [
+        "Treating application validation as a substitute for database constraints.",
+        "Committing half of a multi-step update.",
+        "Thinking normalization means 'more tables' without considering relationships."
+      ],
+      "cheatSheet": "PRIMARY KEY, NOT NULL, UNIQUE, CHECK, FOREIGN KEY protect data; BEGIN/COMMIT/ROLLBACK control transaction boundaries.",
+      "reflectionQuestions": [
+        "What changes if you remove one clause from the query?",
+        "Which part of the task is row-level filtering versus result shaping?",
+        "Can you explain the query to another learner without reading the SQL?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m6-t5-ex1",
+          "title": "Inspect an integrity rule",
+          "task": "Inspect the CHECK constraint on account balances.",
+          "query": "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'accounts';",
+          "result": {
+            "columns": [
+              "sql"
+            ],
+            "rows": [
+              [
+                "CREATE TABLE accounts (\n    account_id INTEGER PRIMARY KEY,\n    account_holder TEXT NOT NULL,\n    balance REAL NOT NULL CHECK (balance >= 0)\n)"
+              ]
+            ],
+            "rowCount": 1
+          },
+          "explanation": "Schema inspection makes the constraint visible without attempting a duplicate table creation.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m6-t5-ex2",
+          "title": "Transaction concept",
+          "task": "A transfer should update two account rows as one unit.",
+          "query": "SELECT account_id, balance FROM accounts ORDER BY account_id;",
+          "result": {
+            "columns": [
+              "account_id",
+              "balance"
+            ],
+            "rows": [
+              [
+                1,
+                25000
+              ],
+              [
+                2,
+                18000
+              ],
+              [
+                3,
+                32000
+              ]
+            ],
+            "rowCount": 3
+          },
+          "explanation": "The executable example inspects the starting state. In a real transaction, BEGIN/COMMIT/ROLLBACK would wrap the related UPDATE statements.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ],
+          "executable": true
+        },
+        {
+          "exampleId": "sql-m6-t5-ex3",
+          "title": "Normalized payment report",
+          "task": "Summarize paid payments by account.",
+          "query": "SELECT a.account_id, a.account_holder, SUM(CASE WHEN p.status = 'PAID' THEN p.amount ELSE 0 END) AS paid_total FROM accounts a LEFT JOIN payments p ON a.account_id = p.account_id GROUP BY a.account_id, a.account_holder ORDER BY a.account_id;",
+          "result": {
+            "columns": [
+              "account_id",
+              "account_holder",
+              "paid_total"
+            ],
+            "rows": [
+              [
+                1,
+                "Arun",
+                1500
+              ],
+              [
+                2,
+                "Bhavya",
+                2500
+              ],
+              [
+                3,
+                "Charan",
+                0
+              ]
+            ],
+            "rowCount": 3
+          },
+          "explanation": "Separate account and payment tables preserve entity boundaries while the JOIN reconstructs the report.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build a small report from this topic's dataset. Start with the simplest query that returns the required rows, then add only the clauses needed for filtering, relationships, aggregation, or presentation.",
+      "pages": [
+        {
+          "pageId": "p-sql-m6-t5-concept",
+          "title": "Concept: Constraints, Transactions, ACID and Normalization Basics",
+          "content": "### What you'll learn\n- Explain constraints as data-integrity rules.\n- Understand transaction boundaries.\n- Describe atomicity, consistency, isolation, and durability.\n- Recognize why normalization reduces unnecessary duplication.\n\n### Why this matters\nSQL is easiest to master when you connect each clause to a concrete change in the result set. This lesson uses the live database already attached to the exercise, so you can run the examples and inspect the result.\n\n### Rule of thumb\n`PRIMARY KEY, NOT NULL, UNIQUE, CHECK, FOREIGN KEY protect data; BEGIN/COMMIT/ROLLBACK control transaction boundaries.`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "CREATE TABLE accounts (account_id INTEGER PRIMARY KEY, account_holder TEXT NOT NULL, balance REAL CHECK (balance >= 0));"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m6-t5-concept",
+            "question": "Which approach best matches the goal of this lesson?",
+            "options": [
+              "CREATE TABLE accounts (account_id INTEGER PRIMARY KEY, account_holder TEXT NOT NULL, balance REAL CHECK (balance >= 0));",
+              "Start by changing unrelated tables.",
+              "Return every column for every task.",
+              "Skip the live result and guess."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          }
+        },
+        {
+          "pageId": "p-sql-m6-t5-trace",
+          "title": "Worked example: trace the query",
+          "content": "Let's trace this example step by step.\n\n**Task:** Create a constrained account table.\n\n**Query:**\n```sql\nCREATE TABLE accounts (account_id INTEGER PRIMARY KEY, account_holder TEXT NOT NULL, balance REAL CHECK (balance >= 0));\n```\n\n1. Identify the source.\n2. Identify the requested output columns.\n3. Apply filtering/grouping/sorting if present.\n4. Compare the returned rows with the task requirement.\n\n**Teaching point:** The schema rejects invalid states.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Start from the data and output contract, then add clauses deliberately."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "CREATE TABLE accounts (account_id INTEGER PRIMARY KEY, account_holder TEXT NOT NULL, balance REAL CHECK (balance >= 0));"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m6-t5-trace",
+            "question": "What should you identify before adding advanced clauses?",
+            "options": [
+              "The required output and source data",
+              "A random index",
+              "A transaction log",
+              "An unrelated table"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Start from the data and output contract, then add clauses deliberately."
+          }
+        },
+        {
+          "pageId": "p-sql-m6-t5-check",
+          "title": "Common mistakes and challenge",
+          "content": "### Common mistakes\n- Treating application validation as a substitute for database constraints.\n- Committing half of a multi-step update.\n- Thinking normalization means 'more tables' without considering relationships.\n\n### Try this before Submit\nRun the query with a small change and predict how the result should change. Then restore it and submit the exact task.\n\n### Self-check\nCan you explain why the query returns exactly the rows shown?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Prediction plus result inspection builds reliable query reasoning."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "CREATE TABLE accounts (account_id INTEGER PRIMARY KEY, account_holder TEXT NOT NULL, balance REAL CHECK (balance >= 0));"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m6-t5-check",
+            "question": "What is the most useful self-check?",
+            "options": [
+              "Predict the result before running and explain any difference",
+              "Add SELECT * to every query",
+              "Ignore row counts",
+              "Only check whether the editor accepted the query"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Prediction plus result inspection builds reliable query reasoning."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m6-t5-code-1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Constraint",
+          "code": "CREATE TABLE accounts (account_id INTEGER PRIMARY KEY, account_holder TEXT NOT NULL, balance REAL CHECK (balance >= 0));",
+          "description": "The schema rejects invalid states."
+        },
+        {
+          "exampleId": "sql-m6-t5-code-2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Transaction",
+          "code": "BEGIN; UPDATE accounts SET balance = balance - 100 WHERE account_id = 1; UPDATE accounts SET balance = balance + 100 WHERE account_id = 2; COMMIT;",
+          "description": "The two writes belong to one logical transaction."
+        },
+        {
+          "exampleId": "sql-m6-t5-code-3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Normalization",
+          "code": "SELECT c.customer_name, o.order_total FROM customers c JOIN orders o ON c.customer_id = o.customer_id;",
+          "description": "Separate entities reduce duplication while relationships preserve access."
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Submit",
+        "Reflect"
+      ],
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 6: SQL & Database Fundamentals",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t02-transactions-savepoint-acid",
+      "title": "Transactions, SAVEPOINT & ACID",
+      "description": "Understand atomic changes, rollback, savepoints, and transaction thinking.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 50,
+      "lessonMarkdown": "## Transaction lab\n\nA bank transfer is a useful mental model:\n\n```sql\nBEGIN;\nUPDATE accounts SET balance = balance - 500 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 500 WHERE account_id = 2;\nCOMMIT;\n```\n\nIf a later step fails, the correct recovery path is usually to roll back the transaction rather than leave a partial state.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "## Transaction lab\n\nA bank transfer is a useful mental model:\n\n```sql\nBEGIN;\nUPDATE accounts SET balance = balance - 500 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 500 WHERE account_id = 2;\nCOMMIT;\n```\n\nIf a later step fails, the correct recovery path is usually to roll back the transaction rather than leave a partial state."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE accounts (account_id INTEGER PRIMARY KEY, account_name TEXT, balance REAL NOT NULL);",
+        "seedSql": "INSERT INTO accounts VALUES (1,'Asha',5000),(2,'Ben',3000);",
+        "defaultTable": "accounts",
+        "defaultQuery": "SELECT * FROM accounts ORDER BY account_id;",
+        "tasks": [
+          {
+            "taskId": "sql-m10-tx-1",
+            "instruction": "Transfer 500 from account 1 to account 2 and commit the transaction.",
+            "expectedQuery": "BEGIN; UPDATE accounts SET balance = balance - 500 WHERE account_id = 1; UPDATE accounts SET balance = balance + 500 WHERE account_id = 2; COMMIT;",
+            "solution": "BEGIN; UPDATE accounts SET balance = balance - 500 WHERE account_id = 1; UPDATE accounts SET balance = balance + 500 WHERE account_id = 2; COMMIT;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Transactions"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "table",
+                  "accounts"
+                ]
+              ]
+            }
+          },
+          {
+            "taskId": "sql-m10-tx-2",
+            "instruction": "Attempt the same transfer but roll it back instead of committing.",
+            "expectedQuery": "BEGIN; UPDATE accounts SET balance = balance - 500 WHERE account_id = 1; UPDATE accounts SET balance = balance + 500 WHERE account_id = 2; ROLLBACK;",
+            "solution": "BEGIN; UPDATE accounts SET balance = balance - 500 WHERE account_id = 1; UPDATE accounts SET balance = balance + 500 WHERE account_id = 2; ROLLBACK;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Transactions"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "table",
+                  "accounts"
+                ]
+              ]
+            }
+          },
+          {
+            "taskId": "sql-m10-tx-3",
+            "instruction": "Create a savepoint, make an adjustment, rollback to the savepoint, then commit the unchanged transaction.",
+            "expectedQuery": "BEGIN; SAVEPOINT before_adjustment; UPDATE accounts SET balance = balance + 1000 WHERE account_id = 1; ROLLBACK TO before_adjustment; COMMIT;",
+            "solution": "BEGIN; SAVEPOINT before_adjustment; UPDATE accounts SET balance = balance + 1000 WHERE account_id = 1; ROLLBACK TO before_adjustment; COMMIT;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Transactions",
+              "SAVEPOINT"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "table",
+                  "accounts"
+                ]
+              ]
+            }
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m10-tx-ch1",
+            "instruction": "Transfer 750 from account 1 to 2, but use a savepoint before the second update so you can safely roll back the partial step.",
+            "expectedQuery": "BEGIN; UPDATE accounts SET balance = balance - 750 WHERE account_id = 1; SAVEPOINT after_debit; UPDATE accounts SET balance = balance + 750 WHERE account_id = 2; RELEASE after_debit; COMMIT;",
+            "solution": "BEGIN; UPDATE accounts SET balance = balance - 750 WHERE account_id = 1; SAVEPOINT after_debit; UPDATE accounts SET balance = balance + 750 WHERE account_id = 2; RELEASE after_debit; COMMIT;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Transactions",
+              "SAVEPOINT"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "table",
+                  "accounts"
+                ]
+              ]
+            }
+          },
+          {
+            "taskId": "sql-m10-tx-ch2",
+            "instruction": "Demonstrate a failed business adjustment by rolling back after a tentative debit.",
+            "expectedQuery": "BEGIN; UPDATE accounts SET balance = balance - 1000 WHERE account_id = 1; ROLLBACK;",
+            "solution": "BEGIN; UPDATE accounts SET balance = balance - 1000 WHERE account_id = 1; ROLLBACK;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "ROLLBACK"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "table",
+                  "accounts"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Use BEGIN/COMMIT/ROLLBACK",
+        "Understand SAVEPOINT",
+        "Map transactions to atomic business operations"
+      ],
+      "commonMistakes": [
+        "Forgetting COMMIT/ROLLBACK",
+        "Partial updates outside transactions",
+        "Assuming rollback can undo already committed work"
+      ],
+      "cheatSheet": [
+        "BEGIN; COMMIT; ROLLBACK;",
+        "SAVEPOINT name; ROLLBACK TO name;"
+      ],
+      "reflectionQuestions": [
+        "What must be atomic?",
+        "What happens if a later step fails?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m10-tx-ex1",
+          "title": "Atomic transfer",
+          "task": "Keep two balance changes together.",
+          "query": "BEGIN; UPDATE accounts SET balance=balance-500 WHERE account_id=1; UPDATE accounts SET balance=balance+500 WHERE account_id=2; COMMIT;",
+          "result": {
+            "objects": [
+              [
+                "table",
+                "accounts"
+              ]
+            ]
+          },
+          "explanation": "The transfer is one logical unit.",
+          "walkthrough": [
+            "Begin.",
+            "Apply both updates.",
+            "Commit."
+          ]
+        },
+        {
+          "exampleId": "sql-m10-tx-ex2",
+          "title": "Rollback",
+          "task": "Discard an experiment.",
+          "query": "BEGIN; UPDATE accounts SET balance=balance-500 WHERE account_id=1; ROLLBACK;",
+          "result": {
+            "objects": [
+              [
+                "table",
+                "accounts"
+              ]
+            ]
+          },
+          "explanation": "Rollback restores the pre-transaction state.",
+          "walkthrough": [
+            "Begin.",
+            "Change.",
+            "Rollback."
+          ]
+        },
+        {
+          "exampleId": "sql-m10-tx-ex3",
+          "title": "Savepoint",
+          "task": "Undo only part of a larger transaction.",
+          "query": "BEGIN; SAVEPOINT s1; UPDATE accounts SET balance=balance+100 WHERE account_id=1; ROLLBACK TO s1; COMMIT;",
+          "result": {
+            "objects": [
+              [
+                "table",
+                "accounts"
+              ]
+            ]
+          },
+          "explanation": "Savepoints provide a checkpoint inside a transaction.",
+          "walkthrough": [
+            "Begin.",
+            "Set savepoint.",
+            "Rollback to checkpoint."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build and test a safe money-transfer transaction.",
+      "pages": [
+        {
+          "pageId": "sql-m10-t3-p1",
+          "title": "Understand the idea",
+          "content": "Transactions group changes into one logical unit of work. The usual lifecycle is `BEGIN`, perform changes, then `COMMIT` or `ROLLBACK`. A rollback discards changes made in the current transaction. SQLite supports transactions, and the same concepts underpin ACID behavior in larger systems.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "COMMIT makes the transaction changes durable according to the database engine."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT * FROM accounts ORDER BY account_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t3-p1",
+            "question": "Which command makes a transaction's changes permanent?",
+            "options": [
+              "COMMIT",
+              "ROLLBACK",
+              "SAVEPOINT",
+              "BEGIN"
+            ],
+            "correctAnswer": 0,
+            "explanation": "COMMIT makes the transaction changes durable according to the database engine."
+          }
+        },
+        {
+          "pageId": "sql-m10-t3-p2",
+          "title": "Worked reasoning",
+          "content": "Use rollback when a transaction should be undone.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "COMMIT makes the transaction changes durable according to the database engine."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "BEGIN; UPDATE accounts SET balance = balance - 500 WHERE account_id = 1; UPDATE accounts SET balance = balance + 500 WHERE account_id = 2; COMMIT;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t3-p2",
+            "question": "What does ROLLBACK do?",
+            "options": [
+              "Undo uncommitted changes in the current transaction",
+              "Delete the database",
+              "Create a savepoint",
+              "Commit changes"
+            ],
+            "correctAnswer": 0,
+            "explanation": "COMMIT makes the transaction changes durable according to the database engine."
+          }
+        },
+        {
+          "pageId": "sql-m10-t3-p3",
+          "title": "Predict before you run",
+          "content": "ROLLBACK abandons the current transaction changes.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "COMMIT makes the transaction changes durable according to the database engine."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "Why is a transfer a good transaction example?"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t3-p3",
+            "question": [
+              "Both account updates must succeed together",
+              "It needs a SELECT only",
+              "It avoids all constraints",
+              "It replaces indexes"
+            ],
+            "options": 0,
+            "correctAnswer": "A transfer should not leave one account debited without the corresponding credit.",
+            "explanation": "COMMIT makes the transaction changes durable according to the database engine."
+          }
+        },
+        {
+          "pageId": "sql-m10-t3-p4",
+          "title": "Debugging checklist",
+          "content": "In a real system, transaction behavior also depends on isolation and concurrent access.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "COMMIT makes the transaction changes durable according to the database engine."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "BEGIN;\n...\nCOMMIT;\nBEGIN;\n...\nROLLBACK;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t3-p4",
+            "question": [
+              "What should be atomic?",
+              "What should happen on failure?"
+            ],
+            "options": "Think of a transaction as an all-or-nothing unit of work.",
+            "correctAnswer": "## Transaction lab\n\nA bank transfer is a useful mental model:\n\n```sql\nBEGIN;\nUPDATE accounts SET balance = balance - 500 WHERE account_id = 1;\nUPDATE accounts SET balance = balance + 500 WHERE account_id = 2;\nCOMMIT;\n```\n\nIf a later step fails, the correct recovery path is usually to roll back the transaction rather than leave a partial state.",
+            "explanation": "COMMIT makes the transaction changes durable according to the database engine."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m10-tx-ex1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Atomic transfer",
+          "code": "BEGIN; UPDATE accounts SET balance=balance-500 WHERE account_id=1; UPDATE accounts SET balance=balance+500 WHERE account_id=2; COMMIT;"
+        },
+        {
+          "exampleId": "sql-m10-tx-ex2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Rollback",
+          "code": "BEGIN; UPDATE accounts SET balance=balance-500 WHERE account_id=1; ROLLBACK;"
+        },
+        {
+          "exampleId": "sql-m10-tx-ex3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Savepoint",
+          "code": "BEGIN; SAVEPOINT s1; UPDATE accounts SET balance=balance+100 WHERE account_id=1; ROLLBACK TO s1; COMMIT;"
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Debug",
+        "Submit",
+        "Reflect"
+      ],
+      "scenario": "Transaction reliability",
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 10: SQL Engineering, Reliability & Projects",
+      "practiceProblems": []
+    }
+  ]
+}

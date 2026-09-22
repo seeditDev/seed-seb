@@ -250,7 +250,7 @@ export async function flushActiveSessionTime(reason = 'milestone', isClosing = f
       );
     }
 
-    console.log(`[courseSessionTracker] Flushed ${secondsToFlush}s for ${courseId} (${reason}, totalSession: ${currentSession.sessionTotalSeconds}s)`);
+    console.log(`[courseSessionTracker] Flushed ${secondsToFlush}s for ${courseId} (${reason}, totalSession: ${currentSession?.sessionTotalSeconds ?? sessionEntry.durationSeconds}s)`);
   } catch (err) {
     console.warn('[courseSessionTracker] Flush error (non-fatal):', err.message);
   }

@@ -1,0 +1,1060 @@
+{
+  "moduleId": "m19-debug-algorithmic-problems",
+  "title": "Debug Algorithmic Problems",
+  "description": "Core concepts and hands-on practice in Debug Algorithmic Problems.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-flow-of-control-and-key-variables",
+      "title": "Flow of control and Key Variables",
+      "description": "Study and practice Flow of control and Key Variables with focused C problems and verification-oriented exercises.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 35,
+      "pages": [
+        {
+          "pageId": "p-DEBUGICF1",
+          "title": "Flow of control introduction",
+          "content": "Previously we have learned Basic Debugging \nModule and now we will deep dive in it. \n\nIn this module we are going to learn the \"Flow of control\" ,\"Tracing key variable\" ,\"Checkpoint\" and \"Unit testing\".\n\nFirst, we are going to learn the flow of control. \\\nDo you have any understanding of the concept of \"flow of control\"?  \\\nWhenever you compile your program in C or any other language, how your compiler reads the program determines the program's flow of control. \n\nGenerally the compiler first searches for the main function and then reads line by line in the main function until there is a breakpoint or function calling which changes the flow of control. \n\nReview the code below carefully to understand the flow of control. \n\n```\n#include \n\nvoid name()\n{\n    printf(\"My name is Krish\\n\");\n}\n\nvoid reply()\n{\n    printf(\"Doing great\\n\");\n}\n\nint main()\n{\n    printf(\"Hello bro, What is your name\\n\");\n    name();\n    printf(\"How you doing Krish\\n\");\n    reply();\n    return 0;\n}\n```\nLet's see how the flow of control is working in the above program and how our compiler reads it. \n- We start from the main function.  \n- The first line of the main function contains print statement so we print **`Hello bro, What is your name`**. \n- The second line calls a function name(), so we need to stop reading the main function for now until we completely read the name function.  \n- The first line of the name function contains print statement so we print **`My name is Krish`**. \n- The name function gets finished so we move back to the main function. \n- The third line of the main function is a print statement so we again printed **`How you doing Krish`**\n- In the fourth line of the main function there is a function call so now we will read the reply function first then continue our main function. \n- The first line of the reply function is a print statement so we printed **`Doing great`**.\n- The reply function gets executed so we move back to the main function.  \n- The main function is also terminated.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on flow of control introduction: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int x = 7;\n    if (x > 0) printf(\"positive\\n\");\n    else printf(\"non-positive\\n\");\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DEBUGICF1",
+            "question": "When debugging a loop, what should you trace first?",
+            "options": [
+              "Track how key variables change on each iteration",
+              "Read only the final output",
+              "Remove all loop conditions",
+              "Add random print statements everywhere"
+            ],
+            "correctAnswer": 0,
+            "explanation": "This choice directly supports systematic problem solving and reliable debugging."
+          }
+        },
+        {
+          "pageId": "p-DEBUGICF2",
+          "title": "Flow control continued",
+          "content": "Read the program given below carefully and find out the right flow of control, from the given options. \n\n```\n#include \n\nvoid name()\n{\n    printf(\"My name is Krish\\n\");\n}\n\nvoid reply()\n{\n    printf(\"Doing great\\n\");\n}\n\nint main()\n{\n    printf(\"Hello bro, What is your name\\n\");\n    name();\n    printf(\"How you doing Krish\\n\");\n    reply();\n    return 0;\n}\n\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on flow control continued: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    for (int i = 1; i <= 5; ++i) printf(\"%d \", i);\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGICF3",
+          "title": "Arrange right flow",
+          "content": "Read the program given below carefully and find out the right flow of control, from the given options. \n```\n#include \n\nvoid ram1()\n{\n    printf(\"Hello Daksh\\n\");\n}\n\nvoid Daksh1()\n{\n    printf(\"Hey Ram\\n\");\n}\n\nvoid ram2()\n{\n    printf(\"How's your mother's health now\\n\");\n}\n\nvoid Daksh2()\n{\n    printf(\"She is fine now\\n\");\n}\n\nvoid startconversation()\n{\n    ram1();\n    Daksh1();\n    ram2();\n    Daksh2();\n}\n\nint main()\n{\n    startconversation();\n    return 0;\n}\n\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on arrange right flow: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    for (int i = 1; i <= 5; ++i) {\n        for (int j = 1; j <= i; ++j) putchar('*');\n        putchar('\\n');\n    }\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGICF4",
+          "title": "Understanding key variable",
+          "content": "Variables which are of prime importance in your program can be considered as key variables.\nwith the help of key variables, we can check whether the program is working correctly or not. \\\nProgram to check in the given array if there are even number of 3's multiple or an odd number of 3's multiple. \n```\n#include \n\nint main() {\n  int arr[13];\n  for (int i = 0; i < 13; i++) {\n    scanf(\"%d\", &arr[i]);\n  }\n  int count = 0;\n  for (int i = 0; i < 13; i++) {\n    if (arr[i] % 3 == 0) {\n      count++;\n    }\n  }\n  if (count % 2 == 0) {\n    printf(\"even number of multiple of 3\\n\");\n  } else {\n    printf(\"odd number of multiples of 3\\n\");\n  }\n\n  return 0;\n}\n```\nAs in the above program we can see:-\n- count tells the frequency of 3's multiple\n- count help to find whether the frequency of 3's multiple is odd or even. \\\nSo for this program, we can consider count as our key variable.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on understanding key variable: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int sum = 0;\n    for (int i = 1; i <= 5; ++i) sum += i;\n    printf(\"sum=%d\\n\", sum);\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGICF5",
+          "title": "Tracing key variable-1",
+          "content": "Read the program given below carefully and find the correct output.\n```\n#include \n\nint main() {\n  int arr[] = {1,3,4,5,6,8,6,13,34,45,65,76,38};\n  int count = 0;\n  for (int i = 0; i < 13; i++) {\n    if (arr[i] % 3 == 0) {\n      count++;\n    }\n  }\n  printf(\"%d\\n\", count); // tracing of count \n  count = count % 2;\n  printf(\"%d\\n\", count); // tracing of count\n  if (count == 0) {\n    printf(\"even number of multiple of 3\\n\");\n  } else {\n    printf(\"odd number of multiples of 3\\n\");\n  }\n\n  return 0;\n}\n\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on tracing key variable-1: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int x = 1;\n    for (int i = 0; i < 4; ++i) {\n        x *= 2;\n        printf(\"step %d: x=%d\\n\", i + 1, x);\n    }\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGICF6",
+          "title": "Tracing key variable - 2",
+          "content": "Given below is the program to count all the numbers which are divisible by 2,3 or 5 and are less than or equal to 30. \\\nRead the program carefully and find the correct output.\n```\n#include \n\nint main()\n{\n    int count = 0;\n    for(int i=1;i<=30;i++)\n    {\n        if(i%2==0)\n        {\n            count++;\n        }\n    }\n    printf(\"%d\\n\", count);  // tracing count which stores number divisible by 2.\n    for(int i=1;i<=30;i++)\n    {\n        if(i%3==0&&i%2!=0)\n        {\n            count++;\n        }\n    }\n    printf(\"%d\\n\", count); // tracing count which stores number divisible by 2 and 3.\n    for(int i=1;i<=30;i++)\n    {\n        if(i%5==0&&i%2!=0&&i%3!=0)\n        {\n            count++;\n        }\n    }\n    printf(\"%d\\n\", count); // final answer which stores number divisible by 2,3 and 5\n\n    return 0;\n}\n\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on tracing key variable - 2: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int n = 54321;\n    int last = n % 10;\n    printf(\"last=%d\\n\", last);\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGICF7",
+          "title": "Tracing key variable - 3",
+          "content": "Given an array of size 8 add all the elements of the array and check whether it is divisible by 2. \\\nRead the program given below carefully and find the correct output.\n```\n#include \n\nint main()\n{\n    int arr[8] = {1,2,3,4,5,6,7,8};\n    int total = arr[0];\n    for(int i=1;i<8;i++)\n    {\n        total = total + arr[i];\n    }\n    printf(\"%d\\n\", total);\n\n    if(total%2 == 1)\n    {\n        printf(\"Not divisible by 2\\n\");\n    }\n    else\n    {\n        printf(\"Divisible by 2\\n\");\n    }\n    \n    return 0;\n}\n    \n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on tracing key variable - 3: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int n = 12345;\n    int sum = 0;\n    while (n > 0) { sum += n % 10; n /= 10; }\n    printf(\"sum=%d\\n\", sum);\n    return 0;\n}"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-DEBUGICF1-c",
+          "language": "c",
+          "label": "C",
+          "title": "Flow of control introduction (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGICF2-c",
+          "language": "c",
+          "label": "C",
+          "title": "Flow control continued (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGICF3-c",
+          "language": "c",
+          "label": "C",
+          "title": "Arrange right flow (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGICF4-c",
+          "language": "c",
+          "label": "C",
+          "title": "Understanding key variable (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGICF5-c",
+          "language": "c",
+          "label": "C",
+          "title": "Tracing key variable-1 (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGICF6-c",
+          "language": "c",
+          "label": "C",
+          "title": "Tracing key variable - 2 (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGICF7-c",
+          "language": "c",
+          "label": "C",
+          "title": "Tracing key variable - 3 (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        }
+      ],
+      "practiceProblems": [],
+      "_sourceFile": "c-beginner-v2-p2.json",
+      "_moduleTitle": "Debug Algorithmic Problems"
+    },
+    {
+      "topicId": "t02-check-points",
+      "title": "Check-points",
+      "description": "Study and practice Check-points with focused C problems and verification-oriented exercises.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 35,
+      "pages": [
+        {
+          "pageId": "p-DEBUGCC1",
+          "title": "Introduction to checkpoints",
+          "content": "In the previous module, we learned about the flow of control and key variables which are essential for debugging.\nNow we are going to learn about checkpoints. \n\nWhile tracing your program using the flow of control and figuring out the key variables we need to print the \nthe key variables to check whether the program is working correctly till this point or not so those points \nin which we print our key variables to check whether the program is working correctly till this point is termed as checkpoints.\n\nThere can be multiple checkpoints according to the programmer's requirement.\nBut it's important not to create unnecessary checkpoints as it may make your debugging harder.\nA relevant checkpoint is one which may arrive after a certain number of operations to check whether those \noperations get performed correctly or not.\n \n```\n#include \n\nint main()\n{\n    {\n        // major chunk of code \n    }\n    // checkpoint1\n    {\n        // major chunk of code\n    }\n    // checkpoint2\n    {\n        // major chunk of code \n    }\n    // checkpoint3\n\n    return 0;\n}\n\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on introduction to checkpoints: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int x = 10;\n    printf(\"checkpoint x=%d\\n\", x);\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DEBUGCC1",
+            "question": "What is the main benefit of placing a checkpoint inside a suspicious branch?",
+            "options": [
+              "It exposes the program state at a specific execution point",
+              "It automatically fixes the bug",
+              "It replaces all unit tests",
+              "It makes loops unnecessary"
+            ],
+            "correctAnswer": 0,
+            "explanation": "This choice directly supports systematic problem solving and reliable debugging."
+          }
+        },
+        {
+          "pageId": "p-DEBUGCC2",
+          "title": "Lets practice",
+          "content": "Given a program to check whether the sum of all the elements of an array is divisible by 2 or not.\nWe have inserted some checkpoints in the given program you must find out the good checkpoint which one must use for debugging the code.\n```\n#include \n\nint main()\n{\n    int val = 0;\n    printf(\"%d = Checkpoint1\\n\", val);\n    int arr[8] = {1,0,1,0,1,1,0,1};\n    val = arr[0];\n    for(int i=1; i<8; i++)\n    {\n        val = val + arr[i];\n    }\n    printf(\"%d = Checkpoint2\\n\", val);\n    val = val % 2;\n    if(val == 1)\n    {\n        printf(\"not divisible by 2\\n\");\n    }\n    else\n    {\n        printf(\"divisible by 2\\n\");\n    }\n\n    return 0;\n}\n\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on lets practice: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int total = 0;\n    for (int i = 1; i <= 4; ++i) total += i;\n    printf(\"total=%d\\n\", total);\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGCC5",
+          "title": "Checkpoints with tracing of key variable",
+          "content": "As we have learned checkpoints and key variable now lets try to use both of them together. \n\nWe can use checkpoints for:-\n- Checking which code block is giving wrong answer(Code Block means numerous lines of code creating a relevant information).\n- Deeply try to debug the given code block by, finding out the key variables and printing those key variable repetitively in each line. \\\n**Showing a basic structure of how to use key variables with checkpoints** \n```cpp\n// assuming that we find out that checkpoint1 was missing out on something\n#include \n\nvoid funct1()\n{\n\n    // line1\n    // printf(\"%d\\n\", cnt); // tracing key variable \n\n    // line2\n    // line3\n    // printf(\"%d\\n\", cnt); // tracing key variable \n    // line4\n    // line5\n    // printf(\"%d\\n\", cnt); // tracing key variable \n\n}\nvoid funct2()\n{\n    // line1\n    // line2\n    // line3\n    // line4\n    // line5\n}\nvoid funct3()\n{\n    // line1\n    // line2\n    // line3\n    // line4\n    // line5\n}\nint main()\n{\n    funct1();\n    // checkpoint1\n    funct2();\n    // checkpoint2\n    funct3();\n    // checkpoint3\n\n    return 0;\n}\n\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on checkpoints with tracing of key variable: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int n = 1234, digit;\n    while (n > 0) {\n        digit = n % 10;\n        printf(\"digit=%d\\n\", digit);\n        n /= 10;\n    }\n    return 0;\n}"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-DEBUGCC1-c",
+          "language": "c",
+          "label": "C",
+          "title": "Introduction to checkpoints (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCC2-c",
+          "language": "c",
+          "label": "C",
+          "title": "Lets practice (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCC5-c",
+          "language": "c",
+          "label": "C",
+          "title": "Checkpoints with tracing of key variable (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "DEBUGCC3",
+          "questionId": "DEBUGCC3",
+          "title": "Debug the increasing-then-decreasing star pattern",
+          "difficulty": "Easy",
+          "description": "Print a pattern with 1,2,3,4,5 stars and then 4,3,2,1 stars.",
+          "problemStatement": "Print a pattern with 1,2,3,4,5 stars and then 4,3,2,1 stars.",
+          "constraints": [
+            "- $1\\leq T\\leq100$"
+          ],
+          "inputFormat": "Each test case contains an integer $N$ (the peak width).",
+          "outputFormat": "Print the pattern for each test case.",
+          "sampleTestCases": [
+            {
+              "input": "1\n3",
+              "output": "*\n**\n***\n**\n*",
+              "explanation": "The first half grows to $N$ stars and the second half shrinks."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Read input and solve the problem.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    # Read input and solve the problem.\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8').trim();\n// Read input and solve the problem.\n",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(\"\")\n    // Read input and solve the problem.\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input = String::new(); io::stdin().read_to_string(&mut input).unwrap();\n    // Read input and solve the problem.\n}",
+            "C#": "using System;\nclass Program { static void Main() {\n    // Read input and solve the problem.\n} }",
+            "SQL": "-- SQL is not required for this C programming problem.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\n1",
+              "output": "*",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n2",
+              "output": "*\n**\n*",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n5",
+              "output": "*\n**\n***\n****\n*****\n****\n***\n**\n*",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n3",
+              "output": "*\n**\n***\n**\n*",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n4",
+              "output": "*\n**\n***\n****\n***\n**\n*",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            }
+          ]
+        },
+        {
+          "problemId": "DEBUGCC4",
+          "questionId": "DEBUGCC4",
+          "title": "Debug the decreasing-then-increasing star pattern",
+          "difficulty": "Easy",
+          "description": "Print a pattern with $N,N-1,\\ldots,1$ stars and then $2,3,\\ldots,N$ stars.",
+          "problemStatement": "Print a pattern with $N,N-1,\\ldots,1$ stars and then $2,3,\\ldots,N$ stars.",
+          "constraints": [
+            "- $1\\leq T\\leq100$"
+          ],
+          "inputFormat": "Each test case contains an integer $N$.",
+          "outputFormat": "Print the required pattern.",
+          "sampleTestCases": [
+            {
+              "input": "1\n5",
+              "output": "*****\n****\n***\n**\n*\n**\n***\n****\n*****",
+              "explanation": "The second half starts from 2 stars because the 1-star row is shared by both halves."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Read input and solve the problem.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    # Read input and solve the problem.\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8').trim();\n// Read input and solve the problem.\n",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(\"\")\n    // Read input and solve the problem.\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input = String::new(); io::stdin().read_to_string(&mut input).unwrap();\n    // Read input and solve the problem.\n}",
+            "C#": "using System;\nclass Program { static void Main() {\n    // Read input and solve the problem.\n} }",
+            "SQL": "-- SQL is not required for this C programming problem.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\n1",
+              "output": "*",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n2",
+              "output": "**\n*\n**",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n5",
+              "output": "*****\n****\n***\n**\n*\n**\n***\n****\n*****",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n3",
+              "output": "***\n**\n*\n**\n***",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n4",
+              "output": "****\n***\n**\n*\n**\n***\n****",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            }
+          ]
+        },
+        {
+          "problemId": "DEBUGCC6",
+          "questionId": "DEBUGCC6",
+          "title": "Reverse even digits and sum all digits",
+          "difficulty": "Easy",
+          "description": "Given an integer $N$, print the digits of $N$ in reverse order but keep only even digits; then print the sum of all digits.",
+          "problemStatement": "Given an integer $N$, print the digits of $N$ in reverse order but keep only even digits; then print the sum of all digits.",
+          "constraints": [
+            "- $1\\leq T\\leq100$",
+            "- $0\\leq N\\leq10^{18}$"
+          ],
+          "inputFormat": "Each test case contains one non-negative integer.",
+          "outputFormat": "Print the filtered reverse digits and the digit sum on separate lines. Print `EMPTY` when no even digit exists.",
+          "sampleTestCases": [
+            {
+              "input": "2\n123456\n135",
+              "output": "642\n21\nEMPTY\n9",
+              "explanation": "Reverse traversal filters even digits; the sum uses every digit."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Read input and solve the problem.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    # Read input and solve the problem.\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8').trim();\n// Read input and solve the problem.\n",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(\"\")\n    // Read input and solve the problem.\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input = String::new(); io::stdin().read_to_string(&mut input).unwrap();\n    // Read input and solve the problem.\n}",
+            "C#": "using System;\nclass Program { static void Main() {\n    // Read input and solve the problem.\n} }",
+            "SQL": "-- SQL is not required for this C programming problem.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "2\n123456\n135",
+              "output": "642\n21\nEMPTY\n9",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n24680",
+              "output": "08642\n20",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n111",
+              "output": "EMPTY\n3",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n2005",
+              "output": "002\n7",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n908172",
+              "output": "280\n27",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            }
+          ]
+        },
+        {
+          "problemId": "DEBUGCC7",
+          "questionId": "DEBUGCC7",
+          "title": "Reverse digits up to 5 and multiply all digits",
+          "difficulty": "Easy",
+          "description": "Given an integer $N$, print its digits in reverse order keeping only digits at most 5; then print the product of all digits.",
+          "problemStatement": "Given an integer $N$, print its digits in reverse order keeping only digits at most 5; then print the product of all digits.",
+          "constraints": [
+            "- $1\\leq T\\leq100$",
+            "- $0\\leq N\\leq10^{18}$"
+          ],
+          "inputFormat": "Each test case contains one non-negative integer.",
+          "outputFormat": "Print the filtered reverse digits and digit product on separate lines. Print `EMPTY` if no digit is at most 5.",
+          "sampleTestCases": [
+            {
+              "input": "2\n67251\n9876",
+              "output": "152\n420\nEMPTY\n3024",
+              "explanation": "Filter the reverse traversal by digit <=5; multiply all original digits."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Read input and solve the problem.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    # Read input and solve the problem.\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8').trim();\n// Read input and solve the problem.\n",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(\"\")\n    // Read input and solve the problem.\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input = String::new(); io::stdin().read_to_string(&mut input).unwrap();\n    // Read input and solve the problem.\n}",
+            "C#": "using System;\nclass Program { static void Main() {\n    // Read input and solve the problem.\n} }",
+            "SQL": "-- SQL is not required for this C programming problem.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "2\n67251\n9876",
+              "output": "152\n420\nEMPTY\n3024",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n123456",
+              "output": "54321\n720",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n555",
+              "output": "555\n125",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n999",
+              "output": "EMPTY\n729",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n105",
+              "output": "501\n0",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "c-beginner-v2-p2.json",
+      "_moduleTitle": "Debug Algorithmic Problems"
+    },
+    {
+      "topicId": "t03-unit-testing",
+      "title": "Unit Testing",
+      "description": "Study and practice Unit Testing with focused C problems and verification-oriented exercises.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-DEBUGCU1",
+          "title": "Introdution to unit testing",
+          "content": "We have learned about the flow of control, tracing key variables and checkpoints in the previous modules.\n\nUsing those techniques you can debug problems whose test case is given to you. \\\nSometimes your submission gives an `AC` in most of the test cases but fails in a few test cases. \\\nHere - you need to generate your own test cases using a special technique named **Unit Testing**.\n\nIn unit testing, \n- We generate multiple `test cases` and their `expected output` in our notebook / diary / in our mind\n- We then run our code on our unit test cases \n- We compare the `expected output` from our book with the `actual output` to see which test cases are failing and then try and identify the error in the code\n- Fix the code and repeat the steps above till you get an `AC`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on introdution to unit testing: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int x = 5;\n    int y = x * 2;\n    printf(\"%d\\n\", y);\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DEBUGCU1",
+            "question": "What makes an edge test case valuable during debugging?",
+            "options": [
+              "It targets a boundary where assumptions are most likely to fail",
+              "It always uses the largest possible input",
+              "It must contain random numbers",
+              "It ignores the stated constraints"
+            ],
+            "correctAnswer": 0,
+            "explanation": "This choice directly supports systematic problem solving and reliable debugging."
+          }
+        },
+        {
+          "pageId": "p-DEBUGCU2",
+          "title": "Learning to create test cases",
+          "content": "In this lesson, we will learn to create valid test cases.\nFor a test case to be valid it should satisfy all the test case constraints and the input format.\nSo you need to read those two thing carefully to create a valid test case.\n\nLet's try to create some valid test case reading constraints and input format.\n\n### Input\n- The first line of the input contains a single integer T denoting the number of test cases. The description of \nT test cases follows.\n- The first line of each test case contains three space-separated integers N, K and V.\n- The second line contains N space-separated integers A1,A2,A3...AN.\n\n### Constraints\n- 1≤T≤100\n- 1 ≤ N, K ≤ 100\n- 1 ≤ V ≤ $10^5$\n- 1 ≤ Ai ≤ $10^5$",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on learning to create test cases: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int a[] = {1, 2, 3};\n    int n = 3;\n    for (int i = 0; i < n; ++i) printf(\"%d \", a[i]);\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGCU3",
+          "title": "Learning to create test cases continue",
+          "content": "Let's create some valid test case reading constraints and input format.\n\n### Input\n- The first line of the input contains a single integer T denoting the number of test cases. The description of \nT-test cases follow.\n- The first line of each test case contains four space-separated integers N, M, K, and V.\n- The second line contains N space-separated integers A1, A2, A3...AN.\n- The third line contains M space-separated integers B1, B2, B3....BM.\n\n### Constraints\n- 1≤T≤100\n- 1 ≤ N, M, K ≤ 100\n- 1 ≤ V ≤ $10^5$\n- 1 ≤ Ai ≤ $10^5$\n- 1 ≤ Bi ≤ $10^5$",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on learning to create test cases continue: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int a = 0;\n    for (int i = 0; i < 3; ++i) a += i;\n    printf(\"%d\\n\", a);\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGCU4",
+          "title": "How to create edge test case",
+          "content": "While searching for the failing test cases - you can't create a lot of test cases, since that would be time consuming.\n\nTry and create unit tests which meet one or more of the following criteria\n- Thoroughly understand the program logic, constraints and Input / Output format. \n- Identify the boundary conditions, and the upper and lower limit for input format and make test cases around it.\n- Create a test case around large inputs.\n- Consider the negative values in the test case.\n- Consider zero input as one of the special test cases.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on how to create edge test case: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int n = 1;\n    while (n < 16) n *= 2;\n    printf(\"%d\\n\", n);\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGCU15",
+          "title": "Find the correct edge test case",
+          "content": "Given below is a program to multiply two numbers and print the product of the number.\n```\n#include \n\nint main()\n{\n    int num1, num2;\n    scanf(\"%d %d\", &num1, &num2);\n    int ans = num1 * num2;\n    printf(\"%d\\n\", ans);\n    return 0;\n}\n\n\n```\n### Task\n- Read the code carefully.\n- Read the constraints given below carefully.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on find the correct edge test case: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int a[] = {1, 2, 3, 4};\n    int n = 4;\n    printf(\"first=%d last=%d\\n\", a[0], a[n-1]);\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGCU16",
+          "title": "Find the correct edge test case",
+          "content": "Your input has two arrays of size $n$ and $m$ and divide the sum of first array with the sum of second array and print the result.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on find the correct edge test case: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int n = 10;\n    for (int i = 1; i <= n; ++i) {\n        if (i % 2 == 0) printf(\"%d \", i);\n    }\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGCU5",
+          "title": "Identify valid edge case",
+          "content": "There is an ATM machine. \\\nInitially, it contains a total of $K$ units of money. \\\n$N$ people (numbered 1 through $N$) want to withdraw money; for each valid $i$, the $i^{th}$ person wants to withdraw $A_i$ units of money. \\\nThe people come in and try to withdraw money one by one, in the increasing order of their indices. \\\nWhenever someone tries to withdraw money, if the machine has at least the required amount of money, it will give out the required amount. \\\nOtherwise, it will throw an error and not give out anything; in that case, this person will return home directly without trying to do anything else. \n\nFor each person, determine whether they will get the required amount of money or not.\n\nYou can use seed-it Ide to run the testcase.\n\n### Read the given code carefully.\n```\n#include \n\nint main() {\n    int t, i = 1, j = 0, n, k;\n    scanf(\"%d\", &t);\n    \n    for (i; i = A[j]) {\n                printf(\"1\");\n                k = k - A[j];\n            } else {\n                printf(\"0\");\n            }\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}\n```\n### Task\n- Read the code carefully.\n- Given some test cases in option.\n- Analyze those test case.\n- Find the edge test case out of them.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on identify valid edge case: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int x = 100;\n    if (x > 0 && x <= 100) printf(\"valid\\n\");\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGCU6",
+          "title": "Identify the valid edge testcase",
+          "content": "You are given an array A of size 2N. Find out whether it is possible to split A into two arrays, each of length N, such that both arrays consist of distinct elements. \n\nYou can use seed-it Ide to run the testcase.\n\n\n\n### Code\n```\n#include \n\nint main() {\n    int t;\n    scanf(\"%d\", &t);\n    while (t--) {\n        int n;\n        scanf(\"%d\", &n);\n        int a[2 * n];\n        for (int i = 0; i  1)\n            printf(\"No\\n\");\n    }\n    return 0;\n}\n\n```\n### Task \n- Read the question.\n- Analyze the solution written by us carefully.\n- Find out in which test case this solution will fail.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on identify the valid edge testcase: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int a = 10, b = 3;\n    printf(\"remainder=%d\\n\", a % b);\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGCU9",
+          "title": "Identify the valid edge test case",
+          "content": "### Question\nNow that Chef has finished baking and frosting his cupcakes, it's time to package them. Chef has N cupcakes, and needs to decide how many cupcakes to place in each package. Each package must contain the same number of cupcakes. Chef will choose an integer A between 1 and N, inclusive, and place exactly A cupcakes into each package. Chef makes as many packages as possible. Chef then gets to eat the remaining cupcakes. Chef enjoys eating cupcakes very much. Help Chef choose the package size A that will let him eat as many cupcakes as possible. \\\nYou can use seed-it Ide to run the testcase.\n\n\n### Output\nFor each test case, output the package size that will maximize the number of leftover cupcakes. If multiple package sizes will result in the same number of leftover cupcakes, print the largest such size. \n\n### Code\n```\n#include \n\nint main() {\n    int t;\n    scanf(\"%d\", &t);\n    while(t--){\n        int n;\n        scanf(\"%d\", &n);\n\n        if(n - 2 == 0){\n            printf(\"%d\\n\", 2);\n        }\n        else{\n            printf(\"%d\\n\", n - 2);\n        }\n    }\n    return 0;\n}\n\n```\n### Task \n- Read the question.\n- Analyze the solution written by us carefully.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on identify the valid edge test case: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int n = 0;\n    if (n == 0) printf(\"edge case\\n\");\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGCU11",
+          "title": "Identify valid edge case",
+          "content": "### Question\nChef decided to go on a diet during the following N days (numbered 1 through N). Part of the diet plan is to eat K grams of protein during each day. For each valid i, Chef wants to buy Ai grams of protein in the morning of the \ni-th day and then eat K grams of protein as part of his dinner. If he has any protein remaining, he can store it and use it in later dinners. Initially, Chef is storing 0 grams of protein. \\\nDetermine whether Chef will have enough protein all the time during his diet. In case he will not have enough, find the first day on which Chef will be unable to eat K grams of protein. \\\nYou can use seed-it Ide to run the testcase.\n\n### Read the code given below carefully\n```c\n#include \n\nint main() {\n    int testcase;\n    scanf(\"%d\", &testcase);\n    while(testcase--){\n        int num, num1;\n        scanf(\"%d %d\", &num, &num1);\n        int arr[num];\n        for(int i = 0; i < num; i++)\n            scanf(\"%d\", &arr[i]);\n        int left = 0;\n        int flag = 0;\n        for(int i = 0; i < num; i++) {\n            if (left + arr[i] < num1) {\n                printf(\"NO %d\\n\", i + 1);\n                flag = 1;\n            }\n            left = left + arr[i] - num1;\n        }\n        if (flag == 0) {\n            printf(\"YES\\n\");\n        }\n    }\n    return 0;\n}\n```\n### Task\n- Read the question.\n- Analyze the solution written by us carefully.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on identify valid edge case: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int a = 5, b = 8;\n    printf(\"difference=%d\\n\", b - a);\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DEBUGCU13",
+          "title": "Identify the valid edge case",
+          "content": "Chef recently graduated Computer Science in university, so he was looking for a job. He applied for several job offers, but he eventually settled for a software engineering job at ShareChat. Chef was very enthusiastic about his new job and the first mission assigned to him was to implement a message encoding feature to ensure the chat is private and secure.\nChef has a message, which is a string S with length N containing only lowercase English letters. It should be encoded in two steps as follows:\n- Swap the first and second character of the string S, then swap the 3rd and 4th character, then the 5th and 6th character and so on. If the length of S is odd, the last character should not be swapped with any other.\n- Replace each occurrence of the letter 'a' in the message obtained after the first step by the letter 'z', each occurrence of 'b' by 'y', each occurrence of 'c' by 'x', etc, and each occurrence of 'z' in the message obtained after the first step by 'a'.\nThe string produced in the second step is the encoded message. Help Chef and find this message. \\\nYou can use seed-it Ide to check the testcase.\n\n\n### Read the code carefully\n```\n#include \n#include \n\nint main() {\n    int t, n;\n    char s[101];\n    scanf(\"%d\", &t);\n    while(t--){\n        scanf(\"%d\", &n);\n        scanf(\"%s\", s);\n        for(int i = 0; i < n; i += 2){\n            if( (i + 1) < n ){\n                char temp = s[i];\n                s[i] = s[i+1];\n                s[i+1] = temp;\n            }\n        }\n        for(int i = 0; i < n; i++){\n            if(s[i] != 'z'){\n                s[i] = 'a' + 'z' - s[i];\n            }\n        }\n        printf(\"%s\\n\", s);\n    }\n    return 0;\n}\n\n```\n### Task\n- Read the question carefully.\n- Analyze the code written by us.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key idea",
+            "text": "Focus on identify the valid edge case: trace the data flow, state changes, and edge conditions before coding."
+          },
+          "codeCard": {
+            "language": "c",
+            "code": "#include <stdio.h>\n\nint main(void) {\n    int n = 10;\n    int square = n * n;\n    printf(\"%d\\n\", square);\n    return 0;\n}"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-DEBUGCU1-c",
+          "language": "c",
+          "label": "C",
+          "title": "Introdution to unit testing (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCU2-c",
+          "language": "c",
+          "label": "C",
+          "title": "Learning to create test cases (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCU3-c",
+          "language": "c",
+          "label": "C",
+          "title": "Learning to create test cases continue (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCU4-c",
+          "language": "c",
+          "label": "C",
+          "title": "How to create edge test case (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCU15-c",
+          "language": "c",
+          "label": "C",
+          "title": "Find the correct edge test case (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCU16-c",
+          "language": "c",
+          "label": "C",
+          "title": "Find the correct edge test case (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCU5-c",
+          "language": "c",
+          "label": "C",
+          "title": "Identify valid edge case (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCU6-c",
+          "language": "c",
+          "label": "C",
+          "title": "Identify the valid edge testcase (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCU9-c",
+          "language": "c",
+          "label": "C",
+          "title": "Identify the valid edge test case (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCU11-c",
+          "language": "c",
+          "label": "C",
+          "title": "Identify valid edge case (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DEBUGCU13-c",
+          "language": "c",
+          "label": "C",
+          "title": "Identify the valid edge case (C)",
+          "code": "#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "DEBUGCU7",
+          "questionId": "DEBUGCU7",
+          "title": "ATM simulation",
+          "difficulty": "Easy",
+          "description": "An ATM starts with $K$ units. Person $i$ requests $A_i$. If enough money remains, the withdrawal succeeds and reduces the balance; otherwise it fails and the balance is unchanged. Output `1` for success and `0` for failure for every person.",
+          "problemStatement": "An ATM starts with $K$ units. Person $i$ requests $A_i$. If enough money remains, the withdrawal succeeds and reduces the balance; otherwise it fails and the balance is unchanged. Output `1` for success and `0` for failure for every person.",
+          "constraints": [
+            "- $1\\leq T\\leq100$",
+            "- $1\\leq N\\leq10^5$",
+            "- $0\\leq K,A_i\\leq10^9$"
+          ],
+          "inputFormat": "Each test case contains $N,K$ followed by $N$ requests.",
+          "outputFormat": "Print a binary success/failure sequence.",
+          "sampleTestCases": [
+            {
+              "input": "2\n4 10\n4 5 3 2\n3 5\n6 1 4",
+              "output": "1 1 0 0\n0 1 1",
+              "explanation": "Process requests in order and update the remaining balance after successful withdrawals."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Read input and solve the problem.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    # Read input and solve the problem.\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8').trim();\n// Read input and solve the problem.\n",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(\"\")\n    // Read input and solve the problem.\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input = String::new(); io::stdin().read_to_string(&mut input).unwrap();\n    // Read input and solve the problem.\n}",
+            "C#": "using System;\nclass Program { static void Main() {\n    // Read input and solve the problem.\n} }",
+            "SQL": "-- SQL is not required for this C programming problem.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "2\n4 10\n4 5 3 2\n3 5\n6 1 4",
+              "output": "1 1 0 0\n0 1 1",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n3 0\n1 1 1",
+              "output": "0 0 0",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n4 7\n7 1 6 1",
+              "output": "1 0 0 0",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n2 10\n10 1",
+              "output": "1 0",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n5 3\n1 1 1 1 1",
+              "output": "1 1 1 0 0",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            }
+          ]
+        },
+        {
+          "problemId": "DEBUGCU8",
+          "questionId": "DEBUGCU8",
+          "title": "Split array into two distinct halves",
+          "difficulty": "Easy",
+          "description": "Given an array of size $2N$, determine whether it can be split into two length-$N$ arrays such that each half contains distinct values.",
+          "problemStatement": "Given an array of size $2N$, determine whether it can be split into two length-$N$ arrays such that each half contains distinct values.",
+          "constraints": [
+            "- $1\\leq T\\leq100$",
+            "- $1\\leq N\\leq10^5$"
+          ],
+          "inputFormat": "Each test case contains $N$ followed by $2N$ integers.",
+          "outputFormat": "Print `YES` if such a split exists, otherwise `NO`.",
+          "sampleTestCases": [
+            {
+              "input": "3\n2\n1 2 2 1\n2\n1 2 3 4\n3\n1 2 1 3 2 3",
+              "output": "YES\nYES\nYES",
+              "explanation": "A valid partition exists exactly when no value occurs more than twice; paired occurrences can be distributed one to each half."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Read input and solve the problem.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    # Read input and solve the problem.\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8').trim();\n// Read input and solve the problem.\n",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(\"\")\n    // Read input and solve the problem.\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input = String::new(); io::stdin().read_to_string(&mut input).unwrap();\n    // Read input and solve the problem.\n}",
+            "C#": "using System;\nclass Program { static void Main() {\n    // Read input and solve the problem.\n} }",
+            "SQL": "-- SQL is not required for this C programming problem.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n2\n1 2 2 1\n2\n1 2 3 4\n3\n1 2 1 3 2 3",
+              "output": "YES\nYES\nYES",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n1\n5 5",
+              "output": "YES",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n2\n1 1 1 1",
+              "output": "NO",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n3\n1 1 1 2 2 2",
+              "output": "NO",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n2\n1 1 1 2",
+              "output": "NO",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            }
+          ]
+        },
+        {
+          "problemId": "DEBUGCU10",
+          "questionId": "DEBUGCU10",
+          "title": "Cupcake package size",
+          "difficulty": "Easy",
+          "description": "Given $N$ cupcakes, choose $A$ between 1 and $N$ and form as many equal packages as possible. Maximize the number of cupcakes left over.",
+          "problemStatement": "Given $N$ cupcakes, choose $A$ between 1 and $N$ and form as many equal packages as possible. Maximize the number of cupcakes left over.",
+          "constraints": [
+            "- $1\\leq T\\leq100$",
+            "- $1\\leq N\\leq10^9$"
+          ],
+          "inputFormat": "Each test case contains $N$.",
+          "outputFormat": "Print the maximum possible remainder.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1\n2\n7\n10",
+              "output": "0\n0\n3\n4",
+              "explanation": "Evaluate $N\\bmod A$ for $1\\le A\\le N$; the maximum is 0 for $N\\le2$, 3 for 7, and 4 for 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Read input and solve the problem.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    # Read input and solve the problem.\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8').trim();\n// Read input and solve the problem.\n",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(\"\")\n    // Read input and solve the problem.\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input = String::new(); io::stdin().read_to_string(&mut input).unwrap();\n    // Read input and solve the problem.\n}",
+            "C#": "using System;\nclass Program { static void Main() {\n    // Read input and solve the problem.\n} }",
+            "SQL": "-- SQL is not required for this C programming problem.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4\n1\n2\n7\n10",
+              "output": "0\n0\n3\n4",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n3",
+              "output": "1",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n4",
+              "output": "1",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n5",
+              "output": "2",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n10",
+              "output": "4",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            }
+          ]
+        },
+        {
+          "problemId": "DEBUGCU12",
+          "questionId": "DEBUGCU12",
+          "title": "Protein diet simulation",
+          "difficulty": "Easy",
+          "description": "For each day, buy $A_i$ grams of protein in the morning and consume $K$ grams at dinner. Stored protein carries to later days. Output the first day on which the available protein is insufficient, or `0` if every day succeeds.",
+          "problemStatement": "For each day, buy $A_i$ grams of protein in the morning and consume $K$ grams at dinner. Stored protein carries to later days. Output the first day on which the available protein is insufficient, or `0` if every day succeeds.",
+          "constraints": [
+            "- $1\\leq T\\leq100$",
+            "- $1\\leq N\\leq10^5$",
+            "- $1\\leq K,A_i\\leq10^9$"
+          ],
+          "inputFormat": "Each test case contains $N,K$ followed by $N$ purchases.",
+          "outputFormat": "Print the first failing day, or 0.",
+          "sampleTestCases": [
+            {
+              "input": "3\n3 5\n5 5 5\n4 6\n2 2 10 2\n3 4\n4 1 1",
+              "output": "0\n1\n2",
+              "explanation": "Carry the unspent protein forward and check the balance before each dinner."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Read input and solve the problem.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    # Read input and solve the problem.\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8').trim();\n// Read input and solve the problem.\n",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(\"\")\n    // Read input and solve the problem.\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input = String::new(); io::stdin().read_to_string(&mut input).unwrap();\n    // Read input and solve the problem.\n}",
+            "C#": "using System;\nclass Program { static void Main() {\n    // Read input and solve the problem.\n} }",
+            "SQL": "-- SQL is not required for this C programming problem.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n3 5\n5 5 5\n4 6\n2 2 10 2\n3 4\n4 1 1",
+              "output": "0\n1\n2",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n1 10\n5",
+              "output": "1",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n4 5\n3 3 3 3",
+              "output": "1",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n5 2\n1 1 1 1 1",
+              "output": "1",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\n3 1\n0 0 2",
+              "output": "1",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            }
+          ]
+        },
+        {
+          "problemId": "DEBUGCU14",
+          "questionId": "DEBUGCU14",
+          "title": "Encode the message",
+          "difficulty": "Easy",
+          "description": "Encode a lowercase string in two steps: swap adjacent pairs (leave a final odd character unchanged), then replace each letter by its alphabetic mirror `a`↔`z`, ..., `m`↔`n`.",
+          "problemStatement": "Encode a lowercase string in two steps: swap adjacent pairs (leave a final odd character unchanged), then replace each letter by its alphabetic mirror `a`↔`z`, ..., `m`↔`n`.",
+          "constraints": [
+            "- $1\\leq T\\leq100$",
+            "- $1\\leq N\\leq10^4$"
+          ],
+          "inputFormat": "Each test case contains one lowercase string.",
+          "outputFormat": "Print the encoded string.",
+          "sampleTestCases": [
+            {
+              "input": "3\nabcd\nabcde\nhello",
+              "output": "yzwx\nyzwxv\nvsool",
+              "explanation": "`abcd` becomes `badc`, then mirrors to `yxwz`."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // Read input and solve the problem.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Read input and solve the problem.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    # Read input and solve the problem.\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+            "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf8').trim();\n// Read input and solve the problem.\n",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(\"\")\n    // Read input and solve the problem.\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input = String::new(); io::stdin().read_to_string(&mut input).unwrap();\n    // Read input and solve the problem.\n}",
+            "C#": "using System;\nclass Program { static void Main() {\n    // Read input and solve the problem.\n} }",
+            "SQL": "-- SQL is not required for this C programming problem.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\nabcd\nabcde\nhello",
+              "output": "yzwx\nyzwxv\nvsool",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\na",
+              "output": "z",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\nab",
+              "output": "yz",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\naz",
+              "output": "az",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            },
+            {
+              "input": "1\nabc",
+              "output": "yzx",
+              "explanation": "Hidden case targets boundary, equality, repetition, or scale-related behavior for this concept."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "c-beginner-v2-p2.json",
+      "_moduleTitle": "Debug Algorithmic Problems"
+    }
+  ]
+}

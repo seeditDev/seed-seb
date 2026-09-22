@@ -1,0 +1,1108 @@
+{
+  "moduleId": "m03-database-integration",
+  "title": "Database Integration",
+  "description": "Core concepts and hands-on practice in Database Integration.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-mongodb-setup",
+      "title": "MongoDB Setup",
+      "description": "Study concepts and solve targeted engineering problems for MongoDB Setup.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 40,
+      "pages": [
+        {
+          "pageId": "p-NIPFVX01",
+          "title": "Understanding databases (SQL vs NoSQL basics)",
+          "content": "Welcome! So far in our Node.js journey, especially with Express, we've learned how to handle incoming requests and data (like form submissions in `req.body`). But what happens to that data when our server restarts? It's gone! To store data permanently and in an organized way, we use **databases**.\n\nThink of a database as a dedicated system for storing, managing, and retrieving information efficiently. When you build web applications, you'll almost always need a database to store user information, product details, posts, or any other persistent data.\n\nThere are many types of databases, but they generally fall into two main categories: **SQL** and **NoSQL**. Let's look at a basic overview of each.\n\n**1. SQL Databases (Relational Databases)**\n\n* **What they are:** SQL stands for Structured Query Language. These databases are also known as relational databases because they store data in a structured way, using tables with rows and columns, much like an Excel spreadsheet.\n* **Structure:** Data is organized into tables. Each table has a predefined structure (called a schema), meaning you decide upfront what columns it will have and what type of data each column will hold (e.g., text, numbers, dates).\n * For example, a `Users` table might have columns like `id` (number), `username` (text), and `email` (text).\n* **Relationships:** SQL databases are good at managing relationships between different tables. For instance, you might have a `Users` table and an `Orders` table, and you can link orders to specific users.\n* **Language:** You interact with these databases using SQL, a powerful language for querying and managing data.\n* **Examples:** MySQL, PostgreSQL, SQL Server, SQLite.\n\n**Analogy:** Think of SQL databases like a well-organized library where books (data) are neatly arranged on specific shelves (tables) according to a predefined cataloging system (schema).\n\n *If you want to learn SQL, go to this [CodeChef SQL Course](https://www.codechef.com/learn/course/sql).*\n\n**2. NoSQL Databases (Non-Relational Databases)**\n\n* **What they are:** NoSQL means \"Not Only SQL\" or \"non-relational.\" This is a broader category of databases that don't rely on the traditional table-based relational model.\n* **Structure:** NoSQL databases are more flexible. They can store data in various formats, such as:\n * **Document databases:** Store data in document-like structures, often resembling JSON objects. (This is what MongoDB, which we'll be learning about, is!)\n * **Key-value stores:** Simple databases that store data as pairs of keys and values.\n * **Graph databases:** Used for data with complex relationships, like social networks.\n * And others.\n* **Flexibility:** A key feature is schema flexibility. You often don't need to define the exact structure of your data upfront. Different \"records\" (e.g., documents) can have different fields.\n* **Language:** The way you query data varies from one NoSQL database to another; there isn't one universal language like SQL.\n* **Examples:** MongoDB (document), Redis (key-value), Cassandra (wide-column).\n\n**Analogy:** Think of NoSQL databases like a collection of filing cabinets. Each cabinet (database) can hold different types of folders (collections), and each folder can contain various documents (data records), which don't all have to look the same. For document databases specifically, imagine each document is like a flexible JSON object.\n\n**Key Difference at a Glance:**\n\n* **SQL:** Structured, predefined schema (like tables in a spreadsheet), uses SQL. Good for well-defined, related data.\n* **NoSQL:** Flexible schema (like JSON documents), diverse data models. Good for rapidly changing data, large datasets, or when data structures vary.\n\n**How does this relate to Node.js and Express?**\n\n1. **Persistent Storage:** Remember how we handled data from forms in Express using `req.body`? That data is usually temporary. Databases allow us to store this information permanently, so it's available even if our server restarts.\n2. **Asynchronous Operations:** Just like reading files from the `File System` (using the `fs` module) or making external `HTTP` requests, interacting with a database (saving or fetching data) is an I/O operation that takes time. In Node.js, these operations are typically **asynchronous**, aligning with what you learned in 'Asynchronous JavaScript Basics'. We'll use concepts like callbacks or Promises when we start writing code to talk to a database.\n\nIn this topic, \"MongoDB Setup in NodeJS,\" we will be focusing on **MongoDB**, which is a popular NoSQL document database. Understanding this basic difference between SQL and NoSQL will help you appreciate why MongoDB is a great choice for many modern web applications built with Node.js.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Understanding databases (SQL vs NoSQL basics) in MongoDB Setup is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-NIPFVX01",
+            "question": "In MongoDB Setup, what is the key consideration regarding Understanding databases (SQL vs NoSQL basics)?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-NIPFVX04",
+          "title": "MongoDB Basics: Documents and Collections",
+          "content": "In our previous lesson, we explored the differences between SQL and NoSQL databases. MongoDB is a very popular NoSQL database, and it's the one we'll be focusing on for storing data in our Node.js applications.\n\nUnlike SQL databases that structure data in tables with rows and columns, MongoDB uses a different approach centered around **documents** and **collections**.\n\n**What are Documents?**\n\nAt the very core of MongoDB are **documents**. You can think of a MongoDB document as a way to store information about a single item or entity. The exciting part for you, having worked with JavaScript and Express, is that a MongoDB document is very similar in structure to a JavaScript object!\n\nRemember how you might have represented a user or a piece of data as a JavaScript object when handling requests in your Express applications? A MongoDB document is just like that. It's made up of **key-value pairs**.\n\nFor example, a document representing a user might look like this:\n\n```json\n{\n \"name\": \"Alex Lee\",\n \"email\": \"alex.lee@example.com\",\n \"age\": 28,\n \"isVerified\": true\n}\n```\n\nOr a document for a blog post:\n\n```json\n{\n \"title\": \"My First Blog Post\",\n \"content\": \"This is the content of my first post.\",\n \"author\": \"Alex Lee\",\n \"tags\": [\"beginner\", \"mongodb\", \"nodejs\"]\n}\n```\n\nThese look just like JavaScript objects, don't they? MongoDB technically stores these in a format called BSON (Binary JSON), which is a binary-encoded version of JSON. For now, just thinking of them as JSON-like objects is perfect.\n\nOne key feature of documents in MongoDB is their **flexibility**. Unlike rows in a SQL table where every row must have the same columns, documents in the same group (we'll get to that next) don't necessarily need to have the exact same fields. For instance, one user document might have an `age` field, while another might not, or it might include an additional `city` field.\n\n**What are Collections?**\n\nSo, where do these individual documents live? They are stored inside **collections**.\n\nA **collection** is simply a group of related documents.\n* You can think of a collection like a **folder** on your computer that holds many related files (where each file is a document). This is similar to how you might have organized files using the \"File System & Core Module\" in Node.js.\n* Another way to think about it, using your JavaScript knowledge, is that a collection is like an **array of JavaScript objects**.\n\nFor example:\n* You could have a `user` collection that holds all your user documents.\n* You could have a `products` collection for an e-commerce site, holding documents for each product.\n* You could have a `posts` collection for a blog, holding all the blog post documents.\n\nIf we had a `students` collection, it might conceptually look like this (an array of user documents):\n\n\n\nNotice how each document can have slightly different fields, showcasing the flexibility we talked about.\n\nTo draw a parallel with what you learned about SQL databases:\n* What SQL databases call a **table**, MongoDB generally calls a **collection**.\n* What SQL databases call a **row**, MongoDB generally calls a **document**.\n\n**The Big Picture: Database > Collections > Documents**\n\nSo, the hierarchy in MongoDB is straightforward:\n1. **Database**: This is the main container. You might have a database for your entire application (e.g., `myCoolAppDB`).\n2. **Collections**: Inside a database, you'll have various collections (e.g., `users`, `articles`, `orders`).\n3. **Documents**: Inside each collection, you'll have individual documents, each representing a specific piece of data (e.g., a specific user's details, a particular article's content).\n\nWhen you build applications with Node.js and Express—perhaps handling user sign-ups, saving blog posts, or listing products, like you've practiced in lessons such as \"Handling Requests & Data\"—MongoDB will serve as the place where all this information is persistently stored using this document-collection structure.\n\nUnderstanding documents and collections is the first fundamental step to working effectively with MongoDB. In the next lesson, we'll begin to explore how we can connect our Node.js application to a MongoDB database.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding MongoDB Basics: Documents and Collections in MongoDB Setup is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-NIPFVX04",
+            "question": "In MongoDB Setup, what is the key consideration regarding MongoDB Basics: Documents and Collections?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-NIPFVX07",
+          "title": "Connecting to MongoDB with Mongoose",
+          "content": "Hi there! In our previous lessons, we learned about NoSQL databases and got a basic understanding of MongoDB, including its documents and collections. Now, let's see how our Node.js applications, perhaps an Express app we've built, can actually \"talk\" to a **MongoDB Atlas (cloud-based) database**.\n\n\n### **What is Mongoose?**\n\nImagine you want to speak a different language. You could learn it from scratch, or you could use a translator. **Mongoose** is like a very helpful translator and organizer for talking to **MongoDB** from your Node.js code. It's an \"**Object Data Modeling**\" (ODM) library. In simple terms, it helps us work with MongoDB data using familiar JavaScript objects, making our code cleaner and more intuitive.\n\n\n### **Why use Mongoose to connect?**\n\nWhile Node.js has a native MongoDB driver (another way to connect), Mongoose provides a more structured and often simpler way to manage connections. For now, we'll focus just on making that initial handshake – establishing the connection between your Node.js application and your **MongoDB Atlas** cloud database.\n\n\n### **Let’s Connect!**\n\nConnecting your Node.js application to **MongoDB Atlas** using Mongoose involves a few straightforward steps. We’ll **focus on Atlas (cloud-based)** rather than a local installation.\n\n\n### **Step 1: Install Mongoose**\n\nFirst, we need to add Mongoose to our project. Just like we installed Express using `npm` (Node Package Manager), we do the same for Mongoose. Open your project's terminal and run:\n\n```bash\nnpm install mongoose\n```\n\nThis command downloads Mongoose and adds it as a dependency in your `package.json` file.\n\n\n### **Step 2: Require Mongoose in Your Application**\n\nIn your main Node.js file (e.g., `app.js` or `server.js` if you're using Express), you need to import Mongoose. This is similar to how you `require` other modules like `express` or core Node.js modules:\n\n```javascript\nconst mongoose = require('mongoose');\n```\n\n\n### **Step 3: The Atlas Connection String (URI)**\n\nTo tell Mongoose where your **Atlas** MongoDB cluster is and which database you want to use, you’ll use a **connection URI** provided by Atlas. It looks like this:\n\n```\nmongodb+srv://:@cluster0.abcde.mongodb.net/yourDatabaseName?retryWrites=true&w=majority\n```\n\nLet’s break it down:\n\n* `mongodb+srv://`: This is the protocol, telling Mongoose we’re connecting to a **cloud-based MongoDB Atlas** instance.\n* `:`: These are the credentials you created in your Atlas dashboard.\n* `@cluster0.abcde.mongodb.net`: This is the address of your specific cluster (copied from Atlas).\n* `/yourDatabaseName`: This is the name of the database you want to connect to. Atlas will create it if it doesn’t exist.\n\n\n### **Step 4: Connect using `mongoose.connect()`**\n\nMongoose provides a `connect()` method to establish the connection. This method is **asynchronous**, and returns a **Promise**, so you can use `.then()` and `.catch()` to handle the outcome.\n\nHere’s how you can put it all together, perhaps in your Express `app.js` file:\n\n```javascript\n// 1. Define your MongoDB Atlas Connection String\nconst mongoURI = 'mongodb+srv://:@cluster0.abcde.mongodb.net/myFirstAppDB?retryWrites=true&w=majority';\n\n// 2. Connect to MongoDB Atlas using Mongoose\nmongoose.connect(mongoURI)\n .then(() => {\n // This block executes if the connection is successful\n console.log(' Successfully connected to MongoDB Atlas!');\n })\n .catch((error) => {\n // This block executes if there’s an error during connection\n console.error(' Error connecting to MongoDB Atlas:', error);\n });\n```\n\n\n### **How it Works:**\n\n1. We `require` the `mongoose` library.\n2. We define our `mongoURI` string using the URI provided by **MongoDB Atlas**.\n3. We call `mongoose.connect(mongoURI)`.\n\n * If the connection is successful, the function inside `.then()` is executed, and you’ll see **\"Successfully connected to MongoDB Atlas!\"** in your console.\n * If there’s an error (e.g., invalid password, cluster misconfigured), the function inside `.catch()` runs and shows the error.\n\n\n### **Important Notes:**\n\n* **Create your Atlas cluster and credentials first**: Go to [https://cloud.mongodb.com](https://cloud.mongodb.com) and follow the \"Connect your application\" steps to get your connection string.\n* **Make sure your IP is whitelisted**: In the \"Network Access\" section of Atlas, add `0.0.0.0/0` to allow access from anywhere (for development).\n* **Encode special characters in passwords**: For example, `@` becomes `%40` in the connection string.\n* **Mongoose Versions**: With Mongoose version 6+, you generally don’t need to pass additional options like `{ useNewUrlParser: true, useUnifiedTopology: true }`—they are set by default.\n\n\n### **What about local MongoDB?**\n\nIf you are running MongoDB **locally**, you can use this simpler URI instead:\n\n```\nmongodb://localhost:27017/myFirstAppDB\n```\n\nBut for modern apps, **MongoDB Atlas is recommended** for its cloud convenience and easy access.\n\n\n### **Official Documentation Links:**\n\n* **MongoDB Atlas Getting Started**:\n [https://www.mongodb.com/docs/atlas/getting-started/](https://www.mongodb.com/docs/atlas/getting-started/)\n\n* **Mongoose Connection Guide**:\n [https://mongoosejs.com/docs/connections.html](https://mongoosejs.com/docs/connections.html)",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Connecting to MongoDB with Mongoose in MongoDB Setup is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-NIPFVX07",
+            "question": "In MongoDB Setup, what is the key consideration regarding Connecting to MongoDB with Mongoose?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-NIPFVX07A",
+          "title": "Connecting to MongoDB with Mongoose",
+          "content": "#### Video explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Connecting to MongoDB with Mongoose in MongoDB Setup is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-NIPFVX07A",
+            "question": "In MongoDB Setup, what is the key consideration regarding Connecting to MongoDB with Mongoose?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-NIPFVX10",
+          "title": "Basic Database Connection Management",
+          "content": "Welcome! In the previous lesson, \"Connecting to MongoDB with Mongoose,\" you learned how to establish an initial connection from your Node.js application to your MongoDB database using `mongoose.connect()`. That's like making the first phone call to the database.\n\nNow, let's talk about managing that phone line. It's not enough to just connect; a robust application needs to know the status of its database connection, handle any issues, and close it gracefully. This is what basic database connection management is all about.\n\n**Why Manage the Connection?**\n\nImagine you call a friend. You wouldn't hang up and redial for every sentence you want to say, right? Similarly:\n\n1. **Efficiency:** We want to establish the database connection once when our application starts and reuse that same connection for all database requests. Constantly opening and closing connections is inefficient.\n2. **Awareness & Reliability:** What if the database server isn't available when your app starts? Or what if the connection drops while your app is running? We need to be aware of these events to handle them, perhaps by logging an error or alerting an administrator.\n\n**The `mongoose.connection` Object: Your Connection Hub**\n\nMongoose provides a special object, `mongoose.connection`, that represents the default connection to MongoDB. This object is an **event emitter**, similar to how an HTTP server emits 'request' events (which you learned about in \"HTTP Servers\") or how other parts of Node.js use events (as seen in \"Asynchronous JavaScript Basics\").\n\nThis `mongoose.connection` object will emit different events based on the state of our database connection. We can listen for these events to manage our connection.\n\n**Listening to Connection Events**\n\nAfter you call `mongoose.connect()`, you can start listening to events on `mongoose.connection`. Here are the most common ones for basic management:\n\n1. **`open` Event:**\n * This event fires **once** when the connection to MongoDB is successfully established.\n * It's a great place to log a success message or to ensure your database is ready before starting other parts of your application, like your Express server.\n\n ```javascript\n // Assuming you have already called mongoose.connect('your_mongodb_uri', {...});\n\n const db = mongoose.connection;\n\n db.once('open', () => {\n console.log(\"Successfully connected to MongoDB!\");\n // You might start your Express app here if it depends on the DB being ready\n // For example:\n // app.listen(3000, () => {\n // console.log(\"Server started and connected to DB\");\n // });\n });\n ```\n *Notice we use `db.once('open', ...)` because this event typically only needs to be handled the first time the connection opens.*\n\n2. **`error` Event:**\n * This event fires if an error occurs during the initial connection attempt or if an error happens on an established connection that causes it to break.\n * It's crucial to listen for this event to log errors and understand if something went wrong with your database communication.\n\n ```javascript\n // (Continuing from above)\n db.on('error', (error) => {\n console.error(\"MongoDB connection error:\", error);\n // In a real application, you might want to try to gracefully shut down\n // or implement a retry mechanism (though retries are more advanced).\n });\n ```\n *We use `db.on('error', ...)` because errors can occur multiple times.*\n\n3. **`disconnected` Event:**\n * This event fires if the Mongoose connection to MongoDB is lost for any reason after it was initially established.\n * This helps you know if your application can no longer communicate with the database.\n\n ```javascript\n // (Continuing from above)\n db.on('disconnected', () => {\n console.log(\"MongoDB disconnected!\");\n });\n ```\n\n**Closing the Connection Gracefully**\n\nWhen your Node.js application shuts down (e.g., when you press `Ctrl+C` in the terminal or during a server deployment process), it's good practice to explicitly close the MongoDB connection. This allows MongoDB to clean up resources.\n\nYou can do this using `mongoose.connection.close()`:\n\n```javascript\n// To close the connection (e.g., when the app is shutting down)\n// mongoose.connection.close(() => {\n// console.log('Mongoose default connection disconnected through app termination');\n// process.exit(0); // Exit the Node.js process\n// });\n\n// A common pattern to handle Ctrl+C (SIGINT signal)\nprocess.on('SIGINT', async () => {\n try {\n await mongoose.connection.close();\n console.log('MongoDB connection closed successfully due to application termination.');\n process.exit(0);\n } catch (err) {\n console.error('Error closing MongoDB connection:', err);\n process.exit(1);\n }\n});\n```\nThis `SIGINT` handler ensures that if you stop your application with `Ctrl+C`, it attempts to close the database connection first.\n\n**Summary**\n\nBasic database connection management with Mongoose involves:\n1. Connecting once when your application starts using `mongoose.connect()`.\n2. Using the `mongoose.connection` object to listen for events like `open`, `error`, and `disconnected`.\n3. Handling these events appropriately (e.g., logging, starting your server on `open`).\n4. Gracefully closing the connection using `mongoose.connection.close()` when your application shuts down.\n\nBy managing your connection, you make your application more robust, efficient, and easier to debug when database communication issues arise! In the upcoming lessons, we'll dive into \"Mongoose Fundamentals\" to see how to define data structures and interact with the database using this managed connection.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Basic Database Connection Management in MongoDB Setup is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-NIPFVX10",
+            "question": "In MongoDB Setup, what is the key consideration regarding Basic Database Connection Management?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-NIPFVX01-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Understanding databases (SQL vs NoSQL basics) (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-NIPFVX04-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "MongoDB Basics: Documents and Collections (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-NIPFVX07-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Connecting to MongoDB with Mongoose (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-NIPFVX07A-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Connecting to MongoDB with Mongoose (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-NIPFVX10-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Basic Database Connection Management (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "NIPFVX02",
+          "questionId": "NIPFVX02",
+          "title": "Planning Product Data Structures (SQL vs NoSQL)",
+          "difficulty": "Easy",
+          "description": "Now that you have a basic understanding of the differences between SQL and NoSQL databases, let's work through a practical thought experiment.\n\n**Scenario:**\n\nImagine we're working on our Express.js application. We've learned how to handle incoming data using `req.body` (for example, from a form submission). Now, we want to plan how we would store information about different types of products that our application might sell.\n\nLet's say we have two types of products:\n1. **Books:** Have a `name`, `price`, `description`, `author`, and `pages`.\n2. **T-Shirts:** Have a `name`, `price`, `description`, `color`, `size`, and `material`.\n\nNotice that both products share some common fields (`name`, `price`, `description`), but they also have fields unique to their type.\n\n**The Task:**\n\nOur goal is to *conceptually plan* how we might structure this data if we were to use:\n1. An SQL (relational) database.\n2. A NoSQL (document) database (like MongoDB, which we'll be focusing on soon).\n\nWe won't be writing any actual database connection code yet. Instead, we'll use a simple Node.js script with JavaScript objects to represent how these product records or documents might look. This will help us visualize the difference in structure.\n\n**Let's walk through the solution:**\n\nWe'll create a Node.js script. In this script:\n1. We'll simulate having received data for a new book and a new t-shirt (as if it came from `req.body`).\n2. Then, we'll show how we might represent these products for an SQL database.\n3. After that, we'll show how we might represent them for a NoSQL document database.\n4. We'll use `console.log` to see our planned structures.\n\nPay close attention to how the data is organized in each approach, especially concerning the fields that are not common to all product types.\n\n**Here's the code you will run. Copy this into a file (e.g., `database_planning.js`), run it with `node database_planning.js`, and observe the output.**",
+          "problemStatement": "Now that you have a basic understanding of the differences between SQL and NoSQL databases, let's work through a practical thought experiment.\n\n**Scenario:**\n\nImagine we're working on our Express.js application. We've learned how to handle incoming data using `req.body` (for example, from a form submission). Now, we want to plan how we would store information about different types of products that our application might sell.\n\nLet's say we have two types of products:\n1. **Books:** Have a `name`, `price`, `description`, `author`, and `pages`.\n2. **T-Shirts:** Have a `name`, `price`, `description`, `color`, `size`, and `material`.\n\nNotice that both products share some common fields (`name`, `price`, `description`), but they also have fields unique to their type.\n\n**The Task:**\n\nOur goal is to *conceptually plan* how we might structure this data if we were to use:\n1. An SQL (relational) database.\n2. A NoSQL (document) database (like MongoDB, which we'll be focusing on soon).\n\nWe won't be writing any actual database connection code yet. Instead, we'll use a simple Node.js script with JavaScript objects to represent how these product records or documents might look. This will help us visualize the difference in structure.\n\n**Let's walk through the solution:**\n\nWe'll create a Node.js script. In this script:\n1. We'll simulate having received data for a new book and a new t-shirt (as if it came from `req.body`).\n2. Then, we'll show how we might represent these products for an SQL database.\n3. After that, we'll show how we might represent them for a NoSQL document database.\n4. We'll use `console.log` to see our planned structures.\n\nPay close attention to how the data is organized in each approach, especially concerning the fields that are not common to all product types.\n\n**Here's the code you will run. Copy this into a file (e.g., `database_planning.js`), run it with `node database_planning.js`, and observe the output.**",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "NIPFVX08",
+          "questionId": "NIPFVX08",
+          "title": "Connect Express App to MyTasksDB",
+          "difficulty": "Easy",
+          "description": "Alright, you've just learned how to use Mongoose to connect your Node.js application to MongoDB! Now, let's solidify that understanding with a practical example.\n\n#### What this code does:\n\n1. Attempt to connect to a **MongoDB Atlas** database named `MyTasksDB`.\n2. Log a success message to the console if the MongoDB connection is established.\n3. Log an error message to the console if the connection fails.\n\n**Let's walk through building the solution step-by-step:**\n\n * **Define the MongoDB Atlas Connection URI:**\n This string tells Mongoose where your cloud database is hosted and what it's called.\n Replace the ``, ``, and `` placeholders with your **real MongoDB Atlas credentials**.\n\n ```javascript\n const mongoURI = 'mongodb+srv://:@.mongodb.net/MyTasksDB?retryWrites=true&w=majority';\n ```\n\n * **Connect to MongoDB Atlas using Mongoose:**\n This is the core part. We use `mongoose.connect()` which returns a Promise. We'll use `.then()` for success and `.catch()` for errors.\n\n```javascript\nmongoose.connect(mongoURI)\n .then(() => {\n console.log(' Connected to MongoDB Atlas');\n })\n .catch((err) => {\n console.error(' MongoDB connection error:', err);\n });\n```\n\n#### Task:\nComplete the `mongoURI` with your own MongoDB atlas connection string to connect with the database.",
+          "problemStatement": "Alright, you've just learned how to use Mongoose to connect your Node.js application to MongoDB! Now, let's solidify that understanding with a practical example.\n\n#### What this code does:\n\n1. Attempt to connect to a **MongoDB Atlas** database named `MyTasksDB`.\n2. Log a success message to the console if the MongoDB connection is established.\n3. Log an error message to the console if the connection fails.\n\n**Let's walk through building the solution step-by-step:**\n\n * **Define the MongoDB Atlas Connection URI:**\n This string tells Mongoose where your cloud database is hosted and what it's called.\n Replace the ``, ``, and `` placeholders with your **real MongoDB Atlas credentials**.\n\n ```javascript\n const mongoURI = 'mongodb+srv://:@.mongodb.net/MyTasksDB?retryWrites=true&w=majority';\n ```\n\n * **Connect to MongoDB Atlas using Mongoose:**\n This is the core part. We use `mongoose.connect()` which returns a Promise. We'll use `.then()` for success and `.catch()` for errors.\n\n```javascript\nmongoose.connect(mongoURI)\n .then(() => {\n console.log(' Connected to MongoDB Atlas');\n })\n .catch((err) => {\n console.error(' MongoDB connection error:', err);\n });\n```\n\n#### Task:\nComplete the `mongoURI` with your own MongoDB atlas connection string to connect with the database.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "NIPFVX11",
+          "questionId": "NIPFVX11",
+          "title": "MongoDB Connection Event Logger",
+          "difficulty": "Easy",
+          "description": "Hello there! You've just learned about the importance of managing your database connection in Node.js using Mongoose, especially how to listen for connection events like open, error, and disconnected, and how to close connections gracefully.\n\nNow, let's solidify this understanding with a practical, step-by-step example.\n\nNode.js script works:\n\nAttempts to connect to a **MongoDB Atlas** instance using Mongoose.\nLogs a message when the connection attempt is initiated using `mongoose.connect()`.\nLogs a specific success message (including the MongoDB URI) once the connection is fully established (this is signaled by the `open` event on `mongoose.connection`).\nIs prepared to log any errors that occur with the connection (handled by the `error` event).\nIs prepared to log a message if the connection is unexpectedly lost (handled by the `disconnected` event).\nStarts a basic Express web server. This helps simulate a real application that would run alongside your database connection. The server itself will just have a simple informational route.\nImplements a graceful shutdown mechanism: when you stop the application (e.g., by pressing Ctrl+C in your terminal), it will first attempt to close the MongoDB connection cleanly and log this action before the Node.js process exits.\n\n**Database Explanation in the Code:**\n\n* The MongoDB connection is made using:\n\n ```js\n mongoose.connect(MONGO_URI, {\n useNewUrlParser: true,\n useUnifiedTopology: true\n });\n ```\n\n* `mongoose.connect()` is the method provided by Mongoose to initiate a connection to a MongoDB database. In this case, the database is hosted on **MongoDB Atlas** and the connection string (`MONGO_URI`) includes your credentials, cluster address, and other connection details.\n\n* The second argument is an **options object** that customizes how Mongoose connects:\n\n * `useNewUrlParser: true`\n This tells Mongoose to use the modern MongoDB connection string parser. It ensures better compatibility with connection strings provided by Atlas.\n\n * `useUnifiedTopology: true`\n This enables the new unified topology layer, improving server discovery and monitoring behavior. It leads to more stable connections and fewer deprecation warnings.\n\n* This line does not directly return the connection. Instead, we listen to events emitted by `mongoose.connection`:\n\n * `db.on('open')`: Logs a message when the connection is successfully established.\n * `db.on('error')`: Catches and logs any connection issues.\n * `db.on('disconnected')`: Logs a warning if the connection is lost unexpectedly.\n\n* During application shutdown, the `SIGINT` signal is captured and `mongoose.connection.close()` is called to gracefully terminate the connection before exiting the process.\n\n\n### Task:\nComplete the blanks in the given code to run correctly.",
+          "problemStatement": "Hello there! You've just learned about the importance of managing your database connection in Node.js using Mongoose, especially how to listen for connection events like open, error, and disconnected, and how to close connections gracefully.\n\nNow, let's solidify this understanding with a practical, step-by-step example.\n\nNode.js script works:\n\nAttempts to connect to a **MongoDB Atlas** instance using Mongoose.\nLogs a message when the connection attempt is initiated using `mongoose.connect()`.\nLogs a specific success message (including the MongoDB URI) once the connection is fully established (this is signaled by the `open` event on `mongoose.connection`).\nIs prepared to log any errors that occur with the connection (handled by the `error` event).\nIs prepared to log a message if the connection is unexpectedly lost (handled by the `disconnected` event).\nStarts a basic Express web server. This helps simulate a real application that would run alongside your database connection. The server itself will just have a simple informational route.\nImplements a graceful shutdown mechanism: when you stop the application (e.g., by pressing Ctrl+C in your terminal), it will first attempt to close the MongoDB connection cleanly and log this action before the Node.js process exits.\n\n**Database Explanation in the Code:**\n\n* The MongoDB connection is made using:\n\n ```js\n mongoose.connect(MONGO_URI, {\n useNewUrlParser: true,\n useUnifiedTopology: true\n });\n ```\n\n* `mongoose.connect()` is the method provided by Mongoose to initiate a connection to a MongoDB database. In this case, the database is hosted on **MongoDB Atlas** and the connection string (`MONGO_URI`) includes your credentials, cluster address, and other connection details.\n\n* The second argument is an **options object** that customizes how Mongoose connects:\n\n * `useNewUrlParser: true`\n This tells Mongoose to use the modern MongoDB connection string parser. It ensures better compatibility with connection strings provided by Atlas.\n\n * `useUnifiedTopology: true`\n This enables the new unified topology layer, improving server discovery and monitoring behavior. It leads to more stable connections and fewer deprecation warnings.\n\n* This line does not directly return the connection. Instead, we listen to events emitted by `mongoose.connection`:\n\n * `db.on('open')`: Logs a message when the connection is successfully established.\n * `db.on('error')`: Catches and logs any connection issues.\n * `db.on('disconnected')`: Logs a warning if the connection is lost unexpectedly.\n\n* During application shutdown, the `SIGINT` signal is captured and `mongoose.connection.close()` is called to gracefully terminate the connection before exiting the process.\n\n\n### Task:\nComplete the blanks in the given code to run correctly.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "nodejs.json",
+      "_moduleTitle": "Database Integration"
+    },
+    {
+      "topicId": "t02-mongoose-fundamentals",
+      "title": "Mongoose Fundamentals",
+      "description": "Study concepts and solve targeted engineering problems for Mongoose Fundamentals.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-UITVXZ01",
+          "title": "Defining schemas and models",
+          "content": "Welcome! In our previous lessons, we learned how to set up MongoDB, our database. Now, we need a way to define the structure of the data we'll be storing in MongoDB from our Node.js application. This is where Mongoose, an Object Data Mapper (ODM) for MongoDB, comes in handy, and specifically, its concepts of **Schemas** and **Models**.\n\n**What is a Schema?**\n\nThink of a Mongoose Schema as a **blueprint** for your data. Before you build a house, you need a blueprint that details what rooms it will have, their sizes, etc. Similarly, a Mongoose Schema defines the structure for **documents** (which are like records or rows in other databases) within a specific **collection** (which is like a table) in your MongoDB database.\n\nA Schema specifies:\n* What **fields** each document will have (e.g., `username`, `email`, `age`).\n* What **type of data** each field will store (e.g., `String` for text, `Number` for numbers, `Boolean` for true/false values, `Date` for dates).\n\nUsing schemas helps ensure that the data you store in MongoDB is consistent and follows a predefined structure from your application's perspective, even though MongoDB itself can be very flexible (it's often called \"schemaless\"). Mongoose helps us add this layer of structure in our Node.js code.\n\n**Defining a Schema in Mongoose:**\n\nIn your Node.js application (where you've already learned about `require` from 'Getting Started with Node.js'), you use the `mongoose.Schema` constructor to create a new schema. Let's say we want to create a schema for blog posts.\n\n```javascript\n// First, we need to import Mongoose into our file\nconst mongoose = require('mongoose');\n\n// Now, let's define the structure (the blueprint) for our blog posts\n// We create a new instance of mongoose.Schema\nconst blogPostSchema = new mongoose.Schema({\n title: String, // The title of the post will be text (a String)\n body: String, // The main content will also be text\n author: String, // The author's name\n likes: Number, // Number of likes, will be a number\n published: Boolean, // Is the post published? (true or false)\n createdAt: Date // When was the post created? (a Date object)\n // We can add more fields as needed!\n});\n```\nIn this JavaScript code, `blogPostSchema` is our blueprint. It tells Mongoose that every blog post document we manage through it should ideally have a `title` (which is a `String`), a `body` (also a `String`), an `author` (`String`), `likes` (`Number`), a `published` status (`Boolean`), and a `createdAt` timestamp (`Date`).\n\n**What is a Model?**\n\nNow that we have a blueprint (the Schema), we need a way to actually **work** with it – to create, read, update, or delete blog posts in our database. This is where a Mongoose **Model** comes in.\n\nA Mongoose Model is like a **special constructor** or a **tool** that is built from a Schema definition.\n* An instance of a model represents a single MongoDB document that can be saved to the database.\n* The model itself is what you use to interact with the corresponding MongoDB collection (e.g., to find all blog posts, create a new one, etc.).\n\nThink of the Schema as the architectural plan for a car, and the Model as the car factory that uses that plan to build actual cars (our documents) and manage them.\n\n**Creating a Model from a Schema:**\n\nOnce you have a schema, you use the `mongoose.model()` method to create a model.\n\n```javascript\n// Continuing from the previous example where we defined blogPostSchema:\n\n// The first argument to mongoose.model is the *singular* name of the collection\n// your model is for. Mongoose will automatically look for the plural, lowercased version\n// of this name for the actual collection in MongoDB.\n// For example, if you use 'BlogPost', Mongoose will interact with a collection named 'blogposts'.\nconst BlogPost = mongoose.model('BlogPost', blogPostSchema);\n\n// Now, 'BlogPost' is our model! We can use this model to interact with\n// the 'blogposts' collection in MongoDB.\n```\nWith the `BlogPost` model, we can now (as we'll see in the next lesson) create new blog post documents, find existing ones, update them, and so on. These operations are often referred to as CRUD (Create, Read, Update, Delete) operations.\n\n**Why are Schemas and Models important?**\n\nIn your Express applications (which we learned to set up in 'Express Setup & Basics'), you'll often define your Mongoose schemas and models in separate files to keep your project organized. Then, in your route handlers (from 'Routing & Middleware'), you'll use these models to process incoming requests (from 'Handling Requests & Data') that need to interact with the database.\n\n* **Schemas** provide structure and help maintain consistency for your data within your application layer.\n* **Models** provide the powerful and convenient interface to work with that data in MongoDB.\n\n**In summary:**\n* **Schema**: Defines the structure and data types for your documents (the blueprint).\n* **Model**: Provides an interface (a set of tools) to interact with a MongoDB collection based on a schema. You use models to create, read, update, and delete documents.\n\nNext up, we'll dive into how to use these models to perform basic Create, Read, Update, and Delete (CRUD) operations with Mongoose!",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Defining schemas and models in Mongoose Fundamentals is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-UITVXZ01",
+            "question": "In Mongoose Fundamentals, what is the key consideration regarding Defining schemas and models?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-UITVXZ04",
+          "title": "CRUD Operations with Mongoose",
+          "content": "Now that you know how to define schemas and create Mongoose models (from our previous lesson 'Defining schemas and models'), let's explore how to perform the most common database operations: **CRUD**. CRUD stands for **C**reate, **R**ead, **U**pdate, and **D**elete. These are the fundamental actions you'll perform on your data in MongoDB using Mongoose.\n\nRemember how we set up Express.js and handled requests in topics like 'Express Setup & Basics' and 'Handling Requests & Data'? CRUD operations are often triggered by these requests. For example, a `POST` request might create data, a `GET` request might read data, a `PUT` request might update it, and a `DELETE` request might remove it. Mongoose makes these database interactions very straightforward.\n\nAlso, recall our lesson on 'Asynchronous JavaScript Basics'. All Mongoose operations that interact with the database are asynchronous, meaning they return Promises. We'll typically use `async/await` to work with them cleanly, making our code look synchronous while still being non-blocking.\n\nLet's assume we have a `Task` model defined like this (similar to what we learned in 'Defining schemas and models'). You would typically define this in a separate file, for example, `models/Task.js`.\n\n```javascript\n// models/Task.js (Example)\nconst mongoose = require('mongoose');\n\n// Define the schema for a Task\nconst taskSchema = new mongoose.Schema({\n description: String,\n isCompleted: Boolean\n});\n\n// Create the Task model\nconst Task = mongoose.model('Task', taskSchema);\n\n// Don't forget, you need to connect to your MongoDB database,\n// usually in your main server file (e.g., app.js or server.js),\n// as covered in 'MongoDB Setup'.\n// Example: mongoose.connect('mongodb://localhost/mydatabase');\n\nmodule.exports = Task; // Export the model to use it in other files\n```\n\nNow, let's see how to perform CRUD operations using this `Task` model. Imagine these operations are happening inside your Express route handlers.\n\n**1. Create (C) - Adding New Data**\n\nTo add a new task to our database, we can create an instance of our `Task` model and then call the `save()` method on it, or use the static `create()` method directly on the `Task` model.\n\n* **Using `new Model()` and `save()`:**\n\n ```javascript\n // Example: Potentially inside an async Express route handler like app.post('/tasks', async (req, res) => { ... });\n async function createTask(taskData) {\n try {\n const newTask = new Task({\n description: taskData.description, // e.g., \"Learn Mongoose CRUD\"\n isCompleted: taskData.isCompleted // e.g., false\n });\n const savedTask = await newTask.save(); // This saves the document to MongoDB\n console.log('Task created:', savedTask);\n return savedTask; // savedTask contains the new document including its _id\n } catch (error) {\n console.error('Error creating task:', error);\n // We'll cover detailed error handling in 'Handling database errors'.\n }\n }\n\n // How you might call it (e.g., with data from req.body):\n // createTask({ description: \"Buy groceries\", isCompleted: false });\n ```\n\n* **Using `Model.create()`:** This is a convenient shorthand for creating and saving a new document.\n\n ```javascript\n // Example: Also could be in an async Express route handler\n async function createTaskShorthand(taskData) {\n try {\n const createdTask = await Task.create({\n description: taskData.description, // e.g., \"Walk the dog\"\n isCompleted: taskData.isCompleted // e.g., false\n });\n console.log('Task created (shorthand):', createdTask);\n return createdTask;\n } catch (error) {\n console.error('Error creating task:', error);\n }\n }\n\n // How you might call it:\n // createTaskShorthand({ description: \"Read a book\", isCompleted: false });\n ```\n This new document will be stored in the 'tasks' collection in your MongoDB database (Mongoose automatically pluralizes 'Task' to 'tasks').\n\n**2. Read (R) - Retrieving Data**\n\nOnce data is in the database, you'll want to retrieve it. Mongoose provides several methods for this. Here are a couple of basic ones:\n\n* **`Model.find(query)`**: Finds all documents matching the `query` object. If the `query` is an empty object (`{}`), it returns all documents in the collection.\n\n ```javascript\n // Example: Inside an async Express route handler like app.get('/tasks', async (req, res) => { ... });\n async function getAllTasks() {\n try {\n const tasks = await Task.find({}); // Empty object {} means find all documents\n console.log('All tasks:', tasks); // tasks will be an array of documents\n return tasks;\n } catch (error) {\n console.error('Error fetching tasks:', error);\n }\n }\n // getAllTasks();\n\n // To find specific tasks, e.g., all incomplete tasks:\n async function getIncompleteTasks() {\n try {\n const incompleteTasks = await Task.find({ isCompleted: false });\n console.log('Incomplete tasks:', incompleteTasks);\n return incompleteTasks;\n } catch (error) {\n console.error('Error fetching incomplete tasks:', error);\n }\n }\n // getIncompleteTasks();\n ```\n\n* **`Model.findById(id)`**: Finds a single document by its unique `_id`. MongoDB automatically creates an `_id` (a unique identifier) for every document.\n\n ```javascript\n // Example: Inside an async Express route handler like app.get('/tasks/:id', async (req, res) => { ... });\n // const taskId = req.params.id;\n async function getTaskById(taskId) {\n try {\n const task = await Task.findById(taskId); // taskId should be a string representation of a MongoDB ObjectId\n if (task) {\n console.log('Task found:', task); // task will be a single document or null if not found\n } else {\n console.log('Task not found.');\n }\n return task;\n } catch (error) {\n console.error('Error fetching task by ID:', error);\n // This can also error if taskId is not a valid ObjectId format\n }\n }\n // getTaskById('someMongoDBObjectIdString'); // Replace with an actual ID from your database\n ```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding CRUD Operations with Mongoose in Mongoose Fundamentals is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-UITVXZ04",
+            "question": "In Mongoose Fundamentals, what is the key consideration regarding CRUD Operations with Mongoose?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-UITVXZ05",
+          "title": "Remaning CURD operations in Mongoose",
+          "content": "Lets continue with the remaining CURD operations: `update` and `delete`.\n\nLet's assume we have a Task model defined like this (similar to what we learned in 'Defining schemas and models'). You would typically define this in a separate file, for example, models/Task.js.\n\n```javascript\n// models/Task.js (Example)\nconst mongoose = require('mongoose');\n\n// Define the schema for a Task\nconst taskSchema = new mongoose.Schema({\n description: String,\n isCompleted: Boolean\n});\n\n// Create the Task model\nconst Task = mongoose.model('Task', taskSchema);\n\n// Don't forget, you need to connect to your MongoDB database,\n// usually in your main server file (e.g., app.js or server.js),\n// as covered in 'MongoDB Setup'.\n// Example: mongoose.connect('mongodb://localhost/mydatabase');\n```\n\nmodule.exports = Task; // Export the model to use it in other files\nNow, let's see how to perform CRUD operations using this Task model. Imagine these operations are happening inside your Express route handlers.\n\n\n\n**1. Update (U) - Modifying Existing Data**\n\nTo change existing data, you first need to find the document(s) and then apply the updates.\n\n* **`Model.findByIdAndUpdate(id, update, options)`**: Finds a document by its `_id` and updates it with the `update` object.\n\n ```javascript\n // Example: Inside an async Express route handler like app.put('/tasks/:id', async (req, res) => { ... });\n // const taskId = req.params.id;\n // const updateData = req.body;\n async function updateTask(taskId, dataToUpdate) {\n try {\n // The { new: true } option tells Mongoose to return the modified document\n // rather than the original one (which is the default).\n const updatedTask = await Task.findByIdAndUpdate(taskId, dataToUpdate, { new: true });\n if (updatedTask) {\n console.log('Task updated:', updatedTask);\n } else {\n console.log('Task not found for update.');\n }\n return updatedTask; // Returns the updated document (or null if not found)\n } catch (error) {\n console.error('Error updating task:', error);\n }\n }\n\n // Example usage: Mark a task as completed\n // updateTask('someMongoDBObjectIdString', { isCompleted: true });\n // Or update description:\n // updateTask('someMongoDBObjectIdString', { description: \"Finish Mongoose lesson\" });\n ```\n Other methods like `Model.updateOne()` or `Model.updateMany()` can also be used for different update scenarios. We'll explore more query methods in a later lesson.\n\n**2. Delete (D) - Removing Data**\n\nTo remove data from your database:\n\n* **`Model.findByIdAndDelete(id)`**: Finds a document by its `_id` and removes it from the database.\n\n ```javascript\n // Example: Inside an async Express route handler like app.delete('/tasks/:id', async (req, res) => { ... });\n // const taskId = req.params.id;\n async function deleteTask(taskId) {\n try {\n const deletedTask = await Task.findByIdAndDelete(taskId);\n if (deletedTask) {\n console.log('Task deleted:', deletedTask); // deletedTask is the document that was removed\n } else {\n console.log('Task not found for deletion.');\n }\n return deletedTask; // Returns the deleted document (or null if not found)\n } catch (error) {\n console.error('Error deleting task:', error);\n }\n }\n\n // Example usage:\n // deleteTask('someMongoDBObjectIdString');\n ```\n Similarly, methods like `Model.deleteOne()` or `Model.deleteMany()` exist for other deletion needs.\n\n**Summary**\n\nThese four operations – Create, Read, Update, and Delete – are the backbone of most applications that interact with a database. Mongoose provides simple and powerful methods to perform these actions on your MongoDB data, leveraging the schemas and models you define.\n\nRemember, these operations are typically used within your Express route handlers, responding to client requests (e.g., from a web browser or a mobile app) to manage data. For example:\n* A `POST` request to `/tasks` might use `Task.create()` to add a new task.\n* A `GET` request to `/tasks` might use `Task.find()` to list all tasks.\n* A `GET` request to `/tasks/:id` might use `Task.findById()` to show a specific task.\n* A `PUT` request to `/tasks/:id` might use `Task.findByIdAndUpdate()` to modify a task.\n* A `DELETE` request to `/tasks/:id` might use `Task.findByIdAndDelete()` to remove a task.\n\nIn the upcoming lessons, we'll dive deeper into 'Data validation with schemas' to ensure data integrity, explore 'Basic query methods' for more complex data retrieval, and learn how to implement robust 'Handling database errors'.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Remaning CURD operations in Mongoose in Mongoose Fundamentals is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-UITVXZ05",
+            "question": "In Mongoose Fundamentals, what is the key consideration regarding Remaning CURD operations in Mongoose?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-UITVXZ07",
+          "title": "Data Validation with Schemas",
+          "content": "In our previous lessons, we learned how to define **schemas** and **models** in Mongoose. Schemas describe the *structure* of our data in MongoDB – what fields a document will have and their basic data types (like String, Number, Boolean).\n\nNow, let's take it a step further. What if we want to ensure the data we save is not just structured correctly, but also meets certain *rules*? For example:\n* A user's `username` must always be provided.\n* A product's `price` must be a positive number.\n* A user's `role` can only be 'user' or 'admin'.\n\nThis process of checking data against rules is called **data validation**.\n\n**Why is Data Validation Important?**\n\nThink of it like filling out a form. If you miss a required field or enter an invalid email, the form usually tells you, right? Data validation in our backend application does something similar for the data we store in our database.\n* **Keeps Data Clean:** It prevents \"garbage\" or incorrect data from getting into our database.\n* **Increases Reliability:** Our application becomes more robust and less prone to errors caused by bad data.\n* **Maintains Integrity:** Ensures the data stored is meaningful and consistent.\n\n**Mongoose Schemas for Validation**\n\nThe great thing about Mongoose is that it allows us to define these validation rules directly within our schema definitions! Mongoose has several built-in validators we can use.\n\nWhen you try to save a new document (using methods like `new Model(data).save()` or `Model.create(data)` which we learned about in \"CRUD operations with Mongoose\"), Mongoose automatically runs these validation checks.\n\n**Common Built-in Validators:**\n\nLet's look at some of the most common validation options you can add to your schema fields:\n\n1. **`required: true`**: Makes a field mandatory. If you try to save a document without this field, Mongoose will raise an error.\n ```javascript\n // In your schema definition\n name: {\n type: String,\n required: true // The 'name' field must be provided\n }\n ```\n\n2. **`default: `**: Provides a default value for a field if one is not supplied when creating a new document.\n ```javascript\n // In your schema definition\n isActive: {\n type: Boolean,\n default: true // If 'isActive' is not provided, it will default to true\n }\n ```\n\n3. **`minlength: ` / `maxlength: `** (for Strings): Specifies the minimum or maximum length for a string.\n ```javascript\n // In your schema definition\n username: {\n type: String,\n required: true,\n minlength: 3, // Username must be at least 3 characters long\n maxlength: 20 // Username cannot be more than 20 characters long\n }\n ```\n\n4. **`min: ` / `max: `** (for Numbers): Specifies the minimum or maximum value for a number.\n ```javascript\n // In your schema definition\n age: {\n type: Number,\n min: 0, // Age cannot be less than 0\n max: 120 // Age cannot be more than 120\n }\n ```\n\n5. **`enum: [, , ...]`**: Restricts the field's value to be one of the specified values in the array.\n ```javascript\n // In your schema definition\n status: {\n type: String,\n enum: ['pending', 'active', 'inactive'] // Status must be one of these three values\n }\n ```\n\n**Example: A `Product` Schema with Validation**\n\nLet's combine these in an example `Product` schema. Remember from \"Defining schemas and models\" how we create schemas:\n\n```javascript\nconst mongoose = require('mongoose');\n\nconst productSchema = new mongoose.Schema({\n productName: {\n type: String,\n required: true, // Product name is mandatory\n minlength: 3 // Must be at least 3 characters\n },\n price: {\n type: Number,\n required: true,\n min: 0.01 // Price must be a positive value\n },\n category: {\n type: String,\n required: true,\n enum: ['Electronics', 'Books', 'Clothing'] // Category must be one of these\n },\n inStock: {\n type: Boolean,\n default: true // Defaults to true if not specified\n }\n});\n\n// const Product = mongoose.model('Product', productSchema);\n// module.exports = Product; // To use this model in other files\n```\n\n**What Happens if Validation Fails?**\n\nIf you try to save data that violates any of these rules:\n1. Mongoose will **not** save the data to your MongoDB database.\n2. The `save()` or `create()` operation (which are asynchronous, as we learned in \"Asynchronous JavaScript Basics\") will result in an error. This error is typically a `ValidationError`.\n\nYou can catch this error using a `try...catch` block, which you might remember from \"Asynchronous JavaScript Basics\".\n\nLet's imagine you're handling a request in an Express app (from \"Express Setup & Basics\" and \"Handling Requests & Data\"). You get data from `req.body` and try to create a new product:\n\n```javascript\n// Assume 'Product' is your Mongoose model\n// const Product = require('./models/productModel'); // Import your model\n\n// Inside an Express route handler, e.g., app.post('/products', async (req, res) => { ... });\n// const newProductData = req.body; // Data from an HTTP request\n\n// Example of trying to save valid data:\n// const validData = { productName: 'Laptop Pro', price: 1200, category: 'Electronics' };\n// const product = new Product(validData);\n\n// Example of trying to save invalid data:\nconst invalidData = { productName: 'TV', price: -50 }; // 'productName' is okay, but 'price' is invalid, 'category' is missing\n\nconst product = new Product(invalidData);\n\ntry {\n await product.save(); // This is a CRUD operation\n console.log(\"Product saved successfully!\"); // This line won't be reached for invalidData\n // res.status(201).send(product); // If using Express\n} catch (error) {\n console.error(\"Validation Failed!\");\n console.error(\"Error Message:\", error.message);\n // error.errors will often contain more details about which specific fields failed validation.\n // We will learn more about handling database errors in a future lesson.\n // res.status(400).send({ message: \"Validation failed\", details: error.errors }); // If using Express\n}\n```\n\nIn the `invalidData` example above, the `price` is negative (violating `min: 0.01`) and `category` is missing (violating `required: true`). So, `product.save()` would throw an error, and the `catch` block would be executed. The product would *not* be saved to MongoDB.\n\nData validation is a powerful feature of Mongoose schemas that helps you build more robust and reliable applications by ensuring the integrity of the data you store in MongoDB. It works hand-in-hand with the schemas and CRUD operations you've already learned.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Data Validation with Schemas in Mongoose Fundamentals is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-UITVXZ07",
+            "question": "In Mongoose Fundamentals, what is the key consideration regarding Data Validation with Schemas?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-UITVXZ10",
+          "title": "Basic query methods",
+          "content": "Welcome! So far, you've learned how to define schemas and models with Mongoose, and perform basic Create, Read, Update, and Delete (CRUD) operations. Now, we're going to dive a bit deeper into the \"Read\" part and explore how to find or \"query\" for specific data in your MongoDB database using Mongoose. These query methods are essential tools for retrieving the exact information you need from your database.\n\nThink of your MongoDB collection (managed by a Mongoose Model) as a big digital filing cabinet full of records (documents). Basic query methods are like asking specific questions to this cabinet to pull out particular records or sets of records.\n\nLet's look at some of the most common and basic query methods. Remember, these operations interact with the database, so they are asynchronous. We'll use `async/await` (which you learned about in \"Asynchronous JavaScript Basics\") to handle them, just like you would in an Express route handler.\n\n**1. `Model.find(queryObject)`: Finding Multiple Documents**\n\nThe `find()` method is used to retrieve all documents that match the conditions specified in the `queryObject`.\n\n* **To find all documents in a collection:**\n You can pass an empty object `{}` or no argument at all to `find()`.\n\n ```javascript\n // Assuming 'User' is your Mongoose model\n // This code would typically be inside an async function, like an Express route handler\n\n async function getAllUsers() {\n try {\n const allUsers = await User.find({}); // or User.find()\n console.log(\"All users:\", allUsers);\n // 'allUsers' will be an array of all user documents\n // If no users are found, it will be an empty array []\n } catch (error) {\n console.error(\"Error fetching users:\", error);\n }\n }\n ```\n\n* **To find documents matching specific criteria:**\n You provide an object where keys are field names (from your schema) and values are what you're looking for.\n\n ```javascript\n // Assuming a User model with 'name' and 'age' fields\n\n async function findSpecificUsers() {\n try {\n // Find all users named \"Alice\"\n const alices = await User.find({ name: \"Alice\" });\n console.log(\"Users named Alice:\", alices);\n // 'alices' will be an array of user documents where name is \"Alice\"\n\n // Find all users who are 25 years old\n const usersAged25 = await User.find({ age: 25 });\n console.log(\"Users aged 25:\", usersAged25);\n // 'usersAged25' will be an array of user documents where age is 25\n } catch (error) {\n console.error(\"Error finding specific users:\", error);\n }\n }\n ```\n The `find()` method always returns an array of documents. If no documents match, it returns an empty array.\n\n**2. `Model.findOne(queryObject)`: Finding a Single Document**\n\nSometimes, you only need to find one specific document. For example, when searching for a user by a unique email address. `findOne()` retrieves the first document that matches the `queryObject`.\n\n```javascript\n// Assuming a User model with a unique 'email' field\n\nasync function findOneUserByEmail(userEmail) {\n try {\n const user = await User.findOne({ email: userEmail });\n if (user) {\n console.log(\"User found:\", user);\n // 'user' will be a single user document object\n } else {\n console.log(\"User not found with email:\", userEmail);\n // 'user' will be null if no document matches\n }\n } catch (error) {\n console.error(\"Error finding user by email:\", error);\n }\n}\n\n// Example usage:\n// findOneUserByEmail(\"test@example.com\");\n```\nIf multiple documents match the query, `findOne()` will still only return the first one it finds. If no document matches, it returns `null`.\n\n**3. `Model.findById(id)`: Finding a Document by its ID**\n\nEvery document in MongoDB has a unique `_id`. If you have this ID, `findById()` is the most straightforward way to retrieve that specific document. This is often used after creating a new document or when you get an ID from a URL parameter in an Express route.\n\n```javascript\n// Assuming 'User' is your Mongoose model\n\nasync function findUserById(userId) {\n try {\n const user = await User.findById(userId);\n if (user) {\n console.log(\"User found by ID:\", user);\n // 'user' will be the user document object\n } else {\n console.log(\"User not found with ID:\", userId);\n // 'user' will be null if no document has this ID\n }\n } catch (error) {\n console.error(\"Error finding user by ID:\", error);\n // This can also error if the userId is not a valid ObjectId format\n }\n}\n\n// Example usage (replace 'someValidObjectIdString' with an actual ID):\n// findUserById(\"someValidObjectIdString\");\n```\nLike `findOne()`, `findById()` returns a single document or `null` if not found.\n\n**How these methods fit into your Node.js/Express application:**\n\nYou'll typically use these query methods inside your Express route handlers (which you learned about in \"Routing & Middleware\" and \"Handling Requests & Data\"). For example, when a user visits `/users`, your route handler might use `User.find({})` to fetch all users from MongoDB and then pass that data to a template (from \"Templates & Views\") to display them.\n\n```javascript\n// Simplified Express route example:\n// const express = require('express');\n// const User = require('./models/User'); // Your Mongoose User model\n// const app = express();\n\n// app.get('/users', async (req, res) => {\n// try {\n// const users = await User.find({});\n// res.json(users); // Sending users back as JSON\n// // Or you might render a template: res.render('users_list', { users });\n// } catch (err) {\n// res.status(500).send(\"Error fetching users\");\n// }\n// });\n```\n\nThese basic query methods (`find()`, `findOne()`, `findById()`) are the foundational building blocks for retrieving data with Mongoose. As you progress, you'll learn more advanced querying techniques, but mastering these basics is key!",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Basic query methods in Mongoose Fundamentals is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-UITVXZ10",
+            "question": "In Mongoose Fundamentals, what is the key consideration regarding Basic query methods?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-UITVXZ13",
+          "title": "Handling Database Errors",
+          "content": "When we build applications that interact with a database like MongoDB using Mongoose, things don't always go as planned. The database server might be down, there could be network issues, or we might try to save data that doesn't follow the rules we defined in our Mongoose schemas (this is a validation error, which you learned about in \"Data validation with schemas\").\n\nIf we don't handle these situations, our Node.js application could crash, or users might see confusing error messages. Proper error handling makes our application more robust and user-friendly.\n\n**Mongoose Operations are Asynchronous**\n\nRemember from our \"Asynchronous JavaScript Basics\" lesson that operations that take time, like talking to a database, are usually asynchronous in Node.js. Mongoose methods like `save()`, `find()`, `findByIdAndUpdate()`, etc., return **Promises**. This is great because Promises have built-in ways to handle both successful outcomes and errors.\n\n**Handling Errors with `async/await` and `try...catch` (Recommended)**\n\nThe `async/await` syntax, which you're familiar with, provides a very clean way to work with Promises and handle their errors using `try...catch` blocks. This is generally the recommended approach.\n\nLet's see how this works within an Express route handler, which you learned about in \"Routing & Middleware\" and \"Handling Requests & Data\":\n\n```javascript\n// Assuming you have a 'Book' model defined with Mongoose\n// const Book = mongoose.model('Book', bookSchema);\n\n// Example: Creating a new book\napp.post('/books', async (req, res) => {\n try {\n // 1. Create a new Book instance with data from the request body\n const newBook = new Book(req.body);\n\n // 2. Try to save the new book to the database\n // The 'await' keyword pauses execution here until save() completes or fails\n const savedBook = await newBook.save();\n\n // 3. If save() is successful, send a 201 (Created) response\n res.status(201).json(savedBook);\n\n } catch (error) {\n // 4. If any error occurs in the 'try' block (e.g., during newBook.save()),\n // execution jumps to this 'catch' block.\n\n // It's very important to log the error on the server for debugging!\n console.error(\"Error saving book:\", error);\n\n // Now, let's figure out what kind of error it is and respond appropriately.\n // We'll explore this next. For now, a generic server error:\n res.status(500).json({ message: \"Oh no! Something went wrong on our end.\" });\n }\n});\n```\n\nIn the `catch (error)` block, the `error` object contains information about what went wrong.\n\n**Common Types of Database Errors and How to Respond**\n\n1. **Validation Errors:**\n * These happen if the data you're trying to save doesn't meet the requirements of your Mongoose schema (e.g., a required field is missing, or a number is out of range).\n * Mongoose sets `error.name` to `'ValidationError'`.\n * The `error.errors` object will contain details about which fields failed validation.\n * **Response:** Send an HTTP `400 Bad Request` status, as the client sent invalid data.\n\n ```javascript\n // Inside the catch block:\n if (error.name === 'ValidationError') {\n // You can get more specific messages from error.errors if needed\n return res.status(400).json({ message: \"Validation Failed\", details: error.message });\n }\n ```\n\n2. **Duplicate Key Errors (MongoDB specific):**\n * This occurs if you try to insert a document that violates a `unique` constraint in your schema (e.g., two users with the same unique email address).\n * MongoDB returns a specific error code for this: `11000`. You can check `error.code === 11000`.\n * **Response:** Send an HTTP `409 Conflict` or `400 Bad Request` status.\n\n ```javascript\n // Inside the catch block (usually after checking for ValidationError):\n if (error.code === 11000) {\n // The error.message might give clues about which field caused the duplication.\n return res.status(409).json({ message: \"This item already exists. Please use a unique value.\" });\n }\n ```\n\n3. **Other/Unexpected Server Errors:**\n * These could be due to various reasons like a lost database connection mid-operation, or other unexpected issues on the server.\n * If the error isn't one of the specific types above, it's good practice to treat it as a general server error.\n * **Response:** Send an HTTP `500 Internal Server Error`. Always log these errors thoroughly on the server side for debugging.\n\n ```javascript\n // This would be the fallback in your catch block:\n console.error(\"Unhandled database operation error:\", error);\n res.status(500).json({ message: \"An unexpected error occurred while processing your request.\" });\n ```\n\n**Putting It Together in an Express Route:**\n\n```javascript\napp.post('/books', async (req, res) => {\n try {\n const newBook = new Book(req.body);\n const savedBook = await newBook.save();\n res.status(201).json(savedBook);\n } catch (error) {\n console.error(\"Failed to save book:\", error); // Log for the developer\n\n if (error.name === 'ValidationError') {\n return res.status(400).json({ message: \"Validation failed.\", errors: error.errors });\n }\n if (error.code === 11000) { // Duplicate key error\n return res.status(409).json({ message: \"A book with this identifier already exists.\" });\n }\n // For any other errors, send a generic 500 server error\n res.status(500).json({ message: \"An internal server error occurred.\" });\n }\n});\n```\nThis pattern applies to other Mongoose operations like `Model.findByIdAndUpdate()`, `Model.findByIdAndDelete()`, `Model.find()`, etc. Always wrap them in `try...catch` if you're using `async/await`.\n\n**Initial Database Connection Errors**\n\nWhen your application first starts, it needs to connect to MongoDB. This initial connection (using `mongoose.connect()`) can also fail (e.g., if MongoDB isn't running). You learned about \"MongoDB Setup\" earlier. It's crucial to handle this:\n\n```javascript\n// Typically in your main server file (e.g., app.js or server.js)\nconst mongoose = require('mongoose');\nconst MONGODB_URI = 'mongodb://localhost:27017/myLibrary'; // Your MongoDB connection string\n\nmongoose.connect(MONGODB_URI)\n .then(() => {\n console.log('Successfully connected to MongoDB!');\n // Start your Express server only after successful DB connection\n // app.listen(PORT, () => console.log(`Server running on port ${PORT}`));\n })\n .catch(err => {\n console.error('Failed to connect to MongoDB:', err);\n process.exit(1); // Exit the application if DB connection fails at start\n });\n```\nIf the connection drops *after* your application has started and successfully connected, the `try...catch` blocks around your individual Mongoose operations (like `newBook.save()`) will catch those subsequent errors.\n\n**Alternative: Using `.then().catch()` with Promises**\n\nWhile `async/await` is often preferred for readability, you can also handle errors using the traditional Promise `.catch()` method:\n\n```javascript\napp.post('/books-promise', (req, res) => {\n const newBook = new Book(req.body);\n\n newBook.save()\n .then(savedBook => {\n res.status(201).json(savedBook);\n })\n .catch(error => {\n console.error(\"Failed to save book (promise):\", error);\n\n if (error.name === 'ValidationError') {\n return res.status(400).json({ message: \"Validation failed.\", errors: error.errors });\n }\n if (error.code === 11000) {\n return res.status(409).json({ message: \"A book with this identifier already exists.\" });\n }\n res.status(500).json({ message: \"An internal server error occurred.\" });\n });\n});\n```\n\n**Key Takeaway**\n\nWhenever you perform a database operation with Mongoose:\n1. **Anticipate errors:** They can and will happen.\n2. **Use `try...catch` with `async/await`** (or `.catch()` with promises) to handle them.\n3. **Log the full error** on the server for your debugging (`console.error(error)`).\n4. **Inspect the `error` object** to understand the type of error.\n5. **Send an appropriate HTTP status code and a user-friendly message** back to the client (`res.status().json()`).\n\nBy handling database errors correctly, you make your application more reliable and provide a better experience for your users and an easier debugging experience for yourself.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Handling Database Errors in Mongoose Fundamentals is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-UITVXZ13",
+            "question": "In Mongoose Fundamentals, what is the key consideration regarding Handling Database Errors?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-UITVXZ01-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Defining schemas and models (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-UITVXZ04-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "CRUD Operations with Mongoose (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-UITVXZ05-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Remaning CURD operations in Mongoose (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-UITVXZ07-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Data Validation with Schemas (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-UITVXZ10-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Basic query methods (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-UITVXZ13-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Handling Database Errors (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "UITVXZ02",
+          "questionId": "UITVXZ02",
+          "title": "Defining a Student Schema and Model",
+          "difficulty": "Easy",
+          "description": "Now that you understand what Mongoose Schemas and Models are, let's put that knowledge into practice with a worked-out example.\n\n**Our Goal:** We want to create a system to manage student records. For this, we need to define the structure of a student document and then create a Mongoose model to interact with student data in our (future) MongoDB collection.\n\nLet's walk through what happens when we define a schema and a model for a \"Student\".\n\n**Explanation:**\nTo begin, we include the Mongoose library in our Node.js file using `require('mongoose')`. This allows us to use Mongoose's powerful tools to define and interact with data.\n\nAfter importing Mongoose, we define a **schema** using `new mongoose.Schema({...})`. The schema acts as a blueprint that outlines the shape of each student document in our MongoDB collection. In our example, the schema includes:\n\n* `fullName`: A string representing the student’s complete name (e.g., \"John Doe\").\n* `studentId`: A string that uniquely identifies each student (e.g., \"S1001\").\n* `major`: A string that holds the student’s field of study (e.g., \"Computer Science\").\n* `enrollmentDate`: A Date object that stores when the student enrolled.\n\nWith the schema ready, we now create a **model** using `mongoose.model()`. A model is a wrapper around the schema and gives us access to methods for interacting with the database. The first argument to `mongoose.model()` is the name of the model (`'Student'`). Mongoose will automatically use the plural, lowercase version (`students`) as the name of the collection in the database.\n\nFinally, to ensure our model and schema are set up correctly, we can log some useful details to the console. This includes the model name and the field names (schema keys). Note that Mongoose also adds some default fields like `_id` and `__v`.\n\n\n#### Task:\n1. Complete the code with your mongodb atlas URI.\n2. Complete the code to connect with the database.\n\n\n#### Note:\nAfter running this code you can go to your mongodb atlas cluster and see if the schema is actully created or not. Like this:",
+          "problemStatement": "Now that you understand what Mongoose Schemas and Models are, let's put that knowledge into practice with a worked-out example.\n\n**Our Goal:** We want to create a system to manage student records. For this, we need to define the structure of a student document and then create a Mongoose model to interact with student data in our (future) MongoDB collection.\n\nLet's walk through what happens when we define a schema and a model for a \"Student\".\n\n**Explanation:**\nTo begin, we include the Mongoose library in our Node.js file using `require('mongoose')`. This allows us to use Mongoose's powerful tools to define and interact with data.\n\nAfter importing Mongoose, we define a **schema** using `new mongoose.Schema({...})`. The schema acts as a blueprint that outlines the shape of each student document in our MongoDB collection. In our example, the schema includes:\n\n* `fullName`: A string representing the student’s complete name (e.g., \"John Doe\").\n* `studentId`: A string that uniquely identifies each student (e.g., \"S1001\").\n* `major`: A string that holds the student’s field of study (e.g., \"Computer Science\").\n* `enrollmentDate`: A Date object that stores when the student enrolled.\n\nWith the schema ready, we now create a **model** using `mongoose.model()`. A model is a wrapper around the schema and gives us access to methods for interacting with the database. The first argument to `mongoose.model()` is the name of the model (`'Student'`). Mongoose will automatically use the plural, lowercase version (`students`) as the name of the collection in the database.\n\nFinally, to ensure our model and schema are set up correctly, we can log some useful details to the console. This includes the model name and the field names (schema keys). Note that Mongoose also adds some default fields like `_id` and `__v`.\n\n\n#### Task:\n1. Complete the code with your mongodb atlas URI.\n2. Complete the code to connect with the database.\n\n\n#### Note:\nAfter running this code you can go to your mongodb atlas cluster and see if the schema is actully created or not. Like this:",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "UITVXZ03",
+          "questionId": "UITVXZ03",
+          "title": "Mongoose Product Schema and Model Definition",
+          "difficulty": "Easy",
+          "description": "Great job on going through the worked-out example for defining Mongoose schemas and models! Now it's time for you to put that knowledge into practice with a similar exercise.\n\n**Your Task:**\n\nImagine you are building an inventory management system for a small store. You need to define the structure for a \"Product\" document that will be stored in MongoDB.\n\n1. **Define a Mongoose Schema:**\n Create a schema named `productSchema` for a product with the following fields:\n * `productName`: Should be a `String` (e.g., \"Laptop Pro\").\n * `price`: Should be a `Number` (e.g., 1200.50).\n * `stockQuantity`: Should be a `Number` (e.g., 50).\n * `category`: Should be a `String` (e.g., \"Electronics\").\n\n2. **Create a Mongoose Model:**\n After defining the `productSchema`, create a Mongoose model named `Product` based on this schema.\n\n3. **Verify Your Setup:**\n To confirm that your schema and model are correctly defined in your application, print the following to the console:\n * A success message: \"Product Model Created Successfully!\"\n * The model's name using `Product.modelName`.\n * The keys (field names) defined in your schema using `Object.keys(productSchema.paths)`.\n\n**Instructions:**\n\n* Create a new `.js` file (e.g., `productApp.js`).\n* Remember to first `require` the Mongoose library.\n* Follow the steps outlined above to define the schema, create the model, and print the verification messages.\n* Run your file using Node.js (e.g., `node productApp.js`) to see the output.\n\nThis exercise will help solidify your understanding of how to structure data definitions using Mongoose before we move on to interacting with the database. Good luck!",
+          "problemStatement": "Great job on going through the worked-out example for defining Mongoose schemas and models! Now it's time for you to put that knowledge into practice with a similar exercise.\n\n**Your Task:**\n\nImagine you are building an inventory management system for a small store. You need to define the structure for a \"Product\" document that will be stored in MongoDB.\n\n1. **Define a Mongoose Schema:**\n Create a schema named `productSchema` for a product with the following fields:\n * `productName`: Should be a `String` (e.g., \"Laptop Pro\").\n * `price`: Should be a `Number` (e.g., 1200.50).\n * `stockQuantity`: Should be a `Number` (e.g., 50).\n * `category`: Should be a `String` (e.g., \"Electronics\").\n\n2. **Create a Mongoose Model:**\n After defining the `productSchema`, create a Mongoose model named `Product` based on this schema.\n\n3. **Verify Your Setup:**\n To confirm that your schema and model are correctly defined in your application, print the following to the console:\n * A success message: \"Product Model Created Successfully!\"\n * The model's name using `Product.modelName`.\n * The keys (field names) defined in your schema using `Object.keys(productSchema.paths)`.\n\n**Instructions:**\n\n* Create a new `.js` file (e.g., `productApp.js`).\n* Remember to first `require` the Mongoose library.\n* Follow the steps outlined above to define the schema, create the model, and print the verification messages.\n* Run your file using Node.js (e.g., `node productApp.js`) to see the output.\n\nThis exercise will help solidify your understanding of how to structure data definitions using Mongoose before we move on to interacting with the database. Good luck!",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "UITVXZ06",
+          "questionId": "UITVXZ06",
+          "title": "Create and read operations practice",
+          "difficulty": "Easy",
+          "description": "In this practice, you will apply what you've learned by performing **Create** and **Read** operations using the **Student model** you've already defined earlier.\n\nWe will use the existing schema to:\n\n* Insert new student documents into the MongoDB Atlas database.\n* Retrieve all students using a `.find()` query.\n* (Optional) Retrieve a specific student by their `_id` using `.findById()`.\n\n\n### Reminder: Student Schema\n\nThis is the same schema you created earlier:\n\n```js\nconst studentSchema = new mongoose.Schema({\n fullName: String,\n studentId: String,\n major: String,\n enrollmentDate: Date\n});\n```\n\nYou’ve also created a model using:\n\n```js\nconst Student = mongoose.model('Student', studentSchema);\n```\n\nThis student schema is stored in `/models/student.js` and we are importing it in this `index.js` file.\n\n### Your Task\n\nYou don’t need to redefine the schema or model — it's already in place. Your job now is to:\nJust add your MongoDB URI.\n\n\n### Expected Outcome\n\nWhen you run your script:\n\n* A new student will be inserted into your database.\n* All students will be printed to the console.\n* (Optional) A specific student will be fetched using their `_id`.",
+          "problemStatement": "In this practice, you will apply what you've learned by performing **Create** and **Read** operations using the **Student model** you've already defined earlier.\n\nWe will use the existing schema to:\n\n* Insert new student documents into the MongoDB Atlas database.\n* Retrieve all students using a `.find()` query.\n* (Optional) Retrieve a specific student by their `_id` using `.findById()`.\n\n\n### Reminder: Student Schema\n\nThis is the same schema you created earlier:\n\n```js\nconst studentSchema = new mongoose.Schema({\n fullName: String,\n studentId: String,\n major: String,\n enrollmentDate: Date\n});\n```\n\nYou’ve also created a model using:\n\n```js\nconst Student = mongoose.model('Student', studentSchema);\n```\n\nThis student schema is stored in `/models/student.js` and we are importing it in this `index.js` file.\n\n### Your Task\n\nYou don’t need to redefine the schema or model — it's already in place. Your job now is to:\nJust add your MongoDB URI.\n\n\n### Expected Outcome\n\nWhen you run your script:\n\n* A new student will be inserted into your database.\n* All students will be printed to the console.\n* (Optional) A specific student will be fetched using their `_id`.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "FVSKVZ08",
+          "questionId": "FVSKVZ08",
+          "title": "Book Inventory: Update Price & Delete Book",
+          "difficulty": "Easy",
+          "description": "Alright, you've learned the theory behind updating and deleting records in MongoDB using Mongoose. Now, let's see it in action with a practical example!\n\nImagine we're building a simple inventory system for a small online bookstore. We'll need to:\n1. Update the price of a book.\n2. Remove a book that's no longer in stock.\n\nWe'll write a Node.js script that connects to a MongoDB database, defines a `Book` model, adds some initial books, then performs an update and a delete operation. We'll log the changes to the console so you can see what's happening at each step.\n\nThis example will use concepts we've covered:\n* Connecting to MongoDB with Mongoose (`Mongoose Fundamentals`).\n* Defining a Mongoose schema and model (`Mongoose Fundamentals`).\n* Using `async/await` for database operations (`Asynchronous JavaScript Basics`).\n* Creating, updating, and deleting documents.\n\nLet's get started!",
+          "problemStatement": "Alright, you've learned the theory behind updating and deleting records in MongoDB using Mongoose. Now, let's see it in action with a practical example!\n\nImagine we're building a simple inventory system for a small online bookstore. We'll need to:\n1. Update the price of a book.\n2. Remove a book that's no longer in stock.\n\nWe'll write a Node.js script that connects to a MongoDB database, defines a `Book` model, adds some initial books, then performs an update and a delete operation. We'll log the changes to the console so you can see what's happening at each step.\n\nThis example will use concepts we've covered:\n* Connecting to MongoDB with Mongoose (`Mongoose Fundamentals`).\n* Defining a Mongoose schema and model (`Mongoose Fundamentals`).\n* Using `async/await` for database operations (`Asynchronous JavaScript Basics`).\n* Creating, updating, and deleting documents.\n\nLet's get started!",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "UITVXZ08",
+          "questionId": "UITVXZ08",
+          "title": "Mongoose: Validating Book Data",
+          "difficulty": "Easy",
+          "description": "Now that you understand how Mongoose uses schemas for data validation, let's see it in action with a concrete example. We'll define a schema for a `Book`, try to save some data, and observe how Mongoose enforces our validation rules.\n\n**Our Task: The `Book` Schema**\n\nImagine we want to store information about books. We'll define a `Book` schema with the following fields and validation rules:\n\nWe will write a Node.js script that:\n1. Connects to a MongoDB database. (Make sure your MongoDB server is running! This was covered in \"MongoDB Setup\").\n2. Defines the `Book` schema with the validation rules above.\n3. Creates a Mongoose model named `Book`.\n4. Attempts to save three different book entries:\n * A completely valid book.\n * A book with an invalid `pages` count (less than 10) and a missing `genre`.\n * A book with a `title` that's too short and an invalid `genre`.\n\nWe'll use an `async` function and `try...catch` blocks (which you learned about in \"Asynchronous JavaScript Basics\") to handle the `save()` operation, which is asynchronous and can throw validation errors.\n\n#### Task:\nComplete the code without you own MONGODB_URI.\n\nLet's look at the code. Pay close attention to how the validation rules are defined in the schema and how errors are caught and displayed.\n\nAfter you review the code, you'll be instructed to \"run\" it to see the output. This will clearly show which books were saved and which ones failed validation, along with the reasons for failure.",
+          "problemStatement": "Now that you understand how Mongoose uses schemas for data validation, let's see it in action with a concrete example. We'll define a schema for a `Book`, try to save some data, and observe how Mongoose enforces our validation rules.\n\n**Our Task: The `Book` Schema**\n\nImagine we want to store information about books. We'll define a `Book` schema with the following fields and validation rules:\n\nWe will write a Node.js script that:\n1. Connects to a MongoDB database. (Make sure your MongoDB server is running! This was covered in \"MongoDB Setup\").\n2. Defines the `Book` schema with the validation rules above.\n3. Creates a Mongoose model named `Book`.\n4. Attempts to save three different book entries:\n * A completely valid book.\n * A book with an invalid `pages` count (less than 10) and a missing `genre`.\n * A book with a `title` that's too short and an invalid `genre`.\n\nWe'll use an `async` function and `try...catch` blocks (which you learned about in \"Asynchronous JavaScript Basics\") to handle the `save()` operation, which is asynchronous and can throw validation errors.\n\n#### Task:\nComplete the code without you own MONGODB_URI.\n\nLet's look at the code. Pay close attention to how the validation rules are defined in the schema and how errors are caught and displayed.\n\nAfter you review the code, you'll be instructed to \"run\" it to see the output. This will clearly show which books were saved and which ones failed validation, along with the reasons for failure.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "UITVXZ09",
+          "questionId": "UITVXZ09",
+          "title": "To-Do List Item Validator",
+          "difficulty": "Easy",
+          "description": "Great job on understanding the `Book` schema example! Data validation is a crucial part of building robust applications, ensuring that the data stored in your database is correct and meaningful.\n\nNow, it's your turn to practice.\n\nYou're building a simple To-Do List application. You need to define a Mongoose schema for a `Todo` item with the following fields and validation rules:\n\n\n#### Your Task:\n1. Make connection with your atlas URI.\n2. Make schema according to the given attributes.\n* `task`:\n * Type: `String`\n * Required: Yes\n * Minimum length: 5 characters (e.g., \"Buy milk\" is valid, \"Read\" is not)\n* `priority`:\n * Type: `Number`\n * Required: Yes\n * Minimum value: 1 (highest priority)\n * Maximum value: 3 (lowest priority)\n* `isDone`:\n * Type: `Boolean`\n * Default value: `false` (new tasks are not done by default)",
+          "problemStatement": "Great job on understanding the `Book` schema example! Data validation is a crucial part of building robust applications, ensuring that the data stored in your database is correct and meaningful.\n\nNow, it's your turn to practice.\n\nYou're building a simple To-Do List application. You need to define a Mongoose schema for a `Todo` item with the following fields and validation rules:\n\n\n#### Your Task:\n1. Make connection with your atlas URI.\n2. Make schema according to the given attributes.\n* `task`:\n * Type: `String`\n * Required: Yes\n * Minimum length: 5 characters (e.g., \"Buy milk\" is valid, \"Read\" is not)\n* `priority`:\n * Type: `Number`\n * Required: Yes\n * Minimum value: 1 (highest priority)\n * Maximum value: 3 (lowest priority)\n* `isDone`:\n * Type: `Boolean`\n * Default value: `false` (new tasks are not done by default)",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "UITVXZ11",
+          "questionId": "UITVXZ11",
+          "title": "Querying a Digital Music Library",
+          "difficulty": "Easy",
+          "description": "Alright, you've just learned about the basic Mongoose query methods: `find()`, `findOne()`, and `findById()`. Now, let's put that knowledge into practice with a worked example.\n\n**Scenario:** Imagine you're building a small application to manage your digital music library. You'll store information about songs, like their title, artist, and genre. Your task is to write a Node.js script that connects to your MongoDB database, populates it with some sample songs, and then uses the basic query methods to retrieve specific song information.\n\n**We'll perform the following queries:**\n1. Fetch all songs in the library.\n2. Fetch all songs by a specific artist (e.g., \"Queen\").\n3. Fetch a single song by its title (e.g., \"Imagine\").\n4. Fetch a specific song using its unique MongoDB `_id`.\n\nLet's walk through how to do this. Below, you'll find the complete Node.js script. We'll break down what each part does.\n\n**Understanding the Code Structure:**\n\nThe script will:\n1. **Connect to MongoDB:** Using Mongoose, just like you learned in \"MongoDB Setup\".\n2. **Define a Schema and Model:** We'll create a simple `Song` schema with `title`, `artist`, and `genre`.\n3. **Use an `async` function:** To manage our asynchronous database operations with `await`.\n4. **Prepare Data:** We'll first clear any existing songs and insert a few sample songs. This ensures our queries run on a predictable dataset for this example.\n5. **Execute Queries:** We'll use `Song.find()`, `Song.findOne()`, and `Song.findById()` to retrieve data.\n6. **Log Results:** We'll print the results of our queries to the console.\n7. **Close Connection:** Finally, we'll close the database connection.\n\n#### Task:\nComplete the code to connect with your MONGODB.\n\n\nPay close attention to how each query method is used and what kind of data it returns.",
+          "problemStatement": "Alright, you've just learned about the basic Mongoose query methods: `find()`, `findOne()`, and `findById()`. Now, let's put that knowledge into practice with a worked example.\n\n**Scenario:** Imagine you're building a small application to manage your digital music library. You'll store information about songs, like their title, artist, and genre. Your task is to write a Node.js script that connects to your MongoDB database, populates it with some sample songs, and then uses the basic query methods to retrieve specific song information.\n\n**We'll perform the following queries:**\n1. Fetch all songs in the library.\n2. Fetch all songs by a specific artist (e.g., \"Queen\").\n3. Fetch a single song by its title (e.g., \"Imagine\").\n4. Fetch a specific song using its unique MongoDB `_id`.\n\nLet's walk through how to do this. Below, you'll find the complete Node.js script. We'll break down what each part does.\n\n**Understanding the Code Structure:**\n\nThe script will:\n1. **Connect to MongoDB:** Using Mongoose, just like you learned in \"MongoDB Setup\".\n2. **Define a Schema and Model:** We'll create a simple `Song` schema with `title`, `artist`, and `genre`.\n3. **Use an `async` function:** To manage our asynchronous database operations with `await`.\n4. **Prepare Data:** We'll first clear any existing songs and insert a few sample songs. This ensures our queries run on a predictable dataset for this example.\n5. **Execute Queries:** We'll use `Song.find()`, `Song.findOne()`, and `Song.findById()` to retrieve data.\n6. **Log Results:** We'll print the results of our queries to the console.\n7. **Close Connection:** Finally, we'll close the database connection.\n\n#### Task:\nComplete the code to connect with your MONGODB.\n\n\nPay close attention to how each query method is used and what kind of data it returns.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "UITVXZ12",
+          "questionId": "UITVXZ12",
+          "title": "Student Records Query Practice",
+          "difficulty": "Easy",
+          "description": "Great! You've seen how `find()`, `findOne()`, and `findById()` work with a music library in the worked example. Now, it's your turn to practice these Mongoose query methods.\n\n**Your Task: Student Records Database**\n\nImagine you're building a system for a small university department to manage student records. You need to store information like student name, ID, major, and graduation year.\n\n#### Your task is to:\n1. Fetch all students in the database.\n2. Fetch all students majoring in \"Computer Science\".\n3. Fetch the student \"Alice Wonderland\" (studentID \"S1001\") using her MongoDB `_id`. (Hint: You'll need to find Alice first to get her `_id`).",
+          "problemStatement": "Great! You've seen how `find()`, `findOne()`, and `findById()` work with a music library in the worked example. Now, it's your turn to practice these Mongoose query methods.\n\n**Your Task: Student Records Database**\n\nImagine you're building a system for a small university department to manage student records. You need to store information like student name, ID, major, and graduation year.\n\n#### Your task is to:\n1. Fetch all students in the database.\n2. Fetch all students majoring in \"Computer Science\".\n3. Fetch the student \"Alice Wonderland\" (studentID \"S1001\") using her MongoDB `_id`. (Hint: You'll need to find Alice first to get her `_id`).",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "nodejs.json",
+      "_moduleTitle": "Database Integration"
+    },
+    {
+      "topicId": "t03-data-relationships",
+      "title": "Data relationships",
+      "description": "Study concepts and solve targeted engineering problems for Data relationships.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 30,
+      "pages": [
+        {
+          "pageId": "p-ZXVDMM01",
+          "title": "One-to-many relationships",
+          "content": "Welcome! Now that you're comfortable with Mongoose fundamentals and setting up MongoDB, let's dive into how different pieces of your data can be related to each other. This is a crucial concept for building more complex and realistic applications in Node.js.\n\n**What are Data Relationships?**\n\nIn most applications, different pieces of data are connected. For example, in an e-commerce application, a customer might have multiple orders, or in a blog, a user might have written many posts. Data relationships define how these different pieces of information are linked together in your database (like MongoDB).\n\n**Understanding One-to-Many Relationships**\n\nA **one-to-many relationship** is one of the most common types of data relationships you'll encounter. Here's a simple way to understand it:\n\n* **One \"Owner\" or \"Parent\"**: You have one type of data item. Think of this as the \"one\" side of the relationship.\n* **Many \"Owned\" or \"Children\"**: This single \"parent\" item can be associated with, or \"own,\" many items of another type. This is the \"many\" side.\n* **Child's Perspective**: Importantly, each \"child\" item, in this specific relationship, belongs to only *one* \"parent\" item.\n\n**A Simple Analogy**\n\nLet's use an example you might build with Express and Mongoose: a simple blog.\n\n* **One `User`**: Imagine a single user account in your application (defined by a `User` Mongoose model). This is our \"one\" side or \"parent.\"\n* **Many `Posts`**: This user can write and publish many blog posts (each defined by a `Post` Mongoose model). These posts are the \"many\" side or \"children.\"\n* **Post's Author**: Each individual blog post is written by *only one* specific user. A single post doesn't belong to multiple users simultaneously in this simple model.\n\nSo, we say there's a **one-to-many relationship** between `User` and `Post`: one user can have many posts.\n\nOther examples include:\n* One `Author` can have many `Books`.\n* One `Category` can contain many `Products`.\n\n**How Does This Relate to NodeJS and Mongoose?**\n\nYou've already learned how to create Mongoose schemas and models to define the structure of your data in MongoDB. For instance, you might have a `UserSchema` for users and a `PostSchema` for blog posts.\n\nOne-to-many relationships are about how we can represent the connection between a document created from your `User` model (a specific user stored in your MongoDB `users` collection) and multiple documents created from your `Post` model (several posts in your `posts` collection).\n\nWhen you're handling requests in your Express application, you might need to:\n* Fetch a user's profile and also display all the posts they've written.\n* When a user submits a new post through a form, associate that post with the correct user.\n\nUnderstanding the concept of one-to-many relationships is the first step to designing your Mongoose schemas effectively to store and manage these connections.\n\n**Why are these relationships important?**\n\n* **Logical Data Organization**: They help you structure your data in a way that mirrors real-world connections, making your database more intuitive.\n* **Efficient Data Retrieval**: They enable you to query and retrieve related data more effectively. For example, getting all posts for a specific user. (We'll touch on how to query these relationships later).\n* **Data Integrity**: They can help maintain consistency in your data.\n\n**What's Next?**\n\nNow that you understand the *theory* behind one-to-many relationships, the next lessons will focus on the *practical* side. We'll explore:\n* Different ways to implement these relationships in Mongoose (like \"Referencing\" vs. \"Embedding\" documents).\n* How to use Mongoose's \"Population\" feature to easily fetch related data.\n* How to design your schemas to support these relationships.\n\nFor now, make sure you grasp the core idea: one entity (like a user) can be linked to many other entities (like posts), and each of those \"many\" entities is linked back to that single \"one\" entity.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding One-to-many relationships in Data relationships is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ZXVDMM01",
+            "question": "In Data relationships, what is the key consideration regarding One-to-many relationships?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-ZXVDMM04",
+          "title": "Referencing vs Embedding Documents",
+          "content": "Okay, so we've learned about MongoDB and how to use Mongoose to define `Schemas` for our data. Now, let's talk about how we can represent relationships between different pieces of data, specifically \"one-to-many\" relationships.\n\nImagine you're building a simple blog application. A user can write many blog posts. This is a classic \"one-to-many\" relationship: one user, many posts. How do we store this relationship in our MongoDB database using Mongoose? We have two main approaches: **embedding** and **referencing**.\n\n**1. Embedding Documents (Keeping everything in one place)**\n\nThink of embedding like putting all related information directly inside the main document.\n\n* **Analogy:** Imagine you have a folder for each `User`. When a `User` writes a blog `Post`, you put a copy of the *entire post* (title, content, date) directly inside that `User`'s folder.\n* **How it works in Mongoose:** In your `UserSchema`, you might have a field called `posts`. This `posts` field would be an array, and each item in the array would be a complete post object (e.g., `{ title: 'My First Post', content: 'Hello world!' }`).\n\n ```javascript\n // Simplified Example (conceptual)\n const userSchema = new mongoose.Schema({\n name: String,\n email: String,\n posts: [ // Array of embedded post documents\n {\n title: String,\n content: String,\n date: Date\n }\n ]\n });\n ```\n\n* **Pros:**\n * **Easy to retrieve:** When you fetch a user, you get all their posts at the same time in a single database query. Very convenient!\n* **Cons:**\n * **Large documents:** If a user has hundreds or thousands of posts, the user document can become very large. This can slow down queries and updates for that user.\n * **Data duplication (potentially):** If a post somehow needed to be associated with another user (less common in a simple blog), embedding would mean duplicating the post data.\n * **Independent access:** It's harder to query just the posts independently (e.g., get the 10 most recent posts from *all* users) if they are all buried inside user documents.\n\n**2. Referencing Documents (Linking with IDs)**\n\nThink of referencing like keeping related information in separate places but linking them with a unique ID.\n\n* **Analogy:** You still have a folder for each `User`. You also have a separate filing cabinet for all `Posts`. Each `Post` in the cabinet has a unique ID number. Now, inside the `User`'s folder, instead of putting the whole post, you just put a list of the ID numbers of the posts written by that user.\n* **How it works in Mongoose:** Your `UserSchema` would have a field, say `postIds`, which is an array of `ObjectId`s. Each `ObjectId` in this array is the unique `_id` of a document in your `Posts` collection. You'd have a separate `PostSchema` and `Post` model.\n\n ```javascript\n // Simplified Example (conceptual)\n // User Schema\n const userSchema = new mongoose.Schema({\n name: String,\n email: String,\n postIds: [ // Array of ObjectId references to Post documents\n { type: mongoose.Schema.Types.ObjectId, ref: 'Post' }\n ]\n });\n\n // Post Schema\n const postSchema = new mongoose.Schema({\n title: String,\n content: String,\n date: Date,\n authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // Reference back to the User\n });\n ```\n (Note: `ref: 'Post'` tells Mongoose which model these IDs refer to. We'll explore this more with \"population\" soon.)\n\n* **Pros:**\n * **Smaller documents:** User documents remain small, only storing IDs. Post documents are also separate and manageable.\n * **Data consistency:** Each post exists as a single document. If you update a post, it's updated in one place.\n * **Independent access:** Posts can be easily queried on their own (e.g., find all posts with a certain keyword).\n* **Cons:**\n * **Multiple queries:** To get a user and all their posts, you first fetch the user to get the `postIds`, and then you need to make another query (or queries) to fetch the actual post documents using those IDs. (Don't worry, Mongoose has a neat way to handle this called \"population,\" which we'll cover next!)\n\n**When to Choose Which?**\n\n* **Choose Embedding when:**\n * You have a \"one-to-few\" relationship (e.g., a user has a few addresses, a blog post has a few comments).\n * The embedded data is almost always accessed *with* the parent document.\n * The embedded data doesn't have a strong independent identity or isn't queried separately very often.\n * The total size of the parent document won't become excessively large.\n\n* **Choose Referencing when:**\n * You have a \"one-to-many\" or \"one-to-squillions\" relationship (e.g., a user has many posts, a product has many reviews).\n * The related documents need to be accessed independently.\n * You want to avoid very large parent documents.\n * Data consistency across references is important.\n\nThis decision between embedding and referencing is a fundamental part of designing your database `Schemas` with Mongoose. It impacts how you store data in MongoDB and how you'll later retrieve and work with it in your Node.js application.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Referencing vs Embedding Documents in Data relationships is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ZXVDMM04",
+            "question": "In Data relationships, what is the key consideration regarding Referencing vs Embedding Documents?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-ZXVDMM07",
+          "title": "Population basics",
+          "content": "In our previous lessons, especially \"Mongoose Fundamentals\" and \"Referencing vs embedding documents\", we learned how to define schemas and models using Mongoose. We also discussed two ways to relate data: embedding and referencing.\n\nWhen we use **referencing**, we store the `_id` of a document from one collection inside a document in another collection. For example, a `Post` document might store the `_id` of its `User` (author).\n\nLet's say we have a `Post` schema like this:\n\n```javascript\n// Assuming you have a User model defined elsewhere\n// const userSchema = new mongoose.Schema({ name: String, email: String });\n// const User = mongoose.model('User', userSchema);\n\nconst postSchema = new mongoose.Schema({\n title: String,\n content: String,\n author: {\n type: mongoose.Schema.Types.ObjectId, // We store the User's ID\n ref: 'User' // This tells Mongoose which model to use for the ID\n }\n});\n\nconst Post = mongoose.model('Post', postSchema);\n```\n\nIf you create a post and then fetch it from the database, the `author` field will just contain the `ObjectId` of the user, not the user's actual information like their name or email.\n\n```javascript\n// Example: Fetching a post (assuming 'somePostId' is a valid ID)\nasync function getPost() {\n const post = await Post.findById(somePostId);\n console.log(post);\n // Output might look like:\n // {\n // _id: ObjectId(\"...\"),\n // title: \"My Awesome Post\",\n // content: \"This is the content.\",\n // author: ObjectId(\"someUserId...\") // Just an ID!\n // }\n}\n```\n\nThis is where **population** comes in!\n\n**What is Population?**\n\nPopulation is a Mongoose feature that allows you to automatically replace the specified paths (which store `ObjectId` references) in a document with the actual document(s) from other collections. In simpler terms, it \"fills in\" the referenced data for you.\n\n**How to use Population?**\n\nMongoose provides a `.populate()` method that you can chain to your queries. You tell `.populate()` which field you want to \"fill in\".\n\nLet's revisit our `Post` example. If we want to get the post details *and* the full author details (not just the ID), we can use `.populate('author')`:\n\n```javascript\n// Example: Fetching a post and populating the author field\nasync function getPostWithAuthorDetails() {\n const postWithAuthor = await Post.findById(somePostId).populate('author');\n console.log(postWithAuthor);\n // Output might look like:\n // {\n // _id: ObjectId(\"...\"),\n // title: \"My Awesome Post\",\n // content: \"This is the content.\",\n // author: { // Now it's the full User document!\n // _id: ObjectId(\"someUserId...\"),\n // name: \"Alice\",\n // email: \"alice@example.com\"\n // }\n // }\n}\n```\n\n**Key things to remember about population:**\n\n1. **`ref` is Crucial:** For population to work, you **must** have the `ref` option in your schema definition. This tells Mongoose which model to look into when it finds an `ObjectId` in that field. In our example, `ref: 'User'` in the `postSchema`'s `author` field is essential.\n2. **It's a Mongoose Feature:** Population is a convenience provided by Mongoose. Behind the scenes, Mongoose makes separate queries to fetch the related documents.\n3. **Simplifies Data Retrieval:** It saves you from writing manual queries to fetch related data.\n\nPopulation is a powerful tool when working with referenced relationships in MongoDB using Mongoose. It makes your code cleaner and your life easier when you need to access data that spans across multiple collections.\n\nIn the next lesson, \"Simple queries with relationships\", we'll explore more ways to query data when you have these relationships set up.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Population basics in Data relationships is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ZXVDMM07",
+            "question": "In Data relationships, what is the key consideration regarding Population basics?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-ZXVDMM01-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "One-to-many relationships (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-ZXVDMM04-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Referencing vs Embedding Documents (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-ZXVDMM07-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Population basics (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "ZXVDMM06",
+          "questionId": "ZXVDMM06",
+          "title": "Blog Posts and Comments Modeling",
+          "difficulty": "Easy",
+          "description": "Imagine you are building a simple blogging application using Node.js and MongoDB with Mongoose. In this application, users can create blog posts, and other users can write comments on these posts. A single blog post can have many comments (from zero to potentially hundreds or thousands).\n\n\n### Your Task:\n\n**Define Mongoose Schemas**:\n\n * Create a `Post` schema that includes basic fields like `title`, `content`, `author`,'createdAt' and a way to associate it with comments.\n * Create a `Comment` schema that includes basic fields like `text`, `author`,'createdAt' and a way to associate it with the post it belongs to.\n * Be sure to reflect your chosen approach (embedding or referencing) accurately when modeling the relationship.\n\n\n#### Expected Output:\n\n**Post**\n\n\n**Comments**\n\n\n\nYou can check that the post's id is refrenced in comment's schema.\n\n\n *Hint:* Think about how you might handle thousands of comments, how you'd query individual comments, and what kind of schema relationships Mongoose supports.",
+          "problemStatement": "Imagine you are building a simple blogging application using Node.js and MongoDB with Mongoose. In this application, users can create blog posts, and other users can write comments on these posts. A single blog post can have many comments (from zero to potentially hundreds or thousands).\n\n\n### Your Task:\n\n**Define Mongoose Schemas**:\n\n * Create a `Post` schema that includes basic fields like `title`, `content`, `author`,'createdAt' and a way to associate it with comments.\n * Create a `Comment` schema that includes basic fields like `text`, `author`,'createdAt' and a way to associate it with the post it belongs to.\n * Be sure to reflect your chosen approach (embedding or referencing) accurately when modeling the relationship.\n\n\n#### Expected Output:\n\n**Post**\n\n\n**Comments**\n\n\n\nYou can check that the post's id is refrenced in comment's schema.\n\n\n *Hint:* Think about how you might handle thousands of comments, how you'd query individual comments, and what kind of schema relationships Mongoose supports.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "ZXVDMM08",
+          "questionId": "ZXVDMM08",
+          "title": "Populating Lead Student in Course",
+          "difficulty": "Easy",
+          "description": "Okay, you've just learned about Mongoose population and how it helps \"fill in\" referenced data. Let's solidify this with a practical, step-by-step example.\n\n**Our Goal:**\n\nWe want to model `Students` and `Courses`. A `Course` will have a `leadStudent` field, which stores the ID of a `Student`. Our task is to create a student and a course, then fetch the course information. We'll first see what it looks like *without* population, and then *with* population, to clearly see the difference.\n\nYou'll see that when fetching *without* population, `leadStudent` is just an `ObjectId`. But when fetching *with* `.populate('leadStudent')`, the `leadStudent` field contains the full document for \"Alice Wonderland\".\n\nThis demonstrates the power and convenience of population for retrieving related data easily!\n\n#### Task:\nComplete the code with your MONGO URI. To run the code.\n\nNow, click \"RUN\" to see the expected output for the provided solution code.",
+          "problemStatement": "Okay, you've just learned about Mongoose population and how it helps \"fill in\" referenced data. Let's solidify this with a practical, step-by-step example.\n\n**Our Goal:**\n\nWe want to model `Students` and `Courses`. A `Course` will have a `leadStudent` field, which stores the ID of a `Student`. Our task is to create a student and a course, then fetch the course information. We'll first see what it looks like *without* population, and then *with* population, to clearly see the difference.\n\nYou'll see that when fetching *without* population, `leadStudent` is just an `ObjectId`. But when fetching *with* `.populate('leadStudent')`, the `leadStudent` field contains the full document for \"Alice Wonderland\".\n\nThis demonstrates the power and convenience of population for retrieving related data easily!\n\n#### Task:\nComplete the code with your MONGO URI. To run the code.\n\nNow, click \"RUN\" to see the expected output for the provided solution code.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "ZXVDMM09",
+          "questionId": "ZXVDMM09",
+          "title": "Populating Author Details for a BlogPost",
+          "difficulty": "Easy",
+          "description": "Alright, you've seen how Mongoose's `.populate()` method can bring related data together with the `Students` and `Courses` example. Now it's your turn to practice!\n\n**Your Goal:**\n\nYou'll model `Authors` and `BlogPosts`. A `BlogPost` will have an `author` field that stores the ID of an `Author`. Your task is to:\n1. Define Mongoose schemas for `Author` and `BlogPost`.\n2. Create one sample author and one sample blog post written by this author.\n3. Fetch the blog post, first *without* populating the author details, and observe the output.\n4. Then, fetch the same blog post *with* populating the author details, and see how the author's information is now included.\n\n#### Task:\n1. Write the 2 given below Schema.\n* **Author Schema (`Author` model):**\n * `name`: String\n * `bio`: String\n* **BlogPost Schema (`BlogPost` model):**\n * `title`: String\n * `content`: String\n * `author`: Should store an `ObjectId` and use `ref: 'Author'` to link to the `Author` model.\n\n2. While printing add the code to populate the data.\n\n#### Note:\nWhen fetching with population, log the post's title, the fully populated `author` object, and specifically the author's name and bio from the populated data.",
+          "problemStatement": "Alright, you've seen how Mongoose's `.populate()` method can bring related data together with the `Students` and `Courses` example. Now it's your turn to practice!\n\n**Your Goal:**\n\nYou'll model `Authors` and `BlogPosts`. A `BlogPost` will have an `author` field that stores the ID of an `Author`. Your task is to:\n1. Define Mongoose schemas for `Author` and `BlogPost`.\n2. Create one sample author and one sample blog post written by this author.\n3. Fetch the blog post, first *without* populating the author details, and observe the output.\n4. Then, fetch the same blog post *with* populating the author details, and see how the author's information is now included.\n\n#### Task:\n1. Write the 2 given below Schema.\n* **Author Schema (`Author` model):**\n * `name`: String\n * `bio`: String\n* **BlogPost Schema (`BlogPost` model):**\n * `title`: String\n * `content`: String\n * `author`: Should store an `ObjectId` and use `ref: 'Author'` to link to the `Author` model.\n\n2. While printing add the code to populate the data.\n\n#### Note:\nWhen fetching with population, log the post's title, the fully populated `author` object, and specifically the author's name and bio from the populated data.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "nodejs.json",
+      "_moduleTitle": "Database Integration"
+    },
+    {
+      "topicId": "t04-practical-database-operations",
+      "title": "Practical database operations",
+      "description": "Study concepts and solve targeted engineering problems for Practical database operations.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 20,
+      "pages": [
+        {
+          "pageId": "p-FVSKVZ01",
+          "title": "Finding and Filtering Data in MongoDB with Mongoose",
+          "content": "Welcome! Now that you know how to set up MongoDB and define Mongoose schemas and models (from \"Mongoose Fundamentals\"), let's learn how to retrieve data from your database. This is a fundamental part of any application that works with data. We'll explore how to find all data in a collection and how to filter it to get only the specific pieces of information you need.\n\nRemember how we use `async/await` for operations that take time, like reading files (from \"Asynchronous JavaScript Basics\")? Database operations are also asynchronous, so we'll be using `async/await` here too.\n\nLet's assume we have a Mongoose model called `User`. Based on what we learned in \"Mongoose Fundamentals,\" its definition might look something like this:\n\n```javascript\n// Assuming you have mongoose connected and this model defined in a file like 'models/User.js'\n// const mongoose = require('mongoose');\n//\n// const userSchema = new mongoose.Schema({\n// name: String,\n// email: { type: String, unique: true }, // Emails should ideally be unique\n// age: Number,\n// city: String\n// });\n//\n// const User = mongoose.model('User', userSchema);\n// module.exports = User; // Exporting the model\n```\n\n**1. Finding All Documents in a Collection**\n\nSometimes, you want to retrieve every single document (or record) stored in a particular collection. For example, you might want to display a list of all users on a page.\n\nMongoose provides the `find()` method on your model to do this. If you pass an empty object `{}` as an argument to `find()`, it means \"match everything\" or \"get all documents.\"\n\nHere's how you might use it within an Express route (like we learned in \"Routing & Middleware\" and \"Handling Requests & Data\"):\n\n```javascript\n// In your Express app file (e.g., app.js or a route file)\n\n// const express = require('express');\n// const app = express();\n// const User = require('./models/User'); // Import the User model\n\n// Example route to get all users\napp.get('/users', async (req, res) => {\n try {\n const allUsers = await User.find({}); // The {} means find all documents\n res.json(allUsers); // Send the array of users as a JSON response\n } catch (error) {\n console.error(\"Error fetching users:\", error);\n res.status(500).json({ message: \"Error fetching data from database\" });\n }\n});\n```\nIn this example, `await User.find({})` will try to fetch all documents from the `users` collection (MongoDB automatically pluralizes model names for collections, so `User` model maps to `users` collection). The `allUsers` variable will then hold an array of user objects. If no users exist, it will be an empty array.\n\n**2. Filtering Data: Finding Specific Documents**\n\nMore often, you'll want to find documents that match specific criteria. This is called **filtering**. You provide a \"query object\" to the `find()` method, specifying the fields and values you're looking for.\n\n**a. Filtering by a Single Field**\n\nLet's say you want to find all users whose name is \"Alice\".\n\n```javascript\n// Example route to find users named Alice\napp.get('/users/by-name/:name', async (req, res) => {\n try {\n const userName = req.params.name; // Get name from URL parameter\n const usersWithName = await User.find({ name: userName });\n // 'usersWithName' will be an array of all users whose 'name' field matches userName\n res.json(usersWithName);\n } catch (error) {\n console.error(\"Error fetching users by name:\", error);\n res.status(500).json({ message: \"Error fetching data\" });\n }\n});\n```\nHere, `{ name: userName }` is the query object. Mongoose will look for documents where the `name` field exactly matches the value of `userName`. If you visited `/users/by-name/Alice`, it would search for users named \"Alice\".\n\n**b. Filtering by Multiple Fields (Implicit AND condition)**\n\nWhat if you want to find users who are 25 years old AND live in \"New York\"? You can add multiple key-value pairs to your query object. This creates an \"AND\" condition – documents must match **all** specified criteria.\n\n```javascript\n// Example route to find users by age and city\napp.get('/users/by-age-and-city', async (req, res) => {\n // For simplicity, let's hardcode criteria.\n // In a real app, these might come from req.query or req.body\n const ageToFind = 25;\n const cityToFind = \"New York\";\n\n try {\n const specificUsers = await User.find({ age: ageToFind, city: cityToFind });\n // 'specificUsers' will be an array of users who are 25 AND live in 'New York'\n res.json(specificUsers);\n } catch (error) {\n console.error(\"Error fetching specific users:\", error);\n res.status(500).json({ message: \"Error fetching data\" });\n }\n});\n```\n\n**3. Finding a Single Document**\n\nSometimes, you expect only one document to match your criteria, or you only care about the first one found. For this, Mongoose provides `findOne()`. It works similarly to `find()`, but it returns only **one document** (the first one that matches) or `null` if no document matches. It does not return an array.\n\nThis is very useful for finding a user by a unique identifier like an email.\n\n```javascript\n// Example route to find a single user by email\napp.get('/user/by-email/:email', async (req, res) => {\n try {\n const userEmail = req.params.email; // Get email from URL parameter\n const user = await User.findOne({ email: userEmail });\n // 'user' will be a single user object if found, or null\n\n if (user) {\n res.json(user);\n } else {\n res.status(404).json({ message: \"User not found\" });\n }\n } catch (error) {\n console.error(\"Error fetching user by email:\", error);\n res.status(500).json({ message: \"Error fetching data\" });\n }\n});\n```\n\n**4. Finding a Document by its ID**\n\nEvery document in MongoDB automatically gets a unique `_id` field. This ID is an ObjectId type by default. If you know the ID of a document, you can retrieve it directly and efficiently using `findById()`. This is a very common operation.\n\n```javascript\n// Example route to find a user by their MongoDB _id\napp.get('/user/by-id/:userId', async (req, res) => {\n try {\n const userId = req.params.userId; // Get ID from URL parameter\n const user = await User.findById(userId);\n // 'user' will be a single user object if found, or null\n\n if (user) {\n res.json(user);\n } else {\n res.status(404).json({ message: \"User not found\" });\n }\n } catch (error) {\n // This catch block can also catch errors if userId is not a valid ObjectId format\n console.error(\"Error fetching user by ID:\", error);\n res.status(500).json({ message: \"Error fetching data or invalid ID format\" });\n }\n});\n```\nRemember, the `userId` you pass to `findById` must be a string representation of a valid MongoDB ObjectId.\n\n**Key Takeaways:**\n* Use `Model.find({})` to get all documents in a collection. It returns an array.\n* Use `Model.find({ field: value, anotherField: anotherValue })` to filter documents. All specified criteria must match (this is an AND condition). It returns an array.\n* Use `Model.findOne({ field: value, ... })` to get the first single document that matches the criteria. It returns a single document object or `null`.\n* Use `Model.findById(idString)` to get a single document by its unique `_id`. It returns a single document object or `null`.\n* Database operations are asynchronous, so always use `await` (inside an `async` function) or handle Promises correctly.\n* Always include error handling (e.g., `try...catch` blocks) when performing database operations.\n\nThese methods are the building blocks for reading data from your database. As you build more complex applications, you'll use them frequently to display information, check for existing data, and much more!",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Finding and Filtering Data in MongoDB with Mongoose in Practical database operations is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-FVSKVZ01",
+            "question": "In Practical database operations, what is the key consideration regarding Finding and Filtering Data in MongoDB with Mongoose?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-FVSKVZ04",
+          "title": "Sorting",
+          "content": "Hello, future Node.js developers! In our journey through 'Practical Database Operations in NodeJS', we've already learned how to find and filter data using Mongoose. Now, let's explore two more essential techniques: **Sorting** and **Basic Pagination**. These help us present data to users in a more organized and manageable way.\n\nImagine you have a list of products, blog posts, or users from your MongoDB database. Displaying them in a random order isn't very helpful. Sorting allows us to arrange this data, and pagination helps us break it into smaller, digestible chunks, especially when dealing with large datasets.\n\n**1. Sorting Data**\n\nSorting means arranging your data in a specific order, like A-Z, Z-A, newest to oldest, or lowest to highest price. This makes it much easier for users to find what they're looking for.\n\nIn Mongoose (which we use to interact with MongoDB), we use the `.sort()` method after a `find()` query.\n\n* **Ascending Order (e.g., A-Z, 1, 2, 3):**\n To sort by a field in ascending order, you pass an object to `.sort()` where the field name is the key, and the value is `1`.\n ```javascript\n // Assuming 'Product' is your Mongoose model (defined using Mongoose Fundamentals)\n // Find all products and sort them by name from A-Z\n const productsSortedByName = await Product.find().sort({ name: 1 });\n // productsSortedByName will be an array of products, sorted alphabetically by their 'name'\n ```\n\n* **Descending Order (e.g., Z-A, 3, 2, 1):**\n To sort in descending order, you use `-1` as the value for the field.\n ```javascript\n // Find all products and sort them by price from highest to lowest\n const productsSortedByPriceDesc = await Product.find().sort({ price: -1 });\n // productsSortedByPriceDesc will be an array of products, sorted by 'price' in descending order\n ```\n You can also sort by dates. For example, to get the newest items first, you would sort by a `createdAt` field (if you have one in your schema) in descending order: `.sort({ createdAt: -1 })`.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Sorting in Practical database operations is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-FVSKVZ04",
+            "question": "In Practical database operations, what is the key consideration regarding Sorting?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-FVSKVZ01-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Finding and Filtering Data in MongoDB with Mongoose (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-FVSKVZ04-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Sorting (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "FVSKVZ03",
+          "questionId": "FVSKVZ03",
+          "title": "Cookbook: Find Quick Vegetarian Recipes",
+          "difficulty": "Easy",
+          "description": "Welcome to your next challenge! In this problem, you'll practice finding and filtering data from a MongoDB collection using Mongoose.\n\nImagine you have a digital cookbook and want to find recipes that meet specific criteria. Your task is to query a collection of recipes.\n\n**Scenario:**\n\nYou have a collection of `Recipe` documents. Each recipe has:\n* `name` (String)\n* `prepTime` (Number, in minutes)\n* `isVegetarian` (Boolean)\n\n#### Task:\n1. Connect with your mongodb database.\n2. Finds all recipes that are `isVegetarian: true` AND have a `prepTime` of less than `30` minutes.",
+          "problemStatement": "Welcome to your next challenge! In this problem, you'll practice finding and filtering data from a MongoDB collection using Mongoose.\n\nImagine you have a digital cookbook and want to find recipes that meet specific criteria. Your task is to query a collection of recipes.\n\n**Scenario:**\n\nYou have a collection of `Recipe` documents. Each recipe has:\n* `name` (String)\n* `prepTime` (Number, in minutes)\n* `isVegetarian` (Boolean)\n\n#### Task:\n1. Connect with your mongodb database.\n2. Finds all recipes that are `isVegetarian: true` AND have a `prepTime` of less than `30` minutes.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "FVSKVZ05",
+          "questionId": "FVSKVZ05",
+          "title": "Book Catalog-Sorting",
+          "difficulty": "Easy",
+          "description": "Now that you understand how sorting with Mongoose works, let's put it into practice with a complete example!\n\n**Goal:** We will build a simple Express application that serves a list of books from a MongoDB database. This list will support sorting by different fields (like title, author, or publication year).\n\n**Scenario:** Imagine you are building an API for an online bookstore. You need an endpoint that allows clients to fetch books, specifying how they want the list sorted.\n\n**Code Explanation:**\n\n1. **Book Model Definition:**\n We define a `bookSchema` using Mongoose with fields like `title`, `author`, and `publicationYear`. Then we create a `Book` model from this schema. This model represents our `books` collection in MongoDB.\n\n2. **Seeding Initial Data:**\n To ensure we have some data for testing, we create a `seedBooks()` function. It checks if the collection is empty using `countDocuments()`. If there are no books, it inserts a few sample books into the database with `insertMany()`.\n\n3. **Books Route with Sorting:**\n We define a `GET /books` route that reads query parameters:\n\n * `sortBy` → which field to sort (`title` by default)\n * `order` → sort direction (`asc` or `desc`, default `asc`)\n\n We convert the `order` into `1` (ascending) or `-1` (descending).\n Then we use Mongoose’s `.sort({ [sortBy]: sortOrder })` to fetch books in the requested order.\n\n Finally, we return the sorted list of books as a JSON response.\n\n#### Task:\nComplete the MONGO_URI with your own URI.\n\n\nWith this setup, you can run the code and test URLs like:\n`/books?sortBy=publicationYear&order=desc`\n\n\n\nThis would return **all books**, sorted by **publication year in descending order**.",
+          "problemStatement": "Now that you understand how sorting with Mongoose works, let's put it into practice with a complete example!\n\n**Goal:** We will build a simple Express application that serves a list of books from a MongoDB database. This list will support sorting by different fields (like title, author, or publication year).\n\n**Scenario:** Imagine you are building an API for an online bookstore. You need an endpoint that allows clients to fetch books, specifying how they want the list sorted.\n\n**Code Explanation:**\n\n1. **Book Model Definition:**\n We define a `bookSchema` using Mongoose with fields like `title`, `author`, and `publicationYear`. Then we create a `Book` model from this schema. This model represents our `books` collection in MongoDB.\n\n2. **Seeding Initial Data:**\n To ensure we have some data for testing, we create a `seedBooks()` function. It checks if the collection is empty using `countDocuments()`. If there are no books, it inserts a few sample books into the database with `insertMany()`.\n\n3. **Books Route with Sorting:**\n We define a `GET /books` route that reads query parameters:\n\n * `sortBy` → which field to sort (`title` by default)\n * `order` → sort direction (`asc` or `desc`, default `asc`)\n\n We convert the `order` into `1` (ascending) or `-1` (descending).\n Then we use Mongoose’s `.sort({ [sortBy]: sortOrder })` to fetch books in the requested order.\n\n Finally, we return the sorted list of books as a JSON response.\n\n#### Task:\nComplete the MONGO_URI with your own URI.\n\n\nWith this setup, you can run the code and test URLs like:\n`/books?sortBy=publicationYear&order=desc`\n\n\n\nThis would return **all books**, sorted by **publication year in descending order**.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "nodejs.json",
+      "_moduleTitle": "Database Integration"
+    }
+  ]
+}

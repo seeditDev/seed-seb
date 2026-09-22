@@ -3241,26 +3241,25 @@ const MultiSectionAssessment = () => {
                 const secId = sec.sectionId || sec.id || `msa-sec-${idx}`;
                 const isCompleted = !!(secCompleted[secId] || secCompleted[sec.sectionId] || secCompleted[sec.id]);
                 const isActive = idx === currentSecIdx;
-                const isLocked = !isCompleted && idx > activeIdx;
+                const isLocked = currentSecIdx >= 0 && !isCompleted && idx > activeIdx;
                 return (
                   <div key={secId} className={`msa-sec-card ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}>
                     <div className="msa-sec-card-header">
-                      <span className="msa-sec-icon">{sec.type === 'mcq' ? <FaBookOpen /> : <FaCode />}</span>
+                      <span className="msa-sec-icon">
+                        {sec.type === 'mcq' ? <FaBookOpen /> : (sec.type === 'essay' ? <FaFileAlt /> : <FaCode />)}
+                      </span>
                       <span className="msa-sec-name">{sec.name}</span>
                     </div>
                     <div className="msa-sec-card-meta">
-                      <span>{sec.duration_minutes} Mins</span>
+                      <span>{sec.duration_minutes || sec.durationMinutes || sec.duration || 30} Mins</span>
                       <span>•</span>
-                      <span>{sec.type.toUpperCase()}</span>
+                      <span>{String(sec.type || 'MCQ').toUpperCase()}</span>
                     </div>
-                    {isCompleted
-                      ? <span className="msa-badge completed">Submitted</span>
-                      : isActive
-                        ? <span className="msa-badge active">Active Now</span>
-                        : isLocked
-                          ? <span className="msa-badge locked"><FaLock /> Locked</span>
-                          : <button className="msa-start-btn" onClick={() => handleStartSection(idx)}>Start Section</button>
-                    }
+                    {isCompleted ? (
+                      <span className="msa-badge completed">Submitted</span>
+                    ) : isActive ? (
+                      <span className="msa-badge active">Active Now</span>
+                    ) : null}
                   </div>
                 );
               });

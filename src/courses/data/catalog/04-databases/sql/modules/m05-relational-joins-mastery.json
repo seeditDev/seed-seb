@@ -1,0 +1,1390 @@
+{
+  "moduleId": "m05-relational-joins-mastery",
+  "title": "Relational Joins Mastery",
+  "description": "INNER JOIN, LEFT (OUTER) JOIN, RIGHT (OUTER) JOIN, FULL OUTER JOIN, CROSS JOIN, and self-joins with alias handling.",
+  "estimatedHours": 5,
+  "topics": [
+    {
+      "topicId": "t01-sql-lesson-6-multi-table-queries-with-joins",
+      "title": "SQL Lesson 6: Multi-table queries with JOINs",
+      "description": "Interactive lesson on SQL Lesson 6: Multi-table queries with JOINs. Learn the concept, run worked queries against a resettable SQLite dataset, inspect results, then solve guided and challenge tasks.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 18,
+      "lessonMarkdown": "Up to now, we've been working with a single table, but entity data in the real world is often broken\ndown into pieces and stored across multiple orthogonal tables using a process known as *normalization*[1]. \n\n### Database normalization\n\nDatabase normalization is useful because it minimizes duplicate data in any single table, and allows \nfor data in the database to grow independently of each other (ie. Types of car engines can grow \nindependent of each type of car).  As a trade-off, queries get slightly more complex since they have\nto be able to find data from different parts of the database, and performance issues can arise when \nworking with many large tables.\nIn order to answer questions about an entity that has data spanning multiple tables in a normalized \ndatabase, we need to learn how to write a query that can combine all that data and pull out exactly \nthe information we need.\n\n### Multi-table queries with JOINs\n\nTables that share information about a single entity need to have a *primary key* that identifies \nthat entity *uniquely* across the database.  One common primary key type is an auto-incrementing \ninteger (because they are space efficient), but it can also be a string, hashed value, so long as it\nis unique.\nUsing the `JOIN` clause in a query, we can combine row data across two separate tables using this \nunique key.  The first of the joins that we will introduce is the `INNER JOIN`.\n\n> **Select query with INNER JOIN on multiple tables**\n```sql\nSELECT column, another_table_column, ...\nFROM mytable\nINNER JOIN another_table \n    ON mytable.id = another_table.id\nWHERE *condition(s)*\nORDER BY column, ... ASC/DESC\nLIMIT num_limit OFFSET num_offset;\n```\n\nThe `INNER JOIN` is a process that matches rows from the first table and the second table which have \nthe same key (as defined by the `ON` constraint) to create a result row with the combined columns\nfrom both tables.  After the tables are joined, the other clauses we learned previously are then \napplied.\n\n    Did you know?\n    \n    You might see queries where the `INNER JOIN` is written simply as a `JOIN`.  \n    These two are equivalent, but we will continue to refer to these joins as inner-joins because they \n    make the query easier to read once you start using other types of joins, which will be introduced \n    in the following lesson.\n    \n\n### Exercise\n\nWe've added a new table to the Pixar database so that you can try practicing some joins. The **BoxOffice** \ntable stores information about the ratings and sales of each particular Pixar movie, and the *Movie_id* \ncolumn in that table corresponds with the *Id* column in the **Movies** table 1-to-1.  Try and solve\nthe tasks below using the `INNER JOIN` introduced above.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "Up to now, we've been working with a single table, but entity data in the real world is often broken\ndown into pieces and stored across multiple orthogonal tables using a process known as *normalization*[1]. \n\n### Database normalization\n\nDatabase normalization is useful because it minimizes duplicate data in any single table, and allows \nfor data in the database to grow independently of each other (ie. Types of car engines can grow \nindependent of each type of car).  As a trade-off, queries get slightly more complex since they have\nto be able to find data from different parts of the database, and performance issues can arise when \nworking with many large tables.\nIn order to answer questions about an entity that has data spanning multiple tables in a normalized \ndatabase, we need to learn how to write a query that can combine all that data and pull out exactly \nthe information we need.\n\n### Multi-table queries with JOINs\n\nTables that share information about a single entity need to have a *primary key* that identifies \nthat entity *uniquely* across the database.  One common primary key type is an auto-incrementing \ninteger (because they are space efficient), but it can also be a string, hashed value, so long as it\nis unique.\nUsing the `JOIN` clause in a query, we can combine row data across two separate tables using this \nunique key.  The first of the joins that we will introduce is the `INNER JOIN`.\n\n> **Select query with INNER JOIN on multiple tables**\n```sql\nSELECT column, another_table_column, ...\nFROM mytable\nINNER JOIN another_table \n    ON mytable.id = another_table.id\nWHERE *condition(s)*\nORDER BY column, ... ASC/DESC\nLIMIT num_limit OFFSET num_offset;\n```\n\nThe `INNER JOIN` is a process that matches rows from the first table and the second table which have \nthe same key (as defined by the `ON` constraint) to create a result row with the combined columns\nfrom both tables.  After the tables are joined, the other clauses we learned previously are then \napplied.\n\n    Did you know?\n    \n    You might see queries where the `INNER JOIN` is written simply as a `JOIN`.  \n    These two are equivalent, but we will continue to refer to these joins as inner-joins because they \n    make the query easier to read once you start using other types of joins, which will be introduced \n    in the following lesson.\n    \n\n### Exercise\n\nWe've added a new table to the Pixar database so that you can try practicing some joins. The **BoxOffice** \ntable stores information about the ratings and sales of each particular Pixar movie, and the *Movie_id* \ncolumn in that table corresponds with the *Id* column in the **Movies** table 1-to-1.  Try and solve\nthe tasks below using the `INNER JOIN` introduced above."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE movies (\n    id integer primary key autoincrement,\n    title text,\n    director text,\n    year integer, \n    length_minutes integer\n);\nCREATE TABLE boxoffice (\n    -- id integer primary key autoincrement,\n    movie_id integer,\n    rating real,\n    domestic_sales real,\n    international_sales real\n);",
+        "seedSql": "INSERT INTO movies (id, title, director, year, length_minutes) VALUES\n(1, 'Toy Story', 'John Lasseter', 1995, 81),\n(2, 'A Bug''s Life', 'John Lasseter', 1998, 95),\n(3, 'Toy Story 2', 'John Lasseter', 1999, 93),\n(4, 'Monsters, Inc.', 'Pete Docter', 2001, 92),\n(5, 'Finding Nemo', 'Andrew Stanton', 2003, 107),\n(6, 'The Incredibles', 'Brad Bird', 2004, 116),\n(7, 'Cars', 'John Lasseter', 2006, 117),\n(8, 'Ratatouille', 'Brad Bird', 2007, 115),\n(9, 'WALL-E', 'Andrew Stanton', 2008, 104),\n(10, 'Up', 'Pete Docter', 2009, 101),\n(11, 'Toy Story 3', 'Lee Unkrich', 2010, 103),\n(12, 'Cars 2', 'John Lasseter', 2011, 120),\n(13, 'Brave', 'Brenda Chapman', 2012, 102),\n(14, 'Monsters University', 'Dan Scanlon', 2013, 110);\n\nINSERT INTO boxoffice (movie_id, rating, domestic_sales, international_sales) VALUES\n(5, 8.2, 380843261, 555900000),\n(14, 7.4, 268492764, 475066843),\n(8, 8, 206445654, 417277164),\n(12, 6.4, 191452396, 368400000),\n(3, 7.9, 245852179, 239163000),\n(6, 8, 261441092, 370001000),\n(9, 8.5, 223808164, 297503696),\n(11, 8.4, 415004880, 648167031),\n(1, 8.3, 191796233, 170162503),\n(7, 7.2, 244082982, 217900167),\n(10, 8.3, 293004164, 438338580),\n(4, 8.1, 289916256, 272900000),\n(2, 7.2, 162798565, 200600000),\n(13, 7.2, 237283207, 301700000);\n",
+        "defaultTable": "movies",
+        "defaultQuery": "-- Write your SQL statement below to solve the exercise tasks:\nSELECT * FROM movies LIMIT 10;",
+        "tasks": [
+          {
+            "instruction": "Find the domestic and international sales for each movie",
+            "expectedQuery": "SELECT title, domestic_sales, international_sales \nFROM movies\n  JOIN boxoffice\n    ON movies.id = boxoffice.movie_id;",
+            "solution": "SELECT title, domestic_sales, international_sales \nFROM movies\n  JOIN boxoffice\n    ON movies.id = boxoffice.movie_id;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "JOIN",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 6: Multi-table queries with JOINs concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m2-t1-task-1"
+          },
+          {
+            "instruction": "Show the sales numbers for each movie that did better internationally rather than domestically",
+            "expectedQuery": "SELECT title, domestic_sales, international_sales\nFROM movies\n  JOIN boxoffice\n    ON movies.id = boxoffice.movie_id\nWHERE international_sales > domestic_sales;",
+            "solution": "SELECT title, domestic_sales, international_sales\nFROM movies\n  JOIN boxoffice\n    ON movies.id = boxoffice.movie_id\nWHERE international_sales > domestic_sales;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "JOIN",
+              "SELECT",
+              "WHERE"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 6: Multi-table queries with JOINs concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m2-t1-task-2"
+          },
+          {
+            "instruction": "List all the movies by their ratings in descending order",
+            "expectedQuery": "SELECT title\nFROM movies\n  JOIN boxoffice\n    ON movies.id = boxoffice.movie_id\nORDER BY rating DESC;",
+            "solution": "SELECT title\nFROM movies\n  JOIN boxoffice\n    ON movies.id = boxoffice.movie_id\nORDER BY rating DESC;",
+            "orderSensitive": false,
+            "difficulty": "Medium",
+            "conceptTags": [
+              "JOIN",
+              "ORDER BY",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 6: Multi-table queries with JOINs concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m2-t1-task-3"
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m2-t1-challenge-1",
+            "instruction": "Show each movie title and its rating",
+            "expectedQuery": "SELECT m.title, b.rating FROM movies m JOIN boxoffice b ON m.id = b.movie_id;",
+            "solution": "SELECT m.title, b.rating FROM movies m JOIN boxoffice b ON m.id = b.movie_id;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 6: Multi-table queries with JOINs"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "title",
+                "rating"
+              ],
+              "rows": [
+                [
+                  "Finding Nemo",
+                  8.2
+                ],
+                [
+                  "Monsters University",
+                  7.4
+                ],
+                [
+                  "Ratatouille",
+                  8
+                ],
+                [
+                  "Cars 2",
+                  6.4
+                ],
+                [
+                  "Toy Story 2",
+                  7.9
+                ],
+                [
+                  "The Incredibles",
+                  8
+                ],
+                [
+                  "WALL-E",
+                  8.5
+                ],
+                [
+                  "Toy Story 3",
+                  8.4
+                ]
+              ],
+              "rowCount": 14
+            }
+          },
+          {
+            "taskId": "sql-m2-t1-challenge-2",
+            "instruction": "Show movies with rating at least 8.3, highest rated first",
+            "expectedQuery": "SELECT m.title, b.rating FROM movies m JOIN boxoffice b ON m.id = b.movie_id WHERE b.rating >= 8.3 ORDER BY b.rating DESC;",
+            "solution": "SELECT m.title, b.rating FROM movies m JOIN boxoffice b ON m.id = b.movie_id WHERE b.rating >= 8.3 ORDER BY b.rating DESC;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 6: Multi-table queries with JOINs"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "title",
+                "rating"
+              ],
+              "rows": [
+                [
+                  "WALL-E",
+                  8.5
+                ],
+                [
+                  "Toy Story 3",
+                  8.4
+                ],
+                [
+                  "Toy Story",
+                  8.3
+                ],
+                [
+                  "Up",
+                  8.3
+                ]
+              ],
+              "rowCount": 4
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Explain primary-key/foreign-key relationships.",
+        "Join two tables with ON.",
+        "Select columns from multiple tables.",
+        "Filter and sort a joined result."
+      ],
+      "commonMistakes": [
+        "Joining on unrelated columns.",
+        "Forgetting table prefixes when names are ambiguous.",
+        "Using WHERE to express a relationship that belongs in ON."
+      ],
+      "cheatSheet": "SELECT ... FROM a JOIN b ON a.id = b.a_id;",
+      "reflectionQuestions": [
+        "What changes if you remove one clause from the query?",
+        "Which part of the task is row-level filtering versus result shaping?",
+        "Can you explain the query to another learner without reading the SQL?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m2-t1-ex1",
+          "title": "Basic inner join",
+          "task": "Show each movie with its sales.",
+          "query": "SELECT m.title, b.domestic_sales FROM movies m JOIN boxoffice b ON m.id = b.movie_id;",
+          "result": {
+            "columns": [
+              "title",
+              "domestic_sales"
+            ],
+            "rows": [
+              [
+                "Finding Nemo",
+                380843261
+              ],
+              [
+                "Monsters University",
+                268492764
+              ],
+              [
+                "Ratatouille",
+                206445654
+              ],
+              [
+                "Cars 2",
+                191452396
+              ],
+              [
+                "Toy Story 2",
+                245852179
+              ],
+              [
+                "The Incredibles",
+                261441092
+              ],
+              [
+                "WALL-E",
+                223808164
+              ],
+              [
+                "Toy Story 3",
+                415004880
+              ]
+            ],
+            "rowCount": 14
+          },
+          "explanation": "Only rows with matches in both tables appear.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m2-t1-ex2",
+          "title": "Joined filter",
+          "task": "Find movies whose international sales exceed domestic sales.",
+          "query": "SELECT m.title FROM movies m JOIN boxoffice b ON m.id = b.movie_id WHERE b.international_sales > b.domestic_sales;",
+          "result": {
+            "columns": [
+              "title"
+            ],
+            "rows": [
+              [
+                "Finding Nemo"
+              ],
+              [
+                "Monsters University"
+              ],
+              [
+                "Ratatouille"
+              ],
+              [
+                "Cars 2"
+              ],
+              [
+                "The Incredibles"
+              ],
+              [
+                "WALL-E"
+              ],
+              [
+                "Toy Story 3"
+              ],
+              [
+                "Up"
+              ]
+            ],
+            "rowCount": 10
+          },
+          "explanation": "Join first conceptually, then filter the result.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m2-t1-ex3",
+          "title": "Joined sort",
+          "task": "Rank movies by rating.",
+          "query": "SELECT m.title, b.rating FROM movies m JOIN boxoffice b ON m.id = b.movie_id ORDER BY b.rating DESC;",
+          "result": {
+            "columns": [
+              "title",
+              "rating"
+            ],
+            "rows": [
+              [
+                "WALL-E",
+                8.5
+              ],
+              [
+                "Toy Story 3",
+                8.4
+              ],
+              [
+                "Toy Story",
+                8.3
+              ],
+              [
+                "Up",
+                8.3
+              ],
+              [
+                "Finding Nemo",
+                8.2
+              ],
+              [
+                "Monsters, Inc.",
+                8.1
+              ],
+              [
+                "Ratatouille",
+                8
+              ],
+              [
+                "The Incredibles",
+                8
+              ]
+            ],
+            "rowCount": 14
+          },
+          "explanation": "Use aliases to keep the query readable.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build a small report from this topic's dataset. Start with the simplest query that returns the required rows, then add only the clauses needed for filtering, relationships, aggregation, or presentation.",
+      "pages": [
+        {
+          "pageId": "p-sql-m2-t1-concept",
+          "title": "Concept: SQL Lesson 6: Multi-table queries with JOINs",
+          "content": "### What you'll learn\n- Explain primary-key/foreign-key relationships.\n- Join two tables with ON.\n- Select columns from multiple tables.\n- Filter and sort a joined result.\n\n### Why this matters\nSQL is easiest to master when you connect each clause to a concrete change in the result set. This lesson uses the live database already attached to the exercise, so you can run the examples and inspect the result.\n\n### Rule of thumb\n`SELECT ... FROM a JOIN b ON a.id = b.a_id;`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT m.title, b.domestic_sales FROM movies m JOIN boxoffice b ON m.id = b.movie_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m2-t1-concept",
+            "question": "Which approach best matches the goal of this lesson?",
+            "options": [
+              "SELECT m.title, b.domestic_sales FROM movies m JOIN boxoffice b ON m.id = b.movie_id;",
+              "Start by changing unrelated tables.",
+              "Return every column for every task.",
+              "Skip the live result and guess."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          }
+        },
+        {
+          "pageId": "p-sql-m2-t1-trace",
+          "title": "Worked example: trace the query",
+          "content": "Let's trace this example step by step.\n\n**Task:** Show each movie with its sales.\n\n**Query:**\n```sql\nSELECT m.title, b.domestic_sales FROM movies m JOIN boxoffice b ON m.id = b.movie_id;\n```\n\n1. Identify the source.\n2. Identify the requested output columns.\n3. Apply filtering/grouping/sorting if present.\n4. Compare the returned rows with the task requirement.\n\n**Teaching point:** Only rows with matches in both tables appear.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Start from the data and output contract, then add clauses deliberately."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT m.title, b.domestic_sales FROM movies m JOIN boxoffice b ON m.id = b.movie_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m2-t1-trace",
+            "question": "What should you identify before adding advanced clauses?",
+            "options": [
+              "The required output and source data",
+              "A random index",
+              "A transaction log",
+              "An unrelated table"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Start from the data and output contract, then add clauses deliberately."
+          }
+        },
+        {
+          "pageId": "p-sql-m2-t1-check",
+          "title": "Common mistakes and challenge",
+          "content": "### Common mistakes\n- Joining on unrelated columns.\n- Forgetting table prefixes when names are ambiguous.\n- Using WHERE to express a relationship that belongs in ON.\n\n### Try this before Submit\nRun the query with a small change and predict how the result should change. Then restore it and submit the exact task.\n\n### Self-check\nCan you explain why the query returns exactly the rows shown?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Prediction plus result inspection builds reliable query reasoning."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT m.title, b.domestic_sales FROM movies m JOIN boxoffice b ON m.id = b.movie_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m2-t1-check",
+            "question": "What is the most useful self-check?",
+            "options": [
+              "Predict the result before running and explain any difference",
+              "Add SELECT * to every query",
+              "Ignore row counts",
+              "Only check whether the editor accepted the query"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Prediction plus result inspection builds reliable query reasoning."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m2-t1-code-1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Basic inner join",
+          "code": "SELECT m.title, b.domestic_sales FROM movies m JOIN boxoffice b ON m.id = b.movie_id;",
+          "description": "Only rows with matches in both tables appear."
+        },
+        {
+          "exampleId": "sql-m2-t1-code-2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Joined filter",
+          "code": "SELECT m.title FROM movies m JOIN boxoffice b ON m.id = b.movie_id WHERE b.international_sales > b.domestic_sales;",
+          "description": "Join first conceptually, then filter the result."
+        },
+        {
+          "exampleId": "sql-m2-t1-code-3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Joined sort",
+          "code": "SELECT m.title, b.rating FROM movies m JOIN boxoffice b ON m.id = b.movie_id ORDER BY b.rating DESC;",
+          "description": "Use aliases to keep the query readable."
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Submit",
+        "Reflect"
+      ],
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 2: Multi-Table Queries & Relational JOINs",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t02-sql-lesson-7-outer-joins",
+      "title": "SQL Lesson 7: OUTER JOINs",
+      "description": "Interactive lesson on SQL Lesson 7: OUTER JOINs. Learn the concept, run worked queries against a resettable SQLite dataset, inspect results, then solve guided and challenge tasks.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 18,
+      "lessonMarkdown": "Depending on how you want to analyze the data, the `INNER JOIN` we used last lesson might not be \nsufficient because the resulting table only contains data that belongs in both of the tables.\nIf the two tables have asymmetric data, which can easily happen when data is entered in different\nstages, then we would have to use a `LEFT JOIN`, `RIGHT JOIN` or `FULL JOIN` instead to ensure that \nthe data you need is not left out of the results.\n\n> **Select query with LEFT/RIGHT/FULL JOINs on multiple tables**\n```sql\nSELECT column, another_column, ...\nFROM mytable\nINNER/LEFT/RIGHT/FULL JOIN another_table \n    ON mytable.id = another_table.matching_id\nWHERE *condition(s)*\nORDER BY column, ... ASC/DESC\nLIMIT num_limit OFFSET num_offset;\n```\n\nLike the `INNER JOIN` these three new joins have to specify which column to join the data on.\nWhen joining table A to table B, a `LEFT JOIN` simply includes rows from A regardless of whether \na matching row is found in B.  The `RIGHT JOIN` is the same, but reversed, keeping rows in B \nregardless of whether a match is found in A.  Finally, a `FULL JOIN` simply means that rows from \nboth tables are kept, regardless of whether a matching row exists in the other table.\nWhen using any of these new joins, you will likely have to write additional logic to deal with `NULL`s\nin the result and constraints (more on this in the next lesson).\n\n    Did you know?\n    \n    You might see queries with these joins written as `LEFT OUTER JOIN`, \n    `RIGHT OUTER JOIN`, or `FULL OUTER JOIN`, but the `OUTER` \n    keyword is really kept for SQL-92 compatibility and these queries are simply equivalent to \n    `LEFT JOIN`, `RIGHT JOIN`, and `FULL JOIN` respectively.\n    \n\n### Exercise\n\nIn this exercise, you are going to be working with a new table which stores fictional data about **Employees** \nin the film studio and their assigned office **Buildings**. Some of the buildings are new, so they \ndon't have any employees in them yet, but we need to find some information about them regardless.\nSince our browser SQL database is somewhat limited, only the `LEFT JOIN` is supported in the \nexercise below.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "Depending on how you want to analyze the data, the `INNER JOIN` we used last lesson might not be \nsufficient because the resulting table only contains data that belongs in both of the tables.\nIf the two tables have asymmetric data, which can easily happen when data is entered in different\nstages, then we would have to use a `LEFT JOIN`, `RIGHT JOIN` or `FULL JOIN` instead to ensure that \nthe data you need is not left out of the results.\n\n> **Select query with LEFT/RIGHT/FULL JOINs on multiple tables**\n```sql\nSELECT column, another_column, ...\nFROM mytable\nINNER/LEFT/RIGHT/FULL JOIN another_table \n    ON mytable.id = another_table.matching_id\nWHERE *condition(s)*\nORDER BY column, ... ASC/DESC\nLIMIT num_limit OFFSET num_offset;\n```\n\nLike the `INNER JOIN` these three new joins have to specify which column to join the data on.\nWhen joining table A to table B, a `LEFT JOIN` simply includes rows from A regardless of whether \na matching row is found in B.  The `RIGHT JOIN` is the same, but reversed, keeping rows in B \nregardless of whether a match is found in A.  Finally, a `FULL JOIN` simply means that rows from \nboth tables are kept, regardless of whether a matching row exists in the other table.\nWhen using any of these new joins, you will likely have to write additional logic to deal with `NULL`s\nin the result and constraints (more on this in the next lesson).\n\n    Did you know?\n    \n    You might see queries with these joins written as `LEFT OUTER JOIN`, \n    `RIGHT OUTER JOIN`, or `FULL OUTER JOIN`, but the `OUTER` \n    keyword is really kept for SQL-92 compatibility and these queries are simply equivalent to \n    `LEFT JOIN`, `RIGHT JOIN`, and `FULL JOIN` respectively.\n    \n\n### Exercise\n\nIn this exercise, you are going to be working with a new table which stores fictional data about **Employees** \nin the film studio and their assigned office **Buildings**. Some of the buildings are new, so they \ndon't have any employees in them yet, but we need to find some information about them regardless.\nSince our browser SQL database is somewhat limited, only the `LEFT JOIN` is supported in the \nexercise below."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE employees (\n    -- id integer primary key autoincrement,\n    role text,\n    name text,\n    building text,\n    years_employed integer\n);\nCREATE TABLE buildings (\n    building_name text,\n    capacity int\n);",
+        "seedSql": "INSERT INTO employees (role, name, building, years_employed) VALUES\n('Engineer', 'Becky A.', '1e', 4),\n('Engineer', 'Dan B.', '1e', 2),\n('Engineer', 'Sharon F.', '1e', 6),\n('Engineer', 'Dan M.', '1e', 4),\n('Engineer', 'Malcom S.', '1e', 1),\n('Artist', 'Tylar S.', '2w', 2),\n('Artist', 'Sherman D.', '2w', 8),\n('Artist', 'Jakob J.', '2w', 6),\n('Artist', 'Lillia A.', '2w', 7),\n('Artist', 'Brandon J.', '2w', 7),\n('Manager', 'Scott K.', '1e', 9),\n('Manager', 'Shirlee M.', '1e', 3),\n('Manager', 'Daria O.', '2w', 6);\n\nINSERT INTO buildings (building_name, capacity) VALUES\n('1e', 24),\n('1w', 32),\n('2e', 16),\n('2w', 20);\n",
+        "defaultTable": "employees",
+        "defaultQuery": "-- Write your SQL statement below to solve the exercise tasks:\nSELECT * FROM employees LIMIT 10;",
+        "tasks": [
+          {
+            "instruction": "Find the list of all buildings that have employees",
+            "expectedQuery": "SELECT DISTINCT building FROM employees;",
+            "solution": "SELECT DISTINCT building FROM employees;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "JOIN",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 7: OUTER JOINs concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m2-t2-task-1"
+          },
+          {
+            "instruction": "Find the list of all buildings and their capacity",
+            "expectedQuery": "SELECT * FROM buildings;",
+            "solution": "SELECT * FROM buildings;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "JOIN",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 7: OUTER JOINs concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m2-t2-task-2"
+          },
+          {
+            "instruction": "List all buildings and the distinct employee roles in each building (including empty buildings)",
+            "expectedQuery": "SELECT DISTINCT building_name, role \nFROM buildings \n  LEFT JOIN employees\n    ON building_name = building;",
+            "solution": "SELECT DISTINCT building_name, role \nFROM buildings \n  LEFT JOIN employees\n    ON building_name = building;",
+            "orderSensitive": false,
+            "difficulty": "Medium",
+            "conceptTags": [
+              "JOIN",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 7: OUTER JOINs concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m2-t2-task-3"
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m2-t2-challenge-1",
+            "instruction": "List every building with the number of employee rows matched to it",
+            "expectedQuery": "SELECT b.building_name, COUNT(e.name) AS employee_count FROM buildings b LEFT JOIN employees e ON b.building_name = e.building GROUP BY b.building_name;",
+            "solution": "SELECT b.building_name, COUNT(e.name) AS employee_count FROM buildings b LEFT JOIN employees e ON b.building_name = e.building GROUP BY b.building_name;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 7: OUTER JOINs"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "building_name",
+                "employee_count"
+              ],
+              "rows": [
+                [
+                  "1e",
+                  7
+                ],
+                [
+                  "1w",
+                  0
+                ],
+                [
+                  "2e",
+                  0
+                ],
+                [
+                  "2w",
+                  6
+                ]
+              ],
+              "rowCount": 4
+            }
+          },
+          {
+            "taskId": "sql-m2-t2-challenge-2",
+            "instruction": "List employees together with their building name when available",
+            "expectedQuery": "SELECT e.name, e.role, b.building_name FROM employees e LEFT JOIN buildings b ON e.building = b.building_name;",
+            "solution": "SELECT e.name, e.role, b.building_name FROM employees e LEFT JOIN buildings b ON e.building = b.building_name;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 7: OUTER JOINs"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "name",
+                "role",
+                "building_name"
+              ],
+              "rows": [
+                [
+                  "Becky A.",
+                  "Engineer",
+                  "1e"
+                ],
+                [
+                  "Dan B.",
+                  "Engineer",
+                  "1e"
+                ],
+                [
+                  "Sharon F.",
+                  "Engineer",
+                  "1e"
+                ],
+                [
+                  "Dan M.",
+                  "Engineer",
+                  "1e"
+                ],
+                [
+                  "Malcom S.",
+                  "Engineer",
+                  "1e"
+                ],
+                [
+                  "Tylar S.",
+                  "Artist",
+                  "2w"
+                ],
+                [
+                  "Sherman D.",
+                  "Artist",
+                  "2w"
+                ],
+                [
+                  "Jakob J.",
+                  "Artist",
+                  "2w"
+                ]
+              ],
+              "rowCount": 13
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Explain how LEFT JOIN differs from INNER JOIN.",
+        "Preserve rows from the left table.",
+        "Detect missing matches through NULLs.",
+        "Use LEFT JOIN for completeness-oriented reports."
+      ],
+      "commonMistakes": [
+        "Moving the right-table filter into WHERE and accidentally removing unmatched rows.",
+        "Treating NULL as zero or empty string.",
+        "Using INNER JOIN when unmatched left-side rows matter."
+      ],
+      "cheatSheet": "SELECT ... FROM left_table l LEFT JOIN right_table r ON ...;",
+      "reflectionQuestions": [
+        "What changes if you remove one clause from the query?",
+        "Which part of the task is row-level filtering versus result shaping?",
+        "Can you explain the query to another learner without reading the SQL?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m2-t2-ex1",
+          "title": "Keep all buildings",
+          "task": "List every building even if it has no employees.",
+          "query": "SELECT b.building_name, e.name FROM buildings b LEFT JOIN employees e ON b.building_name = e.building;",
+          "result": {
+            "columns": [
+              "building_name",
+              "name"
+            ],
+            "rows": [
+              [
+                "1e",
+                "Becky A."
+              ],
+              [
+                "1e",
+                "Dan B."
+              ],
+              [
+                "1e",
+                "Dan M."
+              ],
+              [
+                "1e",
+                "Malcom S."
+              ],
+              [
+                "1e",
+                "Scott K."
+              ],
+              [
+                "1e",
+                "Sharon F."
+              ],
+              [
+                "1e",
+                "Shirlee M."
+              ],
+              [
+                "1w",
+                null
+              ]
+            ],
+            "rowCount": 15
+          },
+          "explanation": "Buildings with no employees still appear.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m2-t2-ex2",
+          "title": "Find empty buildings",
+          "task": "Return buildings with no matching employee.",
+          "query": "SELECT DISTINCT b.building_name FROM buildings b LEFT JOIN employees e ON b.building_name = e.building WHERE e.name IS NULL;",
+          "result": {
+            "columns": [
+              "building_name"
+            ],
+            "rows": [
+              [
+                "1w"
+              ],
+              [
+                "2e"
+              ]
+            ],
+            "rowCount": 2
+          },
+          "explanation": "The missing match becomes NULL.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m2-t2-ex3",
+          "title": "Compare join types",
+          "task": "Replace LEFT JOIN with JOIN and observe which buildings disappear.",
+          "query": "SELECT b.building_name, e.name FROM buildings b JOIN employees e ON b.building_name = e.building;",
+          "result": {
+            "columns": [
+              "building_name",
+              "name"
+            ],
+            "rows": [
+              [
+                "1e",
+                "Becky A."
+              ],
+              [
+                "1e",
+                "Dan B."
+              ],
+              [
+                "1e",
+                "Dan M."
+              ],
+              [
+                "1e",
+                "Malcom S."
+              ],
+              [
+                "1e",
+                "Scott K."
+              ],
+              [
+                "1e",
+                "Sharon F."
+              ],
+              [
+                "1e",
+                "Shirlee M."
+              ],
+              [
+                "2w",
+                "Brandon J."
+              ]
+            ],
+            "rowCount": 13
+          },
+          "explanation": "INNER JOIN keeps matched rows only.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build a small report from this topic's dataset. Start with the simplest query that returns the required rows, then add only the clauses needed for filtering, relationships, aggregation, or presentation.",
+      "pages": [
+        {
+          "pageId": "p-sql-m2-t2-concept",
+          "title": "Concept: SQL Lesson 7: OUTER JOINs",
+          "content": "### What you'll learn\n- Explain how LEFT JOIN differs from INNER JOIN.\n- Preserve rows from the left table.\n- Detect missing matches through NULLs.\n- Use LEFT JOIN for completeness-oriented reports.\n\n### Why this matters\nSQL is easiest to master when you connect each clause to a concrete change in the result set. This lesson uses the live database already attached to the exercise, so you can run the examples and inspect the result.\n\n### Rule of thumb\n`SELECT ... FROM left_table l LEFT JOIN right_table r ON ...;`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT b.building_name, e.name FROM buildings b LEFT JOIN employees e ON b.building_name = e.building;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m2-t2-concept",
+            "question": "Which approach best matches the goal of this lesson?",
+            "options": [
+              "SELECT b.building_name, e.name FROM buildings b LEFT JOIN employees e ON b.building_name = e.building;",
+              "Start by changing unrelated tables.",
+              "Return every column for every task.",
+              "Skip the live result and guess."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          }
+        },
+        {
+          "pageId": "p-sql-m2-t2-trace",
+          "title": "Worked example: trace the query",
+          "content": "Let's trace this example step by step.\n\n**Task:** List every building even if it has no employees.\n\n**Query:**\n```sql\nSELECT b.building_name, e.name FROM buildings b LEFT JOIN employees e ON b.building_name = e.building;\n```\n\n1. Identify the source.\n2. Identify the requested output columns.\n3. Apply filtering/grouping/sorting if present.\n4. Compare the returned rows with the task requirement.\n\n**Teaching point:** Buildings with no employees still appear.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Start from the data and output contract, then add clauses deliberately."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT b.building_name, e.name FROM buildings b LEFT JOIN employees e ON b.building_name = e.building;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m2-t2-trace",
+            "question": "What should you identify before adding advanced clauses?",
+            "options": [
+              "The required output and source data",
+              "A random index",
+              "A transaction log",
+              "An unrelated table"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Start from the data and output contract, then add clauses deliberately."
+          }
+        },
+        {
+          "pageId": "p-sql-m2-t2-check",
+          "title": "Common mistakes and challenge",
+          "content": "### Common mistakes\n- Moving the right-table filter into WHERE and accidentally removing unmatched rows.\n- Treating NULL as zero or empty string.\n- Using INNER JOIN when unmatched left-side rows matter.\n\n### Try this before Submit\nRun the query with a small change and predict how the result should change. Then restore it and submit the exact task.\n\n### Self-check\nCan you explain why the query returns exactly the rows shown?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Prediction plus result inspection builds reliable query reasoning."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT b.building_name, e.name FROM buildings b LEFT JOIN employees e ON b.building_name = e.building;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m2-t2-check",
+            "question": "What is the most useful self-check?",
+            "options": [
+              "Predict the result before running and explain any difference",
+              "Add SELECT * to every query",
+              "Ignore row counts",
+              "Only check whether the editor accepted the query"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Prediction plus result inspection builds reliable query reasoning."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m2-t2-code-1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Keep all buildings",
+          "code": "SELECT b.building_name, e.name FROM buildings b LEFT JOIN employees e ON b.building_name = e.building;",
+          "description": "Buildings with no employees still appear."
+        },
+        {
+          "exampleId": "sql-m2-t2-code-2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Find empty buildings",
+          "code": "SELECT DISTINCT b.building_name FROM buildings b LEFT JOIN employees e ON b.building_name = e.building WHERE e.name IS NULL;",
+          "description": "The missing match becomes NULL."
+        },
+        {
+          "exampleId": "sql-m2-t2-code-3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Compare join types",
+          "code": "SELECT b.building_name, e.name FROM buildings b JOIN employees e ON b.building_name = e.building;",
+          "description": "INNER JOIN keeps matched rows only."
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Submit",
+        "Reflect"
+      ],
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 2: Multi-Table Queries & Relational JOINs",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t03-sql-advanced-self-joins-hierarchical-data",
+      "title": "SQL Advanced: Self-Joins & Hierarchical Data",
+      "description": "Interactive lesson on SQL Advanced: Self-Joins & Hierarchical Data. Learn the concept, run worked queries against a resettable SQLite dataset, inspect results, then solve guided and challenge tasks.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 20,
+      "lessonMarkdown": "### Self-Joins in Relational Databases\n\nA self-join is a regular join, but the table is joined with itself. Self-joins are essential when rows within the same table reference each other (e.g. employees and their managers, or bus routes sharing a stop).\n\n> **Self-Join Syntax**\n```sql\nSELECT A.name AS Employee, B.name AS Colleague\nFROM employees A\nJOIN employees B ON A.building = B.building AND A.name != B.name;\n```\n\n#### Key Rules for Self-Joins:\n- You must use **table aliases** (`A`, `B`) to distinguish between the two copies of the same table.\n- Ensure you avoid matching rows to themselves by adding conditions like `A.name != B.name` or `A.id < B.id`.\n\n### Exercise\nExplore peer relationships in the `employees` dataset using self-joins.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "### Self-Joins in Relational Databases\n\nA self-join is a regular join, but the table is joined with itself. Self-joins are essential when rows within the same table reference each other (e.g. employees and their managers, or bus routes sharing a stop).\n\n> **Self-Join Syntax**\n```sql\nSELECT A.name AS Employee, B.name AS Colleague\nFROM employees A\nJOIN employees B ON A.building = B.building AND A.name != B.name;\n```\n\n#### Key Rules for Self-Joins:\n- You must use **table aliases** (`A`, `B`) to distinguish between the two copies of the same table.\n- Ensure you avoid matching rows to themselves by adding conditions like `A.name != B.name` or `A.id < B.id`.\n\n### Exercise\nExplore peer relationships in the `employees` dataset using self-joins."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE employees (\n    -- id integer primary key autoincrement,\n    role text,\n    name text,\n    building text,\n    years_employed integer\n);",
+        "seedSql": "INSERT INTO employees (role, name, building, years_employed) VALUES\n('Engineer', 'Becky A.', '1e', 4),\n('Engineer', 'Dan B.', '1e', 2),\n('Engineer', 'Sharon F.', '1e', 6),\n('Engineer', 'Dan M.', '1e', 4),\n('Engineer', 'Malcom S.', '1e', 1),\n('Artist', 'Tylar S.', '2w', 2),\n('Artist', 'Sherman D.', '2w', 8),\n('Artist', 'Jakob J.', '2w', 6),\n('Artist', 'Lillia A.', '2w', 7),\n('Artist', 'Brandon J.', '2w', 7),\n('Manager', 'Scott K.', '1e', 9),\n('Manager', 'Shirlee M.', '1e', 3),\n('Manager', 'Daria O.', '2w', 6);\n",
+        "defaultTable": "employees",
+        "defaultQuery": "-- Write a self-join query\nSELECT A.name, B.name FROM employees A JOIN employees B ON A.building = B.building;",
+        "tasks": [
+          {
+            "instruction": "Find all pairs of employees who work in the same building (show employee name and colleague name, avoiding duplicate reversed pairs).",
+            "expectedQuery": "SELECT A.name, B.name FROM employees A JOIN employees B ON A.building = B.building AND A.name < B.name;",
+            "solution": "SELECT A.name, B.name FROM employees A JOIN employees B ON A.building = B.building AND A.name < B.name;",
+            "difficulty": "Easy",
+            "conceptTags": [
+              "JOIN",
+              "SELECT",
+              "Self-Joins"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the SQL Advanced: Self-Joins & Hierarchical Data concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m5-t2-task-1"
+          },
+          {
+            "instruction": "Find all pairs of employees who have the exact same role and years employed.",
+            "expectedQuery": "SELECT A.name, B.name, A.role FROM employees A JOIN employees B ON A.role = B.role AND A.years_employed = B.years_employed AND A.name < B.name;",
+            "solution": "SELECT A.name, B.name, A.role FROM employees A JOIN employees B ON A.role = B.role AND A.years_employed = B.years_employed AND A.name < B.name;",
+            "difficulty": "Easy",
+            "conceptTags": [
+              "JOIN",
+              "SELECT",
+              "Self-Joins"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the SQL Advanced: Self-Joins & Hierarchical Data concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m5-t2-task-2"
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m5-t2-challenge-1",
+            "instruction": "Find employee pairs in the same building and show both roles",
+            "expectedQuery": "SELECT a.name AS employee, b.name AS colleague, a.role AS employee_role, b.role AS colleague_role FROM employees a JOIN employees b ON a.building = b.building AND a.name < b.name;",
+            "solution": "SELECT a.name AS employee, b.name AS colleague, a.role AS employee_role, b.role AS colleague_role FROM employees a JOIN employees b ON a.building = b.building AND a.name < b.name;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Challenge",
+              "SQL Advanced: Self-Joins & Hierarchical Data"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee",
+                "colleague",
+                "employee_role",
+                "colleague_role"
+              ],
+              "rows": [
+                [
+                  "Becky A.",
+                  "Dan B.",
+                  "Engineer",
+                  "Engineer"
+                ],
+                [
+                  "Becky A.",
+                  "Dan M.",
+                  "Engineer",
+                  "Engineer"
+                ],
+                [
+                  "Becky A.",
+                  "Malcom S.",
+                  "Engineer",
+                  "Engineer"
+                ],
+                [
+                  "Becky A.",
+                  "Sharon F.",
+                  "Engineer",
+                  "Engineer"
+                ],
+                [
+                  "Becky A.",
+                  "Scott K.",
+                  "Engineer",
+                  "Manager"
+                ],
+                [
+                  "Becky A.",
+                  "Shirlee M.",
+                  "Engineer",
+                  "Manager"
+                ],
+                [
+                  "Dan B.",
+                  "Dan M.",
+                  "Engineer",
+                  "Engineer"
+                ],
+                [
+                  "Dan B.",
+                  "Malcom S.",
+                  "Engineer",
+                  "Engineer"
+                ]
+              ],
+              "rowCount": 36
+            }
+          },
+          {
+            "taskId": "sql-m5-t2-challenge-2",
+            "instruction": "Find pairs of employees with the same role but different tenure",
+            "expectedQuery": "SELECT a.name, b.name, a.role FROM employees a JOIN employees b ON a.role = b.role AND a.years_employed <> b.years_employed AND a.name < b.name;",
+            "solution": "SELECT a.name, b.name, a.role FROM employees a JOIN employees b ON a.role = b.role AND a.years_employed <> b.years_employed AND a.name < b.name;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Challenge",
+              "SQL Advanced: Self-Joins & Hierarchical Data"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "name",
+                "name",
+                "role"
+              ],
+              "rows": [
+                [
+                  "Becky A.",
+                  "Dan B.",
+                  "Engineer"
+                ],
+                [
+                  "Becky A.",
+                  "Malcom S.",
+                  "Engineer"
+                ],
+                [
+                  "Becky A.",
+                  "Sharon F.",
+                  "Engineer"
+                ],
+                [
+                  "Dan B.",
+                  "Dan M.",
+                  "Engineer"
+                ],
+                [
+                  "Dan B.",
+                  "Malcom S.",
+                  "Engineer"
+                ],
+                [
+                  "Dan B.",
+                  "Sharon F.",
+                  "Engineer"
+                ],
+                [
+                  "Dan M.",
+                  "Malcom S.",
+                  "Engineer"
+                ],
+                [
+                  "Dan M.",
+                  "Sharon F.",
+                  "Engineer"
+                ]
+              ],
+              "rowCount": 21
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Explain why a table can be joined to itself.",
+        "Use aliases to represent two logical roles.",
+        "Avoid duplicate reversed pairs.",
+        "Model same-building and manager/report relationships."
+      ],
+      "commonMistakes": [
+        "Forgetting the self-exclusion condition.",
+        "Returning both A-B and B-A.",
+        "Comparing a row with itself."
+      ],
+      "cheatSheet": "FROM table a JOIN table b ON a.key = b.key AND a.key < b.key;",
+      "reflectionQuestions": [
+        "What changes if you remove one clause from the query?",
+        "Which part of the task is row-level filtering versus result shaping?",
+        "Can you explain the query to another learner without reading the SQL?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m5-t2-ex1",
+          "title": "Colleagues",
+          "task": "Pair employees in the same building.",
+          "query": "SELECT a.name, b.name FROM employees a JOIN employees b ON a.building = b.building AND a.name < b.name;",
+          "result": {
+            "columns": [
+              "name",
+              "name"
+            ],
+            "rows": [
+              [
+                "Becky A.",
+                "Dan B."
+              ],
+              [
+                "Becky A.",
+                "Dan M."
+              ],
+              [
+                "Becky A.",
+                "Malcom S."
+              ],
+              [
+                "Becky A.",
+                "Scott K."
+              ],
+              [
+                "Becky A.",
+                "Sharon F."
+              ],
+              [
+                "Becky A.",
+                "Shirlee M."
+              ],
+              [
+                "Dan B.",
+                "Dan M."
+              ],
+              [
+                "Dan B.",
+                "Malcom S."
+              ]
+            ],
+            "rowCount": 36
+          },
+          "explanation": "The name comparison keeps one orientation.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m5-t2-ex2",
+          "title": "Same role",
+          "task": "Find employees sharing role and tenure.",
+          "query": "SELECT a.name, b.name, a.role FROM employees a JOIN employees b ON a.role = b.role AND a.years_employed = b.years_employed AND a.name < b.name;",
+          "result": {
+            "columns": [
+              "name",
+              "name",
+              "role"
+            ],
+            "rows": [
+              [
+                "Becky A.",
+                "Dan M.",
+                "Engineer"
+              ],
+              [
+                "Brandon J.",
+                "Lillia A.",
+                "Artist"
+              ]
+            ],
+            "rowCount": 2
+          },
+          "explanation": "Two aliases represent two employee rows.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m5-t2-ex3",
+          "title": "Same-table relationship pattern",
+          "task": "Pair employees who work in the same building.",
+          "query": "SELECT e.name AS employee, c.name AS colleague FROM employees e JOIN employees c ON e.building = c.building AND e.name < c.name;",
+          "result": {
+            "columns": [
+              "employee",
+              "colleague"
+            ],
+            "rows": [
+              [
+                "Becky A.",
+                "Dan B."
+              ],
+              [
+                "Becky A.",
+                "Dan M."
+              ],
+              [
+                "Becky A.",
+                "Malcom S."
+              ],
+              [
+                "Becky A.",
+                "Scott K."
+              ],
+              [
+                "Becky A.",
+                "Sharon F."
+              ],
+              [
+                "Becky A.",
+                "Shirlee M."
+              ],
+              [
+                "Dan B.",
+                "Dan M."
+              ],
+              [
+                "Dan B.",
+                "Malcom S."
+              ]
+            ],
+            "rowCount": 36
+          },
+          "explanation": "A self-join can model many same-table relationships. A manager/report hierarchy uses the same aliasing idea when a table contains a manager_id.",
+          "walkthrough": [
+            "Use two aliases for the same table.",
+            "Define the relationship in ON.",
+            "Add a canonical comparison so each pair appears once.",
+            "For hierarchical data, replace the shared-building condition with manager_id = employee_id."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build a small report from this topic's dataset. Start with the simplest query that returns the required rows, then add only the clauses needed for filtering, relationships, aggregation, or presentation.",
+      "pages": [
+        {
+          "pageId": "p-sql-m5-t2-concept",
+          "title": "Concept: SQL Advanced: Self-Joins & Hierarchical Data",
+          "content": "### What you'll learn\n- Explain why a table can be joined to itself.\n- Use aliases to represent two logical roles.\n- Avoid duplicate reversed pairs.\n- Model same-building and manager/report relationships.\n\n### Why this matters\nSQL is easiest to master when you connect each clause to a concrete change in the result set. This lesson uses the live database already attached to the exercise, so you can run the examples and inspect the result.\n\n### Rule of thumb\n`FROM table a JOIN table b ON a.key = b.key AND a.key < b.key;`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT a.name, b.name FROM employees a JOIN employees b ON a.building = b.building AND a.name < b.name;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m5-t2-concept",
+            "question": "Which approach best matches the goal of this lesson?",
+            "options": [
+              "SELECT a.name, b.name FROM employees a JOIN employees b ON a.building = b.building AND a.name < b.name;",
+              "Start by changing unrelated tables.",
+              "Return every column for every task.",
+              "Skip the live result and guess."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          }
+        },
+        {
+          "pageId": "p-sql-m5-t2-trace",
+          "title": "Worked example: trace the query",
+          "content": "Let's trace this example step by step.\n\n**Task:** Pair employees in the same building.\n\n**Query:**\n```sql\nSELECT a.name, b.name FROM employees a JOIN employees b ON a.building = b.building AND a.name < b.name;\n```\n\n1. Identify the source.\n2. Identify the requested output columns.\n3. Apply filtering/grouping/sorting if present.\n4. Compare the returned rows with the task requirement.\n\n**Teaching point:** The name comparison keeps one orientation.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Start from the data and output contract, then add clauses deliberately."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT a.name, b.name FROM employees a JOIN employees b ON a.building = b.building AND a.name < b.name;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m5-t2-trace",
+            "question": "What should you identify before adding advanced clauses?",
+            "options": [
+              "The required output and source data",
+              "A random index",
+              "A transaction log",
+              "An unrelated table"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Start from the data and output contract, then add clauses deliberately."
+          }
+        },
+        {
+          "pageId": "p-sql-m5-t2-check",
+          "title": "Common mistakes and challenge",
+          "content": "### Common mistakes\n- Forgetting the self-exclusion condition.\n- Returning both A-B and B-A.\n- Comparing a row with itself.\n\n### Try this before Submit\nRun the query with a small change and predict how the result should change. Then restore it and submit the exact task.\n\n### Self-check\nCan you explain why the query returns exactly the rows shown?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Prediction plus result inspection builds reliable query reasoning."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT a.name, b.name FROM employees a JOIN employees b ON a.building = b.building AND a.name < b.name;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m5-t2-check",
+            "question": "What is the most useful self-check?",
+            "options": [
+              "Predict the result before running and explain any difference",
+              "Add SELECT * to every query",
+              "Ignore row counts",
+              "Only check whether the editor accepted the query"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Prediction plus result inspection builds reliable query reasoning."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m5-t2-code-1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Colleagues",
+          "code": "SELECT a.name, b.name FROM employees a JOIN employees b ON a.building = b.building AND a.name < b.name;",
+          "description": "The name comparison keeps one orientation."
+        },
+        {
+          "exampleId": "sql-m5-t2-code-2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Same role",
+          "code": "SELECT a.name, b.name, a.role FROM employees a JOIN employees b ON a.role = b.role AND a.years_employed = b.years_employed AND a.name < b.name;",
+          "description": "Two aliases represent two employee rows."
+        },
+        {
+          "exampleId": "sql-m5-t2-code-3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Hierarchy pattern",
+          "code": "SELECT e.name, m.name AS manager FROM employees e LEFT JOIN employees m ON e.manager_id = m.employee_id;",
+          "description": "The self-join connects an employee to another row in the same table."
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Submit",
+        "Reflect"
+      ],
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 5: Advanced SQL Patterns & Subqueries",
+      "practiceProblems": []
+    }
+  ]
+}

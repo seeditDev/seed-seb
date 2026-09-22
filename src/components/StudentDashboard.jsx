@@ -1298,7 +1298,7 @@ const StudentDashboard = () => {
       const enrolled = await fetchEnrolledCourseIds(uid);
       const map = {};
       for (const course of COURSE_CATALOG) {
-        if (enrolled.includes(course.courseId)) {
+        if (enrolled.includes(course.courseId) || enrolled.includes(course.slug) || (course.folderName && enrolled.includes(course.folderName))) {
           const prog = await getCourseProgress(uid, course);
           if (prog) map[course.courseId] = prog;
         }
@@ -1313,8 +1313,12 @@ const StudentDashboard = () => {
     const uid = user?.uid || 'guest';
     const enrolledIds = getEnrolledCourseIds(uid);
 
-    const enrolledCourses = COURSE_CATALOG.filter(c => enrolledIds.includes(c.courseId)).map(c => {
-      const prog = dashboardEnrolledProgress[c.courseId];
+    const enrolledCourses = COURSE_CATALOG.filter(c => 
+      enrolledIds.includes(c.courseId) || 
+      enrolledIds.includes(c.slug) || 
+      (c.folderName && enrolledIds.includes(c.folderName))
+    ).map(c => {
+      const prog = dashboardEnrolledProgress[c.courseId] || dashboardEnrolledProgress[c.slug] || {};
       const pct = prog?.percentage || 0;
       const totalModules = c.modules?.length || 1;
       const completedModules = typeof prog?.completedModules === 'number'
@@ -2473,7 +2477,11 @@ const StudentDashboard = () => {
                   onClick={() => {
                     if (course.rawCourse) {
                       const cid = course.rawCourse.courseId || course.rawCourse.id || course.rawCourse.slug || course.id;
-                      try { sessionStorage.setItem(`seed_learning_course_${cid}`, JSON.stringify(course.rawCourse)); } catch (_) {}
+                      if (course.rawCourse.modules?.[0]?.topics?.length > 0) {
+                        try { sessionStorage.setItem(`seed_learning_course_${cid}`, JSON.stringify(course.rawCourse)); } catch (_) {}
+                      } else {
+                        try { sessionStorage.removeItem(`seed_learning_course_${cid}`); } catch (_) {}
+                      }
                       navigate(`/student/learning/${cid}?view=CLASS`, { state: { view: 'CLASS' } });
                     } else if (course.id) {
                       navigate(`/student/learning/${course.id}?view=CLASS`, { state: { view: 'CLASS' } });
@@ -6861,7 +6869,11 @@ const StudentDashboard = () => {
               <MyLearningDashboard 
                 onOpenCourse={(c, view = 'CLASS') => {
                   const cid = c.courseId || c.id || c.slug;
-                  try { sessionStorage.setItem(`seed_learning_course_${cid}`, JSON.stringify(c)); } catch (_) {}
+                  if (c?.modules?.[0]?.topics?.length > 0) {
+                    try { sessionStorage.setItem(`seed_learning_course_${cid}`, JSON.stringify(c)); } catch (_) {}
+                  } else {
+                    try { sessionStorage.removeItem(`seed_learning_course_${cid}`); } catch (_) {}
+                  }
                   navigate(`/student/learning/${cid}?view=${view}`, { state: { view } });
                 }} 
                 onExploreCourses={() => setActiveTab("courses")} 
@@ -6875,7 +6887,11 @@ const StudentDashboard = () => {
               <CourseCatalog 
                 onStartCourse={(c, view = 'OVERVIEW') => { 
                   const cid = c.courseId || c.id || c.slug;
-                  try { sessionStorage.setItem(`seed_learning_course_${cid}`, JSON.stringify(c)); } catch (_) {}
+                  if (c?.modules?.[0]?.topics?.length > 0) {
+                    try { sessionStorage.setItem(`seed_learning_course_${cid}`, JSON.stringify(c)); } catch (_) {}
+                  } else {
+                    try { sessionStorage.removeItem(`seed_learning_course_${cid}`); } catch (_) {}
+                  }
                   navigate(`/student/learning/${cid}?view=${view}`, { state: { view } });
                 }} 
                 user={user}

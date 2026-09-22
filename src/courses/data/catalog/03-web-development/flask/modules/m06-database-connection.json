@@ -1,0 +1,497 @@
+{
+  "moduleId": "m06-database-connection",
+  "title": "Database connection",
+  "description": "Core concepts and hands-on practice in Database connection.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-connecting-flask-to-database",
+      "title": "Connecting FLASK to database",
+      "description": "Study concepts and solve targeted engineering problems for Connecting FLASK to database.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-BRNFUA01",
+          "title": "Connecting to Databases: Overview of SQLAlchemy setup and configuration",
+          "content": "In this lesson, we'll explore how to connect Flask to a database using SQLAlchemy, a powerful Object-Relational Mapping (ORM) library for Python.\n\nSQLAlchemy allows us to interact with databases using Python objects instead of writing raw SQL queries. This makes it easier to work with databases in our Flask applications.\n\nTo get started with SQLAlchemy in Flask, we need to follow these steps:\n\n1. Install required packages:\n First, we need to install Flask-SQLAlchemy, which is an extension that adds SQLAlchemy support to Flask. You can do this using pip:\n ```\n pip install Flask-SQLAlchemy\n ```\n\n2. Import and initialize SQLAlchemy:\n In your Flask application file, import and initialize SQLAlchemy:\n ```python\n from flask import Flask\n from flask_sqlalchemy import SQLAlchemy\n\n app = Flask(__name__)\n db = SQLAlchemy(app)\n ```\n\n3. Configure the database:\n Set up the database configuration in your Flask app. This includes specifying the database URI and any other necessary settings:\n ```python\n app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db'\n app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False\n ```\n The URI specifies the type of database (SQLite in this example) and its location.\n\n4. Define models:\n Create Python classes that represent your database tables. These classes will inherit from `db.Model`:\n ```python\n class User(db.Model):\n id = db.Column(db.Integer, primary_key=True)\n username = db.Column(db.String(80), unique=True, nullable=False)\n email = db.Column(db.String(120), unique=True, nullable=False)\n ```\n\n5. Create the database:\n After defining your models, you need to create the database tables. You can do this by running the following commands in a Python shell:\n ```python\n from your_app import db\n db.create_all()\n ```\n\n\nRemember, SQLAlchemy works with various database systems, so you can easily switch between different databases (like PostgreSQL or MySQL) by changing the database URI in your configuration.\n\nIn the upcoming lessons, we'll dive deeper into how to perform database operations and design efficient schemas using this setup.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Connecting to Databases: Overview of SQLAlchemy setup and configuration: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "import sqlite3\n\ndef connect():\n return sqlite3.connect(\"app.db\")\n\ndef create_table():\n with connect() as db:\n db.execute(\"CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)\")"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-BRNFUA01",
+            "question": "Which statement best captures the main idea of Connecting to Databases: Overview of SQLAlchemy setup and configuration?",
+            "options": [
+              "It applies Connecting FLASK to database to a Flask/Python application.",
+              "It bypasses Flask request handling.",
+              "It replaces application logic with CSS.",
+              "It disables validation and error handling."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The lesson focuses on Connecting FLASK to database as part of building Flask applications."
+          }
+        },
+        {
+          "pageId": "p-BRNFUA07",
+          "title": "CRUD Operations: Creating, Reading, Updating, and Deleting Records Using Models",
+          "content": "When you were learning SQL - recall that you had learnt about CRUD (Create, Read, Update, Delete) operations.\n\nIn this lesson, we'll explore how to perform CRUD (Create, Read, Update, Delete) operations using models in Flask with SQLAlchemy. \n\n1. Creating Records:\nTo create a new record, you'll create a model object and add it to the database session:\n\n```python\nnew_user = User(username='john_doe', email='john@example.com')\ndb.session.add(new_user)\ndb.session.commit()\n```\n\n2. Reading Records:\nTo retrieve records, you can use various query methods provided by SQLAlchemy:\n\n```python\n# Get all users\nall_users = User.query.all()\n\n# Get a specific user by ID\nuser = User.query.get(1)\n\n# Filter users\nfiltered_users = User.query.filter_by(username='john_doe').first()\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on CRUD Operations: Creating, Reading, Updating, and Deleting Records Using Models: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "new_user = User(username='john_doe', email='john@example.com')\ndb.session.add(new_user)\ndb.session.commit()"
+          }
+        },
+        {
+          "pageId": "p-BRNFUA01A",
+          "title": "Update and delete operations",
+          "content": "In this lesson, we'll explore how to perform rest of the CRUD (Create, Read, Update, Delete) operations using models in Flask with SQLAlchemy. \n\n`Update` and `Delete` operations are less used that Read and Create.\n\n1. Updating Records:\nTo update a record, you'll first query for it, modify its attributes, and then commit the changes:\n\n```python\nuser = User.query.get(1)\nuser.email = 'newemail@example.com'\ndb.session.commit()\n```\n\n2. Deleting Records:\nTo delete a record, you'll query for it and then use the delete method:\n\n```python\nuser = User.query.get(1)\ndb.session.delete(user)\ndb.session.commit()\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Update and delete operations: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "user = User.query.get(1)\nuser.email = 'newemail@example.com'\ndb.session.commit()"
+          }
+        },
+        {
+          "pageId": "p-BRNFUA10",
+          "title": "Defining Relationships in Flask-SQLAlchemy",
+          "content": "When building a database in Flask, you often want to connect models together. SQLAlchemy provides a powerful way to define these **relationships** using `db.relationship()` and `db.ForeignKey()`.\n\n---\n\n### One-to-Many\n\n**Use Case:** A `User` can have many `Posts`.\n\n**Theory:**\n\n* The \"one\" side (`User`) uses `db.relationship()` to define access to related `Post`s.\n* The \"many\" side (`Post`) uses `db.ForeignKey()` to link back to the `User`.\n\n**Code:**\n\n```python\n# In User model\nposts = db.relationship('Post', back_populates='author', lazy='dynamic')\n\n# In Post model\nauthor = db.relationship('User', back_populates='posts')\nuser_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)\n```\n\n---\n\n### One-to-One\n\n**Use Case:** A `User` has one `Profile`.\n\n**Theory:**\n\n* Same as one-to-many, but add `uselist=False` in `db.relationship()` to restrict it to one.\n\n**Code:**\n\n```python\n# In User model\nprofile = db.relationship('Profile', back_populates='user', uselist=False)\n\n# In Profile model\nuser = db.relationship('User', back_populates='profile')\nuser_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)\n```\n\n---\n\n### Many-to-Many\n\n**Use Case:** A `User` can be in many `Groups`, and a `Group` can have many `Users`.\n\n**Theory:**\n\n* You need an **association table** to map this relationship.\n\n**Code:**\n\n```python\nuser_group = db.Table('user_group',\n db.Column('user_id', db.Integer, db.ForeignKey('user.id')),\n db.Column('group_id', db.Integer, db.ForeignKey('group.id'))\n)\n\n# In User model\ngroups = db.relationship('Group', secondary=user_group, back_populates='members')\n\n# In Group model\nmembers = db.relationship('User', secondary=user_group, back_populates='groups')\n```\n\n---\n\n### Tips to Remember\n\n* `db.relationship()` is for accessing related objects.\n* `db.ForeignKey()` is what actually links the rows in the database.\n* `back_populates` is preferred over `backref` for clarity.\n* `cascade='all, delete-orphan'` ensures cleanup of child records.\n* `lazy='dynamic'` allows query-like access to relationships.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Defining Relationships in Flask-SQLAlchemy: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "# In User model\nposts = db.relationship('Post', back_populates='author', lazy='dynamic')\n\n# In Post model\nauthor = db.relationship('User', back_populates='posts')\nuser_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-BRNFUA01-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Connecting to Databases: Overview of SQLAlchemy setup and configuration",
+          "code": "import sqlite3\n\ndef connect():\n return sqlite3.connect(\"app.db\")\n\ndef create_table():\n with connect() as db:\n db.execute(\"CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)\")"
+        },
+        {
+          "exampleId": "ex-BRNFUA07-java",
+          "language": "python",
+          "label": "Python",
+          "title": "CRUD Operations: Creating, Reading, Updating, and Deleting Records Using Models",
+          "code": "new_user = User(username='john_doe', email='john@example.com')\ndb.session.add(new_user)\ndb.session.commit()"
+        },
+        {
+          "exampleId": "ex-BRNFUA01A-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Update and delete operations",
+          "code": "user = User.query.get(1)\nuser.email = 'newemail@example.com'\ndb.session.commit()"
+        },
+        {
+          "exampleId": "ex-BRNFUA10-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Defining Relationships in Flask-SQLAlchemy",
+          "code": "# In User model\nposts = db.relationship('Post', back_populates='author', lazy='dynamic')\n\n# In Post model\nauthor = db.relationship('User', back_populates='posts')\nuser_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "BRNFUA02",
+          "questionId": "BRNFUA02",
+          "title": "DB Setup",
+          "difficulty": "Medium",
+          "description": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "problemStatement": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "constraints": [
+            "1 <= N <= 10^4",
+            "name length <= 50"
+          ],
+          "inputFormat": "First line N. Second line N names separated by spaces.",
+          "outputFormat": "Print N.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA B",
+              "output": "B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA B C D",
+              "output": "D C B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "5\nu1 u2 u3 u4 u5",
+              "output": "u5 u4 u3 u2 u1",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "10\nu0 u1 u2 u3 u4 u5 u6 u7 u8 u9",
+              "output": "u9 u8 u7 u6 u5 u4 u3 u2 u1 u0",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "BRNFUA08",
+          "questionId": "BRNFUA08",
+          "title": "Worked example - Create, Read operations",
+          "difficulty": "Medium",
+          "description": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "problemStatement": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "constraints": [
+            "1 <= N <= 10^4",
+            "name length <= 50"
+          ],
+          "inputFormat": "First line N. Second line N names separated by spaces.",
+          "outputFormat": "Print N.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA B",
+              "output": "B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA B C D",
+              "output": "D C B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "5\nu1 u2 u3 u4 u5",
+              "output": "u5 u4 u3 u2 u1",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "10\nu0 u1 u2 u3 u4 u5 u6 u7 u8 u9",
+              "output": "u9 u8 u7 u6 u5 u4 u3 u2 u1 u0",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "BRNFUA09",
+          "questionId": "BRNFUA09",
+          "title": "Practice problem - Create operations",
+          "difficulty": "Medium",
+          "description": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "problemStatement": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "constraints": [
+            "1 <= N <= 10^4",
+            "name length <= 50"
+          ],
+          "inputFormat": "First line N. Second line N names separated by spaces.",
+          "outputFormat": "Print N.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA B",
+              "output": "B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA B C D",
+              "output": "D C B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "5\nu1 u2 u3 u4 u5",
+              "output": "u5 u4 u3 u2 u1",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "10\nu0 u1 u2 u3 u4 u5 u6 u7 u8 u9",
+              "output": "u9 u8 u7 u6 u5 u4 u3 u2 u1 u0",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "BRNFUA08A",
+          "questionId": "BRNFUA08A",
+          "title": "Worked example - Update, Delete operations",
+          "difficulty": "Medium",
+          "description": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "problemStatement": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "constraints": [
+            "1 <= N <= 10^4",
+            "name length <= 50"
+          ],
+          "inputFormat": "First line N. Second line N names separated by spaces.",
+          "outputFormat": "Print N.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA B",
+              "output": "B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA B C D",
+              "output": "D C B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "5\nu1 u2 u3 u4 u5",
+              "output": "u5 u4 u3 u2 u1",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "10\nu0 u1 u2 u3 u4 u5 u6 u7 u8 u9",
+              "output": "u9 u8 u7 u6 u5 u4 u3 u2 u1 u0",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "BRNFUA09A",
+          "questionId": "BRNFUA09A",
+          "title": "Practice problem - Delete operations",
+          "difficulty": "Medium",
+          "description": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "problemStatement": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "constraints": [
+            "1 <= N <= 10^4",
+            "name length <= 50"
+          ],
+          "inputFormat": "First line N. Second line N names separated by spaces.",
+          "outputFormat": "Print N.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA B",
+              "output": "B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA B C D",
+              "output": "D C B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "5\nu1 u2 u3 u4 u5",
+              "output": "u5 u4 u3 u2 u1",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "10\nu0 u1 u2 u3 u4 u5 u6 u7 u8 u9",
+              "output": "u9 u8 u7 u6 u5 u4 u3 u2 u1 u0",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "BRNFUA11",
+          "questionId": "BRNFUA11",
+          "title": "Designing a Social App Schema with Relationships",
+          "difficulty": "Medium",
+          "description": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "problemStatement": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "constraints": [
+            "1 <= N <= 10^4",
+            "name length <= 50"
+          ],
+          "inputFormat": "First line N. Second line N names separated by spaces.",
+          "outputFormat": "Print N.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA B",
+              "output": "B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA B C D",
+              "output": "D C B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "5\nu1 u2 u3 u4 u5",
+              "output": "u5 u4 u3 u2 u1",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "10\nu0 u1 u2 u3 u4 u5 u6 u7 u8 u9",
+              "output": "u9 u8 u7 u6 u5 u4 u3 u2 u1 u0",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "BRNFUA12",
+          "questionId": "BRNFUA12",
+          "title": "Design a Recipe Sharing Platform Schema",
+          "difficulty": "Medium",
+          "description": "Given a whitespace-separated list of field values, print `VALID` when every field is non-empty after stripping whitespace; otherwise print `INVALID`.",
+          "problemStatement": "Given a whitespace-separated list of field values, print `VALID` when every field is non-empty after stripping whitespace; otherwise print `INVALID`.",
+          "constraints": [
+            "1 <= number of fields <= 10",
+            "field length <= 50"
+          ],
+          "inputFormat": "One line containing space-separated field values.",
+          "outputFormat": "Print VALID or INVALID.",
+          "sampleTestCases": [
+            {
+              "input": "x",
+              "output": "VALID",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "x",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice example.com",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice ",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": " ",
+              "output": "INVALID",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "flask.json",
+      "_moduleTitle": "Database connection"
+    }
+  ]
+}

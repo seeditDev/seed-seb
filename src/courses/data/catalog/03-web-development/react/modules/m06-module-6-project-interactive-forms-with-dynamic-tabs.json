@@ -1,0 +1,244 @@
+{
+  "moduleId": "m06-module-6-project-interactive-forms-with-dynamic-tabs",
+  "title": "Module 6: Project — Interactive Forms with Dynamic Tabs",
+  "description": "Core concepts and hands-on practice in Module 6: Project — Interactive Forms with Dynamic Tabs.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-capstone-dynamic-multi-tab-form-portal",
+      "title": "Capstone: Dynamic Multi-Tab Form Portal",
+      "description": "Build an enterprise multi-step wizard with real-time validation and sync to GitHub.",
+      "mode": "VSCODE_STUDIO",
+      "readingTimeMinutes": 45,
+      "guidedProject": {
+        "projectId": "react-dynamic-tabs-form",
+        "title": "Multi-Step Interactive Wizard with Dynamic Tabs",
+        "category": "React Development",
+        "description": "Build a two-step registration wizard while learning how state stays in the parent and how child components receive data and callbacks.\n\nLearning sequence:\n1. Understand state ownership.\n2. Render the first step.\n3. Move to the second step.\n4. Go back without losing data.\n5. Keep inputs controlled.\n6. Add validation before allowing the next step.\n7. Finish with a review step.\n\nFor the first guided milestone, focus only on navigation. Do not jump ahead to validation until the state transition is working.",
+        "skills": [
+          "React 18",
+          "Dynamic Tabs",
+          "State Ownership",
+          "Props",
+          "Controlled Forms",
+          "Form Validation",
+          "State Transitions",
+          "GitHub Sync"
+        ],
+        "milestones": [
+          {
+            "id": 1,
+            "title": "Step 1 → Step 2 Navigation",
+            "goal": "Render Step 1 first and switch to Preferences when the Next button is clicked.",
+            "instructions": "Read App.jsx. `activeStep` or `activeTab` is the source of truth. The parent should change it; the child should call the callback.",
+            "tasks": [
+              {
+                "id": 1,
+                "instruction": "Render Step 1 as the initial active view.",
+                "domSelector": "#step-heading",
+                "expectedText": "Step 1: Personal Info",
+                "failMessage": "Expected Step 1 initially."
+              },
+              {
+                "id": 2,
+                "instruction": "Clicking Next changes the heading to Step 2: Preferences.",
+                "domSelector": "#next-step-btn",
+                "simulateAction": "click",
+                "afterActionSelector": "#step-heading",
+                "afterActionExpectedText": "Step 2: Preferences",
+                "failMessage": "Expected Next to switch to Preferences."
+              },
+              {
+                "id": 3,
+                "instruction": "Do not move activeStep state into the child component.",
+                "failMessage": "Expected activeStep to be owned by App.jsx."
+              }
+            ],
+            "files": [
+              {
+                "name": "App.jsx",
+                "code": "import React, { useState } from 'react';\n\nexport default function App() {\n  const [activeStep, setActiveStep] = useState(1);\n  const [formData, setFormData] = useState({\n    fullName: 'Jordan Bell',\n    email: 'jordan@seed.dev',\n    theme: 'Dark'\n  });\n\n  return (\n    <div style={{ maxWidth: '440px', margin: '0 auto', padding: '24px', fontFamily: 'sans-serif' }}>\n      <h2>Onboarding Wizard</h2>\n\n      {activeStep === 1 ? (\n        <div>\n          <h3 id=\"step-heading\">Step 1: Personal Info</h3>\n          <p>Name: {formData.fullName}</p>\n          <button id=\"next-step-btn\" onClick={() => { /* TODO: move to step 2 */ }}>\n            Next: Preferences →\n          </button>\n        </div>\n      ) : (\n        <div>\n          <h3 id=\"step-heading\">Step 2: Preferences</h3>\n          <button onClick={() => setActiveStep(1)}>\n            ← Back to Step 1\n          </button>\n        </div>\n      )}\n    </div>\n  );\n}\n"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "Preserve Form Data While Navigating",
+            "goal": "Keep the user's name and preference in shared parent state while changing steps.",
+            "instructions": "Update formData from controlled inputs. Going forward and back must preserve the data already entered.",
+            "tasks": [
+              {
+                "id": 1,
+                "instruction": "The name field is controlled by formData.fullName.",
+                "domSelector": "#name-input",
+                "expectedText": "Jordan Bell",
+                "failMessage": "Expected the input value to come from formData.fullName."
+              },
+              {
+                "id": 2,
+                "instruction": "Typing a new name updates the rendered summary.",
+                "domSelector": "#name-input",
+                "simulateAction": "type",
+                "afterActionSelector": "#name-preview",
+                "afterActionExpectedText": "Anu",
+                "failMessage": "Expected the preview to update from the controlled input."
+              }
+            ],
+            "files": [
+              {
+                "name": "App.jsx",
+                "code": "// Add a controlled input using value={formData.fullName}\n// and update formData with the spread operator.\n"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "Preference Selection",
+            "goal": "Store a preference in shared state and render it in the Preferences step.",
+            "instructions": "Use a controlled select. The selected value should come from formData.theme and updates should preserve the other fields.",
+            "tasks": [
+              {
+                "id": 1,
+                "instruction": "Preferences step renders a visible theme selection control.",
+                "domSelector": "#theme-select",
+                "expectedText": "Dark",
+                "failMessage": "Expected the theme selection control to be visible with the current theme."
+              }
+            ],
+            "files": [
+              {
+                "name": "PreferencesStep.jsx",
+                "code": "// Build a controlled select for Light and Dark preferences.\n"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Step Validation",
+            "goal": "Prevent the user from leaving Personal Info with an empty name.",
+            "instructions": "Trim the name before deciding whether navigation is allowed. Show a clear validation message instead of changing steps when the name is empty.",
+            "tasks": [
+              {
+                "id": 1,
+                "instruction": "An empty name does not advance to the Preferences step.",
+                "domSelector": "#next-btn",
+                "simulateAction": "click",
+                "afterActionSelector": "#step-heading",
+                "afterActionExpectedText": "Step 1: Personal Info",
+                "failMessage": "Expected empty-name validation to keep the user on Step 1."
+              },
+              {
+                "id": 2,
+                "instruction": "A non-empty name allows navigation to Preferences.",
+                "domSelector": "#next-btn",
+                "simulateAction": "click",
+                "afterActionSelector": "#step-heading",
+                "afterActionExpectedText": "Step 2: Preferences",
+                "failMessage": "Expected valid data to allow navigation."
+              }
+            ],
+            "files": [
+              {
+                "name": "PersonalStep.jsx",
+                "code": "// Add a validation guard before calling onNext().\n"
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "title": "Review and Finalize",
+            "goal": "Display the collected values before the form is considered complete.",
+            "instructions": "Create a final review view that shows the user's name, email, and selected theme. Do not duplicate state.",
+            "tasks": [
+              {
+                "id": 1,
+                "instruction": "Review shows the collected full name.",
+                "domSelector": "#review-name",
+                "expectedText": "Jordan Bell",
+                "failMessage": "Expected review to show the collected name."
+              },
+              {
+                "id": 2,
+                "instruction": "Review shows the selected theme.",
+                "domSelector": "#review-theme",
+                "expectedText": "Dark",
+                "failMessage": "Expected review to show the selected theme."
+              }
+            ],
+            "files": [
+              {
+                "name": "ReviewStep.jsx",
+                "code": "// Render review values received through props.\n"
+              }
+            ]
+          }
+        ]
+      },
+      "codeStudio": {
+        "projectId": "react-dynamic-tabs-form",
+        "title": "Multi-Step Interactive Wizard with Dynamic Tabs",
+        "category": "React Development",
+        "description": "Build a beginner-friendly multi-step form in multiple files. You will learn the relationship between parent state and child components.\n\nArchitecture:\nApp.jsx\n├── TabNav.jsx\n├── PersonalStep.jsx\n└── PreferencesStep.jsx\n\nThe parent owns `activeTab` and `formData`. Child components receive values and callbacks through props. Navigation changes the active step, while inputs update the shared form object.",
+        "skills": [
+          "Multi-File Structure",
+          "State Ownership",
+          "Props",
+          "Callbacks",
+          "Controlled Inputs",
+          "Form Validation",
+          "State Transitions",
+          "Accessibility Basics"
+        ],
+        "files": {
+          "src/App.jsx": "import React, { useState } from 'react';\nimport TabNav from './components/TabNav';\nimport PersonalStep from './components/PersonalStep';\nimport PreferencesStep from './components/PreferencesStep';\nimport './styles/wizard.css';\n\nexport default function App() {\n  const [activeTab, setActiveTab] = useState('personal');\n\n  const [formData, setFormData] = useState({\n    fullName: 'Jordan Bell',\n    email: 'jordan@seed.dev',\n    theme: 'Dark Mode'\n  });\n\n  return (\n    <div className=\"wizard-app\">\n      <TabNav\n        activeTab={activeTab}\n        onSelectTab={setActiveTab}\n      />\n\n      <div className=\"wizard-body\">\n        {activeTab === 'personal' ? (\n          <PersonalStep\n            data={formData}\n            onChange={setFormData}\n            // TODO: connect onNext to setActiveTab('preferences')\n            onNext={() => {}}\n          />\n        ) : (\n          <PreferencesStep\n            data={formData}\n            onChange={setFormData}\n            onBack={() => setActiveTab('personal')}\n          />\n        )}\n      </div>\n    </div>\n  );\n}\n",
+          "src/components/TabNav.jsx": "import React from 'react';\n\nexport default function TabNav({ activeTab, onSelectTab }) {\n  return (\n    <div className=\"tab-strip\">\n      <button \n        id=\"tab-btn-personal\"\n        className={'tab-pill ' + (activeTab === 'personal' ? 'active' : '')}\n        onClick={() => onSelectTab('personal')}\n      >\n        1. Personal Info\n      </button>\n      <button \n        id=\"tab-btn-preferences\"\n        className={'tab-pill ' + (activeTab === 'preferences' ? 'active' : '')}\n        onClick={() => onSelectTab('preferences')}\n      >\n        2. Preferences\n      </button>\n    </div>\n  );\n}\n",
+          "src/components/PersonalStep.jsx": "import React from 'react';\n\nexport default function PersonalStep({ data, onChange, onNext }) {\n  return (\n    <div className=\"step-card\">\n      <h3 id=\"step-title\">Personal Information</h3>\n\n      <label htmlFor=\"name-input\">Full Name</label>\n      <input\n        id=\"name-input\"\n        value={data.fullName}\n        onChange={event =>\n          onChange({\n            ...data,\n            fullName: event.target.value\n          })\n        }\n      />\n\n      {/* TODO: Wire the button to onNext */}\n      <button id=\"next-btn\" className=\"btn-primary\" onClick={() => {}}>\n        Next: Preferences →\n      </button>\n    </div>\n  );\n}\n",
+          "src/components/PreferencesStep.jsx": "import React from 'react';\n\nexport default function PreferencesStep({ data, onChange, onBack }) {\n  return (\n    <div className=\"step-card\">\n      <h3 id=\"step-title\">Preferences</h3>\n      <label>Preferred Mode:</label>\n      <select \n        id=\"theme-select\"\n        value={data.theme}\n        onChange={e => onChange({ ...data, theme: e.target.value })}\n      >\n        <option value=\"Light Mode\">Light Mode</option>\n        <option value=\"Dark Mode\">Dark Mode</option>\n      </select>\n      <button id=\"back-btn\" className=\"btn-secondary\" onClick={onBack}>\n        ← Back\n      </button>\n    </div>\n  );\n}\n",
+          "src/styles/wizard.css": ".wizard-app {\n  max-width: 460px;\n  margin: 0 auto;\n  font-family: Inter, sans-serif;\n  color: #0f172a;\n}\n.tab-strip {\n  display: flex;\n  gap: 8px;\n  border-bottom: 2px solid #e2e8f0;\n  padding-bottom: 8px;\n  margin-bottom: 16px;\n}\n.tab-pill {\n  background: #f1f5f9;\n  border: 1px solid #cbd5e1;\n  padding: 6px 12px;\n  border-radius: 6px;\n  font-size: 12.5px;\n  font-weight: 600;\n  color: #475569;\n}\n.tab-pill.active {\n  background: #2563eb;\n  color: #ffffff;\n  border-color: #1d4ed8;\n}\n.step-card {\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n}\n.step-card h3 {\n  margin: 0;\n  font-size: 17px;\n}\n"
+        },
+        "tasks": [
+          {
+            "id": 1,
+            "instruction": "Verify TabNav component exists at src/components/TabNav.jsx.",
+            "requiredFile": "src/components/TabNav.jsx",
+            "failMessage": "Expected TabNav.jsx in src/components/."
+          },
+          {
+            "id": 2,
+            "instruction": "Verify PersonalStep component exists at src/components/PersonalStep.jsx.",
+            "requiredFile": "src/components/PersonalStep.jsx",
+            "failMessage": "Expected PersonalStep.jsx in src/components/."
+          },
+          {
+            "id": 3,
+            "instruction": "Initial step renders 'Personal Information' in #step-title.",
+            "domSelector": "#step-title",
+            "expectedText": "Personal Information",
+            "failMessage": "Expected initial step to be Personal Information."
+          },
+          {
+            "id": 4,
+            "instruction": "Clicking #next-btn switches to the Preferences step.",
+            "domSelector": "#next-btn",
+            "simulateAction": "click",
+            "afterActionSelector": "#step-title",
+            "afterActionExpectedText": "Preferences",
+            "failMessage": "Clicking next should show Preferences."
+          }
+        ],
+        "solutionFiles": {
+          "src/App.jsx": "import React, { useState } from 'react';\nimport TabNav from './components/TabNav';\nimport PersonalStep from './components/PersonalStep';\nimport PreferencesStep from './components/PreferencesStep';\nimport './styles/wizard.css';\n\nexport default function App() {\n  const [activeTab, setActiveTab] = useState('personal');\n\n  const [formData, setFormData] = useState({\n    fullName: 'Jordan Bell',\n    email: 'jordan@seed.dev',\n    theme: 'Dark Mode'\n  });\n\n  return (\n    <div className=\"wizard-app\">\n      <TabNav\n        activeTab={activeTab}\n        onSelectTab={setActiveTab}\n      />\n\n      <div className=\"wizard-body\">\n        {activeTab === 'personal' ? (\n          <PersonalStep\n            data={formData}\n            onChange={setFormData}\n            onNext={() => setActiveTab('preferences')}\n          />\n        ) : (\n          <PreferencesStep\n            data={formData}\n            onChange={setFormData}\n            onBack={() => setActiveTab('personal')}\n          />\n        )}\n      </div>\n    </div>\n  );\n}\n",
+          "src/components/TabNav.jsx": "import React from 'react';\n\nexport default function TabNav({ activeTab, onSelectTab }) {\n  return (\n    <div className=\"tab-strip\">\n      <button \n        id=\"tab-btn-personal\"\n        className={'tab-pill ' + (activeTab === 'personal' ? 'active' : '')}\n        onClick={() => onSelectTab('personal')}\n      >\n        1. Personal Info\n      </button>\n      <button \n        id=\"tab-btn-preferences\"\n        className={'tab-pill ' + (activeTab === 'preferences' ? 'active' : '')}\n        onClick={() => onSelectTab('preferences')}\n      >\n        2. Preferences\n      </button>\n    </div>\n  );\n}\n",
+          "src/components/PersonalStep.jsx": "import React from 'react';\n\nexport default function PersonalStep({ data, onChange, onNext }) {\n  return (\n    <div className=\"step-card\">\n      <h3 id=\"step-title\">Personal Information</h3>\n\n      <label htmlFor=\"name-input\">Full Name</label>\n      <input\n        id=\"name-input\"\n        value={data.fullName}\n        onChange={event =>\n          onChange({\n            ...data,\n            fullName: event.target.value\n          })\n        }\n      />\n\n      <button id=\"next-btn\" className=\"btn-primary\" onClick={onNext}>\n        Next: Preferences →\n      </button>\n    </div>\n  );\n}\n",
+          "src/components/PreferencesStep.jsx": "import React from 'react';\n\nexport default function PreferencesStep({ data, onChange, onBack }) {\n  return (\n    <div className=\"step-card\">\n      <h3 id=\"step-title\">Preferences</h3>\n      <label>Preferred Mode:</label>\n      <select \n        id=\"theme-select\"\n        value={data.theme}\n        onChange={e => onChange({ ...data, theme: e.target.value })}\n      >\n        <option value=\"Light Mode\">Light Mode</option>\n        <option value=\"Dark Mode\">Dark Mode</option>\n      </select>\n      <button id=\"back-btn\" className=\"btn-secondary\" onClick={onBack}>\n        ← Back\n      </button>\n    </div>\n  );\n}\n",
+          "src/styles/wizard.css": ".wizard-app {\n  max-width: 460px;\n  margin: 0 auto;\n  font-family: Inter, sans-serif;\n  color: #0f172a;\n}\n.tab-strip {\n  display: flex;\n  gap: 8px;\n  border-bottom: 2px solid #e2e8f0;\n  padding-bottom: 8px;\n  margin-bottom: 16px;\n}\n.tab-pill {\n  background: #f1f5f9;\n  border: 1px solid #cbd5e1;\n  padding: 6px 12px;\n  border-radius: 6px;\n  font-size: 12.5px;\n  font-weight: 600;\n  color: #475569;\n}\n.tab-pill.active {\n  background: #2563eb;\n  color: #ffffff;\n  border-color: #1d4ed8;\n}\n.step-card {\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n}\n.step-card h3 {\n  margin: 0;\n  font-size: 17px;\n}\n"
+        }
+      },
+      "_sourceFile": "react-js.json",
+      "_moduleTitle": "Module 6: Project — Interactive Forms with Dynamic Tabs",
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": []
+    }
+  ]
+}

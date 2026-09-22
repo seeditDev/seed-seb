@@ -1,0 +1,566 @@
+{
+  "moduleId": "m03-boundary-search-duplicates",
+  "title": "Boundary Search & Duplicates",
+  "description": "Core concepts and hands-on practice in Boundary Search & Duplicates.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-lower-bound-first-occurrence",
+      "title": "Lower Bound & First Occurrence",
+      "description": "Find the first position meeting >= target and convert it into first occurrence. Includes guided dry runs, Java 17 implementation, independent practice, and interview transfer.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "binary-search-new-m3-t1-p1",
+          "title": "Why This Topic Matters",
+          "sectionType": "CONCEPT",
+          "content": "Find the first position meeting >= target and convert it into first occurrence.",
+          "teachingGoal": "Explain why Lower Bound & First Occurrence is useful."
+        },
+        {
+          "pageId": "binary-search-new-m3-t1-p2",
+          "title": "Intuition",
+          "sectionType": "INTUITION",
+          "content": "Start from a brute-force mental model, then ask what structure lets us remove half the candidates. State the invariant before writing the loop.",
+          "teachingGoal": "Explain the intuition for Lower Bound & First Occurrence.",
+          "suggestedVisual": "Candidate interval shrinking from two sides."
+        },
+        {
+          "pageId": "binary-search-new-m3-t1-p3",
+          "title": "Worked Example 1",
+          "sectionType": "WORKED_EXAMPLE",
+          "content": "Lower bound",
+          "teachingGoal": "Trace the first example of Lower Bound & First Occurrence.",
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,2,2,4}; int x=2,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<x)l=m+1;else r=m;} System.out.println(l);\n  }\n}\n"
+          }
+        },
+        {
+          "pageId": "binary-search-new-m3-t1-p4",
+          "title": "Worked Example 2",
+          "sectionType": "WORKED_EXAMPLE",
+          "content": "First occurrence",
+          "teachingGoal": "Trace a second variation and compare its boundary rule.",
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,2,2,4}; int x=2,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<x)l=m+1;else r=m;} System.out.println(l<a.length&&a[l]==x?l:-1);\n  }\n}\n"
+          }
+        },
+        {
+          "pageId": "binary-search-new-m3-t1-p5",
+          "title": "Debugging Clinic",
+          "sectionType": "DEBUGGING",
+          "content": "Test empty/small input where allowed, target at an endpoint, target absent, repeated values where relevant, and the largest numeric answer. Never change a pointer without preserving the invariant.",
+          "teachingGoal": "Debug common Lower Bound & First Occurrence failures."
+        },
+        {
+          "pageId": "binary-search-new-m3-t1-p6",
+          "title": "Mastery Gate",
+          "sectionType": "MASTERY",
+          "content": "Explain the candidate space, predicate/order, boundary convention, termination, and complexity. Then solve one nearby problem without looking at the worked code.",
+          "teachingGoal": "Pass the mastery gate for Lower Bound & First Occurrence."
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "binary-search-new-m3-t1-ex1",
+          "language": "java",
+          "label": "Java",
+          "title": "Lower bound",
+          "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,2,2,4}; int x=2,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<x)l=m+1;else r=m;} System.out.println(l);\n  }\n}\n"
+        },
+        {
+          "exampleId": "binary-search-new-m3-t1-ex2",
+          "language": "java",
+          "label": "Java",
+          "title": "First occurrence",
+          "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,2,2,4}; int x=2,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<x)l=m+1;else r=m;} System.out.println(l<a.length&&a[l]==x?l:-1);\n  }\n}\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "LC034-ADAPT",
+          "questionId": "LC034-ADAPT",
+          "title": "Find First and Last Position of Element in Sorted Array",
+          "difficulty": "Medium",
+          "description": "Find the first and last index of a target in a sorted array with duplicates, or -1 -1 if absent.",
+          "problemStatement": "Find the first and last index of a target in a sorted array with duplicates, or -1 -1 if absent.",
+          "constraints": [
+            "Follow the stated input size and complexity target."
+          ],
+          "inputFormat": "N, sorted array, target.",
+          "outputFormat": "First and last index.",
+          "sampleTestCases": [
+            {
+              "input": "6\n5 7 7 8 8 10\n8",
+              "output": "3 4",
+              "explanation": "The target occupies indices 3 through 4."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "5\n1 2 2 2 9\n7",
+              "output": "-1 -1",
+              "explanation": "Target absent."
+            }
+          ],
+          "boilerPlates": {
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }"
+          },
+          "referenceSolution": {
+            "language": "Java",
+            "version": "17",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    Scanner s=new Scanner(System.in); int n=s.nextInt(); int[] a=new int[n]; for(int i=0;i<n;i++) a[i]=s.nextInt(); int x=s.nextInt(); int l=0,r=n; while(l<r){int m=(l+r)/2; if(a[m]<x)l=m+1; else r=m;} int first=(l<n&&a[l]==x)?l:-1; l=0;r=n; while(l<r){int m=(l+r)/2; if(a[m]<=x)l=m+1; else r=m;} int last=first==-1?-1:l-1; System.out.println(first+\" \"+last);\n  }\n}\n"
+          },
+          "editorial": "Perform two boundary searches: lower bound and upper bound.",
+          "learningSequence": [
+            "Understand",
+            "Identify search space",
+            "Write invariant",
+            "Dry run",
+            "Implement",
+            "Test boundaries",
+            "Explain complexity"
+          ],
+          "hints": [
+            "What remains possible?",
+            "Why is the predicate ordered or monotonic?",
+            "Which bound should move?"
+          ],
+          "tags": [
+            "boundary-search",
+            "duplicates"
+          ],
+          "source": {
+            "platform": "LeetCode",
+            "problemNumber": 34,
+            "problemTitle": "Find First and Last Position of Element in Sorted Array",
+            "url": "https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/",
+            "pattern": "boundary-search",
+            "integration": "Paraphrased practice adaptation; solve the SEED version first, then compare the approach with the original LeetCode problem.",
+            "adaptationId": "LC034-ADAPT"
+          }
+        }
+      ],
+      "learningObjectives": [
+        "Explain Lower Bound & First Occurrence.",
+        "Implement the pattern in Java 17.",
+        "Handle boundary and termination cases.",
+        "Transfer the pattern to an interview problem."
+      ],
+      "keyConcepts": [
+        "Lower Bound & First Occurrence",
+        "Invariant",
+        "Search space",
+        "Boundary conditions"
+      ],
+      "commonMistakes": [
+        "Off-by-one errors",
+        "Wrong candidate interval",
+        "Non-monotonic predicate",
+        "Overflow",
+        "Stopping before the boundary is proven"
+      ],
+      "learningPath": [
+        "1. Prerequisite",
+        "2. Core concept",
+        "3. Pattern intuition",
+        "4. Visualization",
+        "5. Dry run",
+        "6. Guided Java implementation",
+        "7. Micro practice",
+        "8. Independent practice",
+        "9. LeetCode transfer",
+        "10. Mastery gate"
+      ],
+      "masteryGate": {
+        "required": "Pass checkpoint and solve one nearby variation without hints.",
+        "minimumPracticeSolved": 1
+      },
+      "leetCodeTransfer": [
+        {
+          "number": 34,
+          "title": "Find First and Last Position of Element in Sorted Array",
+          "problemId": "LC034-ADAPT",
+          "url": "https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/",
+          "pattern": "boundary-search"
+        }
+      ],
+      "_sourceFile": "binary-search-new.json",
+      "_moduleTitle": "Boundary Search & Duplicates"
+    },
+    {
+      "topicId": "t02-upper-bound-last-occurrence",
+      "title": "Upper Bound & Last Occurrence",
+      "description": "Find the first position > target, then subtract one to get the last occurrence. Includes guided dry runs, Java 17 implementation, independent practice, and interview transfer.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "binary-search-new-m3-t2-p1",
+          "title": "Why This Topic Matters",
+          "sectionType": "CONCEPT",
+          "content": "Find the first position > target, then subtract one to get the last occurrence.",
+          "teachingGoal": "Explain why Upper Bound & Last Occurrence is useful."
+        },
+        {
+          "pageId": "binary-search-new-m3-t2-p2",
+          "title": "Intuition",
+          "sectionType": "INTUITION",
+          "content": "Start from a brute-force mental model, then ask what structure lets us remove half the candidates. State the invariant before writing the loop.",
+          "teachingGoal": "Explain the intuition for Upper Bound & Last Occurrence.",
+          "suggestedVisual": "Candidate interval shrinking from two sides."
+        },
+        {
+          "pageId": "binary-search-new-m3-t2-p3",
+          "title": "Worked Example 1",
+          "sectionType": "WORKED_EXAMPLE",
+          "content": "Upper bound",
+          "teachingGoal": "Trace the first example of Upper Bound & Last Occurrence.",
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,2,2,4}; int x=2,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<=x)l=m+1;else r=m;} System.out.println(l);\n  }\n}\n"
+          }
+        },
+        {
+          "pageId": "binary-search-new-m3-t2-p4",
+          "title": "Worked Example 2",
+          "sectionType": "WORKED_EXAMPLE",
+          "content": "Last occurrence",
+          "teachingGoal": "Trace a second variation and compare its boundary rule.",
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,2,2,4}; int x=2,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<=x)l=m+1;else r=m;} System.out.println(l-1);\n  }\n}\n"
+          }
+        },
+        {
+          "pageId": "binary-search-new-m3-t2-p5",
+          "title": "Debugging Clinic",
+          "sectionType": "DEBUGGING",
+          "content": "Test empty/small input where allowed, target at an endpoint, target absent, repeated values where relevant, and the largest numeric answer. Never change a pointer without preserving the invariant.",
+          "teachingGoal": "Debug common Upper Bound & Last Occurrence failures."
+        },
+        {
+          "pageId": "binary-search-new-m3-t2-p6",
+          "title": "Mastery Gate",
+          "sectionType": "MASTERY",
+          "content": "Explain the candidate space, predicate/order, boundary convention, termination, and complexity. Then solve one nearby problem without looking at the worked code.",
+          "teachingGoal": "Pass the mastery gate for Upper Bound & Last Occurrence."
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "binary-search-new-m3-t2-ex1",
+          "language": "java",
+          "label": "Java",
+          "title": "Upper bound",
+          "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,2,2,4}; int x=2,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<=x)l=m+1;else r=m;} System.out.println(l);\n  }\n}\n"
+        },
+        {
+          "exampleId": "binary-search-new-m3-t2-ex2",
+          "language": "java",
+          "label": "Java",
+          "title": "Last occurrence",
+          "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,2,2,4}; int x=2,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<=x)l=m+1;else r=m;} System.out.println(l-1);\n  }\n}\n"
+        }
+      ],
+      "practiceProblems": [],
+      "learningObjectives": [
+        "Explain Upper Bound & Last Occurrence.",
+        "Implement the pattern in Java 17.",
+        "Handle boundary and termination cases.",
+        "Transfer the pattern to an interview problem."
+      ],
+      "keyConcepts": [
+        "Upper Bound & Last Occurrence",
+        "Invariant",
+        "Search space",
+        "Boundary conditions"
+      ],
+      "commonMistakes": [
+        "Off-by-one errors",
+        "Wrong candidate interval",
+        "Non-monotonic predicate",
+        "Overflow",
+        "Stopping before the boundary is proven"
+      ],
+      "learningPath": [
+        "1. Prerequisite",
+        "2. Core concept",
+        "3. Pattern intuition",
+        "4. Visualization",
+        "5. Dry run",
+        "6. Guided Java implementation",
+        "7. Micro practice",
+        "8. Independent practice",
+        "9. LeetCode transfer",
+        "10. Mastery gate"
+      ],
+      "masteryGate": {
+        "required": "Pass checkpoint and solve one nearby variation without hints.",
+        "minimumPracticeSolved": 1
+      },
+      "_sourceFile": "binary-search-new.json",
+      "_moduleTitle": "Boundary Search & Duplicates"
+    },
+    {
+      "topicId": "t03-floor-ceil-insert-position",
+      "title": "Floor, Ceil & Insert Position",
+      "description": "Use one boundary to derive the first >= target and the predecessor immediately before it. Includes guided dry runs, Java 17 implementation, independent practice, and interview transfer.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "binary-search-new-m3-t3-p1",
+          "title": "Why This Topic Matters",
+          "sectionType": "CONCEPT",
+          "content": "Use one boundary to derive the first >= target and the predecessor immediately before it.",
+          "teachingGoal": "Explain why Floor, Ceil & Insert Position is useful."
+        },
+        {
+          "pageId": "binary-search-new-m3-t3-p2",
+          "title": "Intuition",
+          "sectionType": "INTUITION",
+          "content": "Start from a brute-force mental model, then ask what structure lets us remove half the candidates. State the invariant before writing the loop.",
+          "teachingGoal": "Explain the intuition for Floor, Ceil & Insert Position.",
+          "suggestedVisual": "Candidate interval shrinking from two sides."
+        },
+        {
+          "pageId": "binary-search-new-m3-t3-p3",
+          "title": "Worked Example 1",
+          "sectionType": "WORKED_EXAMPLE",
+          "content": "Floor/Ceil",
+          "teachingGoal": "Trace the first example of Floor, Ceil & Insert Position.",
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,3,5,7}; int x=6,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<x)l=m+1;else r=m;} System.out.println((l<a.length?a[l]:-1)+\" \"+(l>0?a[l-1]:-1));\n  }\n}\n"
+          }
+        },
+        {
+          "pageId": "binary-search-new-m3-t3-p4",
+          "title": "Worked Example 2",
+          "sectionType": "WORKED_EXAMPLE",
+          "content": "Floor/Ceil",
+          "teachingGoal": "Trace a second variation and compare its boundary rule.",
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,3,5,7}; int x=6,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<x)l=m+1;else r=m;} System.out.println((l<a.length?a[l]:-1)+\" \"+(l>0?a[l-1]:-1));\n  }\n}\n"
+          }
+        },
+        {
+          "pageId": "binary-search-new-m3-t3-p5",
+          "title": "Debugging Clinic",
+          "sectionType": "DEBUGGING",
+          "content": "Test empty/small input where allowed, target at an endpoint, target absent, repeated values where relevant, and the largest numeric answer. Never change a pointer without preserving the invariant.",
+          "teachingGoal": "Debug common Floor, Ceil & Insert Position failures."
+        },
+        {
+          "pageId": "binary-search-new-m3-t3-p6",
+          "title": "Mastery Gate",
+          "sectionType": "MASTERY",
+          "content": "Explain the candidate space, predicate/order, boundary convention, termination, and complexity. Then solve one nearby problem without looking at the worked code.",
+          "teachingGoal": "Pass the mastery gate for Floor, Ceil & Insert Position."
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "binary-search-new-m3-t3-ex1",
+          "language": "java",
+          "label": "Java",
+          "title": "Neighbors",
+          "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,3,5,7}; int x=6,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<x)l=m+1;else r=m;} System.out.println((l<a.length?a[l]:-1)+\" \"+(l>0?a[l-1]:-1));\n  }\n}\n"
+        },
+        {
+          "exampleId": "binary-search-new-m3-t3-ex2",
+          "language": "java",
+          "label": "Java",
+          "title": "Neighbors",
+          "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,3,5,7}; int x=6,l=0,r=a.length; while(l<r){int m=(l+r)/2;if(a[m]<x)l=m+1;else r=m;} System.out.println((l<a.length?a[l]:-1)+\" \"+(l>0?a[l-1]:-1));\n  }\n}\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "LC069-ADAPT",
+          "questionId": "LC069-ADAPT",
+          "title": "Sqrt(x)",
+          "difficulty": "Easy",
+          "description": "Find the floor square root of a non-negative integer without using a square-root library.",
+          "problemStatement": "Find the floor square root of a non-negative integer without using a square-root library.",
+          "constraints": [
+            "Follow the stated input size and complexity target."
+          ],
+          "inputFormat": "One integer x.",
+          "outputFormat": "Floor square root.",
+          "sampleTestCases": [
+            {
+              "input": "8",
+              "output": "2",
+              "explanation": "2^2 <= 8 < 3^2."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "2147395600",
+              "output": "46340",
+              "explanation": "46340 is the largest integer whose square fits."
+            }
+          ],
+          "boilerPlates": {
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }"
+          },
+          "referenceSolution": {
+            "language": "Java",
+            "version": "17",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    Scanner s=new Scanner(System.in); long x=s.nextLong(); long l=0,r=Math.min(x,46340)+1; while(l+1<r){long m=l+(r-l)/2; if(m*m<=x)l=m; else r=m;} System.out.println(l);\n  }\n}\n"
+          },
+          "editorial": "Search the answer range. Use long for multiplication.",
+          "learningSequence": [
+            "Understand",
+            "Identify search space",
+            "Write invariant",
+            "Dry run",
+            "Implement",
+            "Test boundaries",
+            "Explain complexity"
+          ],
+          "hints": [
+            "What remains possible?",
+            "Why is the predicate ordered or monotonic?",
+            "Which bound should move?"
+          ],
+          "tags": [
+            "answer-space",
+            "overflow"
+          ],
+          "source": {
+            "platform": "LeetCode",
+            "problemNumber": 69,
+            "problemTitle": "Sqrt(x)",
+            "url": "https://leetcode.com/problems/sqrt-x/",
+            "pattern": "answer-space",
+            "integration": "Paraphrased practice adaptation; solve the SEED version first, then compare the approach with the original LeetCode problem.",
+            "adaptationId": "LC069-ADAPT"
+          }
+        },
+        {
+          "problemId": "LC744-ADAPT",
+          "questionId": "LC744-ADAPT",
+          "title": "Find Smallest Letter Greater Than Target",
+          "difficulty": "Easy",
+          "description": "In a sorted circular letter list, find the first letter strictly greater than target and wrap to the first letter when needed.",
+          "problemStatement": "In a sorted circular letter list, find the first letter strictly greater than target and wrap to the first letter when needed.",
+          "constraints": [
+            "Follow the stated input size and complexity target."
+          ],
+          "inputFormat": "N, sorted letters, target.",
+          "outputFormat": "One letter.",
+          "sampleTestCases": [
+            {
+              "input": "3\nc f j\nf",
+              "output": "j",
+              "explanation": "j is the first letter greater than f."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "3\nc f j\nz",
+              "output": "c",
+              "explanation": "No larger letter exists, so wrap."
+            }
+          ],
+          "boilerPlates": {
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }"
+          },
+          "referenceSolution": {
+            "language": "Java",
+            "version": "17",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    Scanner s=new Scanner(System.in); int n=s.nextInt(); char[] a=new char[n]; for(int i=0;i<n;i++) a[i]=s.next().charAt(0); char x=s.next().charAt(0); int l=0,r=n; while(l<r){int m=(l+r)/2; if(a[m]<=x)l=m+1; else r=m;} System.out.println(a[l%n]);\n  }\n}\n"
+          },
+          "editorial": "This is an upper-bound search with a circular fallback.",
+          "learningSequence": [
+            "Understand",
+            "Identify search space",
+            "Write invariant",
+            "Dry run",
+            "Implement",
+            "Test boundaries",
+            "Explain complexity"
+          ],
+          "hints": [
+            "What remains possible?",
+            "Why is the predicate ordered or monotonic?",
+            "Which bound should move?"
+          ],
+          "tags": [
+            "upper-bound",
+            "wrap-around"
+          ],
+          "source": {
+            "platform": "LeetCode",
+            "problemNumber": 744,
+            "problemTitle": "Find Smallest Letter Greater Than Target",
+            "url": "https://leetcode.com/problems/find-smallest-letter-greater-than-target/",
+            "pattern": "upper-bound",
+            "integration": "Paraphrased practice adaptation; solve the SEED version first, then compare the approach with the original LeetCode problem.",
+            "adaptationId": "LC744-ADAPT"
+          }
+        }
+      ],
+      "learningObjectives": [
+        "Explain Floor, Ceil & Insert Position.",
+        "Implement the pattern in Java 17.",
+        "Handle boundary and termination cases.",
+        "Transfer the pattern to an interview problem."
+      ],
+      "keyConcepts": [
+        "Floor, Ceil & Insert Position",
+        "Invariant",
+        "Search space",
+        "Boundary conditions"
+      ],
+      "commonMistakes": [
+        "Off-by-one errors",
+        "Wrong candidate interval",
+        "Non-monotonic predicate",
+        "Overflow",
+        "Stopping before the boundary is proven"
+      ],
+      "learningPath": [
+        "1. Prerequisite",
+        "2. Core concept",
+        "3. Pattern intuition",
+        "4. Visualization",
+        "5. Dry run",
+        "6. Guided Java implementation",
+        "7. Micro practice",
+        "8. Independent practice",
+        "9. LeetCode transfer",
+        "10. Mastery gate"
+      ],
+      "masteryGate": {
+        "required": "Pass checkpoint and solve one nearby variation without hints.",
+        "minimumPracticeSolved": 1
+      },
+      "leetCodeTransfer": [
+        {
+          "number": 69,
+          "title": "Sqrt(x)",
+          "problemId": "LC069-ADAPT",
+          "url": "https://leetcode.com/problems/sqrt-x/",
+          "pattern": "answer-space"
+        },
+        {
+          "number": 744,
+          "title": "Find Smallest Letter Greater Than Target",
+          "problemId": "LC744-ADAPT",
+          "url": "https://leetcode.com/problems/find-smallest-letter-greater-than-target/",
+          "pattern": "upper-bound"
+        }
+      ],
+      "_sourceFile": "binary-search-new.json",
+      "_moduleTitle": "Boundary Search & Duplicates"
+    }
+  ]
+}

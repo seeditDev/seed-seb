@@ -27,6 +27,9 @@ const resolveTenant = (u, propT) => {
  * renders instantly on 1st frame before any assessment logic or async state.
  */
 const getInitialAuth = () => {
+  if (typeof window === 'undefined') {
+    return { roll: 'CANDIDATE', tenant: 'GLOBAL ARENA' };
+  }
   try {
     const authData = getAuthData();
     const roll = resolveUserIdentifier(authData);

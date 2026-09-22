@@ -1,0 +1,1009 @@
+{
+  "moduleId": "m03-core-django-fundamentals-templates-static-content",
+  "title": "Core Django Fundamentals – Templates & Static Content",
+  "description": "Core concepts and hands-on practice in Core Django Fundamentals – Templates & Static Content.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-templates-and-static-content",
+      "title": "Templates and Static content",
+      "description": "Study concepts and solve targeted engineering problems for Templates and Static content.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-MGBVKU01",
+          "title": "Django Templates",
+          "content": "Django Templates are a crucial part of Django's web development framework, allowing you to separate your HTML content from your Python code. \nThey provide a way to dynamically generate HTML by combining static HTML with dynamic content. \nThis approach follows the principle of separation of concerns, keeping your presentation logic separate from your business logic.\n\nTo use templates in Django:\n1. Create a \"templates\" directory in your Django app folder.\n2. Inside the \"templates\" folder, create HTML files for your pages.\n3. In your views (which we learned about in the Views Fundamentals topic), instead of returning an HttpResponse with hardcoded HTML, you'll use the render() function to combine a template with data.\n\nHere's a basic example of how to use a template in a view:\n\n```python\nfrom django.shortcuts import render\n\ndef my_view(request):\n return render(request, 'my_template.html')\n```\n\nIn this example, 'my_template.html' should be located in your app's templates directory.\n\nRemember, templates work hand-in-hand with views and URLs. \nThe URL configuration (which we covered in the URL Configuration topic) determines which view is called, the view processes data and chooses a template, and the template defines how that data is presented to the user.\n\nIn the upcoming lessons, we'll dive deeper into how to write template syntax, pass data to templates, and create more complex template structures.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system. The key implementation detail in **Django Templates** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "django-template",
+            "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MGBVKU01",
+            "question": "Which statement best describes **Django Templates** in the Django topic **Templates and Static content**?",
+            "options": [
+              "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Django Templates within Templates and Static content."
+          }
+        },
+        {
+          "pageId": "p-MGBVKU10",
+          "title": "Variables in Django Templates",
+          "content": "In Django templating, variables act as placeholders for data that will be inserted when the template is rendered.\n\nLet us look at them in detail now.\n\n**1. Passing Variables:** \n In your view function, you can pass variables to the template using a context dictionary. \nFor example:\n\n ```python\n def my_view(request):\n context = {'name': 'John', 'age': 25}\n return render(request, 'my_template.html', context)\n ```\n\n**2. Accessing Variables in Templates:** \n In your HTML template, you can access these variables using double curly braces {{ }}. \n For instance:\n\n ```html\n Hello, {{ name }}! You are {{ age }} years old.\n ```\n\n**3. Dot Notation:** \n Django templates use dot notation to access attributes of objects or dictionary keys. \nFor example:\n\n ```html\n {{ user.username }}\n {{ my_dict.key }}\n ```\n\n**4. Variable Filters:** \n You can modify the output of a variable using filters. Filters are applied using the pipe symbol |. \nFor example:\n\n ```html\n {{ name|upper }} \n ```\n\n**5. Missing Variables:** \n If a variable is not found in the context, Django will render an empty string instead of raising an error.\n\nRemember, variables in templates are read-only. \nYou cannot assign values to variables or modify them within the template itself. \nThe logic for manipulating data should be handled in your views before passing it to the template.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system. The key implementation detail in **Variables in Django Templates** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "django-template",
+            "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+          }
+        },
+        {
+          "pageId": "p-MGBVKU16",
+          "title": "Conditionals in Django Templates",
+          "content": "In Django templates, conditionals allow you to control the flow of your template rendering based on certain conditions. \nThis is similar to how you use if statements in Python views, but with a slightly different syntax for templates. \nDjango templates support three main conditional tags: \n`{% if %}, {% else %}` and `{% elif %}`. \n\n**Here's how you can use conditionals in your Django templates:**\n\n1. `{% if %}` tag: \n Use this to check if a condition is true. If it is, the content inside the if block will be rendered.\n\n Example:\n```python\n {% if user.is_authenticated %}\n Welcome, {{ user.username }}!\n {% endif %}\n```\n\n2. `{% else %}` tag: \n This is used in conjunction with {% if %} to provide an alternative when the condition is false.\n\n Example:\n```python\n {% if user.is_authenticated %}\n Welcome, {{ user.username }}!\n {% else %}\n Please log in to continue.\n {% endif %}\n```\n\n3. `{% elif %}` tag: \n Short for \"else if\", this tag allows you to check multiple conditions in sequence.\n\n Example:\n```python\n {% if user.is_superuser %}\n Welcome, admin!\n {% elif user.is_authenticated %}\n Welcome, {{ user.username }}!\n {% else %}\n Please log in to continue.\n {% endif %}\n```\n\nYou can also use comparison operators in your conditions, such as ==, !=, , =. Boolean operators 'and', 'or', and 'not' are also supported.\n\nExample:\n```python\n{% if user.age >= 18 and user.is_verified %}\n You can create an email account.\n{% endif %}\n```\n\nRemember that these conditionals work with the context data you pass from your views. \nFor instance, if you have a view that passes a 'user' object to the template, you can use its attributes in your conditionals.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system. The key implementation detail in **Conditionals in Django Templates** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "django-template",
+            "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+          }
+        },
+        {
+          "pageId": "p-MGBVKU13",
+          "title": "Tags & Loops (for) in Django Templates",
+          "content": "In Django templating, tags and loops are powerful tools that allow you to add logic and iterate over data in your HTML templates. \nThis lesson focuses on the 'for' loop, which is one of the most commonly used tags in Django templates.\n\nTags in Django templates are enclosed in `{% %}` and are used to perform logic or control flow. \nThe `'for'` loop is a tag that allows you to iterate over a sequence of items, such as a list or queryset, which you've passed from your view to the template.\n\nHere's the basic syntax of a `'for'` loop in Django templates:\n```python\n{% for item in items %}\n \n{% endfor %}\n```\n\nThe `'items'` in this example would be a variable passed from your view function to the template context. \nRemember how we learned to pass context to templates? \nThis is where that comes into play.\n\nFor instance, if you have a view function that passes a list of books to a template:\n\n```python\ndef book_list(request):\n books = ['Book1', 'Book2', 'Book3']\n return render(request, 'books.html', {'books': books})\n```\n\nIn your template, you can then use a `'for'` loop to iterate over this list:\n```html\n\n{% for book in books %}\n {{ book }}\n{% endfor %}\n\n```\n\nThis would generate an unordered list with each book as a list item.\n\nDjango's `'for'` loop also provides some useful variables within the loop:\n\n- `forloop.counter`: The current iteration of the loop (1-indexed)\n- `forloop.counter0`: The current iteration of the loop (0-indexed)\n- `forloop.first`: Boolean value; true if this is the first time through the loop\n- `forloop.last`: Boolean value; true if this is the last time through the loop\n\nYou can use these variables like this:\n\n```html\n{% for book in books %}\n Book #{{ forloop.counter }}: {{ book }}\n {% if forloop.last %}\n This is the last book!\n {% endif %}\n{% endfor %}\n```\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system. The key implementation detail in **Tags & Loops (for) in Django Templates** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "django-template",
+            "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+          }
+        },
+        {
+          "pageId": "p-MGBVKU19",
+          "title": "Filters & Comments in Django Templates",
+          "content": "In Django templating, filters and comments help manipulate data and add notes to your templates.\n\n**Filters:** \nFilters in Django templates allow you to modify variables before they are displayed. They are applied using the pipe `|` symbol after a variable. Here are some common filters:\n\n1. **lowercase**: Converts text to lowercase \n `{{ name|lowercase }}`\n\n2. **upper**: Converts text to uppercase \n `{{ name|upper }}`\n\n3. **title**: Capitalizes the first letter of each word \n `{{ title|title }}`\n\n4. **length**: Returns the length of a list or string \n `{{ my_list|length }}`\n\n5. **date**: Formats a date according to the given format \n `{{ today|date:\"Y-m-d\" }}`\n\nYou can chain multiple filters:\n`{{ name|lower|capfirst }}`\n\n**Comments:** \nComments in Django templates allow you to add notes or temporarily disable parts of your template. \nThere are two types of comments:\n\n1. **Single-line comments:**\n `{# This is a single-line comment #}`\n\n2. **Multi-line comments:** \n `{% comment %}` \n `This is a` \n `multi-line comment` \n `{% endcomment %}`\n\nComments are not rendered in the final HTML output, making them useful for developers without affecting the user experience.\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system. The key implementation detail in **Filters & Comments in Django Templates** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "django-template",
+            "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+          }
+        },
+        {
+          "pageId": "p-TAJLNA01",
+          "title": "Template Inheritance in Django",
+          "content": "In Django, template inheritance is a powerful feature that allows you to define a common structure for your website using base templates, and then build upon that structure using child templates. This keeps your code DRY (Don't Repeat Yourself) and makes it easy to manage layout consistency across multiple pages.\n____\n\n#### What is a Base Template?\nA base template is a skeleton HTML file that contains common elements shared across different pages of your site — such as the header, navigation bar, and footer. It also defines content blocks where child templates can insert page-specific content.\n\nFor example, let’s create a **base.html** in your project's templates directory:\n```html\n\n\n\n\n {% block title %}My Website{% endblock %}\n\n\n \n Welcome to My Website\n \n \n \n \n Home\n About\n \n \n \n \n {% block content %}\n \n {% endblock %}\n \n \n \n &copy; 2025 My Website\n \n\n\n```\nIn this template, we’ve defined two blocks using **{% block %}** tags:\n\n- `{% block title %}` for the page title\n\n- `{% block content %}` for the main content area\n\nYou can also define additional blocks to allow more granular customization of other layout sections:\n\n- `{% block header %}`: For customizing or replacing the header section (e.g., different banners or welcome messages per page)\n\n- `{% block navigation %}`: Useful if some pages require different navigation menus or links\n\n- `{% block footer %}`: Allows child templates to modify or extend the footer with additional links, disclaimers, or page-specific details\n\nThese blocks will be overridden by child templates.\n\n#### Extending Templates with Child Templates\nOnce you have a base template, you can create other templates that extend it. This is done using the {% extends %} tag at the very beginning of the child template.\n\nHere’s an example of a child template called **home.html** that extends **base.html**:\n\n```html\n\n{% extends \"base.html\" %}\n\n{% block title %}Home - My Website{% endblock %}\n\n{% block content %}\nWelcome to the homepage!\nThis is the main content for the homepage.\n{% endblock %}\n```\n\nWhen Django renders **home.html**, it uses the structure from **base.html**, but replaces the content inside the title and content blocks with what’s provided in **home.html**.\n\n**Benefits of Template Inheritance**\n- Reusability: Shared layout elements are written only once.\n\n- Consistency: All pages follow the same design framework.\n\n- Maintainability: Changes to the layout need to be made only in the base template.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system. The key implementation detail in **Template Inheritance in Django** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "django-template",
+            "code": "{% extends \"base.html\" %}\n{% block content %}\n <h1>{{ title }}</h1>\n{% endblock %}"
+          }
+        },
+        {
+          "pageId": "p-IYPSWA22",
+          "title": "Understanding Relative URLs in Django",
+          "content": "In Django, relative URLs are a way to define links within your project without specifying the full path. This approach is useful especially when you're working on larger projects.\n\nWhen we covered URL patterns in Django, we learned how to define URL routes using the urlpatterns list in the urls.py file. \nRelative URLs build upon this concept by allowing you to reference other views or pages within your project using shorter, more convenient paths.\n\nTo use relative URLs in your Django project, you can use the **{% url %}** template tag in your HTML templates. \nSuppose your urlpattern in `urls.py` is defined as follows.\n```python\nurlpatterns = [\n path('about/', views.about, name='view_name'),\n]\n```\nInstead of hardcoding URLs, you can use the name you gave to your URL pattern in your HTML file.\n```html\n\nLink\n\n\nLink\n```\n\nRelative URL makes your links automatically update if the URL pattern changes — you don’t need to manually change the link everywhere. We will see this in action in the worked example covered next.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system. The key implementation detail in **Understanding Relative URLs in Django** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "django-template",
+            "code": "<nav>\n <a href=\"{% url 'home' %}\">Home</a>\n <a href=\"{% url 'profile' user.username %}\">Profile</a>\n</nav>"
+          }
+        },
+        {
+          "pageId": "p-IYPSWA24",
+          "title": "Relative URLs - MCQ-1",
+          "content": "### Which of the following best describes a relative URL in Django? \n\n\n1. A URL that includes the full domain name (e.g., `https://example.com/profile/`)\n\n2. A URL that is written relative to the current page or application (e.g., `about/`)\n\n3. A URL that is dynamically generated using Python functions\n\n3. A URL that always starts with '/' to indicate the root of the site",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system. The key implementation detail in **Relative URLs - MCQ-1** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "django-template",
+            "code": "<nav>\n <a href=\"{% url 'home' %}\">Home</a>\n <a href=\"{% url 'profile' user.username %}\">Profile</a>\n</nav>"
+          }
+        },
+        {
+          "pageId": "p-IYPSWA24A",
+          "title": "Relative URLs - MCQ-2",
+          "content": "### In Django's `urls.py`, what is the benefit of using the `{% url 'name' %}` template tag for relative URLs? \n\n\n1. It allows us to use the same URL structure across different Django projects\n\n2. It automatically generates URLs based on the names assigned in `urls.py`, making URL changes easier\n\n3. It ensures that all URLs are absolute, preventing broken links\n\n4. It is required for every Django project, or the URLs will not work",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system. The key implementation detail in **Relative URLs - MCQ-2** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "django-template",
+            "code": "<nav>\n <a href=\"{% url 'home' %}\">Home</a>\n <a href=\"{% url 'profile' user.username %}\">Profile</a>\n</nav>"
+          }
+        },
+        {
+          "pageId": "p-WFBMJG01",
+          "title": "Configuring Static Files in Django",
+          "content": "In Django, static files are an essential part of web development. They include CSS, JavaScript, images, and other files that don't change and are served directly to the client. Let's learn how to configure and use static files in your Django project.\n\n1. Settings Configuration:\n First, we need to configure our project's settings. In your project's settings.py file, ensure the following settings are present:\n\n ```python\n STATIC_URL = '/static/'\n STATICFILES_DIRS = [\n BASE_DIR / \"static\",\n ]\n ```\n\n STATIC_URL defines the URL prefix for static files, while STATICFILES_DIRS tells Django where to look for static files in your project.\n\n2. Creating a Static Directory:\n - Create a folder named 'static' in your project's root directory. This is where you'll store your static files.\n - Inside the 'static' folder, create subdirectories for different types of static files:\nA sample folder structure is given below\n```python\nmyproject/\n├── manage.py\n├── myproject/ # Project folder\n│ ├── settings.py # STATIC_URL, STATICFILES_DIRS go here\n│ ├── urls.py\n│ └── ...\n│\n├── static/ # Project-level static folder\n│ ├── css/\n│ │ └── global.css\n│ ├── js/\n│ │ └── global.js\n│ └── images/\n│ └── logo.png\n│\n├── app1/ # A Django app\n│ ├── views.py\n│ ├── urls.py\n│ └── ...\n```\n\n\n3. Using Static Files in Templates:\n To use static files in your templates, you need to load the static template tag at the beginning of your template:\n\n ```html\n {% load static %}\n ```\n\n Then, you can reference your static files using the static template tag:\n\n ```html\n \n \n \n ```\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Templates render dynamic context into HTML using variables, filters, tags, inheritance, and named URLs. Static files are referenced through Django's static-file system. The key implementation detail in **Configuring Static Files in Django** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "django-template",
+            "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-MGBVKU01-go",
+          "language": "django-template",
+          "label": "Django Template",
+          "title": "Django Templates (Django Template)",
+          "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+        },
+        {
+          "exampleId": "ex-MGBVKU10-go",
+          "language": "django-template",
+          "label": "Django Template",
+          "title": "Variables in Django Templates (Django Template)",
+          "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+        },
+        {
+          "exampleId": "ex-MGBVKU16-go",
+          "language": "django-template",
+          "label": "Django Template",
+          "title": "Conditionals in Django Templates (Django Template)",
+          "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+        },
+        {
+          "exampleId": "ex-MGBVKU13-go",
+          "language": "django-template",
+          "label": "Django Template",
+          "title": "Tags & Loops (for) in Django Templates (Django Template)",
+          "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+        },
+        {
+          "exampleId": "ex-MGBVKU19-go",
+          "language": "django-template",
+          "label": "Django Template",
+          "title": "Filters & Comments in Django Templates (Django Template)",
+          "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+        },
+        {
+          "exampleId": "ex-TAJLNA01-go",
+          "language": "django-template",
+          "label": "Django Template",
+          "title": "Template Inheritance in Django (Django Template)",
+          "code": "{% extends \"base.html\" %}\n{% block content %}\n <h1>{{ title }}</h1>\n{% endblock %}"
+        },
+        {
+          "exampleId": "ex-IYPSWA22-go",
+          "language": "django-template",
+          "label": "Django Template",
+          "title": "Understanding Relative URLs in Django (Django Template)",
+          "code": "<nav>\n <a href=\"{% url 'home' %}\">Home</a>\n <a href=\"{% url 'profile' user.username %}\">Profile</a>\n</nav>"
+        },
+        {
+          "exampleId": "ex-IYPSWA24-go",
+          "language": "django-template",
+          "label": "Django Template",
+          "title": "Relative URLs - MCQ-1 (Django Template)",
+          "code": "<nav>\n <a href=\"{% url 'home' %}\">Home</a>\n <a href=\"{% url 'profile' user.username %}\">Profile</a>\n</nav>"
+        },
+        {
+          "exampleId": "ex-IYPSWA24A-go",
+          "language": "django-template",
+          "label": "Django Template",
+          "title": "Relative URLs - MCQ-2 (Django Template)",
+          "code": "<nav>\n <a href=\"{% url 'home' %}\">Home</a>\n <a href=\"{% url 'profile' user.username %}\">Profile</a>\n</nav>"
+        },
+        {
+          "exampleId": "ex-WFBMJG01-go",
+          "language": "django-template",
+          "label": "Django Template",
+          "title": "Configuring Static Files in Django (Django Template)",
+          "code": "{% load static %}\n<link rel=\"stylesheet\" href=\"{% static 'css/site.css' %}\">\n<img src=\"{% static 'images/logo.png' %}\" alt=\"Logo\">"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "MGBVKU02",
+          "questionId": "MGBVKU02",
+          "title": "Create a Simple Blog Post Template",
+          "difficulty": "Easy",
+          "description": "Practice Django template variable substitution.",
+          "problemStatement": "Render a simplified Django template by replacing each `{{name}}`-style variable with its supplied value. Unknown variables become an empty string.",
+          "constraints": [
+            "Template length <= 200",
+            "At most 8 variables."
+          ],
+          "inputFormat": "One line: template, followed by `|key=value` pairs.",
+          "outputFormat": "Print the rendered template.",
+          "sampleTestCases": [
+            {
+              "input": "Hello {{name}}|name=Ashok",
+              "output": "Hello Ashok",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Hello {{name}}|name=Ashok",
+              "output": "Hello Ashok",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Welcome {{user}}|user=SEED",
+              "output": "Welcome SEED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "{{title}} - {{year}}|title=Django|year=2026",
+              "output": "Django - 2026",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Hi {{name}}, {{lang}}|name=Sam|lang=Python",
+              "output": "Hi Sam, Python",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Course: {{course}}|course=Django",
+              "output": "Course: Django",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "MGBVKU03",
+          "questionId": "MGBVKU03",
+          "title": "Create a Simple Recipe Display Template",
+          "difficulty": "Easy",
+          "description": "Practice Django-style conditional rendering.",
+          "problemStatement": "A simplified template condition contains a flag (`1` or `0`) and a message. Print the message when the flag is `1`; otherwise print `HIDDEN`.",
+          "constraints": [
+            "Flag is 0 or 1.",
+            "Message contains no `|`."
+          ],
+          "inputFormat": "One line: `flag_name=value|message`.",
+          "outputFormat": "Message when true, otherwise `HIDDEN`.",
+          "sampleTestCases": [
+            {
+              "input": "logged_in=1|Welcome",
+              "output": "Welcome",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "logged_in=1|Welcome",
+              "output": "Welcome",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "logged_in=0|Welcome",
+              "output": "HIDDEN",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "admin=1|Control Panel",
+              "output": "Control Panel",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "admin=0|Control Panel",
+              "output": "HIDDEN",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "verified=1|Verified",
+              "output": "Verified",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "MGBVKU17",
+          "questionId": "MGBVKU17",
+          "title": "Weather Display App",
+          "difficulty": "Easy",
+          "description": "Practice rendering repeated data with a Django `{% for %}`-style loop.",
+          "problemStatement": "Read N item names and render each one as `<li>item</li>`, joined by `|`. When N is zero, output `<li>No items found.</li>`.",
+          "constraints": [
+            "0 <= N <= 20",
+            "Items contain no spaces."
+          ],
+          "inputFormat": "N followed by N item names.",
+          "outputFormat": "Print the rendered list items joined with `|`.",
+          "sampleTestCases": [
+            {
+              "input": "3 apple banana cherry",
+              "output": "<li>apple</li>|<li>banana</li>|<li>cherry</li>",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 apple banana cherry",
+              "output": "<li>apple</li>|<li>banana</li>|<li>cherry</li>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "1 Django",
+              "output": "<li>Django</li>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 one two three four",
+              "output": "<li>one</li>|<li>two</li>|<li>three</li>|<li>four</li>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 model view",
+              "output": "<li>model</li>|<li>view</li>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 a b c d e",
+              "output": "<li>a</li>|<li>b</li>|<li>c</li>|<li>d</li>|<li>e</li>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "MGBVKU18",
+          "questionId": "MGBVKU18",
+          "title": "Movie Rating Display",
+          "difficulty": "Easy",
+          "description": "Practice common Django template filters.",
+          "problemStatement": "Apply one filter to a text value. Supported filters: `title`, `upper`, `lower`, `length`, and `truncate:N` (keep the first N words).",
+          "constraints": [
+            "Text length <= 200",
+            "N is non-negative."
+          ],
+          "inputFormat": "One line: `text|filter`.",
+          "outputFormat": "Print the filtered result.",
+          "sampleTestCases": [
+            {
+              "input": "hello django|title",
+              "output": "Hello Django",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "hello django|title",
+              "output": "Hello Django",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "this is a useful lesson|truncate:3",
+              "output": "this is a",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "python for web development|upper",
+              "output": "PYTHON FOR WEB DEVELOPMENT",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Django ORM|lower",
+              "output": "django orm",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "hello world|length",
+              "output": "11",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "MGBVKU14",
+          "questionId": "MGBVKU14",
+          "title": "Create a simple to-do list display",
+          "difficulty": "Easy",
+          "description": "Practice template inheritance by composing a base layout.",
+          "problemStatement": "Given a site name and page title, render the base layout as `<header>site</header><main>page</main>`.",
+          "constraints": [
+            "Each value length <= 80"
+          ],
+          "inputFormat": "One line: `site|page`.",
+          "outputFormat": "Rendered layout.",
+          "sampleTestCases": [
+            {
+              "input": "Site|Home",
+              "output": "<header>Site</header><main>Home</main>",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Site|Home",
+              "output": "<header>Site</header><main>Home</main>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Django|About",
+              "output": "<header>Django</header><main>About</main>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "SEED|Dashboard",
+              "output": "<header>SEED</header><main>Dashboard</main>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Blog|Post",
+              "output": "<header>Blog</header><main>Post</main>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Shop|Products",
+              "output": "<header>Shop</header><main>Products</main>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "MGBVKU15",
+          "questionId": "MGBVKU15",
+          "title": "Display a product catalog with categories",
+          "difficulty": "Easy",
+          "description": "Practice named URL generation for template links.",
+          "problemStatement": "Given a route name, link label, and resolved path, render an anchor tag using the resolved URL.",
+          "constraints": [
+            "Values contain no `|`."
+          ],
+          "inputFormat": "One line: `route|label|resolved_path`.",
+          "outputFormat": "Rendered `<a>` tag.",
+          "sampleTestCases": [
+            {
+              "input": "home|Home|/",
+              "output": "<a href=\"/\">Home</a>",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "home|Home|/",
+              "output": "<a href=\"/\">Home</a>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "profile|Profile|/users/alice",
+              "output": "<a href=\"/users/alice\">Profile</a>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "blog|Blog|/blog",
+              "output": "<a href=\"/blog\">Blog</a>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "shop|Shop|/products",
+              "output": "<a href=\"/products\">Shop</a>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "login|Login|/accounts/login",
+              "output": "<a href=\"/accounts/login\">Login</a>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "MGBVKU20",
+          "questionId": "MGBVKU20",
+          "title": "Create a Blog Post Formatter Using Filters",
+          "difficulty": "Easy",
+          "description": "Practice resolving static asset paths.",
+          "problemStatement": "Map `css`, `js`, and `img` asset kinds to `/static/css/`, `/static/js/`, and `/static/images/` respectively, then append the filename.",
+          "constraints": [
+            "Asset kind is css, js, or img.",
+            "Filename contains no spaces."
+          ],
+          "inputFormat": "One line: `kind|filename`.",
+          "outputFormat": "Resolved static URL.",
+          "sampleTestCases": [
+            {
+              "input": "css|site.css",
+              "output": "/static/css/site.css",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "css|site.css",
+              "output": "/static/css/site.css",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "js|app.js",
+              "output": "/static/js/app.js",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "img|logo.png",
+              "output": "/static/images/logo.png",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "css|theme.css",
+              "output": "/static/css/theme.css",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "img|avatar.png",
+              "output": "/static/images/avatar.png",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "MGBVKU21",
+          "questionId": "MGBVKU21",
+          "title": "Weather Report Styler",
+          "difficulty": "Easy",
+          "description": "Practice Django template variable substitution.",
+          "problemStatement": "Render a simplified Django template by replacing each `{{name}}`-style variable with its supplied value. Unknown variables become an empty string.",
+          "constraints": [
+            "Template length <= 200",
+            "At most 8 variables."
+          ],
+          "inputFormat": "One line: template, followed by `|key=value` pairs.",
+          "outputFormat": "Print the rendered template.",
+          "sampleTestCases": [
+            {
+              "input": "Hello {{name}}|name=Ashok",
+              "output": "Hello Ashok",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Hello {{name}}|name=Ashok",
+              "output": "Hello Ashok",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Welcome {{user}}|user=SEED",
+              "output": "Welcome SEED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "{{title}} - {{year}}|title=Django|year=2026",
+              "output": "Django - 2026",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Hi {{name}}, {{lang}}|name=Sam|lang=Python",
+              "output": "Hi Sam, Python",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Course: {{course}}|course=Django",
+              "output": "Course: Django",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "TAJLNA02",
+          "questionId": "TAJLNA02",
+          "title": "Implement Template Inheritance for a Blog Site",
+          "difficulty": "Easy",
+          "description": "Practice Django-style conditional rendering.",
+          "problemStatement": "A simplified template condition contains a flag (`1` or `0`) and a message. Print the message when the flag is `1`; otherwise print `HIDDEN`.",
+          "constraints": [
+            "Flag is 0 or 1.",
+            "Message contains no `|`."
+          ],
+          "inputFormat": "One line: `flag_name=value|message`.",
+          "outputFormat": "Message when true, otherwise `HIDDEN`.",
+          "sampleTestCases": [
+            {
+              "input": "logged_in=1|Welcome",
+              "output": "Welcome",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "logged_in=1|Welcome",
+              "output": "Welcome",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "logged_in=0|Welcome",
+              "output": "HIDDEN",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "admin=1|Control Panel",
+              "output": "Control Panel",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "admin=0|Control Panel",
+              "output": "HIDDEN",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "verified=1|Verified",
+              "output": "Verified",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "TAJLNA03",
+          "questionId": "TAJLNA03",
+          "title": "Implement Template Inheritance in a Recipe Website",
+          "difficulty": "Easy",
+          "description": "Practice rendering repeated data with a Django `{% for %}`-style loop.",
+          "problemStatement": "Read N item names and render each one as `<li>item</li>`, joined by `|`. When N is zero, output `<li>No items found.</li>`.",
+          "constraints": [
+            "0 <= N <= 20",
+            "Items contain no spaces."
+          ],
+          "inputFormat": "N followed by N item names.",
+          "outputFormat": "Print the rendered list items joined with `|`.",
+          "sampleTestCases": [
+            {
+              "input": "3 apple banana cherry",
+              "output": "<li>apple</li>|<li>banana</li>|<li>cherry</li>",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 apple banana cherry",
+              "output": "<li>apple</li>|<li>banana</li>|<li>cherry</li>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "1 Django",
+              "output": "<li>Django</li>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 one two three four",
+              "output": "<li>one</li>|<li>two</li>|<li>three</li>|<li>four</li>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 model view",
+              "output": "<li>model</li>|<li>view</li>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "5 a b c d e",
+              "output": "<li>a</li>|<li>b</li>|<li>c</li>|<li>d</li>|<li>e</li>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "IYPSWA23",
+          "questionId": "IYPSWA23",
+          "title": "Create a navigation menu with relative URLs",
+          "difficulty": "Easy",
+          "description": "Practice common Django template filters.",
+          "problemStatement": "Apply one filter to a text value. Supported filters: `title`, `upper`, `lower`, `length`, and `truncate:N` (keep the first N words).",
+          "constraints": [
+            "Text length <= 200",
+            "N is non-negative."
+          ],
+          "inputFormat": "One line: `text|filter`.",
+          "outputFormat": "Print the filtered result.",
+          "sampleTestCases": [
+            {
+              "input": "hello django|title",
+              "output": "Hello Django",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "hello django|title",
+              "output": "Hello Django",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "this is a useful lesson|truncate:3",
+              "output": "this is a",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "python for web development|upper",
+              "output": "PYTHON FOR WEB DEVELOPMENT",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Django ORM|lower",
+              "output": "django orm",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "hello world|length",
+              "output": "11",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "WFBMJG02",
+          "questionId": "WFBMJG02",
+          "title": "Create a Django project with a custom CSS file",
+          "difficulty": "Easy",
+          "description": "Practice named URL generation for template links.",
+          "problemStatement": "Given a route name, link label, and resolved path, render an anchor tag using the resolved URL.",
+          "constraints": [
+            "Values contain no `|`."
+          ],
+          "inputFormat": "One line: `route|label|resolved_path`.",
+          "outputFormat": "Rendered `<a>` tag.",
+          "sampleTestCases": [
+            {
+              "input": "home|Home|/",
+              "output": "<a href=\"/\">Home</a>",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "home|Home|/",
+              "output": "<a href=\"/\">Home</a>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "profile|Profile|/users/alice",
+              "output": "<a href=\"/users/alice\">Profile</a>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "blog|Blog|/blog",
+              "output": "<a href=\"/blog\">Blog</a>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "shop|Shop|/products",
+              "output": "<a href=\"/products\">Shop</a>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "login|Login|/accounts/login",
+              "output": "<a href=\"/accounts/login\">Login</a>",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "WFBMJG03",
+          "questionId": "WFBMJG03",
+          "title": "Create a User Profile Display with Custom Styling",
+          "difficulty": "Easy",
+          "description": "Practice resolving static asset paths.",
+          "problemStatement": "Map `css`, `js`, and `img` asset kinds to `/static/css/`, `/static/js/`, and `/static/images/` respectively, then append the filename.",
+          "constraints": [
+            "Asset kind is css, js, or img.",
+            "Filename contains no spaces."
+          ],
+          "inputFormat": "One line: `kind|filename`.",
+          "outputFormat": "Resolved static URL.",
+          "sampleTestCases": [
+            {
+              "input": "css|site.css",
+              "output": "/static/css/site.css",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "css|site.css",
+              "output": "/static/css/site.css",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "js|app.js",
+              "output": "/static/js/app.js",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "img|logo.png",
+              "output": "/static/images/logo.png",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "css|theme.css",
+              "output": "/static/css/theme.css",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "img|avatar.png",
+              "output": "/static/images/avatar.png",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "Core Django Fundamentals – Templates & Static Content"
+    }
+  ]
+}

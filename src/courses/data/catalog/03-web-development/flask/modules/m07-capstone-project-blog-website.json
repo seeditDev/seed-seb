@@ -1,0 +1,401 @@
+{
+  "moduleId": "m07-capstone-project-blog-website",
+  "title": "Capstone project - Blog website",
+  "description": "Core concepts and hands-on practice in Capstone project - Blog website.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-blog-website",
+      "title": "Blog website",
+      "description": "Study concepts and solve targeted engineering problems for Blog website.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 40,
+      "pages": [
+        {
+          "pageId": "p-FLASKPROJ3A",
+          "title": "Blogging website - introduction",
+          "content": "In this module, we will build a dynamic **Blog Website** using Flask.\nFirst, you will see a demonstration of the final application. Then in each lesson, we will implement one piece of functionality at a time until the full project is complete.\n\nClick the Run button to start the Flask development server and explore the application in your browser.\n\n**Overview of the application:**\n\n* **Home page:** Displays summaries of all blog posts, ordered by most recent.\n* **Post Detail page:** Shows the full content of a single blog post and allows logged-in users to add comments. Displays existing comments.\n* **New Post page:** A protected page where logged-in users can create new blog posts using a form.\n* **Registration page:** Allows new users to create an account.\n* **Login page:** Enables registered users to log in and manage sessions.\n* **Logout functionality:** Provides a way for logged-in users to end their session.\n\n**Step-wise breakdown of the project:**\n\n1. We define the basic database to store the data.\n2. Build a basic front-end to accept the login and register data for the database.\n3. Build the login and register APIs to accept the data and push it into database.\n4. Complete the remaining database models for posts and comments.\n5. Complete the remaining API for post and comments.\n6. Complete the remaining front-end for post and comments.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Blogging website - introduction: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from flask import Flask, render_template\napp = Flask(__name__)\n\n@app.route(\"/posts/<int:post_id>\")\ndef post(post_id):\n return render_template(\"post.html\", post_id=post_id)"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-FLASKPROJ3A",
+            "question": "Which statement best captures the main idea of Blogging website - introduction?",
+            "options": [
+              "It applies Blog website to a Flask/Python application.",
+              "It bypasses Flask request handling.",
+              "It replaces application logic with CSS.",
+              "It disables validation and error handling."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The lesson focuses on Blog website as part of building Flask applications."
+          }
+        },
+        {
+          "pageId": "p-FLASKPROJ3AA",
+          "title": "Blogging website - introduction",
+          "content": "In this lesson, you will learn how to:\n\n* Use the `flask_login` library to manage user sessions in a Flask web application.\n* Use the `flash` function to display temporary feedback messages to the user, such as login success or error alerts.\n* These are important libraries which are going to be used in this project. \n---\n\n### Part 1: Introduction to Flask-Login\n\n`Flask-Login` is a helpful extension for managing user authentication in Flask applications.\nIt does not handle user registration or password hashing but provides:\n\n* Session management for logged-in users\n* A way to restrict certain views to authenticated users only\n* Easy access to the currently logged-in user\n* Default behavior for login redirection when a user is not authenticated\n\n---\n\n### Key Components from `flask_login`\n\nHere are the main functions and classes you will use:\n\n* `LoginManager`: Sets up the login system within your Flask app\n* `login_user(user)`: Logs in the user and starts a session\n* `logout_user()`: Logs the user out and ends the session\n* `login_required`: A decorator that prevents access to certain routes unless the user is logged in\n* `current_user`: Represents the current active user in the session\n* `UserMixin`: A mixin class that adds default authentication-related methods to your User model\n\n---\n\n### Setting Up Flask-Login\n\n1. First, create a LoginManager instance and link it to your app:\n\n```python\nlogin_manager = LoginManager(app)\nlogin_manager.login_view = 'login'\nlogin_manager.login_message_category = 'info'\n```\n\n* `login_view` tells Flask where to redirect users if they try to access a protected page\n* `login_message_category` defines the style class used for flashed messages (optional)\n\n2. Define how to load a user from the database:\n\n```python\n@login_manager.user_loader\ndef load_user(user_id):\n return User.query.get(int(user_id))\n```\n\n3. Ensure your User model inherits from `UserMixin`:\n\n```python\nclass User(db.Model, UserMixin):\n id = db.Column(db.Integer, primary_key=True)\n username = db.Column(db.String(64), unique=True, nullable=False)\n password_hash = db.Column(db.String(128), nullable=False)\n```\n\n---\n\n### Part 2: Using `flash` for Feedback Messages\n\nFlask provides the `flash` function to send feedback messages to the user.\nThese messages are stored for the next request and can be displayed in the browser.\n\nTo use `flash`, import it from Flask:\n\n```python\nfrom flask import flash\n```\n\nThen, inside your route:\n\n```python\nflash('Logged in successfully.', 'success')\nflash('Invalid username or password.', 'danger')\n```\n\nThe second argument is the message category (used for styling in your templates). Common categories include `success`, `info`, `warning`, and `danger`.\n\nIn your HTML template (for example, `base.html`), you can display messages like this:\n\n```html\n{% with messages = get_flashed_messages(with_categories=true) %}\n {% if messages %}\n {% for category, message in messages %}\n {{ message }}\n {% endfor %}\n {% endif %}\n{% endwith %}\n```\n\n---\n\n### Common Use Cases\n\n* After a successful login, use `login_user(user)` and flash a success message\n* When login fails, flash an error message\n* Protect important routes using the `@login_required` decorator\n* After logging out with `logout_user()`, flash a logout confirmation\n* Use `current_user` in your templates or backend to get the currently logged-in user's data\n\n---\n\n### Summary\n\n* `Flask-Login` helps manage user sessions and restricts access to certain views\n* The `flash` function is used to show temporary feedback messages to users\n* Always use `@login_required` on routes that require authentication\n* Use `current_user` to access the active user's data\n* Use `UserMixin` to quickly add required methods like `is_authenticated` and `get_id` to your user model",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on Blogging website - introduction: understand the Flask/Python concept and apply it through a concrete web-development workflow."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "login_manager = LoginManager(app)\nlogin_manager.login_view = 'login'\nlogin_manager.login_message_category = 'info'"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-FLASKPROJ3A-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Blogging website - introduction",
+          "code": "from flask import Flask, render_template\napp = Flask(__name__)\n\n@app.route(\"/posts/<int:post_id>\")\ndef post(post_id):\n return render_template(\"post.html\", post_id=post_id)"
+        },
+        {
+          "exampleId": "ex-FLASKPROJ3AA-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Blogging website - introduction",
+          "code": "login_manager = LoginManager(app)\nlogin_manager.login_view = 'login'\nlogin_manager.login_message_category = 'info'"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "FLASKPROJ3B",
+          "questionId": "FLASKPROJ3B",
+          "title": "Blogging website - database",
+          "difficulty": "Medium",
+          "description": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "problemStatement": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "constraints": [
+            "1 <= N <= 10^4",
+            "name length <= 50"
+          ],
+          "inputFormat": "First line N. Second line N names separated by spaces.",
+          "outputFormat": "Print N.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA B",
+              "output": "B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA B C D",
+              "output": "D C B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "5\nu1 u2 u3 u4 u5",
+              "output": "u5 u4 u3 u2 u1",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "10\nu0 u1 u2 u3 u4 u5 u6 u7 u8 u9",
+              "output": "u9 u8 u7 u6 u5 u4 u3 u2 u1 u0",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "FLASKPROJ3C",
+          "questionId": "FLASKPROJ3C",
+          "title": "Login and register forms",
+          "difficulty": "Easy",
+          "description": "Given a whitespace-separated list of field values, print `VALID` when every field is non-empty after stripping whitespace; otherwise print `INVALID`.",
+          "problemStatement": "Given a whitespace-separated list of field values, print `VALID` when every field is non-empty after stripping whitespace; otherwise print `INVALID`.",
+          "constraints": [
+            "1 <= number of fields <= 10",
+            "field length <= 50"
+          ],
+          "inputFormat": "One line containing space-separated field values.",
+          "outputFormat": "Print VALID or INVALID.",
+          "sampleTestCases": [
+            {
+              "input": "x",
+              "output": "VALID",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "x",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice example.com",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "Alice ",
+              "output": "VALID",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": " ",
+              "output": "INVALID",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "FLASKPROJ3D",
+          "questionId": "FLASKPROJ3D",
+          "title": "User authentications",
+          "difficulty": "Medium",
+          "description": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "problemStatement": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "constraints": [
+            "1 <= N <= 100",
+            "title length <= 100"
+          ],
+          "inputFormat": "First line N. Next N lines contain titles.",
+          "outputFormat": "Print the N titles unchanged, one per line.",
+          "sampleTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "A\nB",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nIntro\nModels\nForms",
+              "output": "Intro\nModels\nForms",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nA long post title",
+              "output": "A long post title",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nPost1\nPost2\nPost3\nPost4",
+              "output": "Post1\nPost2\nPost3\nPost4",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "FLASKPROJ3E",
+          "questionId": "FLASKPROJ3E",
+          "title": "Database model - updation",
+          "difficulty": "Medium",
+          "description": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "problemStatement": "Simulate a tiny user table. Read N user names, then print the number of names stored. The task reinforces database create/read/update/delete flow without requiring an external database.",
+          "constraints": [
+            "1 <= N <= 10^4",
+            "name length <= 50"
+          ],
+          "inputFormat": "First line N. Second line N names separated by spaces.",
+          "outputFormat": "Print N.",
+          "sampleTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nA",
+              "output": "A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA B",
+              "output": "B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nA B C D",
+              "output": "D C B A",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "5\nu1 u2 u3 u4 u5",
+              "output": "u5 u4 u3 u2 u1",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "10\nu0 u1 u2 u3 u4 u5 u6 u7 u8 u9",
+              "output": "u9 u8 u7 u6 u5 u4 u3 u2 u1 u0",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "FLASKPROJ3F",
+          "questionId": "FLASKPROJ3F",
+          "title": "Accepting and Storing Posts and Comments",
+          "difficulty": "Easy",
+          "description": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "problemStatement": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "constraints": [
+            "1 <= N <= 100",
+            "title length <= 100"
+          ],
+          "inputFormat": "First line N. Next N lines contain titles.",
+          "outputFormat": "Print the N titles unchanged, one per line.",
+          "sampleTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "A\nB",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nIntro\nModels\nForms",
+              "output": "Intro\nModels\nForms",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nA long post title",
+              "output": "A long post title",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nPost1\nPost2\nPost3\nPost4",
+              "output": "Post1\nPost2\nPost3\nPost4",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        },
+        {
+          "problemId": "FLASKPROJ3G",
+          "questionId": "FLASKPROJ3G",
+          "title": "Post frontend",
+          "difficulty": "Easy",
+          "description": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "problemStatement": "Read N blog post titles and print them in the same order, one per line. The exercise models passing database-backed content to a Flask view/template.",
+          "constraints": [
+            "1 <= N <= 100",
+            "title length <= 100"
+          ],
+          "inputFormat": "First line N. Next N lines contain titles.",
+          "outputFormat": "Print the N titles unchanged, one per line.",
+          "sampleTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Public example for the stated input/output contract."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){return 0;}",
+            "C++": "#include <iostream>\nint main(){return 0;}",
+            "Java": "public class Main { public static void main(String[] args) {} }",
+            "Python3": "# Flask/Python exercise\nimport sys\n\n# Implement the behavior described in the problem statement.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nFirst",
+              "output": "First",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "2\nA\nB",
+              "output": "A\nB",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "3\nIntro\nModels\nForms",
+              "output": "Intro\nModels\nForms",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "1\nA long post title",
+              "output": "A long post title",
+              "explanation": "Hidden validation case."
+            },
+            {
+              "input": "4\nPost1\nPost2\nPost3\nPost4",
+              "output": "Post1\nPost2\nPost3\nPost4",
+              "explanation": "Hidden validation case."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "flask.json",
+      "_moduleTitle": "Capstone project - Blog website"
+    }
+  ]
+}

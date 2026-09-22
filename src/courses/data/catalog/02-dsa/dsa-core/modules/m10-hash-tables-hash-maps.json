@@ -1,0 +1,2089 @@
+{
+  "moduleId": "m10-hash-tables-hash-maps",
+  "title": "Hash Tables & Hash Maps",
+  "description": "Hash functions, collision resolution (chaining, open addressing), HashSet, HashMap internals, and frequency counting.",
+  "estimatedHours": 5,
+  "topics": [
+    {
+      "topicId": "t01-what-is-hashing",
+      "title": "What is Hashing?",
+      "description": "Study concepts and solve targeted engineering problems for What is Hashing?.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-HSH01",
+          "title": "Hashing",
+          "content": "Hashing transforms input data into a fixed-size value or key, typically using a mathematical function, for easier and more efficient storage, retrieval, and operations. This technique is commonly used in data structures like hash tables, where it helps to quickly locate and access data. The main goal of hashing is to optimize performance by minimizing the time required to search or retrieve stored values.\n\n#### Need for Hashing\n- Storing data in an array takes O(1) time, but searching in it takes at least O(log n) time. While this seems small, it can become inefficient with large datasets. \n- To solve this, hashing was introduced. The hash data structure allows both storing and retrieving data in constant time, O(1), making it much faster and more efficient for large datasets.\n\n#### Applications of Hashing\n- **Data Structures** - Hashing is used in various data structures for efficient operations on data.\n- **Data Verifications** - Hashing is used to check if a file has been changed or tampered with.\n- **Cryptography** - Hashing is used to encrypt sensitive data to keep it safe.\n- **File Comparison** - Hash values of files can be used to compare files quickly.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Hashing and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-HSH01",
+            "question": "Which principle is most important when working with Hashing?",
+            "options": [
+              "Apply the correct algorithmic idea and handle the specified edge cases",
+              "Ignore the input specification",
+              "Use unrelated data structures",
+              "Assume the largest possible answer is always correct"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The lesson on Hashing is mastered by applying the intended algorithm correctly and respecting the problem constraints."
+          }
+        },
+        {
+          "pageId": "p-HSH01B",
+          "title": "How Does Hashing Work",
+          "content": "Hashing primarily involves three main components:\n\n\n![image](https://cdn.codechef.com/images/learning/hashing/hashing.png)\n\n1. **Key:** The key can be a string, integer, or any immutable data type that serves as input to the hash function. It must be immutable (i.e., it cannot be modified after being created) to ensure that the hash value remains consistent. Common examples of immutable keys include strings, integers, and tuples.\n\n2. **Hash Function:** The hash function takes the key as input and calculates an index within an array called a hash table. This index is referred to as the hash index. Some well-known hashing functions include MD5, SHA, and CRC. However, these functions are quite complex and fall outside the scope of this discussion.\n\n3. **Hash Table:** The hash table is a data structure that uses a hash function to map keys to their corresponding values. It stores data in an associative way, where each value has a unique index within an array. \n\n\n\nSuppose we have a set of city names: `{\"Delhi\", \"Paris\", \"London\"}`. We want to store these names in a hash table efficiently.\n\nThere are several ways to do this; one approach is:\n\nTo simplify things, let's convert each character in the city name to its alphabetical position:\n   - 'a' = 1, 'b' = 2, ..., 'z' = 26\n   - We'll sum the alphabetical positions of all characters in the city name and use a table size of $10$. Our hash function will be `sum(string) % 10`.\n\n\nLet's break down each city name into its alphabetical values:\n   - For \"Delhi\":\n     - 'D' = 4, 'e' = 5, 'l' = 12, 'h' = 8, 'i' = 9\n     - Sum = 4 + 5 + 12 + 8 + 9 = 38\n   - For \"Paris\":\n     - 'P' = 16, 'a' = 1, 'r' = 18, 'i' = 9, 's' = 19\n     - Sum = 16 + 1 + 18 + 9 + 19 = 63\n   - For \"London\":\n     - 'L' = 12, 'o' = 15, 'n' = 14, 'd' = 4, 'o' = 15, 'n' = 14\n     - Sum = 12 + 15 + 14 + 4 + 15 + 14 = 74\n\nDetermine the Index in the Table Using Modulus Operation(our hash function).\\\n   The table size is 10, so we use the modulus operation to find the index for each city name:\n   - For \"Delhi\":\n     - Hash value = 38 % 10 = 8\n     - Store \"Delhi\" at index 8 in the table.\n   - For \"Paris\":\n     - Hash value = 63 % 10 = 3\n     - Store \"Paris\" at index 3 in the table.\n   - For \"London\":\n     - Hash value = 74 % 10 = 4\n     - Store \"London\" at index 4 in the table.\n\nFinal Table Layout:\n\n![image](https://cdn.codechef.com/images/learning/hashing/hashing_example1.png)\n\n\n\nThis simple example helps illustrate the concept of hashing and how it efficiently maps strings to specific table indices for quick data access.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in How Does Hashing Work and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DSAAGP34",
+          "title": "Using Hashing to Optimize counting frequency",
+          "content": "In the previous problem, to calculate the frequencies of elements in array A, a basic approach is to iterate over the array and count occurrences of each element, which takes **O(N^2)** time. However, we can optimize this using hashing.\n\nOptimized Approach Using Hashing:\n- Find the maximum value in $A$. This will determine the size of the $Hash$ array.\n- Declare a $Hash$ array of size **max(A) + 1**, and initialize all elements to $0$.\n- Iterate through $A$ and for each element $A_i$, increment the corresponding index in the Hash array.\n\nExample:\nFor the array A = [1, 2, 2, 2, 3, 1, 2]:\nMaximum value: 3\n$Hash$ array of size 4: [0, 0, 0, 0]\nAfter iterating through $A$:\n```\nindex    0  1  2  3\n        [0, 0, 0, 0]\n1 ->    [0, 1, 0, 0]\n2 ->    [0, 1, 1, 0]\n2 ->    [0, 1, 2, 0]\n2 ->    [0, 1, 3, 0]\n3 ->    [0, 1, 3, 1]\n1 ->    [0, 2, 3, 1]\n2 ->    [0, 2, 4, 1]\n```\n\nNow, the Hash array represents the frequencies of elements in $A$.\n\nThis approach has a time complexity of **O(N + max(A))**, which is significantly more efficient than **O(N^2)**.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Using Hashing to Optimize counting frequency and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-DSAAGP34V",
+          "title": "Frequency using Hashing",
+          "content": "#### CPP visualizer\nc116998a357e2a3fe350f1b8836aa3b6\n\n\n#### Python visualizer\nf0132549a2005e7d3f33bb802fbb704c",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Frequency using Hashing and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-HSH03",
+          "title": "Use Hashing",
+          "content": "You might've implemented something like - \n- Fix an index $j$ in a loop.\n- For each element at index $j$, you fix another index $i$ in the prefix $A[1...j−1]$.\n- Now, count the number of indices $i$ where $A[i]=A[j]^2$, meaning that the value at $A_i$ should be equal to the square of the value at $A_j$.\n\n#### Steps:\n- Initialize a Hash array: This array will store the frequency of elements in the prefix $A[1...j−1]$.\n- Update the Hash array: As you iterate through the array, for each $j$, you:\n    - Count how many times $A[j]^2$ has appeared in the prefix by checking its frequency in the Hash array.\n    - Update the Hash array by incrementing the frequency of $A_j$.\n\nNow, update $Hash$ according to the following pseudo-code.\n```cpp\nfor j from 1 to N:\n    Hash[A[j]] += 1\n```\n\nTo count the number of beautiful pairs where current element is $j$, simply add the count of times its square has come till now.\n```cpp\nfor j from 1 to N:\n    ans += Hash[A[j] * A[j]]\n    Hash[A[j]] += 1\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Use Hashing and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-HSH04",
+          "title": "MCQ",
+          "content": "Which property should a good hash function have to minimize collisions?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in MCQ and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-HSH06",
+          "title": "Conclusion",
+          "content": "When we use hashing, we are trading time for memory. This means we can make our code faster by using more memory.\n\nIn the first example:\nThe input values range from $1$ to $10^4$.\nSince this range is small, we can easily create a hash array and solve the problem.\nNow, imagine if the input values were as large as $1$ to $10^9$. This approach would fail because creating an array large enough to store all possible values (from $1$ to $10^9$) would use too much memory.\n\nHowever, there’s something important to notice:\n\nThe number of distinct values in the array is always smaller than or equal to the size of the array.\nIf the array has **N** elements, there will be at most N distinct values.\n#### Thought-Provoking Question:\nHow can we handle values as large as 10^9 with just an array of size **N** (around $10^5$)?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Conclusion and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-HSH01-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Hashing (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-HSH01B-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "How Does Hashing Work (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DSAAGP34-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Using Hashing to Optimize counting frequency (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-DSAAGP34V-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Frequency using Hashing (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-HSH03-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Use Hashing (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-HSH04-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "MCQ (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-HSH06-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Conclusion (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "Q4459",
+          "questionId": "Q4459",
+          "title": "Frequency of each element in the array",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Frequency of each element in the array' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Frequency of each element in the array' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4386",
+          "questionId": "Q4386",
+          "title": "Frequency of elements using Hashing",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Frequency of elements using Hashing' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Frequency of elements using Hashing' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4388",
+          "questionId": "Q4388",
+          "title": "Count Beautiful Pairs",
+          "difficulty": "Easy",
+          "description": "Count the number of index pairs with i<j whose values add up to K.",
+          "problemStatement": "Count the number of index pairs with i<j whose values add up to K.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers. The third line contains K.",
+          "outputFormat": "Print the number of valid pairs.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4\n5",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n2 2 2\n4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4\n1 2 3 4\n5",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n2 2 2\n4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n1 5 7\n10",
+              "output": "0",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n0 1 2\n3",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n3 6 9\n12",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "HSH02B",
+          "questionId": "HSH02B",
+          "title": "Hashing Function Example",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Hashing Function Example' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Hashing Function Example' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4459",
+          "questionId": "Q4459",
+          "title": "Frequency of Each Element",
+          "difficulty": "Easy",
+          "description": "Given `N` integers, use hashing to count how many times each distinct value occurs. Print the distinct values in ascending order, followed by their frequencies in the format `value:frequency`, separated by spaces.",
+          "problemStatement": "Given `N` integers, use hashing to count how many times each distinct value occurs. Print the distinct values in ascending order, followed by their frequencies in the format `value:frequency`, separated by spaces.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "-10^9 <= A[i] <= 10^9"
+          ],
+          "inputFormat": "First line: N. Second line: N space-separated integers.",
+          "outputFormat": "Print one line containing the distinct values in ascending order as `value:frequency` pairs separated by spaces.",
+          "sampleTestCases": [
+            {
+              "input": "7\n1 2 2 2 3 1 2",
+              "output": "1:2 2:4 3:1",
+              "explanation": "The frequencies are 2, 4, and 1."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main(void) {\n    /* Solve the problem. */\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    int n; cin >> n; vector<long long>a(n); map<long long,int> f; for(auto &x:a){cin>>x;f[x]++;} for(auto [x,c]:f) cout<<x<<\":\"<<c<<\" \"; cout<<\"\\n\";\n    return 0;\n}\n",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { /* Solve the problem. */ } }",
+            "Python3": "import sys\n\ndef main():\n    data = sys.stdin.read().split()\n    # Solve the problem using data.\n\nif __name__ == '__main__':\n    main()",
+            "JavaScript": "const fs = require('fs');\nconst data = fs.readFileSync(0, 'utf8').trim().split(/\\s+/);\n// Solve the problem using data.",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(0) /* Solve the problem. */ }",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input=String::new(); io::stdin().read_to_string(&mut input).unwrap(); /* Solve the problem. */ }",
+            "C#": "using System;\nclass Program { static void Main() { /* Solve the problem. */ } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\n7",
+              "output": "7:1",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "6\n-2 -2 0 5 5 5",
+              "output": "-2:2 0:1 5:3",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "8\n3 3 3 2 2 1 0 0",
+              "output": "0:2 1:1 2:2 3:3",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "5\n1000000000 -1000000000 1000000000 7 7",
+              "output": "-1000000000:1 7:2 1000000000:2",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "10\n4 1 4 2 3 1 4 2 3 4",
+              "output": "1:2 2:2 3:2 4:4",
+              "explanation": "Expected output computed from an independent reference implementation."
+            }
+          ]
+        },
+        {
+          "problemId": "Q4386",
+          "questionId": "Q4386",
+          "title": "Frequency Queries Using Hashing",
+          "difficulty": "Easy",
+          "description": "Build a frequency map for an integer array. Then answer `Q` frequency queries. For each queried value, print how many times it appears in the array.",
+          "problemStatement": "Build a frequency map for an integer array. Then answer `Q` frequency queries. For each queried value, print how many times it appears in the array.",
+          "constraints": [
+            "1 <= N,Q <= 100000",
+            "-10^9 <= A[i], X <= 10^9"
+          ],
+          "inputFormat": "First line N. Second line N integers. Third line Q. Next Q lines contain one queried integer each.",
+          "outputFormat": "Print Q lines; line i contains the frequency of the i-th queried value.",
+          "sampleTestCases": [
+            {
+              "input": "6\n4 7 4 9 7 4\n4\n4\n7\n5\n9",
+              "output": "3\n2\n0\n1",
+              "explanation": "The map stores each value's frequency."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main(void) {\n    /* Solve the problem. */\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    int n;cin>>n;unordered_map<long long,int> f; for(int i=0,x;i<n;i++){cin>>x;++f[x];} int q;cin>>q; while(q--){long long x;cin>>x;cout<<f[x]<<\"\\n\";}\n    return 0;\n}\n",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { /* Solve the problem. */ } }",
+            "Python3": "import sys\n\ndef main():\n    data = sys.stdin.read().split()\n    # Solve the problem using data.\n\nif __name__ == '__main__':\n    main()",
+            "JavaScript": "const fs = require('fs');\nconst data = fs.readFileSync(0, 'utf8').trim().split(/\\s+/);\n// Solve the problem using data.",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(0) /* Solve the problem. */ }",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input=String::new(); io::stdin().read_to_string(&mut input).unwrap(); /* Solve the problem. */ }",
+            "C#": "using System;\nclass Program { static void Main() { /* Solve the problem. */ } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "5\n1 1 2 3 2\n4\n1\n2\n4\n3",
+              "output": "2\n2\n0\n1",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "8\n9 9 8 7 8 8 6 5\n5\n8\n9\n7\n5\n4",
+              "output": "3\n2\n1\n1\n0",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "3\n-1 -1 10\n4\n-1\n0\n10\n11",
+              "output": "2\n0\n1\n0",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "6\n1000000000 2 3 2 4 2\n3\n2\n1000000000\n99",
+              "output": "3\n1\n0",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "7\n1 2 1 2 1 2 1\n4\n1\n2\n3\n0",
+              "output": "4\n3\n0\n0",
+              "explanation": "Expected output computed from an independent reference implementation."
+            }
+          ]
+        },
+        {
+          "problemId": "HSH02B",
+          "questionId": "HSH02B",
+          "title": "Hash Function Example",
+          "difficulty": "Easy",
+          "description": "For a table size `M`, use the hash function `h(x) = x mod M`. For each given key, print the key and the bucket selected by the hash function.",
+          "problemStatement": "For a table size `M`, use the hash function `h(x) = x mod M`. For each given key, print the key and the bucket selected by the hash function.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "1 <= M <= 1000000",
+            "0 <= X[i] <= 10^18"
+          ],
+          "inputFormat": "First line N M. Second line N integer keys.",
+          "outputFormat": "Print N lines in the format `x -> h(x)`.",
+          "sampleTestCases": [
+            {
+              "input": "5 10\n13 1000000000 342561313 1341234 523151339",
+              "output": "13 -> 3\n1000000000 -> 0\n342561313 -> 3\n1341234 -> 4\n523151339 -> 9",
+              "explanation": "Each key is reduced modulo 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main(void) {\n    /* Solve the problem. */\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    int n; long long m;cin>>n>>m; while(n--){long long x;cin>>x;cout<<x<<\" -> \"<<x%m<<\"\\n\";}\n    return 0;\n}\n",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { /* Solve the problem. */ } }",
+            "Python3": "import sys\n\ndef main():\n    data = sys.stdin.read().split()\n    # Solve the problem using data.\n\nif __name__ == '__main__':\n    main()",
+            "JavaScript": "const fs = require('fs');\nconst data = fs.readFileSync(0, 'utf8').trim().split(/\\s+/);\n// Solve the problem using data.",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(0) /* Solve the problem. */ }",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input=String::new(); io::stdin().read_to_string(&mut input).unwrap(); /* Solve the problem. */ }",
+            "C#": "using System;\nclass Program { static void Main() { /* Solve the problem. */ } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 7\n0 7 14",
+              "output": "0 -> 0\n7 -> 0\n14 -> 0",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "4 10\n13 1000000000 342561313 1341234",
+              "output": "13 -> 3\n1000000000 -> 0\n342561313 -> 3\n1341234 -> 4",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "5 13\n13 26 39 40 52",
+              "output": "13 -> 0\n26 -> 0\n39 -> 0\n40 -> 1\n52 -> 0",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "4 97\n96 97 194 1000000000000",
+              "output": "96 -> 96\n97 -> 0\n194 -> 0\n1000000000000 -> 50",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "3 1\n0 1 999",
+              "output": "0 -> 0\n1 -> 0\n999 -> 0",
+              "explanation": "Expected output computed from an independent reference implementation."
+            }
+          ]
+        }
+      ],
+      "recommendedSequence": 1,
+      "learningTrack": "Concept → Intuition → Dry Run → Guided Build → Micro Practice → Independent Practice → Mastery",
+      "prerequisites": [
+        "Arrays, equality/comparison, and basic maps/sets."
+      ],
+      "stepByStepLearning": {
+        "stepCount": 8,
+        "steps": [
+          {
+            "step": 1,
+            "type": "PREREQUISITE",
+            "title": "Check prerequisites",
+            "goal": "Arrays, equality/comparison, and basic maps/sets.",
+            "action": "Recall the prerequisite idea and answer one tiny self-check before moving on.",
+            "exitCriteria": "I can explain the prerequisite without opening another lesson."
+          },
+          {
+            "step": 2,
+            "type": "CONCEPT",
+            "title": "Build the mental model",
+            "goal": "Hashing trades extra memory for near-constant expected lookup/update, making frequency and membership problems much easier.",
+            "action": "Read the concept explanation and identify the input, state, operation, and desired output.",
+            "exitCriteria": "I can describe what the technique stores/changes and why it exists."
+          },
+          {
+            "step": 3,
+            "type": "RECOGNITION",
+            "title": "Learn when to use it",
+            "goal": "Repeated membership, counting, uniqueness, complement lookup, or grouping requirements.",
+            "action": "Classify two short problem statements and name the pattern before looking at solutions.",
+            "exitCriteria": "I can give at least two signals that this technique applies."
+          },
+          {
+            "step": 4,
+            "type": "DRY_RUN",
+            "title": "Trace a tiny example",
+            "goal": "Track the hash table after each insertion/query and state what key is stored.",
+            "action": "Simulate the algorithm on paper, recording the invariant/state after each step.",
+            "exitCriteria": "I can predict the final state/output for a small example."
+          },
+          {
+            "step": 5,
+            "type": "GUIDED_BUILD",
+            "title": "Implement with scaffolding",
+            "goal": "Choose the key -> choose value meaning -> update/query the table -> handle missing keys and duplicates.",
+            "action": "Write pseudocode from the invariant, then translate one step at a time into C++.",
+            "exitCriteria": "The guided implementation works on the basic example and one edge case."
+          },
+          {
+            "step": 6,
+            "type": "MICRO_PRACTICE",
+            "title": "Solve a small variation",
+            "goal": "Solve a frequency count and a two-sum style complement lookup with a map.",
+            "action": "Solve a tiny variation without copying the worked example.",
+            "exitCriteria": "I can adapt the approach to a changed input or requirement."
+          },
+          {
+            "step": 7,
+            "type": "INDEPENDENT_PRACTICE",
+            "title": "Climb the problem ladder",
+            "goal": "Start with the easiest related problem and move toward mixed/harder problems only after explaining the previous solution.",
+            "action": "Use the practice set in increasing difficulty. Record pattern, invariant, complexity, and failed attempts.",
+            "exitCriteria": "I can solve a fresh problem and explain why the chosen approach is correct."
+          },
+          {
+            "step": 8,
+            "type": "MASTERY",
+            "title": "Pass the mastery gate",
+            "goal": "Translate a repeated search into one-pass hashing and explain the time/space tradeoff.",
+            "action": "Complete the mastery checklist and one unseen variation under a reasonable time limit.",
+            "exitCriteria": "Mastery achieved when I can translate a repeated search into one-pass hashing and explain the time/space tradeoff."
+          }
+        ]
+      },
+      "problemSolvingChecklist": [
+        "What exactly is the input and output?",
+        "What do the constraints allow?",
+        "What is the simplest correct approach?",
+        "What work repeats?",
+        "What invariant/state should stay true?",
+        "What edge cases break the approach?",
+        "What are the time and space costs?"
+      ],
+      "masteryGate": {
+        "mustExplain": [
+          "core idea",
+          "when to use",
+          "invariant/correctness idea",
+          "time complexity",
+          "space complexity",
+          "edge cases"
+        ],
+        "mustPerform": [
+          "one unseen micro problem",
+          "one practice problem at current difficulty"
+        ],
+        "commonFailure": "Wrong key/value meaning, collision misunderstandings, and assuming worst-case complexity is always O(1)."
+      },
+      "_sourceFile": "dsa.json",
+      "_moduleTitle": "HASHING: Introduction to Hashing"
+    },
+    {
+      "topicId": "t02-hash-collision-and-hashmaps",
+      "title": "Hash collision and Hashmaps",
+      "description": "Study concepts and solve targeted engineering problems for Hash collision and Hashmaps.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 35,
+      "pages": [
+        {
+          "pageId": "dsa-m29-t2-step-v2-01",
+          "title": "Step 1 — Start Here",
+          "sectionType": "LEARNING_MAP",
+          "content": "### Before you code\n**Prerequisite:** Arrays, equality/comparison, and basic maps/sets.\n\nThis topic follows a deliberate sequence. Do not skip directly to the hardest practice set.\n\n**Your learning route**\n1. Build the mental model.\n2. Learn when the pattern applies.\n3. Dry-run a tiny example.\n4. Build the algorithm with guidance.\n5. Solve a micro variation.\n6. Progress through the practice ladder.\n7. Pass the mastery gate.\n\n**First question to answer:** What information must remain correct after every step of the algorithm?",
+          "teachingGoal": "Know the prerequisite, learning sequence, and invariant you will track."
+        },
+        {
+          "pageId": "p-HSH07",
+          "title": "Collision",
+          "content": "In the previous module, we learned how the hashing works. \n\nLet’s go through the same example again. Suppose we have the hash table with the cities `{\"Delhi\", \"Paris\", \"London\"}`.\n\n![Image](https://cdn.codechef.com/images/learning/hashing/hashing_example1.png)\n\nAnd now we want to add `\"Moscow\"`.\n\nWe use the same hash function as before: convert each character in the city name to its alphabetical position, sum these values, and use `sum(string) % 10` to find the index.\n\nLet's break down `\"Moscow\"` using alphabetical positions:\n   - 'M' = 13, 'o' = 15, 's' = 19, 'c' = 3, 'o' = 15, 'w' = 23\n   - Sum = 13 + 15 + 19 + 3 + 15 + 23 = 88\n   - Hence for `\"Moscow\"`:\n     - Hash value = 88 % 10 = 8\n\n\nWe need to store `\"Moscow\"` at index 8. However, index 8 is already occupied by **\"Delhi\"**. Such scenarios, when two different inputs produce the same hash value in hashing is called a **collision**.\n\n![image](https://cdn.codechef.com/images/learning/hashing/hash_collision.png)\n\n\n\n#### Why Do Collisions Happen?\n\n- **Fixed Table Size:** Hash tables have a fixed size, so the number of possible hash values is limited. When many keys are being hashed, the chance of two different keys mapping to the same index increases.\n- **Hash Function Limitations:** Even a well-designed hash function will sometimes produce the same index for different keys because it processes the input into a limited range of values.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Collision and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-HSH07",
+            "question": "Which principle is most important when working with Collision?",
+            "options": [
+              "Apply the correct algorithmic idea and handle the specified edge cases",
+              "Ignore the input specification",
+              "Use unrelated data structures",
+              "Assume the largest possible answer is always correct"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The lesson on Collision is mastered by applying the intended algorithm correctly and respecting the problem constraints."
+          }
+        },
+        {
+          "pageId": "p-HSH08",
+          "title": "Resolving Collisions",
+          "content": "Hash collisions are inevitable when different keys produce the same hash value and map to the same index in a hash table. Proper collision handling is essential to maintain the efficiency of hash tables for quick insertion, deletion, and lookup operations. \n\n\nHere are the most common techniques used to handle collisions:\n\n### Chaining\n\n- **How It Works:**  \n  In chaining, each index in the hash table points to a linked list (or another data structure, like an array or a tree) that contains all the elements that hash to the same index.\n- **Steps:**\n  1. If a collision occurs, the new element is added to the linked list at the index where the collision happened.\n  2. During searches, the hash index is located, and the linked list at that index is traversed to find the desired key.\n- **Pros:**  \n  - Simple to implement.\n  - Handles an unlimited number of collisions by dynamically growing the linked list.\n- **Cons:**  \n  - Could lead to inefficient search times if many elements are added to the same index (a long linked list).\n  - Requires extra memory to store pointers in the linked list.\n\n#### Example:\nIf both `\"Delhi\"` and `\"Moscow\"` hash to index 8, chaining will store them as a list at index 8:\n\n![image](https://cdn.codechef.com/images/learning/hashing/chaining.png)",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Resolving Collisions and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-HSH08B",
+          "title": "More Collision Resolution Techniques",
+          "content": "### Open Addressing\n\nIn open addressing, all elements are stored within the hash table itself. When a collision occurs, the algorithm searches for another open slot using a specified probing method. Here are the main types of open addressing:\n\n#### a. **Linear Probing**\n\n- **How It Works:**  \n  When a collision occurs, the algorithm checks the next available slot (in a linear sequence) until an empty one is found.\n- **Steps:**\n  1. Calculate the hash index.\n  2. If occupied, move to the next index (index + 1) until an empty slot is found.\n- **Pros:**  \n  - Simple to implement.\n- **Cons:**  \n  - Can lead to **clustering**, where a group of occupied slots builds up, increasing the time for insertion and search.\n\n**Example:**\nIf `\"Delhi\"` and `\"Moscow\"` hash to the same index (8), `\"Delhi\"` is stored at 8, and `\"Moscow\"` would be placed in the next available slot, 9.\n\n![image](https://cdn.codechef.com/images/learning/hashing/linear_probing.png)\n\n#### b. **Quadratic Probing**\n\n- **How It Works:**  \n  Similar to linear probing, but instead of checking the next slot in a linear sequence, it probes using a quadratic function (e.g., $i$2 where $i$ is the number of attempts).\n- **Steps:**\n  1. Calculate the hash index.\n  2. If occupied, move to `index` + 12, `index` + 22, `index` + 32, etc., until an empty slot is found.\n- **Pros:**  \n  - Reduces clustering compared to linear probing.\n- **Cons:**  \n  - Could still lead to secondary clustering.\n  - More complex probing sequence than linear probing.\n\n\nIn addition to these methods, other hash collision resolution techniques include Double Hashing, Rehashing, and Separate Chaining with Balanced Trees.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in More Collision Resolution Techniques and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-HSH10V",
+          "title": "Built-In Hashing Data Structures",
+          "content": "#### CPP visualizer\nc3e66aaa90a3c0c10f9c999f76e9d009\n\n\n#### Python visualizer\n7aa494e0ebe4adc019223fa4c4265fd2",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Built-In Hashing Data Structures and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-HSH07-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Collision (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-HSH08-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Resolving Collisions (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-HSH08B-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "More Collision Resolution Techniques (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-HSH10V-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Built-In Hashing Data Structures (C++)",
+          "code": "#include <iostream>\n#include <unordered_map>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> a = {2, 7, 11, 15};\n    unordered_map<int,int> freq;\n    for (int x : a) ++freq[x];\n    cout << freq.size() << '\\n';\n    return 0;\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "Q4388",
+          "questionId": "Q4388",
+          "title": "Count Beautiful Pairs",
+          "difficulty": "Easy",
+          "description": "Count the number of index pairs with i<j whose values add up to K.",
+          "problemStatement": "Count the number of index pairs with i<j whose values add up to K.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers. The third line contains K.",
+          "outputFormat": "Print the number of valid pairs.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4\n5",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n2 2 2\n4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4\n1 2 3 4\n5",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n2 2 2\n4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n1 5 7\n10",
+              "output": "0",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n0 1 2\n3",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n3 6 9\n12",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "HSH10",
+          "questionId": "HSH10",
+          "title": "Built-In Hashing Data Structures",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Built-In Hashing Data Structures' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Built-In Hashing Data Structures' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4396",
+          "questionId": "Q4396",
+          "title": "Frequency greater than k",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Frequency greater than k' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Frequency greater than k' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q5082",
+          "questionId": "Q5082",
+          "title": "Length of Longest Palindrome",
+          "difficulty": "Easy",
+          "description": "Determine whether the given string is a palindrome.",
+          "problemStatement": "Determine whether the given string is a palindrome.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Input contains one string.",
+          "outputFormat": "Print YES if it is a palindrome, otherwise NO.",
+          "sampleTestCases": [
+            {
+              "input": "level",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abba",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "level",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abba",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "a",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "aabbaa",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q49",
+          "questionId": "Q49",
+          "title": "Group Anagrams",
+          "difficulty": "Easy",
+          "description": "Determine whether two strings are anagrams.",
+          "problemStatement": "Determine whether two strings are anagrams.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Two lines contain strings A and B.",
+          "outputFormat": "Print YES if A and B contain the same multiset of characters, otherwise NO.",
+          "sampleTestCases": [
+            {
+              "input": "listen\nsilent",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc\nabd",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "listen\nsilent",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc\nabd",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "aab\naba",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "a\na",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "ab\nba",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q560",
+          "questionId": "Q560",
+          "title": "Subarray Sum equals k",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Subarray Sum equals k' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Subarray Sum equals k' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q9503",
+          "questionId": "Q9503",
+          "title": "Hashing - Minimum Window Substring",
+          "difficulty": "Easy",
+          "description": "Given an array, print its minimum element.",
+          "problemStatement": "Given an array, print its minimum element.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the minimum element.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 4 2 9",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4\n1 4 2 9",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n-5 -2 -9",
+              "output": "-9",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 7 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n0 0 1",
+              "output": "0",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        }
+      ],
+      "recommendedSequence": 2,
+      "learningTrack": "Concept → Intuition → Dry Run → Guided Build → Micro Practice → Independent Practice → Mastery",
+      "prerequisites": [
+        "Arrays, equality/comparison, and basic maps/sets."
+      ],
+      "stepByStepLearning": {
+        "stepCount": 8,
+        "steps": [
+          {
+            "step": 1,
+            "type": "PREREQUISITE",
+            "title": "Check prerequisites",
+            "goal": "Arrays, equality/comparison, and basic maps/sets.",
+            "action": "Recall the prerequisite idea and answer one tiny self-check before moving on.",
+            "exitCriteria": "I can explain the prerequisite without opening another lesson."
+          },
+          {
+            "step": 2,
+            "type": "CONCEPT",
+            "title": "Build the mental model",
+            "goal": "Hashing trades extra memory for near-constant expected lookup/update, making frequency and membership problems much easier.",
+            "action": "Read the concept explanation and identify the input, state, operation, and desired output.",
+            "exitCriteria": "I can describe what the technique stores/changes and why it exists."
+          },
+          {
+            "step": 3,
+            "type": "RECOGNITION",
+            "title": "Learn when to use it",
+            "goal": "Repeated membership, counting, uniqueness, complement lookup, or grouping requirements.",
+            "action": "Classify two short problem statements and name the pattern before looking at solutions.",
+            "exitCriteria": "I can give at least two signals that this technique applies."
+          },
+          {
+            "step": 4,
+            "type": "DRY_RUN",
+            "title": "Trace a tiny example",
+            "goal": "Track the hash table after each insertion/query and state what key is stored.",
+            "action": "Simulate the algorithm on paper, recording the invariant/state after each step.",
+            "exitCriteria": "I can predict the final state/output for a small example."
+          },
+          {
+            "step": 5,
+            "type": "GUIDED_BUILD",
+            "title": "Implement with scaffolding",
+            "goal": "Choose the key -> choose value meaning -> update/query the table -> handle missing keys and duplicates.",
+            "action": "Write pseudocode from the invariant, then translate one step at a time into C++.",
+            "exitCriteria": "The guided implementation works on the basic example and one edge case."
+          },
+          {
+            "step": 6,
+            "type": "MICRO_PRACTICE",
+            "title": "Solve a small variation",
+            "goal": "Solve a frequency count and a two-sum style complement lookup with a map.",
+            "action": "Solve a tiny variation without copying the worked example.",
+            "exitCriteria": "I can adapt the approach to a changed input or requirement."
+          },
+          {
+            "step": 7,
+            "type": "INDEPENDENT_PRACTICE",
+            "title": "Climb the problem ladder",
+            "goal": "Start with the easiest related problem and move toward mixed/harder problems only after explaining the previous solution.",
+            "action": "Use the practice set in increasing difficulty. Record pattern, invariant, complexity, and failed attempts.",
+            "exitCriteria": "I can solve a fresh problem and explain why the chosen approach is correct."
+          },
+          {
+            "step": 8,
+            "type": "MASTERY",
+            "title": "Pass the mastery gate",
+            "goal": "Translate a repeated search into one-pass hashing and explain the time/space tradeoff.",
+            "action": "Complete the mastery checklist and one unseen variation under a reasonable time limit.",
+            "exitCriteria": "Mastery achieved when I can translate a repeated search into one-pass hashing and explain the time/space tradeoff."
+          }
+        ]
+      },
+      "problemSolvingChecklist": [
+        "What exactly is the input and output?",
+        "What do the constraints allow?",
+        "What is the simplest correct approach?",
+        "What work repeats?",
+        "What invariant/state should stay true?",
+        "What edge cases break the approach?",
+        "What are the time and space costs?"
+      ],
+      "masteryGate": {
+        "mustExplain": [
+          "core idea",
+          "when to use",
+          "invariant/correctness idea",
+          "time complexity",
+          "space complexity",
+          "edge cases"
+        ],
+        "mustPerform": [
+          "one unseen micro problem",
+          "one practice problem at current difficulty"
+        ],
+        "commonFailure": "Wrong key/value meaning, collision misunderstandings, and assuming worst-case complexity is always O(1)."
+      },
+      "_sourceFile": "dsa.json",
+      "_moduleTitle": "HASHING: Introduction to Hashing"
+    },
+    {
+      "topicId": "t03-frequency-counting-hash-maps",
+      "title": "Frequency Counting & Hash Maps",
+      "description": "Use counts and first/last occurrence information to replace repeated scans.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 55,
+      "pages": [
+        {
+          "pageId": "arrays-m9-t2-v3-step1",
+          "title": "Prerequisite Check",
+          "sectionType": "PREREQUISITE",
+          "content": "Before solving Frequency Counting & Hash Maps, confirm the learner can identify the input shape, the operation being requested, and the expected complexity target.\n\n- State the input and output in your own words.\n- Identify the simplest correct baseline approach.\n- Name the constraint that can make the baseline too slow.",
+          "teachingGoal": "By the end of this step, the learner can progress through Frequency Counting & Hash Maps without skipping the required reasoning step.",
+          "suggestedVisual": "Annotated visual/state trace for Frequency Counting & Hash Maps."
+        },
+        {
+          "pageId": "arrays-m9-t2-v3-step2",
+          "title": "Concept Build",
+          "sectionType": "CONCEPT",
+          "content": "Frequency Counting & Hash Maps is easier to master when the rule is reduced to one repeatable mental model. Start with the data state, the operation, and the condition that permits each update.\n\n- Identify the state that must be maintained.\n- Write the update rule in one sentence.\n- State what must always remain true.",
+          "teachingGoal": "By the end of this step, the learner can progress through Frequency Counting & Hash Maps without skipping the required reasoning step.",
+          "suggestedVisual": "Annotated visual/state trace for Frequency Counting & Hash Maps."
+        },
+        {
+          "pageId": "arrays-m9-t2-v3-step3",
+          "title": "Intuition Before Code",
+          "sectionType": "INTUITION",
+          "content": "Before implementation, reason about a small example for Frequency Counting & Hash Maps. Ask what information can be reused and what work can safely be skipped.\n\n- What information is repeated?\n- What can be maintained incrementally?\n- What changes when the input grows by one element?",
+          "teachingGoal": "By the end of this step, the learner can progress through Frequency Counting & Hash Maps without skipping the required reasoning step.",
+          "suggestedVisual": "Annotated visual/state trace for Frequency Counting & Hash Maps."
+        },
+        {
+          "pageId": "arrays-m9-t2-v3-step4",
+          "title": "Worked Example",
+          "sectionType": "WORKED_EXAMPLE",
+          "content": "Work through a small instance of Frequency Counting & Hash Maps by hand. Do not code yet; write each important state transition.\n\n- Start with the initial state.\n- Apply one operation at a time.\n- Record the state after every transition.",
+          "teachingGoal": "By the end of this step, the learner can progress through Frequency Counting & Hash Maps without skipping the required reasoning step.",
+          "suggestedVisual": "Annotated visual/state trace for Frequency Counting & Hash Maps."
+        },
+        {
+          "pageId": "arrays-m9-t2-v3-step5",
+          "title": "Guided Implementation",
+          "sectionType": "GUIDED_IMPLEMENTATION",
+          "content": "Implement Frequency Counting & Hash Maps in the smallest readable version first. Separate input parsing, algorithm state, and output so debugging is localized.\n\n- Translate the invariant into variables.\n- Implement one transition at a time.\n- Check the sample immediately after the first implementation.",
+          "teachingGoal": "By the end of this step, the learner can progress through Frequency Counting & Hash Maps without skipping the required reasoning step.",
+          "suggestedVisual": "Annotated visual/state trace for Frequency Counting & Hash Maps."
+        },
+        {
+          "pageId": "arrays-m9-t2-v3-step6",
+          "title": "Independent Practice",
+          "sectionType": "PRACTICE",
+          "content": "Now solve a fresh variation of Frequency Counting & Hash Maps without looking at the reference implementation. Use the same pattern but a different input arrangement or boundary.\n\n- Restate the task.\n- Choose the pattern explicitly.\n- Predict the output before running.\n- Test a minimum, boundary, and adversarial case.",
+          "teachingGoal": "By the end of this step, the learner can progress through Frequency Counting & Hash Maps without skipping the required reasoning step.",
+          "suggestedVisual": "Annotated visual/state trace for Frequency Counting & Hash Maps."
+        },
+        {
+          "pageId": "arrays-m9-t2-v3-step7",
+          "title": "Debugging Lab",
+          "sectionType": "DEBUGGING",
+          "content": "Debugging Frequency Counting & Hash Maps should begin with the invariant and boundary conditions, not random edits.\n\n- Check initialization.\n- Check loop/condition boundaries.\n- Check pointer/state movement.\n- Check complexity against constraints.",
+          "teachingGoal": "By the end of this step, the learner can progress through Frequency Counting & Hash Maps without skipping the required reasoning step.",
+          "suggestedVisual": "Annotated visual/state trace for Frequency Counting & Hash Maps."
+        },
+        {
+          "pageId": "arrays-m9-t2-v3-step8",
+          "title": "Mastery Gate",
+          "sectionType": "MASTERY",
+          "content": "You have mastered Frequency Counting & Hash Maps when you can explain the pattern, implement it from scratch, and transfer it to a new problem with the same underlying idea.\n\n- Explain the invariant without code.\n- Implement from a blank editor.\n- Give time and space complexity.\n- Name one common failure mode.",
+          "teachingGoal": "By the end of this step, the learner can progress through Frequency Counting & Hash Maps without skipping the required reasoning step.",
+          "suggestedVisual": "Annotated visual/state trace for Frequency Counting & Hash Maps."
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "arrays-m9-t2-v3-example",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Frequency map",
+          "code": "#include <bits/stdc++.h>\nusing namespace std; int main(){vector<int>a={2,1,2,3,2,1};unordered_map<int,int>f;for(int x:a)f[x]++;cout<<f[2]<<\" \"<<f[1]<<\"\\n\";}",
+          "purpose": "Runnable lesson example before independent practice."
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "LC-ARR-977",
+          "questionId": "LC-ARR-977",
+          "title": "LeetCode #977 - Squares of a Sorted Array",
+          "difficulty": "Easy",
+          "source": "LeetCode",
+          "leetcodeNumber": 977,
+          "leetcodeUrl": "https://leetcode.com/problems/squares-of-a-sorted-array/",
+          "pattern": "Two pointers",
+          "description": "Given a non-decreasing array that may contain negative values, output its squared values in non-decreasing order.",
+          "problemStatement": "Given a non-decreasing array that may contain negative values, output its squared values in non-decreasing order.",
+          "constraints": [
+            "Use the stated input shape.",
+            "Target the standard interview complexity for this pattern."
+          ],
+          "inputFormat": "N\nN sorted integers",
+          "outputFormat": "Squared values in sorted order.",
+          "sampleTestCases": [
+            {
+              "input": "5\n-4 -1 0 3 10",
+              "output": "0 1 9 16 100",
+              "explanation": "Paraphrased SEED adaptation of the official problem idea."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "3\n-7 -3 -1",
+              "output": "1 9 49",
+              "explanation": "Independent edge-case validation for the adapted problem."
+            },
+            {
+              "input": "1\n-5",
+              "output": "25",
+              "explanation": "Independent edge-case validation for the adapted problem."
+            }
+          ],
+          "boilerPlates": {
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){\n    // Implement the solution.\n}\n"
+          },
+          "referenceSolution": {
+            "language": "C++",
+            "code": "#include <bits/stdc++.h>\nusing namespace std;int main(){int n;cin>>n;vector<long long>a(n),r(n);for(auto&x:a)cin>>x;int l=0,h=n-1;for(int k=n-1;k>=0;k--){long long x=llabs(a[l]),y=llabs(a[h]);if(x>y){r[k]=x*x;l++;}else{r[k]=y*y;h--;}}for(int i=0;i<n;i++){if(i)cout<<' ';cout<<r[i];}cout<<'\\n';}"
+          },
+          "editorial": "Use the Two pointers pattern. The key is to maintain the correct invariant while processing each element or interval exactly as required by the pattern. Aim for the standard asymptotic complexity of the original LeetCode problem.",
+          "guidedHints": [
+            "Restate the task in one sentence.",
+            "Write the invariant before coding.",
+            "Identify the Two pointers signal in the input.",
+            "Trace the sample and one boundary case.",
+            "Only then implement and justify complexity."
+          ],
+          "complexity": "Use the standard target complexity for this pattern; justify both time and auxiliary space.",
+          "learningSequence": {
+            "step1": "Read and restate the task.",
+            "step2": "Identify prerequisite pattern.",
+            "step3": "Trace a small example.",
+            "step4": "Write the invariant.",
+            "step5": "Implement the smallest correct version.",
+            "step6": "Test minimum/boundary/adversarial cases.",
+            "step7": "Defend complexity.",
+            "step8": "Attempt the original LeetCode formulation."
+          },
+          "tags": [
+            "arrays",
+            "leetcode",
+            "two-pointers"
+          ]
+        },
+        {
+          "problemId": "Q4396",
+          "questionId": "Q4396",
+          "title": "Frequency Greater Than K",
+          "difficulty": "Easy",
+          "description": "Given an array and an integer `K`, count how many distinct values occur strictly more than `K` times.",
+          "problemStatement": "Given an array and an integer `K`, count how many distinct values occur strictly more than `K` times.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "0 <= K <= N",
+            "-10^9 <= A[i] <= 10^9"
+          ],
+          "inputFormat": "First line N K. Second line N integers.",
+          "outputFormat": "Print the number of distinct values whose frequency is greater than K.",
+          "sampleTestCases": [
+            {
+              "input": "8 2\n1 1 1 2 2 3 4 4",
+              "output": "1",
+              "explanation": "Only value 1 appears more than twice."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main(void) {\n    /* Solve the problem. */\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    int n,k;cin>>n>>k;unordered_map<long long,int>f;for(int i=0;i<n;i++){long long x;cin>>x;++f[x];}int ans=0;for(auto [x,c]:f)if(c>k)++ans;cout<<ans<<\"\\n\";\n    return 0;\n}\n",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { /* Solve the problem. */ } }",
+            "Python3": "import sys\n\ndef main():\n    data = sys.stdin.read().split()\n    # Solve the problem using data.\n\nif __name__ == '__main__':\n    main()",
+            "JavaScript": "const fs = require('fs');\nconst data = fs.readFileSync(0, 'utf8').trim().split(/\\s+/);\n// Solve the problem using data.",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(0) /* Solve the problem. */ }",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input=String::new(); io::stdin().read_to_string(&mut input).unwrap(); /* Solve the problem. */ }",
+            "C#": "using System;\nclass Program { static void Main() { /* Solve the problem. */ } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "5 0\n1 1 2 3 4",
+              "output": "4",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "8 2\n1 1 1 2 2 3 4 4",
+              "output": "1",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "6 3\n1 1 1 1 2 2",
+              "output": "1",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "7 1\n-1 -1 0 0 0 5 5",
+              "output": "3",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "10 4\n1 1 1 1 1 2 2 2 2 3",
+              "output": "1",
+              "explanation": "Expected output computed from an independent reference implementation."
+            }
+          ]
+        },
+        {
+          "problemId": "Q5082",
+          "questionId": "Q5082",
+          "title": "Length of Longest Palindrome",
+          "difficulty": "Medium",
+          "description": "Given a string, compute the maximum length of a palindrome that can be formed by rearranging some or all of its characters. A character with an odd count may be placed in the center; all other used characters contribute even counts.",
+          "problemStatement": "Given a string, compute the maximum length of a palindrome that can be formed by rearranging some or all of its characters. A character with an odd count may be placed in the center; all other used characters contribute even counts.",
+          "constraints": [
+            "1 <= |s| <= 100000",
+            "s contains printable ASCII characters."
+          ],
+          "inputFormat": "One line containing string `s`.",
+          "outputFormat": "Print the maximum possible palindrome length.",
+          "sampleTestCases": [
+            {
+              "input": "abccccdd",
+              "output": "7",
+              "explanation": "A palindrome of length 7 can be formed, such as `dccaccd`."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main(void) {\n    /* Solve the problem. */\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    string s;cin>>s;unordered_map<char,int>f;for(char c:s)++f[c];int ans=0;bool odd=false;for(auto [c,n]:f){ans+=(n/2)*2;if(n%2)odd=true;}if(odd)++ans;cout<<ans<<\"\\n\";\n    return 0;\n}\n",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { /* Solve the problem. */ } }",
+            "Python3": "import sys\n\ndef main():\n    data = sys.stdin.read().split()\n    # Solve the problem using data.\n\nif __name__ == '__main__':\n    main()",
+            "JavaScript": "const fs = require('fs');\nconst data = fs.readFileSync(0, 'utf8').trim().split(/\\s+/);\n// Solve the problem using data.",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(0) /* Solve the problem. */ }",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input=String::new(); io::stdin().read_to_string(&mut input).unwrap(); /* Solve the problem. */ }",
+            "C#": "using System;\nclass Program { static void Main() { /* Solve the problem. */ } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "abccccdd",
+              "output": "7",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "abc",
+              "output": "1",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "aabbcc",
+              "output": "6",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "aaaaabbc",
+              "output": "7",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "zzzzzzzzzzx",
+              "output": "11",
+              "explanation": "Expected output computed from an independent reference implementation."
+            }
+          ]
+        },
+        {
+          "problemId": "Q49",
+          "questionId": "Q49",
+          "title": "Group Anagrams",
+          "difficulty": "Medium",
+          "description": "Group words that are anagrams of one another. Two words belong to the same group when their characters can be rearranged to form each other.\n\nFor deterministic assessment output, sort each group lexicographically, then sort the groups lexicographically by their entire sequence. Print one group per line with words separated by spaces.",
+          "problemStatement": "Group words that are anagrams of one another. Two words belong to the same group when their characters can be rearranged to form each other.\n\nFor deterministic assessment output, sort each group lexicographically, then sort the groups lexicographically by their entire sequence. Print one group per line with words separated by spaces.",
+          "constraints": [
+            "1 <= N <= 10000",
+            "1 <= length(word) <= 100"
+          ],
+          "inputFormat": "First line N. Next line contains N lowercase alphabetic words.",
+          "outputFormat": "Print one sorted anagram group per line. Groups and words within groups must be lexicographically sorted.",
+          "sampleTestCases": [
+            {
+              "input": "6\neat tea tan ate nat bat",
+              "output": "ate eat tea\nbat\nnat tan",
+              "explanation": "The three groups are {eat,tea,ate}, {bat}, and {tan,nat}."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main(void) {\n    /* Solve the problem. */\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    int n;cin>>n;map<string,vector<string>>mp;string w;while(n--){cin>>w;string k=w;sort(k.begin(),k.end());mp[k].push_back(w);}vector<vector<string>> gs;for(auto &[k,v]:mp){sort(v.begin(),v.end());gs.push_back(v);}sort(gs.begin(),gs.end());for(auto &g:gs){for(int i=0;i<(int)g.size();++i){if(i)cout<<\" \";cout<<g[i];}cout<<\"\\n\";}\n    return 0;\n}\n",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { /* Solve the problem. */ } }",
+            "Python3": "import sys\n\ndef main():\n    data = sys.stdin.read().split()\n    # Solve the problem using data.\n\nif __name__ == '__main__':\n    main()",
+            "JavaScript": "const fs = require('fs');\nconst data = fs.readFileSync(0, 'utf8').trim().split(/\\s+/);\n// Solve the problem using data.",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(0) /* Solve the problem. */ }",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input=String::new(); io::stdin().read_to_string(&mut input).unwrap(); /* Solve the problem. */ }",
+            "C#": "using System;\nclass Program { static void Main() { /* Solve the problem. */ } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1\nabc",
+              "output": "abc",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "5\neat tea tan ate nat",
+              "output": "ate eat tea\nnat tan",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "6\neat tea tan ate nat bat",
+              "output": "ate eat tea\nbat\nnat tan",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "7\nlisten silent enlist inlets google gogole abc",
+              "output": "abc\nenlist inlets listen silent\ngogole google",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "5\naaa aaa aba baa aab",
+              "output": "aaa aaa\naab aba baa",
+              "explanation": "Expected output computed from an independent reference implementation."
+            }
+          ]
+        },
+        {
+          "problemId": "Q560",
+          "questionId": "Q560",
+          "title": "Subarray Sum Equals K",
+          "difficulty": "Medium",
+          "description": "Given an integer array and an integer `K`, count the number of non-empty contiguous subarrays whose sum is exactly `K`. Use prefix sums and a hash map of previously seen prefix-sum frequencies.",
+          "problemStatement": "Given an integer array and an integer `K`, count the number of non-empty contiguous subarrays whose sum is exactly `K`. Use prefix sums and a hash map of previously seen prefix-sum frequencies.",
+          "constraints": [
+            "1 <= N <= 20000",
+            "-1000 <= A[i] <= 1000",
+            "-10^7 <= K <= 10^7"
+          ],
+          "inputFormat": "First line N K. Second line N integers.",
+          "outputFormat": "Print the number of non-empty contiguous subarrays whose sum equals K.",
+          "sampleTestCases": [
+            {
+              "input": "3 2\n1 1 1",
+              "output": "2",
+              "explanation": "The first two elements and the last two elements each sum to 2."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main(void) {\n    /* Solve the problem. */\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    int n;long long k;cin>>n>>k;unordered_map<long long,long long>cnt;cnt[0]=1;long long sum=0,ans=0;for(int i=0;i<n;i++){long long x;cin>>x;sum+=x;ans+=cnt[sum-k];++cnt[sum];}cout<<ans<<\"\\n\";\n    return 0;\n}\n",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { /* Solve the problem. */ } }",
+            "Python3": "import sys\n\ndef main():\n    data = sys.stdin.read().split()\n    # Solve the problem using data.\n\nif __name__ == '__main__':\n    main()",
+            "JavaScript": "const fs = require('fs');\nconst data = fs.readFileSync(0, 'utf8').trim().split(/\\s+/);\n// Solve the problem using data.",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(0) /* Solve the problem. */ }",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input=String::new(); io::stdin().read_to_string(&mut input).unwrap(); /* Solve the problem. */ }",
+            "C#": "using System;\nclass Program { static void Main() { /* Solve the problem. */ } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 2\n1 1 1",
+              "output": "2",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "3 3\n1 2 3",
+              "output": "2",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "5 0\n0 0 0 0 0",
+              "output": "15",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "5 -1\n1 -1 1 -1 1",
+              "output": "3",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "6 3\n1 2 -1 2 -1 0",
+              "output": "4",
+              "explanation": "Expected output computed from an independent reference implementation."
+            }
+          ]
+        },
+        {
+          "problemId": "Q9503",
+          "questionId": "Q9503",
+          "title": "Minimum Window Substring",
+          "difficulty": "Hard",
+          "description": "Given strings `S` and `T`, find the shortest substring of `S` that contains every character of `T` with at least the same multiplicity. If no valid window exists, print `-1`.",
+          "problemStatement": "Given strings `S` and `T`, find the shortest substring of `S` that contains every character of `T` with at least the same multiplicity. If no valid window exists, print `-1`.",
+          "constraints": [
+            "1 <= |S|, |T| <= 100000",
+            "S and T contain uppercase and lowercase English letters."
+          ],
+          "inputFormat": "First line S. Second line T.",
+          "outputFormat": "Print the unique minimum window. If none exists, print `-1`.",
+          "sampleTestCases": [
+            {
+              "input": "ADOBECODEBANC\nABC",
+              "output": "BANC",
+              "explanation": "BANC is the shortest substring containing A, B, and C."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main(void) {\n    /* Solve the problem. */\n    return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    string s,t;cin>>s>>t;vector<int>need(128),have(128);int req=t.size(),left=0,best=INT_MAX,bl=-1;for(char c:t)need[(unsigned char)c]++;for(int r=0;r<(int)s.size();++r){char c=s[r];++have[(unsigned char)c];if(need[(unsigned char)c]>=have[(unsigned char)c])--req;while(req==0){if(r-left+1<best){best=r-left+1;bl=left;}char d=s[left++];if(need[(unsigned char)d]>=have[(unsigned char)d])++req;--have[(unsigned char)d];}}if(bl==-1)cout<<\"-1\\n\";else cout<<s.substr(bl,best)<<\"\\n\";\n    return 0;\n}\n",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { /* Solve the problem. */ } }",
+            "Python3": "import sys\n\ndef main():\n    data = sys.stdin.read().split()\n    # Solve the problem using data.\n\nif __name__ == '__main__':\n    main()",
+            "JavaScript": "const fs = require('fs');\nconst data = fs.readFileSync(0, 'utf8').trim().split(/\\s+/);\n// Solve the problem using data.",
+            "Go": "package main\nimport \"fmt\"\nfunc main() { _ = fmt.Sprint(0) /* Solve the problem. */ }",
+            "Rust": "use std::io::{self, Read};\nfn main() { let mut input=String::new(); io::stdin().read_to_string(&mut input).unwrap(); /* Solve the problem. */ }",
+            "C#": "using System;\nclass Program { static void Main() { /* Solve the problem. */ } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "ADOBECODEBANC\nABC",
+              "output": "BANC",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "a\na",
+              "output": "a",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "a\naa",
+              "output": "-1",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "aa\naa",
+              "output": "aa",
+              "explanation": "Expected output computed from an independent reference implementation."
+            },
+            {
+              "input": "thisisateststring\ntist",
+              "output": "tstri",
+              "explanation": "Expected output computed from an independent reference implementation."
+            }
+          ]
+        }
+      ],
+      "learningObjectives": [
+        "Explain the core idea behind Frequency Counting & Hash Maps.",
+        "Dry-run Frequency Counting & Hash Maps on small and boundary inputs.",
+        "Implement Frequency Counting & Hash Maps using a correct invariant.",
+        "Analyze time and space complexity for Frequency Counting & Hash Maps.",
+        "Transfer Frequency Counting & Hash Maps to an interview-style problem."
+      ],
+      "masteryChecklist": [
+        "I can state the pattern before coding.",
+        "I can dry-run the state changes.",
+        "I can implement without copying the reference.",
+        "I can explain complexity and edge cases.",
+        "I can solve a variation using the same pattern."
+      ],
+      "guidedPractice": [
+        {
+          "title": "Trace first",
+          "instruction": "Create the smallest non-trivial example for Frequency Counting & Hash Maps and write the state after every step.",
+          "expectedSkills": [
+            "trace",
+            "invariant",
+            "boundary"
+          ]
+        },
+        {
+          "title": "Implement second",
+          "instruction": "Implement the same pattern in the editor without copying the runnable example.",
+          "expectedSkills": [
+            "implementation",
+            "complexity"
+          ]
+        },
+        {
+          "title": "Transfer third",
+          "instruction": "Change one constraint or requirement and explain whether the same pattern still works.",
+          "expectedSkills": [
+            "pattern transfer",
+            "edge cases"
+          ]
+        }
+      ],
+      "workedExamples": [
+        {
+          "title": "Frequency Counting & Hash Maps: Small example",
+          "steps": [
+            "Define the state/invariant.",
+            "Process the first small case.",
+            "Update state after one transition.",
+            "Compare with expected output."
+          ],
+          "lessonNote": "The purpose is to understand the state transition before optimizing."
+        },
+        {
+          "title": "Frequency Counting & Hash Maps: Boundary case",
+          "steps": [
+            "Choose the smallest valid input.",
+            "Trace every boundary.",
+            "Check whether an empty/full/single-element case changes the logic."
+          ],
+          "lessonNote": "Boundary-first reasoning prevents many interview bugs."
+        },
+        {
+          "title": "Frequency Counting & Hash Maps: Constraint decision",
+          "steps": [
+            "Read the maximum input size.",
+            "Estimate the baseline operation count.",
+            "Reject approaches that cannot fit the constraints.",
+            "Choose the target pattern."
+          ],
+          "lessonNote": "Algorithm selection starts with constraints."
+        }
+      ],
+      "miniProject": "Build a small frequency counting & hash maps utility and explain its invariant and complexity.",
+      "leetcodeProblems": [
+        977
+      ],
+      "assessmentPolicy": {
+        "microPracticeRequired": true,
+        "independentPracticeRequired": true,
+        "leetcodeTransfer": true,
+        "masteryRule": "Learner must explain the invariant, dry-run a boundary case, implement independently, and state complexity."
+      },
+      "learningSequence": [
+        {
+          "step": 1,
+          "name": "Prerequisite",
+          "action": "Confirm the minimum prerequisite knowledge."
+        },
+        {
+          "step": 2,
+          "name": "Concept",
+          "action": "Learn the rule and vocabulary."
+        },
+        {
+          "step": 3,
+          "name": "Intuition",
+          "action": "Understand why the pattern works."
+        },
+        {
+          "step": 4,
+          "name": "Dry Run",
+          "action": "Trace a small input by hand."
+        },
+        {
+          "step": 5,
+          "name": "Guided Build",
+          "action": "Implement with scaffolding."
+        },
+        {
+          "step": 6,
+          "name": "Independent Practice",
+          "action": "Solve a fresh variation."
+        },
+        {
+          "step": 7,
+          "name": "LeetCode Transfer",
+          "action": "Attempt the linked LeetCode adaptation."
+        },
+        {
+          "step": 8,
+          "name": "Mastery",
+          "action": "Explain, reimplement, and defend complexity."
+        }
+      ],
+      "_sourceFile": "arrays.json",
+      "_moduleTitle": "Core Array Patterns"
+    }
+  ]
+}

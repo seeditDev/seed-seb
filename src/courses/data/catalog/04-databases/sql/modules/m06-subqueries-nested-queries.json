@@ -1,0 +1,1222 @@
+{
+  "moduleId": "m06-subqueries-nested-queries",
+  "title": "Subqueries & Nested Queries",
+  "description": "Single-row subqueries, multi-row subqueries (IN, ANY, ALL), correlated subqueries, EXISTS, and NOT EXISTS clauses.",
+  "estimatedHours": 4.5,
+  "topics": [
+    {
+      "topicId": "t01-exists-not-exists",
+      "title": "EXISTS & NOT EXISTS",
+      "description": "Express relationship existence and anti-joins without unnecessary row multiplication.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 35,
+      "lessonMarkdown": "## EXISTS and NOT EXISTS\n\nUse `EXISTS` when you only care whether a related row exists. Use `NOT EXISTS` for anti-joins.\n\n```sql\nSELECT c.customer_name\nFROM customers c\nWHERE NOT EXISTS (\n  SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id\n);\n```\n\nThis pattern is especially useful for “customers with no orders”, “students with no submission”, or “products never purchased”.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "## EXISTS and NOT EXISTS\n\nUse `EXISTS` when you only care whether a related row exists. Use `NOT EXISTS` for anti-joins.\n\n```sql\nSELECT c.customer_name\nFROM customers c\nWHERE NOT EXISTS (\n  SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id\n);\n```\n\nThis pattern is especially useful for “customers with no orders”, “students with no submission”, or “products never purchased”."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE customers (customer_id INTEGER PRIMARY KEY, customer_name TEXT);\nCREATE TABLE orders (order_id INTEGER PRIMARY KEY, customer_id INTEGER, amount REAL);",
+        "seedSql": "INSERT INTO customers VALUES (1,'Asha'),(2,'Ben'),(3,'Cara'),(4,'Dev');\nINSERT INTO orders VALUES (101,1,500),(102,1,700),(103,3,250);",
+        "defaultTable": "customers",
+        "defaultQuery": "SELECT * FROM customers ORDER BY customer_id;",
+        "tasks": [
+          {
+            "taskId": "sql-m8-exists-1",
+            "instruction": "List customers who have placed at least one order.",
+            "expectedQuery": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id) ORDER BY c.customer_id;",
+            "solution": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id) ORDER BY c.customer_id;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "EXISTS"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "customer_name"
+              ],
+              "rows": [
+                [
+                  "Asha"
+                ],
+                [
+                  "Cara"
+                ]
+              ],
+              "rowCount": 2
+            }
+          },
+          {
+            "taskId": "sql-m8-exists-2",
+            "instruction": "List customers who have never placed an order.",
+            "expectedQuery": "SELECT c.customer_name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id) ORDER BY c.customer_id;",
+            "solution": "SELECT c.customer_name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id) ORDER BY c.customer_id;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "NOT EXISTS"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "customer_name"
+              ],
+              "rows": [
+                [
+                  "Ben"
+                ],
+                [
+                  "Dev"
+                ]
+              ],
+              "rowCount": 2
+            }
+          },
+          {
+            "taskId": "sql-m8-exists-3",
+            "instruction": "List customers who have at least one order above 400.",
+            "expectedQuery": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.amount > 400) ORDER BY c.customer_id;",
+            "solution": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.amount > 400) ORDER BY c.customer_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "EXISTS",
+              "correlated subquery"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "customer_name"
+              ],
+              "rows": [
+                [
+                  "Asha"
+                ]
+              ],
+              "rowCount": 1
+            }
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m8-exists-ch1",
+            "instruction": "List customers whose total order amount exceeds 600.",
+            "expectedQuery": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id GROUP BY o.customer_id HAVING SUM(o.amount) > 600) ORDER BY c.customer_id;",
+            "solution": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id GROUP BY o.customer_id HAVING SUM(o.amount) > 600) ORDER BY c.customer_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "EXISTS",
+              "HAVING"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "customer_name"
+              ],
+              "rows": [
+                [
+                  "Asha"
+                ]
+              ],
+              "rowCount": 1
+            }
+          },
+          {
+            "taskId": "sql-m8-exists-ch2",
+            "instruction": "List customers for whom every recorded order is at least 300.",
+            "expectedQuery": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id) AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.amount < 300) ORDER BY c.customer_id;",
+            "solution": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id) AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.amount < 300) ORDER BY c.customer_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "EXISTS",
+              "NOT EXISTS"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "customer_name"
+              ],
+              "rows": [
+                [
+                  "Asha"
+                ]
+              ],
+              "rowCount": 1
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Recognize existence questions",
+        "Use correlated subqueries safely",
+        "Write anti-join logic"
+      ],
+      "commonMistakes": [
+        "Forgetting correlation",
+        "Using JOIN when only existence is needed",
+        "Incorrectly negating the inner condition"
+      ],
+      "cheatSheet": [
+        "EXISTS (SELECT 1 ...)",
+        "NOT EXISTS (SELECT 1 ...)"
+      ],
+      "reflectionQuestions": [
+        "What does “has at least one” map to?",
+        "What does “never” map to?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m8-exists-ex1",
+          "title": "Has orders",
+          "task": "Filter parents based on child existence.",
+          "query": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);",
+          "result": {
+            "columns": [
+              "customer_name"
+            ],
+            "rows": [
+              [
+                "Asha"
+              ],
+              [
+                "Cara"
+              ]
+            ],
+            "rowCount": 2
+          },
+          "explanation": "EXISTS stops caring about child values once one matching row is enough.",
+          "walkthrough": [
+            "Correlate customer IDs.",
+            "Test existence.",
+            "Return parent rows."
+          ]
+        },
+        {
+          "exampleId": "sql-m8-exists-ex2",
+          "title": "Has no orders",
+          "task": "Express a missing relationship.",
+          "query": "SELECT c.customer_name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);",
+          "result": {
+            "columns": [
+              "customer_name"
+            ],
+            "rows": [
+              [
+                "Ben"
+              ],
+              [
+                "Dev"
+              ]
+            ],
+            "rowCount": 2
+          },
+          "explanation": "NOT EXISTS is a direct “never happened” pattern.",
+          "walkthrough": [
+            "Find matching children.",
+            "Negate existence.",
+            "Return unmatched parents."
+          ]
+        },
+        {
+          "exampleId": "sql-m8-exists-ex3",
+          "title": "Threshold existence",
+          "task": "Existence can include a child-row condition.",
+          "query": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.amount > 400);",
+          "result": {
+            "columns": [
+              "customer_name"
+            ],
+            "rows": [
+              [
+                "Asha"
+              ]
+            ],
+            "rowCount": 1
+          },
+          "explanation": "The predicate belongs inside the subquery when the threshold applies to the related row.",
+          "walkthrough": [
+            "Correlate.",
+            "Add child condition.",
+            "Check existence."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Find customer lifecycle segments such as never ordered, high-value ordered, and inactive.",
+      "pages": [
+        {
+          "pageId": "sql-m8-t1-p1",
+          "title": "Understand the idea",
+          "content": "`EXISTS` asks whether a subquery returns at least one row. It is often the cleanest way to express “has at least one” or “has none”.\n\n```sql\nSELECT c.customer_name\nFROM customers c\nWHERE EXISTS (\n  SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id\n);\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "EXISTS tests whether the subquery returns any row."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT * FROM customers ORDER BY customer_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t1-p1",
+            "question": "Which condition finds customers who have at least one order?",
+            "options": [
+              "EXISTS (...)",
+              "MAX(...)",
+              "LIKE (...)",
+              "IN TABLE (...)"
+            ],
+            "correctAnswer": 0,
+            "explanation": "EXISTS tests whether the subquery returns any row."
+          }
+        },
+        {
+          "pageId": "sql-m8-t1-p2",
+          "title": "Worked reasoning",
+          "content": "The subquery is logically evaluated for each customer row.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "EXISTS tests whether the subquery returns any row."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id) ORDER BY c.customer_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t1-p2",
+            "question": "What is the main difference between EXISTS and a scalar subquery?",
+            "options": [
+              "EXISTS checks existence; a scalar subquery produces a value",
+              "They are identical",
+              "EXISTS always returns a table",
+              "A scalar subquery cannot appear in WHERE"
+            ],
+            "correctAnswer": 0,
+            "explanation": "EXISTS tests whether the subquery returns any row."
+          }
+        },
+        {
+          "pageId": "sql-m8-t1-p3",
+          "title": "Predict before you run",
+          "content": "EXISTS is boolean-style logic; scalar subqueries return one value.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "EXISTS tests whether the subquery returns any row."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "Which query finds customers with no orders?"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t1-p3",
+            "question": [
+              "EXISTS",
+              "NOT EXISTS",
+              "NOT IN TABLE",
+              "COUNT ONLY"
+            ],
+            "options": 1,
+            "correctAnswer": "NOT EXISTS is a natural anti-join pattern.",
+            "explanation": "EXISTS tests whether the subquery returns any row."
+          }
+        },
+        {
+          "pageId": "sql-m8-t1-p4",
+          "title": "Debugging checklist",
+          "content": "A frequent mistake is joining only to find existence and accidentally multiplying rows when duplicates exist.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "EXISTS tests whether the subquery returns any row."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "EXISTS (SELECT 1 ... )\nNOT EXISTS (SELECT 1 ... )"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t1-p4",
+            "question": [
+              "When is EXISTS clearer than JOIN?",
+              "How would you express “has never ordered”?"
+            ],
+            "options": "Prefer EXISTS when the question is about presence rather than retrieving child rows.",
+            "correctAnswer": "## EXISTS and NOT EXISTS\n\nUse `EXISTS` when you only care whether a related row exists. Use `NOT EXISTS` for anti-joins.\n\n```sql\nSELECT c.customer_name\nFROM customers c\nWHERE NOT EXISTS (\n  SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id\n);\n```\n\nThis pattern is especially useful for “customers with no orders”, “students with no submission”, or “products never purchased”.",
+            "explanation": "EXISTS tests whether the subquery returns any row."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m8-exists-ex1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Has orders",
+          "code": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);"
+        },
+        {
+          "exampleId": "sql-m8-exists-ex2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Has no orders",
+          "code": "SELECT c.customer_name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id);"
+        },
+        {
+          "exampleId": "sql-m8-exists-ex3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Threshold existence",
+          "code": "SELECT c.customer_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.amount > 400);"
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Debug",
+        "Submit",
+        "Reflect"
+      ],
+      "scenario": "Customer lifecycle",
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 8: Advanced Querying & Set Logic",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t02-correlated-subqueries-comparisons",
+      "title": "Correlated Subqueries & Comparisons",
+      "description": "Compare each row with a value calculated from its own related group or hierarchy.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 35,
+      "lessonMarkdown": "## Correlated subqueries\n\nA correlated subquery is evaluated in the context of the current outer row.\n\nUse them for rules like:\n- salary above department average\n- order above customer average\n- employee compared with manager\n\nThey are powerful but should be replaced by clearer set-based patterns when that makes the query easier to reason about.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "## Correlated subqueries\n\nA correlated subquery is evaluated in the context of the current outer row.\n\nUse them for rules like:\n- salary above department average\n- order above customer average\n- employee compared with manager\n\nThey are powerful but should be replaced by clearer set-based patterns when that makes the query easier to reason about."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE employees (\n    employee_id INTEGER PRIMARY KEY,\n    employee_name TEXT NOT NULL,\n    department TEXT NOT NULL,\n    salary INTEGER NOT NULL,\n    hire_date TEXT NOT NULL,\n    manager_id INTEGER\n);",
+        "seedSql": "INSERT INTO employees VALUES\n(1,'Asha','Engineering',90000,'2021-01-15',NULL),\n(2,'Ben','Engineering',70000,'2022-06-10',1),\n(3,'Cara','Engineering',75000,'2023-03-22',1),\n(4,'Dev','Sales',60000,'2020-08-01',NULL),\n(5,'Esha','Sales',50000,'2024-02-12',4),\n(6,'Farah','HR',65000,'2019-11-18',NULL),\n(7,'Gita','HR',52000,'2023-07-09',6),\n(8,'Hari','Sales',80000,'2021-05-11',4);",
+        "defaultTable": "employees",
+        "defaultQuery": "SELECT * FROM employees ORDER BY employee_id;",
+        "tasks": [
+          {
+            "taskId": "sql-m8-corr-1",
+            "instruction": "Find employees earning above their own department average.",
+            "expectedQuery": "SELECT e.employee_name, e.department, e.salary FROM employees e WHERE e.salary > (SELECT AVG(x.salary) FROM employees x WHERE x.department = e.department) ORDER BY e.employee_id;",
+            "solution": "SELECT e.employee_name, e.department, e.salary FROM employees e WHERE e.salary > (SELECT AVG(x.salary) FROM employees x WHERE x.department = e.department) ORDER BY e.employee_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Correlated subquery"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee_name",
+                "department",
+                "salary"
+              ],
+              "rows": [
+                [
+                  "Asha",
+                  "Engineering",
+                  90000
+                ],
+                [
+                  "Farah",
+                  "HR",
+                  65000
+                ],
+                [
+                  "Hari",
+                  "Sales",
+                  80000
+                ]
+              ],
+              "rowCount": 3
+            }
+          },
+          {
+            "taskId": "sql-m8-corr-2",
+            "instruction": "Find employees earning below their department average.",
+            "expectedQuery": "SELECT e.employee_name, e.department, e.salary FROM employees e WHERE e.salary < (SELECT AVG(x.salary) FROM employees x WHERE x.department = e.department) ORDER BY e.employee_id;",
+            "solution": "SELECT e.employee_name, e.department, e.salary FROM employees e WHERE e.salary < (SELECT AVG(x.salary) FROM employees x WHERE x.department = e.department) ORDER BY e.employee_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Correlated subquery"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee_name",
+                "department",
+                "salary"
+              ],
+              "rows": [
+                [
+                  "Ben",
+                  "Engineering",
+                  70000
+                ],
+                [
+                  "Cara",
+                  "Engineering",
+                  75000
+                ],
+                [
+                  "Dev",
+                  "Sales",
+                  60000
+                ],
+                [
+                  "Esha",
+                  "Sales",
+                  50000
+                ],
+                [
+                  "Gita",
+                  "HR",
+                  52000
+                ]
+              ],
+              "rowCount": 5
+            }
+          },
+          {
+            "taskId": "sql-m8-corr-3",
+            "instruction": "Find each employee and the salary of their manager, excluding top-level employees.",
+            "expectedQuery": "SELECT e.employee_name, m.employee_name AS manager_name, m.salary AS manager_salary FROM employees e JOIN employees m ON e.manager_id = m.employee_id ORDER BY e.employee_id;",
+            "solution": "SELECT e.employee_name, m.employee_name AS manager_name, m.salary AS manager_salary FROM employees e JOIN employees m ON e.manager_id = m.employee_id ORDER BY e.employee_id;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Self join"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee_name",
+                "manager_name",
+                "manager_salary"
+              ],
+              "rows": [
+                [
+                  "Ben",
+                  "Asha",
+                  90000
+                ],
+                [
+                  "Cara",
+                  "Asha",
+                  90000
+                ],
+                [
+                  "Esha",
+                  "Dev",
+                  60000
+                ],
+                [
+                  "Gita",
+                  "Farah",
+                  65000
+                ],
+                [
+                  "Hari",
+                  "Dev",
+                  60000
+                ]
+              ],
+              "rowCount": 5
+            }
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m8-corr-ch1",
+            "instruction": "Find employees whose salary is greater than their manager salary.",
+            "expectedQuery": "SELECT e.employee_name, e.salary, m.employee_name AS manager_name, m.salary AS manager_salary FROM employees e JOIN employees m ON e.manager_id = m.employee_id WHERE e.salary > m.salary ORDER BY e.employee_id;",
+            "solution": "SELECT e.employee_name, e.salary, m.employee_name AS manager_name, m.salary AS manager_salary FROM employees e JOIN employees m ON e.manager_id = m.employee_id WHERE e.salary > m.salary ORDER BY e.employee_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Self join",
+              "comparison"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee_name",
+                "salary",
+                "manager_name",
+                "manager_salary"
+              ],
+              "rows": [
+                [
+                  "Hari",
+                  80000,
+                  "Dev",
+                  60000
+                ]
+              ],
+              "rowCount": 1
+            }
+          },
+          {
+            "taskId": "sql-m8-corr-ch2",
+            "instruction": "Find employees whose salary is the maximum within their department.",
+            "expectedQuery": "SELECT e.employee_name, e.department, e.salary FROM employees e WHERE e.salary = (SELECT MAX(x.salary) FROM employees x WHERE x.department = e.department) ORDER BY e.department, e.employee_id;",
+            "solution": "SELECT e.employee_name, e.department, e.salary FROM employees e WHERE e.salary = (SELECT MAX(x.salary) FROM employees x WHERE x.department = e.department) ORDER BY e.department, e.employee_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Correlated subquery",
+              "MAX"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee_name",
+                "department",
+                "salary"
+              ],
+              "rows": [
+                [
+                  "Asha",
+                  "Engineering",
+                  90000
+                ],
+                [
+                  "Farah",
+                  "HR",
+                  65000
+                ],
+                [
+                  "Hari",
+                  "Sales",
+                  80000
+                ]
+              ],
+              "rowCount": 3
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Recognize correlation",
+        "Use correlated aggregates",
+        "Compare hierarchy rows"
+      ],
+      "commonMistakes": [
+        "Forgetting the correlation predicate",
+        "Returning multiple rows where one value is expected",
+        "Overusing correlation where a window function is clearer"
+      ],
+      "cheatSheet": [
+        "Inner query references outer alias",
+        "Use aliases x/e to clarify scopes"
+      ],
+      "reflectionQuestions": [
+        "What does the inner query depend on?",
+        "When is a self-join clearer?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m8-corr-ex1",
+          "title": "Above department average",
+          "task": "Compare each row with a department-specific scalar.",
+          "query": "SELECT e.employee_name, e.salary FROM employees e WHERE e.salary > (SELECT AVG(x.salary) FROM employees x WHERE x.department=e.department);",
+          "result": {
+            "columns": [
+              "employee_name",
+              "salary"
+            ],
+            "rows": [
+              [
+                "Asha",
+                90000
+              ],
+              [
+                "Farah",
+                65000
+              ],
+              [
+                "Hari",
+                80000
+              ]
+            ],
+            "rowCount": 3
+          },
+          "explanation": "The inner query changes with the outer department.",
+          "walkthrough": [
+            "Identify outer row.",
+            "Compute inner metric for that row.",
+            "Compare."
+          ]
+        },
+        {
+          "exampleId": "sql-m8-corr-ex2",
+          "title": "Department maximum",
+          "task": "Use a correlated MAX.",
+          "query": "SELECT e.employee_name, e.department, e.salary FROM employees e WHERE e.salary = (SELECT MAX(x.salary) FROM employees x WHERE x.department=e.department);",
+          "result": {
+            "columns": [
+              "employee_name",
+              "department",
+              "salary"
+            ],
+            "rows": [
+              [
+                "Asha",
+                "Engineering",
+                90000
+              ],
+              [
+                "Farah",
+                "HR",
+                65000
+              ],
+              [
+                "Hari",
+                "Sales",
+                80000
+              ]
+            ],
+            "rowCount": 3
+          },
+          "explanation": "Each employee is compared with the maximum for their department.",
+          "walkthrough": [
+            "Correlate department.",
+            "Calculate maximum.",
+            "Keep equal rows."
+          ]
+        },
+        {
+          "exampleId": "sql-m8-corr-ex3",
+          "title": "Manager comparison",
+          "task": "A self-join often expresses hierarchy comparisons cleanly.",
+          "query": "SELECT e.employee_name, e.salary, m.employee_name AS manager_name, m.salary AS manager_salary FROM employees e JOIN employees m ON e.manager_id=m.employee_id;",
+          "result": {
+            "columns": [
+              "employee_name",
+              "salary",
+              "manager_name",
+              "manager_salary"
+            ],
+            "rows": [
+              [
+                "Ben",
+                70000,
+                "Asha",
+                90000
+              ],
+              [
+                "Cara",
+                75000,
+                "Asha",
+                90000
+              ],
+              [
+                "Esha",
+                50000,
+                "Dev",
+                60000
+              ],
+              [
+                "Gita",
+                52000,
+                "Farah",
+                65000
+              ],
+              [
+                "Hari",
+                80000,
+                "Dev",
+                60000
+              ]
+            ],
+            "rowCount": 5
+          },
+          "explanation": "A manager relationship is a self-join because both entities live in employees.",
+          "walkthrough": [
+            "Alias the two roles.",
+            "Join manager_id to employee_id.",
+            "Compare values."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build a people analytics report comparing employees with peers and managers.",
+      "pages": [
+        {
+          "pageId": "sql-m8-t4-p1",
+          "title": "Understand the idea",
+          "content": "A correlated subquery references a column from the outer query. This allows each outer row to use a different inner calculation.\n\n```sql\nSELECT e.employee_name, e.salary\nFROM employees e\nWHERE e.salary > (\n  SELECT AVG(x.salary)\n  FROM employees x\n  WHERE x.department = e.department\n);\n```\n\nThe inner query computes the department-specific average for the current employee's department.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "A correlated subquery depends on the current outer row."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT * FROM employees ORDER BY employee_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t4-p1",
+            "question": "What makes a subquery correlated?",
+            "options": [
+              "It references an outer-query column",
+              "It uses GROUP BY",
+              "It returns multiple columns",
+              "It is always recursive"
+            ],
+            "correctAnswer": 0,
+            "explanation": "A correlated subquery depends on the current outer row."
+          }
+        },
+        {
+          "pageId": "sql-m8-t4-p2",
+          "title": "Worked reasoning",
+          "content": "Use aliases to make the relationship explicit.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "A correlated subquery depends on the current outer row."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT e.employee_name, e.department, e.salary FROM employees e WHERE e.salary > (SELECT AVG(x.salary) FROM employees x WHERE x.department = e.department) ORDER BY e.employee_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t4-p2",
+            "question": "What does the inner query compute in this example?",
+            "options": [
+              "Global average salary",
+              "Department average salary",
+              "Maximum salary overall",
+              "Count of employees"
+            ],
+            "correctAnswer": 1,
+            "explanation": "A correlated subquery depends on the current outer row."
+          }
+        },
+        {
+          "pageId": "sql-m8-t4-p3",
+          "title": "Predict before you run",
+          "content": "The inner WHERE ties the inner rows to the outer employee department.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "A correlated subquery depends on the current outer row."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "How would you find employees earning more than their manager?"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t4-p3",
+            "question": [
+              "Compare with a correlated manager lookup",
+              "Use LIMIT 1",
+              "Use DISTINCT only",
+              "Use UNION"
+            ],
+            "options": 0,
+            "correctAnswer": "A self-correlated lookup can retrieve the manager salary for comparison.",
+            "explanation": "A correlated subquery depends on the current outer row."
+          }
+        },
+        {
+          "pageId": "sql-m8-t4-p4",
+          "title": "Debugging checklist",
+          "content": "Correlated queries can be harder to read or optimize than equivalent joins or window functions; use them when they express the business rule clearly.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "A correlated subquery depends on the current outer row."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "Outer alias + inner reference\nWHERE inner.column = outer.column\nCompare scalar result"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m8-t4-p4",
+            "question": [
+              "When is correlation necessary?",
+              "Could a JOIN or window function be clearer?"
+            ],
+            "options": "Always identify the outer row and the value the inner query should calculate for that row.",
+            "correctAnswer": "## Correlated subqueries\n\nA correlated subquery is evaluated in the context of the current outer row.\n\nUse them for rules like:\n- salary above department average\n- order above customer average\n- employee compared with manager\n\nThey are powerful but should be replaced by clearer set-based patterns when that makes the query easier to reason about.",
+            "explanation": "A correlated subquery depends on the current outer row."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m8-corr-ex1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Above department average",
+          "code": "SELECT e.employee_name, e.salary FROM employees e WHERE e.salary > (SELECT AVG(x.salary) FROM employees x WHERE x.department=e.department);"
+        },
+        {
+          "exampleId": "sql-m8-corr-ex2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Department maximum",
+          "code": "SELECT e.employee_name, e.department, e.salary FROM employees e WHERE e.salary = (SELECT MAX(x.salary) FROM employees x WHERE x.department=e.department);"
+        },
+        {
+          "exampleId": "sql-m8-corr-ex3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Manager comparison",
+          "code": "SELECT e.employee_name, e.salary, m.employee_name AS manager_name, m.salary AS manager_salary FROM employees e JOIN employees m ON e.manager_id=m.employee_id;"
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Debug",
+        "Submit",
+        "Reflect"
+      ],
+      "scenario": "Organization analytics",
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 8: Advanced Querying & Set Logic",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t03-subqueries",
+      "title": "Subqueries",
+      "description": "Study concepts and solve targeted engineering problems for Subqueries.",
+      "mode": "PRACTICE",
+      "readingTimeMinutes": 25,
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": [
+        {
+          "problemId": "GSQ69",
+          "questionId": "GSQ69",
+          "title": "Data Transformation",
+          "difficulty": "Easy",
+          "description": "In this module we'll learn the concept of data transformation using 'Subqueries'. Subqueries (also known as nested queries or inner queries) are used to transform data in a table by creating a new table that is based on the results of a subquery.\\\nThis new table can be used as a source for further analysis or used to create a new table.\nThis is referred to as data transformation or table transformation.\n\nHere are some examples of table transformation using subqueries:\n - Filtering based on subquery: A subquery can be used to filter rows from a table based on a condition.\n - Creating a new table using subquery: A subquery can be used to create a new table based on the results of a query. \n - Updating a table using subquery: A subquery can be used to update a table by setting the values of one or more columns based on a condition. \n\n\nWe'll use restaurant database to learn about subqueries.\n\n### Task\nWrite a query to output the first 3 rows of the table 'food'\n```sql\nExpected output\n┌──────┬────────────┬────────┬─────────────┐\n│ f_id │ f_name │ f_cost │ f_type │\n├──────┼────────────┼────────┼─────────────┤\n│ 1 │ Pizza │ 10 │ Continental │\n│ 2 │ Burger │ 8 │ Continental │\n│ 3 │ Fried Rice │ 12 │ Chinese │\n└──────┴────────────┴────────┴─────────────┘\n```\n\n#### Video Explanation:",
+          "problemStatement": "In this module we'll learn the concept of data transformation using 'Subqueries'. Subqueries (also known as nested queries or inner queries) are used to transform data in a table by creating a new table that is based on the results of a subquery.\\\nThis new table can be used as a source for further analysis or used to create a new table.\nThis is referred to as data transformation or table transformation.\n\nHere are some examples of table transformation using subqueries:\n - Filtering based on subquery: A subquery can be used to filter rows from a table based on a condition.\n - Creating a new table using subquery: A subquery can be used to create a new table based on the results of a query. \n - Updating a table using subquery: A subquery can be used to update a table by setting the values of one or more columns based on a condition. \n\n\nWe'll use restaurant database to learn about subqueries.\n\n### Task\nWrite a query to output the first 3 rows of the table 'food'\n```sql\nExpected output\n┌──────┬────────────┬────────┬─────────────┐\n│ f_id │ f_name │ f_cost │ f_type │\n├──────┼────────────┼────────┼─────────────┤\n│ 1 │ Pizza │ 10 │ Continental │\n│ 2 │ Burger │ 8 │ Continental │\n│ 3 │ Fried Rice │ 12 │ Chinese │\n└──────┴────────────┴────────┴─────────────┘\n```\n\n#### Video Explanation:",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "GSQ70",
+          "questionId": "GSQ70",
+          "title": "Non-Correlated Subqueries",
+          "difficulty": "Easy",
+          "description": "A subquery is a query nested inside another query. \n\nA **non-correlated** subquery is a subquery that can be executed independently of the outer query.\n- The subquery does not depend on the outer query for its results. \n- Non-correlated subqueries are typically used to retrieve a single value or a set of values that are used in the WHERE clause or the HAVING clause of the outer query.\n\nLet us take an example for a **non-correlated** subquery\n- Suppose you have customer information in the table 'customers' and their restaurant order information in the table 'orders'\n- Below is the query to get the customer information of those who have placed an order with order value >1000.\n\nQuery:\n```sql\nSELECT * \nFROM customers\nWHERE customer_id IN ( \n SELECT customer_id \n FROM orders\n WHERE order_value >1000);\n```\n\n### Task\nWrite a query to fetch Name and type of the food from the table 'food' which has got rating less than 3 in the table 'ratings'.\n```sql\nExpected output\n┌────────┬─────────┐\n│ f_name │ f_type │\n├────────┼─────────┤\n│ Tacos │ Mexican │\n└────────┴─────────┘\n```\n\nTable 'food' has the following columns: \n- f_id (int)\n- f_name (text)\n- f_cost (int)\n- f_type (int).\n\nTable 'ratings' has the following columns: \n- f_id (int)\n- f_rating (text).",
+          "problemStatement": "A subquery is a query nested inside another query. \n\nA **non-correlated** subquery is a subquery that can be executed independently of the outer query.\n- The subquery does not depend on the outer query for its results. \n- Non-correlated subqueries are typically used to retrieve a single value or a set of values that are used in the WHERE clause or the HAVING clause of the outer query.\n\nLet us take an example for a **non-correlated** subquery\n- Suppose you have customer information in the table 'customers' and their restaurant order information in the table 'orders'\n- Below is the query to get the customer information of those who have placed an order with order value >1000.\n\nQuery:\n```sql\nSELECT * \nFROM customers\nWHERE customer_id IN ( \n SELECT customer_id \n FROM orders\n WHERE order_value >1000);\n```\n\n### Task\nWrite a query to fetch Name and type of the food from the table 'food' which has got rating less than 3 in the table 'ratings'.\n```sql\nExpected output\n┌────────┬─────────┐\n│ f_name │ f_type │\n├────────┼─────────┤\n│ Tacos │ Mexican │\n└────────┴─────────┘\n```\n\nTable 'food' has the following columns: \n- f_id (int)\n- f_name (text)\n- f_cost (int)\n- f_type (int).\n\nTable 'ratings' has the following columns: \n- f_id (int)\n- f_rating (text).",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "GSQ71",
+          "questionId": "GSQ71",
+          "title": "Problem - Non-Correlated Subqueries",
+          "difficulty": "Easy",
+          "description": "Write a query to do the following\n- Find the dishes which cost more than the average cost of all the dishes at the restaurant\n- You need to output f_name, f_cost, f_type for such dishes\n- **Hint:** You need to use a subquery on the table 'food'\n```sql\nExpected output\n┌──────────────────┬────────┬──────────┐\n│ f_name │ f_cost │ f_type │\n├──────────────────┼────────┼──────────┤\n│ Sushi │ 20 │ Japanese │\n│ Tandoori Chicken │ 15 │ Indian │\n│ Beef Stroganoff │ 18 │ Russian │\n│ Paella │ 25 │ Spanish │\n│ Moussaka │ 16 │ Greek │\n└──────────────────┴────────┴──────────┘\n```\n\n### Table Format\nTable 'food' has the following columns: \n- f_id (int)\n- f_name (text)\n- f_cost (int)\n- f_type (int).\n\nTable 'ratings' has the following columns: \n- f_id (int)\n- f_rating (text).",
+          "problemStatement": "Write a query to do the following\n- Find the dishes which cost more than the average cost of all the dishes at the restaurant\n- You need to output f_name, f_cost, f_type for such dishes\n- **Hint:** You need to use a subquery on the table 'food'\n```sql\nExpected output\n┌──────────────────┬────────┬──────────┐\n│ f_name │ f_cost │ f_type │\n├──────────────────┼────────┼──────────┤\n│ Sushi │ 20 │ Japanese │\n│ Tandoori Chicken │ 15 │ Indian │\n│ Beef Stroganoff │ 18 │ Russian │\n│ Paella │ 25 │ Spanish │\n│ Moussaka │ 16 │ Greek │\n└──────────────────┴────────┴──────────┘\n```\n\n### Table Format\nTable 'food' has the following columns: \n- f_id (int)\n- f_name (text)\n- f_cost (int)\n- f_type (int).\n\nTable 'ratings' has the following columns: \n- f_id (int)\n- f_rating (text).",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "GSQ72",
+          "questionId": "GSQ72",
+          "title": "Correlated Subqueries",
+          "difficulty": "Easy",
+          "description": "**Correlated Subqueries** as the name suggests, its inner and outer queries are related. \\\nThe subquery is dependent on the outer query.\n\nLet us understand this via an example\n- Suppose we have a table consisting the following information - 'Employee_id', 'Department' and 'Salary' - employees can belong to various departments - Marketing / Sales / HR / Ops\n- Suppose we want to find the employee id of those employees whose salary is less than the average salary of the employees **ONLY** in his department.\n- This is how the query will work\n - For each employee_id in the outer query, the subquery will run. \n - The subquery will check the department of the employee and then compute the average salary of his department\n - The outer query will then take this average salary - and compare if the employee's salary is less than this average\n - If yes - then the outer query will include this employee in the output. This process will run for each row in the table\n\nQuery:\n```sql\n SELECT employee_id\n FROM employee AS e\n WHERE salary < \n (SELECT AVG(salary)\n FROM employee\n WHERE department= e.department);\n```\n \n### Task\nWrite a query to retrieve the names of food items which cost less than the average cost of 'Continental' food type(f_type).\n```sql\nExpected output\n┌────────┐\n│ f_name │\n├────────┤\n│ Pizza │\n│ Burger │\n│ Tacos │\n└────────┘\n```\nTable 'food' has the following columns:\n - f_id (int)\n - f_name (text)\n - f_cost (int)\n - f_type (text).",
+          "problemStatement": "**Correlated Subqueries** as the name suggests, its inner and outer queries are related. \\\nThe subquery is dependent on the outer query.\n\nLet us understand this via an example\n- Suppose we have a table consisting the following information - 'Employee_id', 'Department' and 'Salary' - employees can belong to various departments - Marketing / Sales / HR / Ops\n- Suppose we want to find the employee id of those employees whose salary is less than the average salary of the employees **ONLY** in his department.\n- This is how the query will work\n - For each employee_id in the outer query, the subquery will run. \n - The subquery will check the department of the employee and then compute the average salary of his department\n - The outer query will then take this average salary - and compare if the employee's salary is less than this average\n - If yes - then the outer query will include this employee in the output. This process will run for each row in the table\n\nQuery:\n```sql\n SELECT employee_id\n FROM employee AS e\n WHERE salary < \n (SELECT AVG(salary)\n FROM employee\n WHERE department= e.department);\n```\n \n### Task\nWrite a query to retrieve the names of food items which cost less than the average cost of 'Continental' food type(f_type).\n```sql\nExpected output\n┌────────┐\n│ f_name │\n├────────┤\n│ Pizza │\n│ Burger │\n│ Tacos │\n└────────┘\n```\nTable 'food' has the following columns:\n - f_id (int)\n - f_name (text)\n - f_cost (int)\n - f_type (text).",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "GSQ74",
+          "questionId": "GSQ74",
+          "title": "Problem - Correlated Subqueries",
+          "difficulty": "Easy",
+          "description": "Let us find out more details about highly rated dishes.\n\n### Task\nWrite a query to do the following. Try and use the concept of sub-queries.\n- You need to output details of the dish - 'f_name', 'f_cost' and 'f_type' ONLY if the following condition is satisfied\n- Average rating of the dish is greater than or equal to 4\n```sql\nExpected output\n┌─────────────────┬────────┬─────────────┐\n│ f_name │ f_cost │ f_type │\n├─────────────────┼────────┼─────────────┤\n│ Pizza │ 10 │ Continental │\n│ Fried Rice │ 12 │ Chinese │\n│ Pad Thai │ 14 │ Thai │\n│ Sushi │ 20 │ Japanese │\n│ Beef Stroganoff │ 18 │ Russian │\n│ Paella │ 25 │ Spanish │\n└─────────────────┴────────┴─────────────┘\n```\n\n### Table Formats\nTable 'food' has the following columns: \n- f_id (int)\n- f_name (text)\n- f_cost (int)\n- f_type (int).\n\nTable 'ratings' has the following columns: \n- f_id (int)\n- f_rating (text).",
+          "problemStatement": "Let us find out more details about highly rated dishes.\n\n### Task\nWrite a query to do the following. Try and use the concept of sub-queries.\n- You need to output details of the dish - 'f_name', 'f_cost' and 'f_type' ONLY if the following condition is satisfied\n- Average rating of the dish is greater than or equal to 4\n```sql\nExpected output\n┌─────────────────┬────────┬─────────────┐\n│ f_name │ f_cost │ f_type │\n├─────────────────┼────────┼─────────────┤\n│ Pizza │ 10 │ Continental │\n│ Fried Rice │ 12 │ Chinese │\n│ Pad Thai │ 14 │ Thai │\n│ Sushi │ 20 │ Japanese │\n│ Beef Stroganoff │ 18 │ Russian │\n│ Paella │ 25 │ Spanish │\n└─────────────────┴────────┴─────────────┘\n```\n\n### Table Formats\nTable 'food' has the following columns: \n- f_id (int)\n- f_name (text)\n- f_cost (int)\n- f_type (int).\n\nTable 'ratings' has the following columns: \n- f_id (int)\n- f_rating (text).",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "sql-intermediate.json",
+      "_moduleTitle": "Subqueries"
+    },
+    {
+      "topicId": "t04-project",
+      "title": "Project",
+      "description": "Study concepts and solve targeted engineering problems for Project.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 20,
+      "pages": [
+        {
+          "pageId": "p-GSQ73C",
+          "title": "Project - Correlated and non-correlated subqueries",
+          "content": "Choose the correct option from the statement regarding Corelated and Non Corelated subqueries.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Project - Correlated and non-correlated subqueries in Project is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "-- Write your SQL query here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-GSQ73C",
+            "question": "In Project, what is the key consideration regarding Project - Correlated and non-correlated subqueries?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Advanced SQL",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Learn Advanced SQL, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-GSQ73C-sql",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Project - Correlated and non-correlated subqueries (SQL)",
+          "code": "-- Write your SQL query here\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "GSQ73",
+          "questionId": "GSQ73",
+          "title": "Project - ABC ecommerce website",
+          "difficulty": "Easy",
+          "description": "Imagine you are hired as a Database analyst of ABC e-commerce website. \\\nYour task is to assist the HR / admin staff with the required data. \\\nLets have a look at the employee's table.\n\n### Task\nWrite a query to output the table 'employee' limited to 5 rows.\n```sql\nExpected output\n┌────────┬───────────────┬─────────┬─────────────────┐\n│ emp_id │ emp_name │ emp_age │ emp_dept │\n├────────┼───────────────┼─────────┼─────────────────┤\n│ 1 │ John Doe │ 28 │ Sales │\n│ 2 │ Jane Smith │ 35 │ Marketing │\n│ 3 │ Bob Johnson │ 42 │ Engineering │\n│ 4 │ Mary Williams │ 31 │ Human Resources │\n│ 5 │ Tom Brown │ 26 │ IT │\n└────────┴───────────────┴─────────┴─────────────────┘\n```",
+          "problemStatement": "Imagine you are hired as a Database analyst of ABC e-commerce website. \\\nYour task is to assist the HR / admin staff with the required data. \\\nLets have a look at the employee's table.\n\n### Task\nWrite a query to output the table 'employee' limited to 5 rows.\n```sql\nExpected output\n┌────────┬───────────────┬─────────┬─────────────────┐\n│ emp_id │ emp_name │ emp_age │ emp_dept │\n├────────┼───────────────┼─────────┼─────────────────┤\n│ 1 │ John Doe │ 28 │ Sales │\n│ 2 │ Jane Smith │ 35 │ Marketing │\n│ 3 │ Bob Johnson │ 42 │ Engineering │\n│ 4 │ Mary Williams │ 31 │ Human Resources │\n│ 5 │ Tom Brown │ 26 │ IT │\n└────────┴───────────────┴─────────┴─────────────────┘\n```",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "GSQ73A",
+          "questionId": "GSQ73A",
+          "title": "Project - Rearrange this query",
+          "difficulty": "Easy",
+          "description": "Rearrange the query to output the names of the employees whose salary is more than 150000. \n\nYour table 'employee' has the following fields:\n - emp_id INT PRIMARY KEY,\n - emp_name VARCHAR(255) NOT NULL,\n - emp_age INT,\n - emp_dept VARCHAR(255)\n\nYour table 'salary' has the following fields:\n - emp_id INT\n - salary_amt INT",
+          "problemStatement": "Rearrange the query to output the names of the employees whose salary is more than 150000. \n\nYour table 'employee' has the following fields:\n - emp_id INT PRIMARY KEY,\n - emp_name VARCHAR(255) NOT NULL,\n - emp_age INT,\n - emp_dept VARCHAR(255)\n\nYour table 'salary' has the following fields:\n - emp_id INT\n - salary_amt INT",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "GSQ73B",
+          "questionId": "GSQ73B",
+          "title": "Project - Subquery with Aggregate function",
+          "difficulty": "Easy",
+          "description": "Write a query to do the following\n- Output the name of employees from the table 'Employee' who meet the following condition\n- Employee age is less than the average age of the employees of the department 'Sales'. \n```sql\nExpected output\n┌──────────────┐\n│ emp_name │\n├──────────────┤\n│ John Doe │\n│ Tom Brown │\n│ Emily Chen │\n│ Peter Nguyen │\n│ Alex Lee │\n└──────────────┘\n```\n\nYour table 'Employee' has the following fields:\n - emp_id INT PRIMARY KEY,\n - emp_name VARCHAR(255) NOT NULL,\n - emp_age INT,\n - emp_dept VARCHAR(255)",
+          "problemStatement": "Write a query to do the following\n- Output the name of employees from the table 'Employee' who meet the following condition\n- Employee age is less than the average age of the employees of the department 'Sales'. \n```sql\nExpected output\n┌──────────────┐\n│ emp_name │\n├──────────────┤\n│ John Doe │\n│ Tom Brown │\n│ Emily Chen │\n│ Peter Nguyen │\n│ Alex Lee │\n└──────────────┘\n```\n\nYour table 'Employee' has the following fields:\n - emp_id INT PRIMARY KEY,\n - emp_name VARCHAR(255) NOT NULL,\n - emp_age INT,\n - emp_dept VARCHAR(255)",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "sql-intermediate.json",
+      "_moduleTitle": "Subqueries"
+    }
+  ]
+}

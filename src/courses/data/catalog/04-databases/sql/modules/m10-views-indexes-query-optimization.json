@@ -1,0 +1,827 @@
+{
+  "moduleId": "m10-views-indexes-query-optimization",
+  "title": "Views, Indexes & Query Optimization",
+  "description": "Creating and managing Views, clustered vs non-clustered B-Tree indexes, EXPLAIN query plans, and query performance tuning.",
+  "estimatedHours": 4.5,
+  "topics": [
+    {
+      "topicId": "t01-indexes-explain-query-plan",
+      "title": "Indexes & EXPLAIN QUERY PLAN",
+      "description": "Understand indexing strategy and inspect SQLite query plans.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 45,
+      "lessonMarkdown": "## Indexes and query plans\n\nCreate a small index and inspect the planner.\n\n```sql\nCREATE INDEX idx_products_category ON products(category);\nEXPLAIN QUERY PLAN\nSELECT * FROM products WHERE category = 'Electronics';\n```\n\nThe goal is not to memorize planner wording. Learn to ask: “What access path is the database using, and why?”",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "## Indexes and query plans\n\nCreate a small index and inspect the planner.\n\n```sql\nCREATE INDEX idx_products_category ON products(category);\nEXPLAIN QUERY PLAN\nSELECT * FROM products WHERE category = 'Electronics';\n```\n\nThe goal is not to memorize planner wording. Learn to ask: “What access path is the database using, and why?”"
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE products (product_id INTEGER PRIMARY KEY, product_name TEXT, category TEXT, price REAL);",
+        "seedSql": "INSERT INTO products VALUES (1,'Laptop','Electronics',900),(2,'Phone','Electronics',600),(3,'Desk','Furniture',250),(4,'Chair','Furniture',120),(5,'Headphones','Electronics',80),(6,'Monitor','Electronics',300);",
+        "defaultTable": "products",
+        "defaultQuery": "SELECT * FROM products ORDER BY product_id;",
+        "tasks": [
+          {
+            "taskId": "sql-m10-idx-1",
+            "instruction": "Create an index on product category.",
+            "expectedQuery": "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);",
+            "solution": "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Index"
+            ],
+            "hint": "What object should you create?",
+            "commonMistake": "Do not recreate an existing index in the same exercise.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "index",
+                  "idx_products_category"
+                ],
+                [
+                  "table",
+                  "products"
+                ]
+              ]
+            }
+          },
+          {
+            "taskId": "sql-m10-idx-2",
+            "instruction": "Create an index on product price.",
+            "expectedQuery": "CREATE INDEX idx_products_price ON products(price);",
+            "solution": "CREATE INDEX idx_products_price ON products(price);",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Index"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "index",
+                  "idx_products_price"
+                ],
+                [
+                  "table",
+                  "products"
+                ]
+              ]
+            }
+          },
+          {
+            "taskId": "sql-m10-idx-3",
+            "instruction": "Inspect the query plan for a category filter after creating the category index.",
+            "expectedQuery": "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category); EXPLAIN QUERY PLAN SELECT * FROM products WHERE category = 'Electronics';",
+            "solution": "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category); EXPLAIN QUERY PLAN SELECT * FROM products WHERE category = 'Electronics';",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Index",
+              "EXPLAIN QUERY PLAN"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "index",
+                  "idx_products_category"
+                ],
+                [
+                  "table",
+                  "products"
+                ]
+              ]
+            }
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m10-idx-ch1",
+            "instruction": "Create a composite index on category and price.",
+            "expectedQuery": "CREATE INDEX idx_products_category_price ON products(category, price);",
+            "solution": "CREATE INDEX idx_products_category_price ON products(category, price);",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Composite index"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "index",
+                  "idx_products_category_price"
+                ],
+                [
+                  "table",
+                  "products"
+                ]
+              ]
+            }
+          },
+          {
+            "taskId": "sql-m10-idx-ch2",
+            "instruction": "Create an index designed for queries filtering by category and ordering by price.",
+            "expectedQuery": "CREATE INDEX idx_products_category_price2 ON products(category, price);",
+            "solution": "CREATE INDEX idx_products_category_price2 ON products(category, price);",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Composite index"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "index",
+                  "idx_products_category_price2"
+                ],
+                [
+                  "table",
+                  "products"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Understand what an index does",
+        "Create simple and composite indexes",
+        "Read basic query-plan output"
+      ],
+      "commonMistakes": [
+        "Indexing every column",
+        "Ignoring write/storage cost",
+        "Assuming an index guarantees a particular plan"
+      ],
+      "cheatSheet": [
+        "CREATE INDEX idx ON table(column);",
+        "EXPLAIN QUERY PLAN SELECT ..."
+      ],
+      "reflectionQuestions": [
+        "Why would an index help?",
+        "What does the planner actually decide?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m10-idx-ex1",
+          "title": "Create an index",
+          "task": "Index a frequently filtered column.",
+          "query": "CREATE INDEX idx_products_category ON products(category);",
+          "result": {
+            "objects": [
+              [
+                "index",
+                "idx_products_category"
+              ],
+              [
+                "table",
+                "products"
+              ]
+            ]
+          },
+          "explanation": "Indexes add lookup structures.",
+          "walkthrough": [
+            "Choose column.",
+            "Create index.",
+            "Inspect schema."
+          ]
+        },
+        {
+          "exampleId": "sql-m10-idx-ex2",
+          "title": "Inspect a plan",
+          "task": "Use EXPLAIN QUERY PLAN before optimizing.",
+          "query": "EXPLAIN QUERY PLAN SELECT * FROM products WHERE category='Electronics';",
+          "result": {
+            "columns": [
+              "id",
+              "parent",
+              "notused",
+              "detail"
+            ],
+            "rows": [
+              [
+                2,
+                0,
+                0,
+                "SCAN products"
+              ]
+            ],
+            "rowCount": 1
+          },
+          "explanation": "The planner output is evidence about the access strategy.",
+          "walkthrough": [
+            "Write real query.",
+            "Ask for plan.",
+            "Read plan."
+          ]
+        },
+        {
+          "exampleId": "sql-m10-idx-ex3",
+          "title": "Composite index",
+          "task": "Index a multi-column access pattern.",
+          "query": "CREATE INDEX idx_products_category_price ON products(category, price);",
+          "result": {
+            "objects": [
+              [
+                "index",
+                "idx_products_category_price"
+              ],
+              [
+                "table",
+                "products"
+              ]
+            ]
+          },
+          "explanation": "Composite indexes can support combined predicates and ordering patterns.",
+          "walkthrough": [
+            "Choose column order.",
+            "Create index.",
+            "Check schema."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Compare indexed and non-indexed access patterns on a reporting table.",
+      "pages": [
+        {
+          "pageId": "sql-m10-t1-p1",
+          "title": "Understand the idea",
+          "content": "Indexes are data structures that can help a database find rows more efficiently. They are not magic: indexes add storage and write overhead, and the optimizer decides whether an index is useful.\n\nSQLite's `EXPLAIN QUERY PLAN` can help you inspect whether a query is scanning or using an index.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "CREATE INDEX defines an index object."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT * FROM products ORDER BY product_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t1-p1",
+            "question": "Which statement creates an index?",
+            "options": [
+              "CREATE INDEX",
+              "CREATE KEY",
+              "ADD INDEX TO",
+              "INDEX TABLE"
+            ],
+            "correctAnswer": 0,
+            "explanation": "CREATE INDEX defines an index object."
+          }
+        },
+        {
+          "pageId": "sql-m10-t1-p2",
+          "title": "Worked reasoning",
+          "content": "Choose the column that is frequently filtered or joined.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "CREATE INDEX defines an index object."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "CREATE INDEX idx_products_category ON products(category); EXPLAIN QUERY PLAN SELECT * FROM products WHERE category = 'Electronics';"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t1-p2",
+            "question": "What should you inspect with EXPLAIN QUERY PLAN?",
+            "options": [
+              "How SQLite plans to access data",
+              "The exact final rows only",
+              "The database password",
+              "Table formatting"
+            ],
+            "correctAnswer": 0,
+            "explanation": "CREATE INDEX defines an index object."
+          }
+        },
+        {
+          "pageId": "sql-m10-t1-p3",
+          "title": "Predict before you run",
+          "content": "The plan describes access strategies such as scans and index searches.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "CREATE INDEX defines an index object."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "What is a trade-off of indexes?"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t1-p3",
+            "question": [
+              "They can increase write/storage cost",
+              "They always slow reads",
+              "They remove constraints",
+              "They replace tables"
+            ],
+            "options": 0,
+            "correctAnswer": "Indexes consume resources and must be chosen intentionally.",
+            "explanation": "CREATE INDEX defines an index object."
+          }
+        },
+        {
+          "pageId": "sql-m10-t1-p4",
+          "title": "Debugging checklist",
+          "content": "Avoid teaching “add an index to every column”; indexing strategy depends on workload.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "CREATE INDEX defines an index object."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "CREATE INDEX name ON table(column);\nEXPLAIN QUERY PLAN SELECT ..."
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t1-p4",
+            "question": [
+              "Which filter is frequent?",
+              "What is the cost of extra indexes?"
+            ],
+            "options": "Think of an index as a lookup structure, not as a universal performance switch.",
+            "correctAnswer": "## Indexes and query plans\n\nCreate a small index and inspect the planner.\n\n```sql\nCREATE INDEX idx_products_category ON products(category);\nEXPLAIN QUERY PLAN\nSELECT * FROM products WHERE category = 'Electronics';\n```\n\nThe goal is not to memorize planner wording. Learn to ask: “What access path is the database using, and why?”",
+            "explanation": "CREATE INDEX defines an index object."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m10-idx-ex1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Create an index",
+          "code": "CREATE INDEX idx_products_category ON products(category);"
+        },
+        {
+          "exampleId": "sql-m10-idx-ex2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Inspect a plan",
+          "code": "EXPLAIN QUERY PLAN SELECT * FROM products WHERE category='Electronics';"
+        },
+        {
+          "exampleId": "sql-m10-idx-ex3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Composite index",
+          "code": "CREATE INDEX idx_products_category_price ON products(category, price);"
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Debug",
+        "Submit",
+        "Reflect"
+      ],
+      "scenario": "Performance lab",
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 10: SQL Engineering, Reliability & Projects",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t02-views-triggers",
+      "title": "Views & Triggers",
+      "description": "Learn reusable query interfaces and controlled database event automation.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 45,
+      "lessonMarkdown": "## Views and triggers\n\nA reporting view can hide repetitive joins:\n\n```sql\nCREATE VIEW customer_totals AS\nSELECT c.customer_name, COALESCE(SUM(o.amount),0) AS total_spend\nFROM customers c\nLEFT JOIN orders o ON c.customer_id=o.customer_id\nGROUP BY c.customer_id, c.customer_name;\n```\n\nTriggers can automate side effects such as audit logging. Use them deliberately because hidden side effects make debugging harder.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "## Views and triggers\n\nA reporting view can hide repetitive joins:\n\n```sql\nCREATE VIEW customer_totals AS\nSELECT c.customer_name, COALESCE(SUM(o.amount),0) AS total_spend\nFROM customers c\nLEFT JOIN orders o ON c.customer_id=o.customer_id\nGROUP BY c.customer_id, c.customer_name;\n```\n\nTriggers can automate side effects such as audit logging. Use them deliberately because hidden side effects make debugging harder."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE customers (customer_id INTEGER PRIMARY KEY, customer_name TEXT);\nCREATE TABLE orders (order_id INTEGER PRIMARY KEY, customer_id INTEGER, amount REAL);",
+        "seedSql": "INSERT INTO customers VALUES (1,'Asha'),(2,'Ben'),(3,'Cara');\nINSERT INTO orders VALUES (101,1,500),(102,1,700),(103,3,250);",
+        "defaultTable": "customers",
+        "defaultQuery": "SELECT * FROM customers ORDER BY customer_id;",
+        "tasks": [
+          {
+            "taskId": "sql-m10-view-1",
+            "instruction": "Create a view showing each customer and total order value.",
+            "expectedQuery": "CREATE VIEW customer_totals AS SELECT c.customer_id, c.customer_name, COALESCE(SUM(o.amount),0) AS total_spend FROM customers c LEFT JOIN orders o ON c.customer_id=o.customer_id GROUP BY c.customer_id,c.customer_name;",
+            "solution": "CREATE VIEW customer_totals AS SELECT c.customer_id, c.customer_name, COALESCE(SUM(o.amount),0) AS total_spend FROM customers c LEFT JOIN orders o ON c.customer_id=o.customer_id GROUP BY c.customer_id,c.customer_name;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "View"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "table",
+                  "customers"
+                ],
+                [
+                  "table",
+                  "orders"
+                ],
+                [
+                  "view",
+                  "customer_totals"
+                ]
+              ]
+            }
+          },
+          {
+            "taskId": "sql-m10-view-2",
+            "instruction": "Create an audit table and a trigger that records new orders.",
+            "expectedQuery": "CREATE TABLE order_audit(order_id INTEGER, recorded_customer INTEGER); CREATE TRIGGER log_order AFTER INSERT ON orders BEGIN INSERT INTO order_audit VALUES (NEW.order_id, NEW.customer_id); END;",
+            "solution": "CREATE TABLE order_audit(order_id INTEGER, recorded_customer INTEGER); CREATE TRIGGER log_order AFTER INSERT ON orders BEGIN INSERT INTO order_audit VALUES (NEW.order_id, NEW.customer_id); END;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Trigger"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "table",
+                  "customers"
+                ],
+                [
+                  "table",
+                  "order_audit"
+                ],
+                [
+                  "table",
+                  "orders"
+                ],
+                [
+                  "trigger",
+                  "log_order"
+                ]
+              ]
+            }
+          },
+          {
+            "taskId": "sql-m10-view-3",
+            "instruction": "Create a view containing only orders above 500.",
+            "expectedQuery": "CREATE VIEW large_orders AS SELECT order_id, customer_id, amount FROM orders WHERE amount > 500;",
+            "solution": "CREATE VIEW large_orders AS SELECT order_id, customer_id, amount FROM orders WHERE amount > 500;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "View"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "table",
+                  "customers"
+                ],
+                [
+                  "table",
+                  "orders"
+                ],
+                [
+                  "view",
+                  "large_orders"
+                ]
+              ]
+            }
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m10-view-ch1",
+            "instruction": "Create a trigger that logs deletions from orders into order_audit.",
+            "expectedQuery": "CREATE TABLE order_audit(order_id INTEGER, recorded_customer INTEGER); CREATE TRIGGER log_order_delete AFTER DELETE ON orders BEGIN INSERT INTO order_audit VALUES (OLD.order_id, OLD.customer_id); END;",
+            "solution": "CREATE TABLE order_audit(order_id INTEGER, recorded_customer INTEGER); CREATE TRIGGER log_order_delete AFTER DELETE ON orders BEGIN INSERT INTO order_audit VALUES (OLD.order_id, OLD.customer_id); END;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Trigger"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "table",
+                  "customers"
+                ],
+                [
+                  "table",
+                  "order_audit"
+                ],
+                [
+                  "table",
+                  "orders"
+                ],
+                [
+                  "trigger",
+                  "log_order_delete"
+                ]
+              ]
+            }
+          },
+          {
+            "taskId": "sql-m10-view-ch2",
+            "instruction": "Create a reusable view for customers whose total spending exceeds 600.",
+            "expectedQuery": "CREATE VIEW high_value_customers AS SELECT c.customer_id, c.customer_name, SUM(o.amount) AS total_spend FROM customers c JOIN orders o ON c.customer_id=o.customer_id GROUP BY c.customer_id,c.customer_name HAVING SUM(o.amount) > 600;",
+            "solution": "CREATE VIEW high_value_customers AS SELECT c.customer_id, c.customer_name, SUM(o.amount) AS total_spend FROM customers c JOIN orders o ON c.customer_id=o.customer_id GROUP BY c.customer_id,c.customer_name HAVING SUM(o.amount) > 600;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "View",
+              "HAVING"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "SCHEMA_STATE",
+            "expectedPreview": {
+              "objects": [
+                [
+                  "table",
+                  "customers"
+                ],
+                [
+                  "table",
+                  "orders"
+                ],
+                [
+                  "view",
+                  "high_value_customers"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Create reusable views",
+        "Understand NEW/OLD trigger rows",
+        "Recognize trigger side effects"
+      ],
+      "commonMistakes": [
+        "Treating a view as a copied table",
+        "Hidden trigger side effects",
+        "Portability assumptions"
+      ],
+      "cheatSheet": [
+        "CREATE VIEW name AS SELECT ...",
+        "CREATE TRIGGER ... AFTER INSERT/UPDATE/DELETE ..."
+      ],
+      "reflectionQuestions": [
+        "When is a view useful?",
+        "When is a trigger risky?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m10-view-ex1",
+          "title": "Reporting view",
+          "task": "Encapsulate a repeatable aggregate.",
+          "query": "CREATE VIEW customer_totals AS SELECT c.customer_id, c.customer_name, COALESCE(SUM(o.amount),0) AS total_spend FROM customers c LEFT JOIN orders o ON c.customer_id=o.customer_id GROUP BY c.customer_id,c.customer_name;",
+          "result": {
+            "objects": [
+              [
+                "table",
+                "customers"
+              ],
+              [
+                "table",
+                "orders"
+              ],
+              [
+                "view",
+                "customer_totals"
+              ]
+            ]
+          },
+          "explanation": "A view is a reusable query interface.",
+          "walkthrough": [
+            "Define query.",
+            "Name view.",
+            "Inspect schema."
+          ]
+        },
+        {
+          "exampleId": "sql-m10-view-ex2",
+          "title": "Audit trigger",
+          "task": "Create a trigger that captures inserted rows.",
+          "query": "CREATE TABLE order_audit(order_id INTEGER, recorded_customer INTEGER); CREATE TRIGGER log_order AFTER INSERT ON orders BEGIN INSERT INTO order_audit VALUES (NEW.order_id, NEW.customer_id); END;",
+          "result": {
+            "objects": [
+              [
+                "table",
+                "customers"
+              ],
+              [
+                "table",
+                "order_audit"
+              ],
+              [
+                "table",
+                "orders"
+              ],
+              [
+                "trigger",
+                "log_order"
+              ]
+            ]
+          },
+          "explanation": "Trigger bodies can use NEW/OLD pseudo-rows.",
+          "walkthrough": [
+            "Create audit table.",
+            "Create trigger.",
+            "Understand event timing."
+          ]
+        },
+        {
+          "exampleId": "sql-m10-view-ex3",
+          "title": "Filtered view",
+          "task": "Create a stable subset for reporting.",
+          "query": "CREATE VIEW large_orders AS SELECT order_id, customer_id, amount FROM orders WHERE amount > 500;",
+          "result": {
+            "objects": [
+              [
+                "table",
+                "customers"
+              ],
+              [
+                "table",
+                "orders"
+              ],
+              [
+                "view",
+                "large_orders"
+              ]
+            ]
+          },
+          "explanation": "Views can simplify common filters.",
+          "walkthrough": [
+            "Choose columns.",
+            "Add filter.",
+            "Persist query definition."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Design a reporting view plus audit trigger for an order system.",
+      "pages": [
+        {
+          "pageId": "sql-m10-t2-p1",
+          "title": "Understand the idea",
+          "content": "A view is a named query stored in the database schema. It can present a stable reporting interface without copying the underlying rows. Triggers are stored programs that run automatically when specified INSERT, UPDATE, or DELETE events occur.\n\nSQLite supports both views and triggers.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "CREATE VIEW stores a named SELECT definition."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT * FROM customers ORDER BY customer_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t2-p1",
+            "question": "Which statement creates a view?",
+            "options": [
+              "CREATE VIEW",
+              "SAVE VIEW",
+              "CREATE QUERY",
+              "CREATE REPORT"
+            ],
+            "correctAnswer": 0,
+            "explanation": "CREATE VIEW stores a named SELECT definition."
+          }
+        },
+        {
+          "pageId": "sql-m10-t2-p2",
+          "title": "Worked reasoning",
+          "content": "A view normally exposes query results, not a separate copy of the data.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "CREATE VIEW stores a named SELECT definition."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "CREATE VIEW customer_totals AS SELECT c.customer_name, COALESCE(SUM(o.amount),0) AS total_spend FROM customers c LEFT JOIN orders o ON c.customer_id=o.customer_id GROUP BY c.customer_id,c.customer_name; SELECT * FROM customer_totals ORDER BY customer_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t2-p2",
+            "question": "What event can fire an AFTER INSERT trigger?",
+            "options": [
+              "An insert operation",
+              "A SELECT only",
+              "A database restart",
+              "A comment"
+            ],
+            "correctAnswer": 0,
+            "explanation": "CREATE VIEW stores a named SELECT definition."
+          }
+        },
+        {
+          "pageId": "sql-m10-t2-p3",
+          "title": "Predict before you run",
+          "content": "Triggers execute on defined table events.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "CREATE VIEW stores a named SELECT definition."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "Why can a view simplify application queries?"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t2-p3",
+            "question": [
+              "It provides a reusable query interface",
+              "It removes tables",
+              "It disables constraints",
+              "It stores SQL passwords"
+            ],
+            "options": 0,
+            "correctAnswer": "Views can encapsulate joins and calculations.",
+            "explanation": "CREATE VIEW stores a named SELECT definition."
+          }
+        },
+        {
+          "pageId": "sql-m10-t2-p4",
+          "title": "Debugging checklist",
+          "content": "Do not assume every DBMS handles updatable views or trigger syntax identically.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "CREATE VIEW stores a named SELECT definition."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "CREATE VIEW name AS SELECT ...\nCREATE TRIGGER name AFTER INSERT ON table BEGIN ... END;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m10-t2-p4",
+            "question": [
+              "Where would a view help?",
+              "What event should a trigger respond to?"
+            ],
+            "options": "Use views for reusable read models and triggers only when database-level event logic is appropriate.",
+            "correctAnswer": "## Views and triggers\n\nA reporting view can hide repetitive joins:\n\n```sql\nCREATE VIEW customer_totals AS\nSELECT c.customer_name, COALESCE(SUM(o.amount),0) AS total_spend\nFROM customers c\nLEFT JOIN orders o ON c.customer_id=o.customer_id\nGROUP BY c.customer_id, c.customer_name;\n```\n\nTriggers can automate side effects such as audit logging. Use them deliberately because hidden side effects make debugging harder.",
+            "explanation": "CREATE VIEW stores a named SELECT definition."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m10-view-ex1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Reporting view",
+          "code": "CREATE VIEW customer_totals AS SELECT c.customer_id, c.customer_name, COALESCE(SUM(o.amount),0) AS total_spend FROM customers c LEFT JOIN orders o ON c.customer_id=o.customer_id GROUP BY c.customer_id,c.customer_name;"
+        },
+        {
+          "exampleId": "sql-m10-view-ex2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Audit trigger",
+          "code": "CREATE TABLE order_audit(order_id INTEGER, recorded_customer INTEGER); CREATE TRIGGER log_order AFTER INSERT ON orders BEGIN INSERT INTO order_audit VALUES (NEW.order_id, NEW.customer_id); END;"
+        },
+        {
+          "exampleId": "sql-m10-view-ex3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Filtered view",
+          "code": "CREATE VIEW large_orders AS SELECT order_id, customer_id, amount FROM orders WHERE amount > 500;"
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Debug",
+        "Submit",
+        "Reflect"
+      ],
+      "scenario": "Database automation",
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 10: SQL Engineering, Reliability & Projects",
+      "practiceProblems": []
+    }
+  ]
+}

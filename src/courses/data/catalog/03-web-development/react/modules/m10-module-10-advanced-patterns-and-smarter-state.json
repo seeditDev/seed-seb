@@ -1,0 +1,68 @@
+{
+  "moduleId": "m10-module-10-advanced-patterns-and-smarter-state",
+  "title": "Module 10: Advanced Patterns and Smarter State",
+  "description": "Core concepts and hands-on practice in Module 10: Advanced Patterns and Smarter State.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-10-1-predictable-state-with-usereducer",
+      "title": "10.1 Predictable State with useReducer",
+      "description": "Consolidate complex state transitions using the reducer pattern.",
+      "mode": "REACT_INTERACTIVE",
+      "readingTimeMinutes": 15,
+      "lessonMarkdown": "# 10.1 Predictable State with useReducer\n\n## Why `useReducer`?\n\n`useState` is excellent for simple state.\n\nAs state logic grows, you may find yourself with many related updates:\n\n```text\nADD_ITEM\nREMOVE_ITEM\nINCREASE_QTY\nDECREASE_QTY\nCLEAR_CART\nAPPLY_COUPON\n```\n\nInstead of spreading the rules across many event handlers, `useReducer` lets you centralize state transitions in one reducer function.\n\n---\n\n## 1. The basic shape\n\n```jsx\nconst [state, dispatch] = useReducer(\n  reducer,\n  initialState\n);\n```\n\nThink:\n\n```text\nstate\n  ↓\ndispatch(action)\n  ↓\nreducer(state, action)\n  ↓\nnew state\n  ↓\nReact renders\n```\n\n---\n\n## 2. A reducer is a normal function\n\n```javascript\nfunction reducer(state, action) {\n  switch (action.type) {\n    case \"INC\":\n      return {\n        ...state,\n        quantity: state.quantity + 1\n      };\n\n    case \"DEC\":\n      return {\n        ...state,\n        quantity: Math.max(1, state.quantity - 1)\n      };\n\n    default:\n      return state;\n  }\n}\n```\n\nIt receives:\n\n```text\ncurrent state\naction\n```\n\nand returns:\n\n```text\nnext state\n```\n\n---\n\n## 3. An action is a description of what happened\n\n```javascript\ndispatch({\n  type: \"INC\"\n});\n```\n\nThe action says:\n\n> increase quantity\n\nAnother action:\n\n```javascript\ndispatch({\n  type: \"DEC\"\n});\n```\n\nThe reducer decides how that action changes the state.\n\n---\n\n## 4. Why this can be easier to reason about\n\nWithout a reducer:\n\n```jsx\nonClick={() => {\n  setQuantity(previous => previous + 1);\n  setSubtotal(...);\n  setMessage(...);\n}}\n```\n\nWith a reducer:\n\n```jsx\nonClick={() => {\n  dispatch({ type: \"INC\" });\n}}\n```\n\nThe transition rules are centralized.\n\n---\n\n## 5. Keep reducers pure\n\nA reducer should not:\n\n- fetch from a server\n- modify the DOM\n- write to localStorage\n- call `setState`\n- mutate the existing state object\n\nGood reducer:\n\n```javascript\nfunction reducer(state, action) {\n  if (action.type === \"INC\") {\n    return {\n      ...state,\n      quantity: state.quantity + 1\n    };\n  }\n\n  return state;\n}\n```\n\n---\n\n## 6. Payloads\n\nActions can carry data.\n\n```javascript\ndispatch({\n  type: \"SET_QUANTITY\",\n  value: 5\n});\n```\n\nReducer:\n\n```javascript\ncase \"SET_QUANTITY\":\n  return {\n    ...state,\n    quantity: value\n  };\n```\n\nOr:\n\n```javascript\ndispatch({\n  type: \"ADD_ITEM\",\n  product: {\n    id: 1,\n    name: \"Keyboard\"\n  }\n});\n```\n\nThe property is often called `payload`, but that is a convention, not a React requirement.\n\n---\n\n## 7. Initial state\n\nKeep an explicit initial object:\n\n```javascript\nconst initialState = {\n  quantity: 1,\n  message: \"Ready\"\n};\n```\n\nThen:\n\n```jsx\nconst [state, dispatch] = useReducer(\n  cartReducer,\n  initialState\n);\n```\n\n---\n\n## 8. Reducer with minimum value\n\n```javascript\ncase \"DEC\":\n  return {\n    ...state,\n    quantity: Math.max(1, state.quantity - 1)\n  };\n```\n\nThis teaches an important business rule:\n\n```text\nquantity cannot go below 1\n```\n\nThe UI does not have to remember that rule in every button.\n\n---\n\n## 9. `useReducer` vs `useState`\n\nUse `useState` when:\n\n- state is small\n- updates are simple\n- a component has a few independent values\n\nConsider `useReducer` when:\n\n- many transitions exist\n- several values change together\n- action-based updates make the domain clearer\n- update logic is easier to test separately\n\nThere is no need to replace every `useState` with a reducer.\n\n---\n\n## Complete example\n\n```jsx\nimport { useReducer } from \"react\";\n\nconst initialState = {\n  quantity: 1\n};\n\nfunction cartReducer(state, action) {\n  switch (action.type) {\n    case \"INC\":\n      return {\n        ...state,\n        quantity: state.quantity + 1\n      };\n\n    case \"DEC\":\n      return {\n        ...state,\n        quantity: Math.max(1, state.quantity - 1)\n      };\n\n    default:\n      return state;\n  }\n}\n\nexport default function App() {\n  const [state, dispatch] = useReducer(\n    cartReducer,\n    initialState\n  );\n\n  return (\n    <div>\n      <p>Quantity: {state.quantity}</p>\n\n      <button\n        onClick={() => dispatch({ type: \"DEC\" })}\n      >\n        -1\n      </button>\n\n      <button\n        onClick={() => dispatch({ type: \"INC\" })}\n      >\n        +1\n      </button>\n    </div>\n  );\n}\n```\n\n---\n\n## Advanced preview: reducer + context\n\nFor larger applications, a reducer can be combined with context:\n\n```text\nContext\n ├── current state\n └── dispatch\n       ↓\nchild components\n```\n\nThis can reduce prop drilling for application-wide state, but it should be introduced only when sharing the state is actually needed.\n\n---\n\n## Common mistakes\n\n- Returning `state.quantity + 1` instead of an object with the expected state shape.\n- Mutating `state.quantity` directly.\n- Forgetting a `default` case.\n- Putting side effects inside the reducer.\n- Creating reducers for state that is simpler as `useState`.\n\nFurther reading:\n- React: Extracting State Logic into a Reducer — https://react.dev/learn/extracting-state-logic-into-a-reducer\n- W3Schools: React useReducer — https://www.w3schools.com/react/react_usereducer.asp\n- GeeksforGeeks: State Management in React — https://www.geeksforgeeks.org/reactjs/state-management-in-react-hooks-context-api-and-redux/",
+      "reactExercise": {
+        "title": "Exercise: Reducer-Driven Cart Counter",
+        "category": "Advanced State",
+        "difficulty": "Intermediate",
+        "description": "Dispatch INCREMENT and DECREMENT actions to a pure reducer.",
+        "defaultCode": "import React, { useReducer } from 'react';\n\nconst initialState = { quantity: 1 };\n\nfunction cartReducer(state, action) {\n  switch (action.type) {\n    case 'INC':\n      // TODO 1: Return a new state object with quantity incremented by 1\n      return state; // Fix this return\n\n    case 'DEC':\n      // TODO 2: Return a new state object with quantity decremented (minimum 1)\n      return { ...state, quantity: Math.max(1, state.quantity - 1) };\n\n    default:\n      return state;\n  }\n}\n\nexport default function App() {\n  const [state, dispatch] = useReducer(cartReducer, initialState);\n\n  return (\n    <div style={{ padding: '24px', fontFamily: 'sans-serif' }}>\n      <h2>Order Quantity Selector</h2>\n      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>\n        <button \n          id=\"dec-btn\" \n          onClick={() => dispatch({ type: 'DEC' })}\n          style={{ padding: '6px 14px', borderRadius: '4px', cursor: 'pointer' }}\n        >\n          -1\n        </button>\n        <span id=\"qty-display\" style={{ fontSize: '20px', fontWeight: 'bold' }}>\n          {state.quantity}\n        </span>\n        <button \n          id=\"inc-btn\" \n          onClick={() => dispatch({ type: 'INC' })}\n          style={{ padding: '6px 14px', borderRadius: '4px', background: '#2563eb', color: '#fff', border: 'none', cursor: 'pointer' }}\n        >\n          +1\n        </button>\n      </div>\n    </div>\n  );\n}\n",
+        "tasks": [
+          {
+            "id": 1,
+            "instruction": "Quantity displays 1 initially in #qty-display.",
+            "domSelector": "#qty-display",
+            "expectedText": "1",
+            "failMessage": "Expected initial quantity of 1."
+          },
+          {
+            "id": 2,
+            "instruction": "Clicking #inc-btn dispatches INC and increments the quantity to 2.",
+            "domSelector": "#inc-btn",
+            "simulateAction": "click",
+            "afterActionSelector": "#qty-display",
+            "afterActionExpectedText": "2",
+            "failMessage": "Clicking #inc-btn should increment quantity to 2."
+          },
+          {
+            "id": 3,
+            "instruction": "Clicking #dec-btn reduces the quantity back to 1.",
+            "domSelector": "#dec-btn",
+            "simulateAction": "click",
+            "afterActionSelector": "#qty-display",
+            "afterActionExpectedText": "1",
+            "failMessage": "Clicking #dec-btn should decrement quantity back to 1."
+          },
+          {
+            "id": 4,
+            "instruction": "The reducer prevents quantity from going below 1.",
+            "testRegex": "Math\\.max\\s*\\(\\s*1",
+            "failMessage": "Expected the reducer to enforce a minimum quantity of 1."
+          },
+          {
+            "id": 5,
+            "instruction": "The reducer returns new state objects instead of mutating state.",
+            "testRegex": "\\.\\.\\.state",
+            "failMessage": "Expected immutable state updates using object spread."
+          }
+        ],
+        "solution": "import React, { useReducer } from 'react';\n\nconst initialState = { quantity: 1 };\n\nfunction cartReducer(state, action) {\n  switch (action.type) {\n    case 'INC':\n      return {\n        ...state,\n        quantity: state.quantity + 1\n      };\n\n    case 'DEC':\n      return {\n        ...state,\n        quantity: Math.max(1, state.quantity - 1)\n      };\n\n    default:\n      return state;\n  }\n}\n\nexport default function App() {\n  const [state, dispatch] = useReducer(cartReducer, initialState);\n\n  return (\n    <div style={{ padding: '24px', fontFamily: 'sans-serif' }}>\n      <h2>Order Quantity Selector</h2>\n\n      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>\n        <button id=\"dec-btn\" onClick={() => dispatch({ type: 'DEC' })}>\n          -1\n        </button>\n\n        <span id=\"qty-display\">{state.quantity}</span>\n\n        <button id=\"inc-btn\" onClick={() => dispatch({ type: 'INC' })}>\n          +1\n        </button>\n      </div>\n    </div>\n  );\n}\n"
+      },
+      "_sourceFile": "react-js.json",
+      "_moduleTitle": "Module 10: Advanced Patterns and Smarter State",
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": []
+    }
+  ]
+}

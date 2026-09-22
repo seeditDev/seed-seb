@@ -57,10 +57,23 @@ const DEFAULT_BASE_REVIEWS = [
 ];
 
 const BASELINE_ENROLLED_COUNTS = {
-  dsa_mastery_course: 1420,
-  python_mastery_course: 980,
+  'dsa-core': 1420,
+  'dsa_mastery_course': 1420,
+  'dsa-problem-solving': 1280,
+  cpp: 1350,
+  java: 1310,
+  python: 1250,
+  python_mastery_course: 1250,
+  c: 1100,
+  react: 1190,
+  sql: 980,
+  sql_database_systems_course: 980,
+  fullstack: 1150,
   web_dev_fullstack_course: 1150,
-  sql_database_systems_course: 890,
+  'operating-systems': 1040,
+  nodejs: 920,
+  'machine-learning': 960,
+  'system-design-fundamentals': 1260,
   system_design_mastery_course: 1260
 };
 
@@ -296,6 +309,8 @@ export const fetchLiveCoursesFromFirestore = async (fallbackList = []) => {
   fallbackList.forEach(c => {
     const id = c.courseId || c.id;
     if (id) fallbackMap[id] = c;
+    if (c.slug) fallbackMap[c.slug] = c;
+    if (c.folderName) fallbackMap[c.folderName] = c;
   });
 
   if (!navigator.onLine) {

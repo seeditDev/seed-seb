@@ -1,0 +1,670 @@
+{
+  "moduleId": "m02-core-django-fundamentals-views-and-urls",
+  "title": "Core Django fundamentals - Views and URLs",
+  "description": "Core concepts and hands-on practice in Core Django fundamentals - Views and URLs.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-views-url-routing",
+      "title": "Views & URL Routing",
+      "description": "Study concepts and solve targeted engineering problems for Views & URL Routing.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-IYPSWA01",
+          "title": "Function-Based Views in Django",
+          "content": "Function-Based Views are a fundamental concept in Django for handling HTTP requests and generating responses. They are Python functions that take a web request and return a web response. \n\nIn Django's project structure, views are typically defined in the `views.py` file within your app directory. \n\nHere's a basic explanation of how Function-Based Views work:\n1. Define a function: Create a Python function that takes at least one argument, usually named `request`. This argument contains information about the incoming HTTP request.\n2. Process the request: Inside the function, you can perform any necessary operations, such as retrieving data from a database, processing form submissions, or any other logic your view requires.\n3. Return a response: The function must return an HTTP response. This can be done using Django's `HttpResponse` class or by rendering a template.\n\nHere's a simple example of a Function-Based View:\n\n```python\nfrom django.http import HttpResponse\n\ndef hello_world(request):\n return HttpResponse(\"Hello, World!\")\n```\n\nThis view function takes a `request` and returns a simple HTTP response with the text \"Hello, World!\".\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django URL patterns dispatch requests to views. Static routes are explicit, while path converters such as `<int:id>` and `<slug:slug>` capture typed URL segments. The key implementation detail in **Function-Based Views in Django** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n path(\"blog/\", views.blog, name=\"blog\"),\n]"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-IYPSWA01",
+            "question": "Which statement best describes **Function-Based Views in Django** in the Django topic **Views & URL Routing**?",
+            "options": [
+              "Django URL patterns dispatch requests to views. Static routes are explicit, while path converters such as `<int:id>` and `<slug:slug>` capture typed URL segments.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Function-Based Views in Django within Views & URL Routing."
+          }
+        },
+        {
+          "pageId": "p-IYPSWA07",
+          "title": "Defining URL Patterns (Static routing) in Django",
+          "content": "This process allows you to map URLs to the appropriate view functions or classes, enabling your web application to respond to different user requests.\n\nURL patterns are typically defined in a file called `urls.py`. \nThis file is usually located in your project's main directory and in each of your app directories.\n\nTo define URL patterns, you'll use Django's `path()` function, which is imported from `django.urls`. The basic syntax for defining a URL pattern is:\n\n```python\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n path('example/', views.example_view, name='example'),\n]\n```\n\nLet's break down the components:\n\n1. 'example/': This is the URL pattern. It represents the part of the URL that comes after your domain name.\n2. views.example_view: `example_view` is the function that will be called when the URL is accessed.\n3. name='example': This is an optional name for the URL pattern, which can be useful for reverse URL lookups.\n\nAs we have seen in the practice problem previously, you can define multiple URL patterns in the `urlpatterns` list. \nEach `path()` function call represents a different URL route in your application.\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django URL patterns dispatch requests to views. Static routes are explicit, while path converters such as `<int:id>` and `<slug:slug>` capture typed URL segments. The key implementation detail in **Defining URL Patterns (Static routing) in Django** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n path(\"blog/\", views.blog, name=\"blog\"),\n]"
+          }
+        },
+        {
+          "pageId": "p-IYPSWA19",
+          "title": "URL Mapping using include() function",
+          "content": "In Django, as your project grows, you may find yourself with many URL patterns across different apps. \nThe `include()` function helps organize and manage these URLs efficiently.\n\nSuppose you had a project folder structure which looks like the following\n```python\nmyproject/\n├── manage.py\n├── myproject/ ← Main project folder\n│ ├── __init__.py\n│ ├── settings.py\n│ ├── urls.py ← Project-level URL configuration\n│ └── wsgi.py\n├── blog/ ← Blog app\n│ ├── views.py\n│ ├── urls.py ← Blog app's own URL config\n│ └── ...\n├── shop/ ← Shop app\n│ ├── views.py\n│ ├── urls.py ← Shop app's own URL config\n│ └── ...\n```\n#### Note: The app level URL files - `blog/urls.py` and `shop/urls.py` - have to be created by us while building the app.\n\nHere's how `include()` works:\n\n1. In your project's main urls.py file, you import the include function:\n```python\n from django.urls import path, include\n```\n\n2. Then, you can use include() to reference URL patterns from other apps:\n```python\n path('blog/', include('blog.urls')),\n path('shop/', include('shop.urls')),\n```\n\n3. In your app's **urls.py** file ***(e.g., blog/urls.py)***, you define the URL patterns for that specific app:\n```python\n from django.urls import path\n from . import views\n\n urlpatterns = [\n path('', views.index, name='index'),\n path('detail/', views.detail, name='detail'),\n ]\n```\nNow, when a user visits **'blog/'**, Django will look for matching patterns in **blog/urls.py**",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django URL patterns dispatch requests to views. Static routes are explicit, while path converters such as `<int:id>` and `<slug:slug>` capture typed URL segments. The key implementation detail in **URL Mapping using include() function** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n path(\"blog/\", views.blog, name=\"blog\"),\n]"
+          }
+        },
+        {
+          "pageId": "p-IYPSWA13",
+          "title": "Dynamic URL Routing in Django",
+          "content": "Dynamic URL routing allows you to create flexible and reusable URL patterns. \nUnlike static URL routing, where each URL corresponds to a specific view, dynamic routing enables you to capture variable parts of a URL and pass them as arguments to your view functions.\n\nIn Django's URL configuration, you can define URL patterns that include placeholders for dynamic values. These placeholders are typically enclosed in angle brackets &lt;&gt; and can be used to capture parts of the URL as parameters.\n\nHere's how dynamic URL routing works:\n\n1. In your urls.py file, define a URL pattern with a placeholder:\n```python\n path('users//', views.user_profile, name='user_profile')\n```\n\n2. In your views.py file, create a view function that accepts the captured parameter:\n```python \n def user_profile(request, username):\n # Use the username parameter in your view logic\n return HttpResponse(f\"Profile page for {username}\")\n```\n\n3. When a user visits a URL like \"/users/john/\", Django will match it to the pattern and pass \"john\" as the username parameter to the view function.\n\nRemember that the parameter name in the URL pattern (&lt;username&gt;) must match the parameter name in your view function (username). This ensures that Django correctly passes the captured value to your view.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django URL patterns dispatch requests to views. Static routes are explicit, while path converters such as `<int:id>` and `<slug:slug>` capture typed URL segments. The key implementation detail in **Dynamic URL Routing in Django** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n path(\"books/<int:book_id>/\", views.book_detail),\n path(\"recipes/<slug:slug>/\", views.recipe_detail),\n]"
+          }
+        },
+        {
+          "pageId": "p-IYPSWA16",
+          "title": "Dynamic Routing with Path Converters in Django",
+          "content": "In our previous lesson, we learnt Dynamic routing. \nNow, let us understand a bit more about a feature of Django's dynamic URL routing: path converters.\n\nDynamic routing allows you to create flexible URL patterns that can handle variable parts in the URL. \nPath converters help you define these variable parts and automatically convert them to Python data types.\n\nHere's how path converters work:\n\n1. In your urls.py file, you define a URL pattern using angle brackets &lt;&gt; to indicate a variable part.\n\n2. Inside the angle brackets, you specify the converter type, followed by a colon and the variable name.\n\n3. Django provides several built-in path converters:\n - str: Matches any non-empty string, excluding the path separator ('/').\n - int: Matches zero or any positive integer.\n - slug: Matches a slug string (ASCII letters, numbers, hyphens, or underscores).\n - uuid: Matches a UUID string.\n - path: Matches any non-empty string, including the path separator.\n\n4. In your view function, you include parameters that correspond to the variable parts in your URL pattern.\n\nHere's an example of how to use path converters in your urls.py file:\n\n```python\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n path('articles//', views.year_archive),\n path('articles///', views.month_archive),\n path('articles//', views.article_detail),\n]\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django URL patterns dispatch requests to views. Static routes are explicit, while path converters such as `<int:id>` and `<slug:slug>` capture typed URL segments. The key implementation detail in **Dynamic Routing with Path Converters in Django** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n path(\"books/<int:book_id>/\", views.book_detail),\n path(\"recipes/<slug:slug>/\", views.recipe_detail),\n]"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-IYPSWA01-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Function-Based Views in Django (Python)",
+          "code": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n path(\"blog/\", views.blog, name=\"blog\"),\n]"
+        },
+        {
+          "exampleId": "ex-IYPSWA07-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Defining URL Patterns (Static routing) in Django (Python)",
+          "code": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n path(\"blog/\", views.blog, name=\"blog\"),\n]"
+        },
+        {
+          "exampleId": "ex-IYPSWA19-go",
+          "language": "python",
+          "label": "Python",
+          "title": "URL Mapping using include() function (Python)",
+          "code": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n path(\"blog/\", views.blog, name=\"blog\"),\n]"
+        },
+        {
+          "exampleId": "ex-IYPSWA13-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Dynamic URL Routing in Django (Python)",
+          "code": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n path(\"books/<int:book_id>/\", views.book_detail),\n path(\"recipes/<slug:slug>/\", views.recipe_detail),\n]"
+        },
+        {
+          "exampleId": "ex-IYPSWA16-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Dynamic Routing with Path Converters in Django (Python)",
+          "code": "from django.urls import path\nfrom . import views\n\nurlpatterns = [\n path(\"books/<int:book_id>/\", views.book_detail),\n path(\"recipes/<slug:slug>/\", views.recipe_detail),\n]"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "IYPSWA02",
+          "questionId": "IYPSWA02",
+          "title": "Create a Simple View",
+          "difficulty": "Easy",
+          "description": "Practice URL dispatch for Django views.",
+          "problemStatement": "Given a request path and ordered route/view pairs, print the first matching view. Support exact paths, `<int:name>`, and `<slug:name>` converters; print `NOT_FOUND` when none matches.",
+          "constraints": [
+            "1 <= N <= 10",
+            "A pattern contains at most one path converter."
+          ],
+          "inputFormat": "N, request path, then N pattern/view pairs on one line.",
+          "outputFormat": "Matching view name or `NOT_FOUND`.",
+          "sampleTestCases": [
+            {
+              "input": "3 /home /home home /blog blog /books books",
+              "output": "home",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 /home /home home /blog blog /books books",
+              "output": "home",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "3 /blog /home home /blog blog /books books",
+              "output": "blog",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /products/42 /products/<int:id> product /about about",
+              "output": "product",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /user/alice /user/<slug:username> profile /help help",
+              "output": "profile",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /missing /home home /blog blog",
+              "output": "NOT_FOUND",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            }
+          ]
+        },
+        {
+          "problemId": "IYPSWA03",
+          "questionId": "IYPSWA03",
+          "title": "Create a Blog Page View",
+          "difficulty": "Easy",
+          "description": "Practice URL dispatch for Django views.",
+          "problemStatement": "Given a request path and ordered route/view pairs, print the first matching view. Support exact paths, `<int:name>`, and `<slug:name>` converters; print `NOT_FOUND` when none matches.",
+          "constraints": [
+            "1 <= N <= 10",
+            "A pattern contains at most one path converter."
+          ],
+          "inputFormat": "N, request path, then N pattern/view pairs on one line.",
+          "outputFormat": "Matching view name or `NOT_FOUND`.",
+          "sampleTestCases": [
+            {
+              "input": "3 /home /home home /blog blog /books books",
+              "output": "home",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 /home /home home /blog blog /books books",
+              "output": "home",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "3 /blog /home home /blog blog /books books",
+              "output": "blog",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /products/42 /products/<int:id> product /about about",
+              "output": "product",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /user/alice /user/<slug:username> profile /help help",
+              "output": "profile",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /missing /home home /blog blog",
+              "output": "NOT_FOUND",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            }
+          ]
+        },
+        {
+          "problemId": "IYPSWA08",
+          "questionId": "IYPSWA08",
+          "title": "Create a URL pattern for a blog page",
+          "difficulty": "Easy",
+          "description": "Practice URL dispatch for Django views.",
+          "problemStatement": "Given a request path and ordered route/view pairs, print the first matching view. Support exact paths, `<int:name>`, and `<slug:name>` converters; print `NOT_FOUND` when none matches.",
+          "constraints": [
+            "1 <= N <= 10",
+            "A pattern contains at most one path converter."
+          ],
+          "inputFormat": "N, request path, then N pattern/view pairs on one line.",
+          "outputFormat": "Matching view name or `NOT_FOUND`.",
+          "sampleTestCases": [
+            {
+              "input": "3 /home /home home /blog blog /books books",
+              "output": "home",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 /home /home home /blog blog /books books",
+              "output": "home",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "3 /blog /home home /blog blog /books books",
+              "output": "blog",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /products/42 /products/<int:id> product /about about",
+              "output": "product",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /user/alice /user/<slug:username> profile /help help",
+              "output": "profile",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /missing /home home /blog blog",
+              "output": "NOT_FOUND",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            }
+          ]
+        },
+        {
+          "problemId": "IYPSWA09",
+          "questionId": "IYPSWA09",
+          "title": "Define URL patterns for a company website",
+          "difficulty": "Easy",
+          "description": "Practice defining static URL patterns.",
+          "problemStatement": "The requested path is always `/`. Given N static patterns and view names, print the view mapped to `/`, or `NOT_FOUND`.",
+          "constraints": [
+            "1 <= N <= 10"
+          ],
+          "inputFormat": "One line: N followed by N pattern/view pairs.",
+          "outputFormat": "Matching view name or `NOT_FOUND`.",
+          "sampleTestCases": [
+            {
+              "input": "3 / / home /about about /blog blog",
+              "output": "/",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 / / home /about about /blog blog",
+              "output": "/",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 /login login /logout logout",
+              "output": "NOT_FOUND",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 /products products /cart cart",
+              "output": "NOT_FOUND",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "1 / home",
+              "output": "home",
+              "explanation": "Additional distinct case for the same documented rule."
+            },
+            {
+              "input": "3 /blog blog /api api /about about",
+              "output": "NOT_FOUND",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        },
+        {
+          "problemId": "IYPSWA20",
+          "questionId": "IYPSWA20",
+          "title": "Create a Movie Review App with URL Mapping",
+          "difficulty": "Easy",
+          "description": "Practice dynamic URL capture with Django path converters.",
+          "problemStatement": "Read a URL path containing one captured value at the end and print that captured value. Numeric examples model `<int:id>`; textual examples model `<slug:slug>`.",
+          "constraints": [
+            "The path contains exactly one captured segment.",
+            "The captured value contains no spaces."
+          ],
+          "inputFormat": "One line containing the URL path followed by the expected converter type/value token. Only the path is evaluated.",
+          "outputFormat": "Print the captured final path segment.",
+          "sampleTestCases": [
+            {
+              "input": "/books/42 42",
+              "output": "42",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "/books/42 42",
+              "output": "42",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/books/105 105",
+              "output": "105",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/recipes/chocolate-cake chocolate-cake",
+              "output": "chocolate-cake",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/user/alice alice",
+              "output": "alice",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/products/7 7",
+              "output": "7",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "IYPSWA21",
+          "questionId": "IYPSWA21",
+          "title": "Create a Superhero Profile App with URL mapping",
+          "difficulty": "Easy",
+          "description": "Practice URL dispatch for Django views.",
+          "problemStatement": "Given a request path and ordered route/view pairs, print the first matching view. Support exact paths, `<int:name>`, and `<slug:name>` converters; print `NOT_FOUND` when none matches.",
+          "constraints": [
+            "1 <= N <= 10",
+            "A pattern contains at most one path converter."
+          ],
+          "inputFormat": "N, request path, then N pattern/view pairs on one line.",
+          "outputFormat": "Matching view name or `NOT_FOUND`.",
+          "sampleTestCases": [
+            {
+              "input": "3 /home /home home /blog blog /books books",
+              "output": "home",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 /home /home home /blog blog /books books",
+              "output": "home",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "3 /blog /home home /blog blog /books books",
+              "output": "blog",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /products/42 /products/<int:id> product /about about",
+              "output": "product",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /user/alice /user/<slug:username> profile /help help",
+              "output": "profile",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /missing /home home /blog blog",
+              "output": "NOT_FOUND",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            }
+          ]
+        },
+        {
+          "problemId": "IYPSWA14",
+          "questionId": "IYPSWA14",
+          "title": "Dynamic Book Catalog with Author Pages",
+          "difficulty": "Easy",
+          "description": "Practice dynamic URL capture with Django path converters.",
+          "problemStatement": "Read a URL path containing one captured value at the end and print that captured value. Numeric examples model `<int:id>`; textual examples model `<slug:slug>`.",
+          "constraints": [
+            "The path contains exactly one captured segment.",
+            "The captured value contains no spaces."
+          ],
+          "inputFormat": "One line containing the URL path followed by the expected converter type/value token. Only the path is evaluated.",
+          "outputFormat": "Print the captured final path segment.",
+          "sampleTestCases": [
+            {
+              "input": "/books/42 42",
+              "output": "42",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "/books/42 42",
+              "output": "42",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/books/105 105",
+              "output": "105",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/recipes/chocolate-cake chocolate-cake",
+              "output": "chocolate-cake",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/user/alice alice",
+              "output": "alice",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/products/7 7",
+              "output": "7",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "IYPSWA15",
+          "questionId": "IYPSWA15",
+          "title": "Recipe Finder by Ingredient",
+          "difficulty": "Easy",
+          "description": "Practice dynamic URL capture with Django path converters.",
+          "problemStatement": "Read a URL path containing one captured value at the end and print that captured value. Numeric examples model `<int:id>`; textual examples model `<slug:slug>`.",
+          "constraints": [
+            "The path contains exactly one captured segment.",
+            "The captured value contains no spaces."
+          ],
+          "inputFormat": "One line containing the URL path followed by the expected converter type/value token. Only the path is evaluated.",
+          "outputFormat": "Print the captured final path segment.",
+          "sampleTestCases": [
+            {
+              "input": "/books/42 42",
+              "output": "42",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "/books/42 42",
+              "output": "42",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/books/105 105",
+              "output": "105",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/recipes/chocolate-cake chocolate-cake",
+              "output": "chocolate-cake",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/user/alice alice",
+              "output": "alice",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "/products/7 7",
+              "output": "7",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "IYPSWA17",
+          "questionId": "IYPSWA17",
+          "title": "Movie DB site with dynamic URLs & path converters",
+          "difficulty": "Easy",
+          "description": "Practice URL dispatch for Django views.",
+          "problemStatement": "Given a request path and ordered route/view pairs, print the first matching view. Support exact paths, `<int:name>`, and `<slug:name>` converters; print `NOT_FOUND` when none matches.",
+          "constraints": [
+            "1 <= N <= 10",
+            "A pattern contains at most one path converter."
+          ],
+          "inputFormat": "N, request path, then N pattern/view pairs on one line.",
+          "outputFormat": "Matching view name or `NOT_FOUND`.",
+          "sampleTestCases": [
+            {
+              "input": "3 /home /home home /blog blog /books books",
+              "output": "home",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 /home /home home /blog blog /books books",
+              "output": "home",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "3 /blog /home home /blog blog /books books",
+              "output": "blog",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /products/42 /products/<int:id> product /about about",
+              "output": "product",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /user/alice /user/<slug:username> profile /help help",
+              "output": "profile",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            },
+            {
+              "input": "2 /missing /home home /blog blog",
+              "output": "NOT_FOUND",
+              "explanation": "Django checks URL patterns in order; the first matching pattern selects the view."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "Core Django fundamentals - Views and URLs"
+    }
+  ]
+}

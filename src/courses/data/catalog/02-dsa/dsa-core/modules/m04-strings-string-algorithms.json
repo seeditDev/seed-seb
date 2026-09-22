@@ -1,0 +1,3144 @@
+{
+  "moduleId": "m04-strings-string-algorithms",
+  "title": "Strings & String Algorithms",
+  "description": "Character frequency arrays, palindromes, anagrams, sliding window on strings, KMP string matching, and Rabin-Karp hashing.",
+  "estimatedHours": 5,
+  "topics": [
+    {
+      "topicId": "t01-strings-basic",
+      "title": "Strings basic",
+      "description": "Study concepts and solve targeted engineering problems for Strings basic.",
+      "mode": "PRACTICE",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "dsa-m9-t1-step-v2-01",
+          "title": "Step 1 — Start Here",
+          "sectionType": "LEARNING_MAP",
+          "content": "### Before you code\n**Prerequisite:** Arrays, character access, loops, and basic comparison.\n\nThis topic follows a deliberate sequence. Do not skip directly to the hardest practice set.\n\n**Your learning route**\n1. Build the mental model.\n2. Learn when the pattern applies.\n3. Dry-run a tiny example.\n4. Build the algorithm with guidance.\n5. Solve a micro variation.\n6. Progress through the practice ladder.\n7. Pass the mastery gate.\n\n**First question to answer:** What information must remain correct after every step of the algorithm?",
+          "teachingGoal": "Know the prerequisite, learning sequence, and invariant you will track."
+        },
+        {
+          "pageId": "dsa-m9-t1-step-v2-02",
+          "title": "Step 2 — Build the Mental Model",
+          "sectionType": "CONCEPT",
+          "content": "### Understand before implementing\nStrings are sequences of characters; most solutions combine scanning, counts, normalization, two pointers, or frequency maps.\n\n**Recognition rule**\nIdentify whether order, frequency, adjacency, or a reversible relationship matters.\n\n**Do not memorize a code template yet.** First identify what state the algorithm must maintain and what information it can safely discard.",
+          "teachingGoal": "Explain the idea in plain language and identify when it should be considered."
+        },
+        {
+          "pageId": "dsa-m9-t1-step-v2-03",
+          "title": "Step 3 — Worked Dry Run",
+          "sectionType": "DRY_RUN",
+          "content": "### Trace before code\nTrack the current character and any frequency/window/pointer state after each position.\n\nUse a table with four columns:\n- **Step / index**\n- **Current input/state**\n- **Important invariant**\n- **Decision / next state**\n\nThen test one boundary case before implementing.",
+          "teachingGoal": "Trace the state transition without depending on the final code."
+        },
+        {
+          "pageId": "dsa-m9-t1-step-v2-04",
+          "title": "Step 4 — Guided Build",
+          "sectionType": "GUIDED_BUILD",
+          "content": "### Build it in small pieces\nDefine the string invariant, handle empty/single-character cases, scan once or maintain the smallest needed state.\n\n**Guided order**\n1. Write the inputs and outputs.\n2. State the invariant.\n3. Write pseudocode.\n4. Implement only the first transition.\n5. Test on the tiny example.\n6. Add the remaining loop/recursion/structure.\n7. Test an edge case.\n8. State time and space complexity.\n\n**Common trap:** Case sensitivity, spaces, empty strings, repeated characters, and mixing character codes with string values.",
+          "teachingGoal": "Turn the mental model into a correct implementation without jumping straight to a full template."
+        },
+        {
+          "pageId": "dsa-m9-t1-step-v2-05",
+          "title": "Step 5 — Micro Practice & Mastery Gate",
+          "sectionType": "MASTERY",
+          "content": "### Micro practice\nSolve palindrome, frequency, or character-classification examples on paper first.\n\n### Before moving on, confirm all of these\n- I can explain the core idea without code.\n- I can dry-run a fresh tiny input.\n- I can state the invariant/correctness idea.\n- I can identify at least two edge cases.\n- I can state time and space complexity.\n- I can explain the common pitfall: Case sensitivity, spaces, empty strings, repeated characters, and mixing character codes with string values.\n\n**Mastery:** Explain why the chosen state is sufficient and state the time/space complexity.",
+          "teachingGoal": "Prove personal understanding before entering the independent problem set."
+        }
+      ],
+      "codeExamples": [],
+      "practiceProblems": [
+        {
+          "problemId": "Q8523",
+          "questionId": "Q8523",
+          "title": "World Chess Championship",
+          "difficulty": "Easy",
+          "description": "Compute the bitwise OR of two non-negative integers.",
+          "problemStatement": "Compute the bitwise OR of two non-negative integers.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "One line contains A and B.",
+          "outputFormat": "Print A OR B.",
+          "sampleTestCases": [
+            {
+              "input": "7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "12 10",
+              "output": "14",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "12 10",
+              "output": "14",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "0 5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "15 8",
+              "output": "15",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "9 6",
+              "output": "15",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q9685",
+          "questionId": "Q9685",
+          "title": "DDMM or MMDD",
+          "difficulty": "Easy",
+          "description": "Compute the bitwise OR of two non-negative integers.",
+          "problemStatement": "Compute the bitwise OR of two non-negative integers.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "One line contains A and B.",
+          "outputFormat": "Print A OR B.",
+          "sampleTestCases": [
+            {
+              "input": "7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "12 10",
+              "output": "14",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "12 10",
+              "output": "14",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "0 5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "15 8",
+              "output": "15",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "9 6",
+              "output": "15",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4542",
+          "questionId": "Q4542",
+          "title": "Largest Odd Substring",
+          "difficulty": "Easy",
+          "description": "Given an array, print its maximum element.",
+          "problemStatement": "Given an array, print its maximum element.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the maximum element.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 4 2 9",
+              "output": "9",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4\n1 4 2 9",
+              "output": "9",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n-5 -2 -9",
+              "output": "-2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n0 0 1",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4308",
+          "questionId": "Q4308",
+          "title": "Convert String to Title Case",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Convert String to Title Case' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Convert String to Title Case' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q6442",
+          "questionId": "Q6442",
+          "title": "Studying Alphabet",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Studying Alphabet' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Studying Alphabet' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q6317",
+          "questionId": "Q6317",
+          "title": "Malvika is peculiar about color of balloons",
+          "difficulty": "Easy",
+          "description": "Compute the bitwise OR of two non-negative integers.",
+          "problemStatement": "Compute the bitwise OR of two non-negative integers.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "One line contains A and B.",
+          "outputFormat": "Print A OR B.",
+          "sampleTestCases": [
+            {
+              "input": "7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "12 10",
+              "output": "14",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "12 10",
+              "output": "14",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "0 5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "15 8",
+              "output": "15",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "9 6",
+              "output": "15",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q9893",
+          "questionId": "Q9893",
+          "title": "N Buttons 1 Bulb",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'N Buttons 1 Bulb' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'N Buttons 1 Bulb' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q7199",
+          "questionId": "Q7199",
+          "title": "Play Piano",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Play Piano' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Play Piano' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q5782",
+          "questionId": "Q5782",
+          "title": "Chef and Feedback",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Chef and Feedback' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Chef and Feedback' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        }
+      ],
+      "recommendedSequence": 1,
+      "learningTrack": "Concept → Intuition → Dry Run → Guided Build → Micro Practice → Independent Practice → Mastery",
+      "prerequisites": [
+        "Arrays, character access, loops, and basic comparison."
+      ],
+      "stepByStepLearning": {
+        "stepCount": 8,
+        "steps": [
+          {
+            "step": 1,
+            "type": "PREREQUISITE",
+            "title": "Check prerequisites",
+            "goal": "Arrays, character access, loops, and basic comparison.",
+            "action": "Recall the prerequisite idea and answer one tiny self-check before moving on.",
+            "exitCriteria": "I can explain the prerequisite without opening another lesson."
+          },
+          {
+            "step": 2,
+            "type": "CONCEPT",
+            "title": "Build the mental model",
+            "goal": "Strings are sequences of characters; most solutions combine scanning, counts, normalization, two pointers, or frequency maps.",
+            "action": "Read the concept explanation and identify the input, state, operation, and desired output.",
+            "exitCriteria": "I can describe what the technique stores/changes and why it exists."
+          },
+          {
+            "step": 3,
+            "type": "RECOGNITION",
+            "title": "Learn when to use it",
+            "goal": "Identify whether order, frequency, adjacency, or a reversible relationship matters.",
+            "action": "Classify two short problem statements and name the pattern before looking at solutions.",
+            "exitCriteria": "I can give at least two signals that this technique applies."
+          },
+          {
+            "step": 4,
+            "type": "DRY_RUN",
+            "title": "Trace a tiny example",
+            "goal": "Track the current character and any frequency/window/pointer state after each position.",
+            "action": "Simulate the algorithm on paper, recording the invariant/state after each step.",
+            "exitCriteria": "I can predict the final state/output for a small example."
+          },
+          {
+            "step": 5,
+            "type": "GUIDED_BUILD",
+            "title": "Implement with scaffolding",
+            "goal": "Define the string invariant, handle empty/single-character cases, scan once or maintain the smallest needed state.",
+            "action": "Write pseudocode from the invariant, then translate one step at a time into C++.",
+            "exitCriteria": "The guided implementation works on the basic example and one edge case."
+          },
+          {
+            "step": 6,
+            "type": "MICRO_PRACTICE",
+            "title": "Solve a small variation",
+            "goal": "Solve palindrome, frequency, or character-classification examples on paper first.",
+            "action": "Solve a tiny variation without copying the worked example.",
+            "exitCriteria": "I can adapt the approach to a changed input or requirement."
+          },
+          {
+            "step": 7,
+            "type": "INDEPENDENT_PRACTICE",
+            "title": "Climb the problem ladder",
+            "goal": "Start with the easiest related problem and move toward mixed/harder problems only after explaining the previous solution.",
+            "action": "Use the practice set in increasing difficulty. Record pattern, invariant, complexity, and failed attempts.",
+            "exitCriteria": "I can solve a fresh problem and explain why the chosen approach is correct."
+          },
+          {
+            "step": 8,
+            "type": "MASTERY",
+            "title": "Pass the mastery gate",
+            "goal": "Explain why the chosen state is sufficient and state the time/space complexity.",
+            "action": "Complete the mastery checklist and one unseen variation under a reasonable time limit.",
+            "exitCriteria": "Mastery achieved when I can explain why the chosen state is sufficient and state the time/space complexity."
+          }
+        ]
+      },
+      "problemSolvingChecklist": [
+        "What exactly is the input and output?",
+        "What do the constraints allow?",
+        "What is the simplest correct approach?",
+        "What work repeats?",
+        "What invariant/state should stay true?",
+        "What edge cases break the approach?",
+        "What are the time and space costs?"
+      ],
+      "masteryGate": {
+        "mustExplain": [
+          "core idea",
+          "when to use",
+          "invariant/correctness idea",
+          "time complexity",
+          "space complexity",
+          "edge cases"
+        ],
+        "mustPerform": [
+          "one unseen micro problem",
+          "one practice problem at current difficulty"
+        ],
+        "commonFailure": "Case sensitivity, spaces, empty strings, repeated characters, and mixing character codes with string values."
+      },
+      "_sourceFile": "dsa.json",
+      "_moduleTitle": "STRINGS-NEW: Strings"
+    },
+    {
+      "topicId": "t02-intermediate-practice",
+      "title": "Intermediate practice",
+      "description": "Study concepts and solve targeted engineering problems for Intermediate practice.",
+      "mode": "PRACTICE",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "dsa-m10-t1-step-v2-01",
+          "title": "Step 1 — Start Here",
+          "sectionType": "LEARNING_MAP",
+          "content": "### Before you code\n**Prerequisite:** Arrays, character access, loops, and basic comparison.\n\nThis topic follows a deliberate sequence. Do not skip directly to the hardest practice set.\n\n**Your learning route**\n1. Build the mental model.\n2. Learn when the pattern applies.\n3. Dry-run a tiny example.\n4. Build the algorithm with guidance.\n5. Solve a micro variation.\n6. Progress through the practice ladder.\n7. Pass the mastery gate.\n\n**First question to answer:** What information must remain correct after every step of the algorithm?",
+          "teachingGoal": "Know the prerequisite, learning sequence, and invariant you will track."
+        },
+        {
+          "pageId": "dsa-m10-t1-step-v2-02",
+          "title": "Step 2 — Build the Mental Model",
+          "sectionType": "CONCEPT",
+          "content": "### Understand before implementing\nStrings are sequences of characters; most solutions combine scanning, counts, normalization, two pointers, or frequency maps.\n\n**Recognition rule**\nIdentify whether order, frequency, adjacency, or a reversible relationship matters.\n\n**Do not memorize a code template yet.** First identify what state the algorithm must maintain and what information it can safely discard.",
+          "teachingGoal": "Explain the idea in plain language and identify when it should be considered."
+        },
+        {
+          "pageId": "dsa-m10-t1-step-v2-03",
+          "title": "Step 3 — Worked Dry Run",
+          "sectionType": "DRY_RUN",
+          "content": "### Trace before code\nTrack the current character and any frequency/window/pointer state after each position.\n\nUse a table with four columns:\n- **Step / index**\n- **Current input/state**\n- **Important invariant**\n- **Decision / next state**\n\nThen test one boundary case before implementing.",
+          "teachingGoal": "Trace the state transition without depending on the final code."
+        },
+        {
+          "pageId": "dsa-m10-t1-step-v2-04",
+          "title": "Step 4 — Guided Build",
+          "sectionType": "GUIDED_BUILD",
+          "content": "### Build it in small pieces\nDefine the string invariant, handle empty/single-character cases, scan once or maintain the smallest needed state.\n\n**Guided order**\n1. Write the inputs and outputs.\n2. State the invariant.\n3. Write pseudocode.\n4. Implement only the first transition.\n5. Test on the tiny example.\n6. Add the remaining loop/recursion/structure.\n7. Test an edge case.\n8. State time and space complexity.\n\n**Common trap:** Case sensitivity, spaces, empty strings, repeated characters, and mixing character codes with string values.",
+          "teachingGoal": "Turn the mental model into a correct implementation without jumping straight to a full template."
+        },
+        {
+          "pageId": "dsa-m10-t1-step-v2-05",
+          "title": "Step 5 — Micro Practice & Mastery Gate",
+          "sectionType": "MASTERY",
+          "content": "### Micro practice\nSolve palindrome, frequency, or character-classification examples on paper first.\n\n### Before moving on, confirm all of these\n- I can explain the core idea without code.\n- I can dry-run a fresh tiny input.\n- I can state the invariant/correctness idea.\n- I can identify at least two edge cases.\n- I can state time and space complexity.\n- I can explain the common pitfall: Case sensitivity, spaces, empty strings, repeated characters, and mixing character codes with string values.\n\n**Mastery:** Explain why the chosen state is sufficient and state the time/space complexity.",
+          "teachingGoal": "Prove personal understanding before entering the independent problem set."
+        }
+      ],
+      "codeExamples": [],
+      "practiceProblems": [
+        {
+          "problemId": "Q4311",
+          "questionId": "Q4311",
+          "title": "Convert string to number",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Convert string to number' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Convert string to number' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4554",
+          "questionId": "Q4554",
+          "title": "Chef and String to Integer",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Chef and String to Integer' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Chef and String to Integer' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q9648",
+          "questionId": "Q9648",
+          "title": "Efficient PAN Linking",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Efficient PAN Linking' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Efficient PAN Linking' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q8608",
+          "questionId": "Q8608",
+          "title": "Add One",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Add One' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Add One' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4552",
+          "questionId": "Q4552",
+          "title": "Chef and Roman Numbers",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Chef and Roman Numbers' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Chef and Roman Numbers' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4558",
+          "questionId": "Q4558",
+          "title": "Reverse Words in a String",
+          "difficulty": "Easy",
+          "description": "Reverse the order of the elements in the given array.",
+          "problemStatement": "Reverse the order of the elements in the given array.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the reversed array.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "4 3 2 1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "4 3 2 1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n0 1 0",
+              "output": "0 1 0",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n-2 7 3",
+              "output": "3 7 -2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "5\n9 8 7 6 5",
+              "output": "5 6 7 8 9",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q796",
+          "questionId": "Q796",
+          "title": "Rotate String",
+          "difficulty": "Easy",
+          "description": "Rotate the array to the right by K positions.",
+          "problemStatement": "Rotate the array to the right by K positions.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers. The third line contains K.",
+          "outputFormat": "Print the rotated array.",
+          "sampleTestCases": [
+            {
+              "input": "5\n1 2 3 4 5\n2",
+              "output": "4 5 1 2 3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n1 2 3\n1",
+              "output": "3 1 2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "5\n1 2 3 4 5\n2",
+              "output": "4 5 1 2 3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n1 2 3\n1",
+              "output": "3 1 2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n9 8\n1",
+              "output": "8 9",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "4\n4 5 6 7\n3",
+              "output": "5 6 7 4",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4545",
+          "questionId": "Q4545",
+          "title": "Longest Common Prefix",
+          "difficulty": "Easy",
+          "description": "Check whether the second string is a prefix of the first string.",
+          "problemStatement": "Check whether the second string is a prefix of the first string.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Two lines contain strings S and P.",
+          "outputFormat": "Print YES if P is a prefix of S, otherwise NO.",
+          "sampleTestCases": [
+            {
+              "input": "algorithm\nalgo",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc\nx",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "algorithm\nalgo",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc\nx",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "testing\ntest",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "a\na",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "prefix\npre",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4310",
+          "questionId": "Q4310",
+          "title": "Check if a string is anagram of another",
+          "difficulty": "Easy",
+          "description": "Determine whether two strings are anagrams.",
+          "problemStatement": "Determine whether two strings are anagrams.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Two lines contain strings A and B.",
+          "outputFormat": "Print YES if A and B contain the same multiset of characters, otherwise NO.",
+          "sampleTestCases": [
+            {
+              "input": "listen\nsilent",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc\nabd",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "listen\nsilent",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc\nabd",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "aab\naba",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "a\na",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "ab\nba",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q5661",
+          "questionId": "Q5661",
+          "title": "Lapindromes",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Lapindromes' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Lapindromes' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4550",
+          "questionId": "Q4550",
+          "title": "Chef and Character Frequency Sort",
+          "difficulty": "Easy",
+          "description": "Sort the given array in nondecreasing order.",
+          "problemStatement": "Sort the given array in nondecreasing order.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the sorted array.",
+          "sampleTestCases": [
+            {
+              "input": "3\n3 1 2",
+              "output": "1 2 3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "5\n5 4 3 2 1",
+              "output": "1 2 3 4 5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n3 1 2",
+              "output": "1 2 3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "5\n5 4 3 2 1",
+              "output": "1 2 3 4 5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n1 1 0",
+              "output": "0 1 1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "4\n9 -1 4 2",
+              "output": "-1 2 4 9",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n7",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4551",
+          "questionId": "Q4551",
+          "title": "Chef and Nested Parentheses",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Chef and Nested Parentheses' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Chef and Nested Parentheses' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4559",
+          "questionId": "Q4559",
+          "title": "Minimum Insertions to Make Parentheses Valid",
+          "difficulty": "Easy",
+          "description": "Given an array, print its minimum element.",
+          "problemStatement": "Given an array, print its minimum element.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the minimum element.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 4 2 9",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4\n1 4 2 9",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n-5 -2 -9",
+              "output": "-9",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 7 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n0 0 1",
+              "output": "0",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4540",
+          "questionId": "Q4540",
+          "title": "Remove Outermost Parentheses",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Remove Outermost Parentheses' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Remove Outermost Parentheses' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q6178",
+          "questionId": "Q6178",
+          "title": "Chef and the Wildcard Matching",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Chef and the Wildcard Matching' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Chef and the Wildcard Matching' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q8168",
+          "questionId": "Q8168",
+          "title": "Password",
+          "difficulty": "Easy",
+          "description": "Compute the bitwise OR of two non-negative integers.",
+          "problemStatement": "Compute the bitwise OR of two non-negative integers.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "One line contains A and B.",
+          "outputFormat": "Print A OR B.",
+          "sampleTestCases": [
+            {
+              "input": "7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "12 10",
+              "output": "14",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "12 10",
+              "output": "14",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "0 5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "15 8",
+              "output": "15",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "9 6",
+              "output": "15",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        }
+      ],
+      "recommendedSequence": 1,
+      "learningTrack": "Concept → Intuition → Dry Run → Guided Build → Micro Practice → Independent Practice → Mastery",
+      "prerequisites": [
+        "Arrays, character access, loops, and basic comparison."
+      ],
+      "stepByStepLearning": {
+        "stepCount": 8,
+        "steps": [
+          {
+            "step": 1,
+            "type": "PREREQUISITE",
+            "title": "Check prerequisites",
+            "goal": "Arrays, character access, loops, and basic comparison.",
+            "action": "Recall the prerequisite idea and answer one tiny self-check before moving on.",
+            "exitCriteria": "I can explain the prerequisite without opening another lesson."
+          },
+          {
+            "step": 2,
+            "type": "CONCEPT",
+            "title": "Build the mental model",
+            "goal": "Strings are sequences of characters; most solutions combine scanning, counts, normalization, two pointers, or frequency maps.",
+            "action": "Read the concept explanation and identify the input, state, operation, and desired output.",
+            "exitCriteria": "I can describe what the technique stores/changes and why it exists."
+          },
+          {
+            "step": 3,
+            "type": "RECOGNITION",
+            "title": "Learn when to use it",
+            "goal": "Identify whether order, frequency, adjacency, or a reversible relationship matters.",
+            "action": "Classify two short problem statements and name the pattern before looking at solutions.",
+            "exitCriteria": "I can give at least two signals that this technique applies."
+          },
+          {
+            "step": 4,
+            "type": "DRY_RUN",
+            "title": "Trace a tiny example",
+            "goal": "Track the current character and any frequency/window/pointer state after each position.",
+            "action": "Simulate the algorithm on paper, recording the invariant/state after each step.",
+            "exitCriteria": "I can predict the final state/output for a small example."
+          },
+          {
+            "step": 5,
+            "type": "GUIDED_BUILD",
+            "title": "Implement with scaffolding",
+            "goal": "Define the string invariant, handle empty/single-character cases, scan once or maintain the smallest needed state.",
+            "action": "Write pseudocode from the invariant, then translate one step at a time into C++.",
+            "exitCriteria": "The guided implementation works on the basic example and one edge case."
+          },
+          {
+            "step": 6,
+            "type": "MICRO_PRACTICE",
+            "title": "Solve a small variation",
+            "goal": "Solve palindrome, frequency, or character-classification examples on paper first.",
+            "action": "Solve a tiny variation without copying the worked example.",
+            "exitCriteria": "I can adapt the approach to a changed input or requirement."
+          },
+          {
+            "step": 7,
+            "type": "INDEPENDENT_PRACTICE",
+            "title": "Climb the problem ladder",
+            "goal": "Start with the easiest related problem and move toward mixed/harder problems only after explaining the previous solution.",
+            "action": "Use the practice set in increasing difficulty. Record pattern, invariant, complexity, and failed attempts.",
+            "exitCriteria": "I can solve a fresh problem and explain why the chosen approach is correct."
+          },
+          {
+            "step": 8,
+            "type": "MASTERY",
+            "title": "Pass the mastery gate",
+            "goal": "Explain why the chosen state is sufficient and state the time/space complexity.",
+            "action": "Complete the mastery checklist and one unseen variation under a reasonable time limit.",
+            "exitCriteria": "Mastery achieved when I can explain why the chosen state is sufficient and state the time/space complexity."
+          }
+        ]
+      },
+      "problemSolvingChecklist": [
+        "What exactly is the input and output?",
+        "What do the constraints allow?",
+        "What is the simplest correct approach?",
+        "What work repeats?",
+        "What invariant/state should stay true?",
+        "What edge cases break the approach?",
+        "What are the time and space costs?"
+      ],
+      "masteryGate": {
+        "mustExplain": [
+          "core idea",
+          "when to use",
+          "invariant/correctness idea",
+          "time complexity",
+          "space complexity",
+          "edge cases"
+        ],
+        "mustPerform": [
+          "one unseen micro problem",
+          "one practice problem at current difficulty"
+        ],
+        "commonFailure": "Case sensitivity, spaces, empty strings, repeated characters, and mixing character codes with string values."
+      },
+      "_sourceFile": "dsa.json",
+      "_moduleTitle": "STRINGS-INTERMEDIATE: Practice Strings"
+    },
+    {
+      "topicId": "t03-strings",
+      "title": "Strings",
+      "description": "Study concepts and solve targeted engineering problems for Strings.",
+      "mode": "PRACTICE",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "dsa-m22-t1-step-v2-01",
+          "title": "Step 1 — Start Here",
+          "sectionType": "LEARNING_MAP",
+          "content": "### Before you code\n**Prerequisite:** Variables, loops, indexing, and zero-based positions.\n\nThis topic follows a deliberate sequence. Do not skip directly to the hardest practice set.\n\n**Your learning route**\n1. Build the mental model.\n2. Learn when the pattern applies.\n3. Dry-run a tiny example.\n4. Build the algorithm with guidance.\n5. Solve a micro variation.\n6. Progress through the practice ladder.\n7. Pass the mastery gate.\n\n**First question to answer:** What information must remain correct after every step of the algorithm?",
+          "teachingGoal": "Know the prerequisite, learning sequence, and invariant you will track."
+        },
+        {
+          "pageId": "dsa-m22-t1-step-v2-02",
+          "title": "Step 2 — Build the Mental Model",
+          "sectionType": "CONCEPT",
+          "content": "### Understand before implementing\nAn array stores elements in indexed contiguous positions; most problems reduce to scanning, updating, or maintaining a range invariant.\n\n**Recognition rule**\nLook for a single pass, two-pointer movement, frequency/state tracking, or range updates.\n\n**Do not memorize a code template yet.** First identify what state the algorithm must maintain and what information it can safely discard.",
+          "teachingGoal": "Explain the idea in plain language and identify when it should be considered."
+        },
+        {
+          "pageId": "dsa-m22-t1-step-v2-03",
+          "title": "Step 3 — Worked Dry Run",
+          "sectionType": "DRY_RUN",
+          "content": "### Trace before code\nWrite the index, current value, and the important state after every iteration.\n\nUse a table with four columns:\n- **Step / index**\n- **Current input/state**\n- **Important invariant**\n- **Decision / next state**\n\nThen test one boundary case before implementing.",
+          "teachingGoal": "Trace the state transition without depending on the final code."
+        },
+        {
+          "pageId": "dsa-m22-t1-step-v2-04",
+          "title": "Step 4 — Guided Build",
+          "sectionType": "GUIDED_BUILD",
+          "content": "### Build it in small pieces\nState the invariant, initialize boundary/state variables, scan the array, update state, then return the required result.\n\n**Guided order**\n1. Write the inputs and outputs.\n2. State the invariant.\n3. Write pseudocode.\n4. Implement only the first transition.\n5. Test on the tiny example.\n6. Add the remaining loop/recursion/structure.\n7. Test an edge case.\n8. State time and space complexity.\n\n**Common trap:** Off-by-one bounds, empty arrays, duplicate values, and accidentally using stale state.",
+          "teachingGoal": "Turn the mental model into a correct implementation without jumping straight to a full template."
+        },
+        {
+          "pageId": "dsa-m22-t1-step-v2-05",
+          "title": "Step 5 — Micro Practice & Mastery Gate",
+          "sectionType": "MASTERY",
+          "content": "### Micro practice\nSolve a one-pass maximum/minimum or first-occurrence problem by hand.\n\n### Before moving on, confirm all of these\n- I can explain the core idea without code.\n- I can dry-run a fresh tiny input.\n- I can state the invariant/correctness idea.\n- I can identify at least two edge cases.\n- I can state time and space complexity.\n- I can explain the common pitfall: Off-by-one bounds, empty arrays, duplicate values, and accidentally using stale state.\n\n**Mastery:** Solve easy scans first, then two-pointer/prefix-sum/range problems while explaining the invariant.",
+          "teachingGoal": "Prove personal understanding before entering the independent problem set."
+        }
+      ],
+      "codeExamples": [],
+      "practiceProblems": [
+        {
+          "problemId": "Q4309",
+          "questionId": "Q4309",
+          "title": "Check if a string is a substring of another",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Check if a string is a substring of another' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Check if a string is a substring of another' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q686",
+          "questionId": "Q686",
+          "title": "Repeated String Match",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Repeated String Match' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Repeated String Match' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4560",
+          "questionId": "Q4560",
+          "title": "Count-and-Say Sequence",
+          "difficulty": "Easy",
+          "description": "Given an array, count the number of distinct values.",
+          "problemStatement": "Given an array, count the number of distinct values.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the number of distinct values.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n5 5 5",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4\n1 2 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n5 5 5",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "4\n0 1 0 2",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n3 4 5",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "5\n1 1 2 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4546",
+          "questionId": "Q4546",
+          "title": "Check Isomorphic Strings",
+          "difficulty": "Easy",
+          "description": "Compute the bitwise OR of two non-negative integers.",
+          "problemStatement": "Compute the bitwise OR of two non-negative integers.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "One line contains A and B.",
+          "outputFormat": "Print A OR B.",
+          "sampleTestCases": [
+            {
+              "input": "7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "12 10",
+              "output": "14",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "7 3",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "12 10",
+              "output": "14",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "0 5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "15 8",
+              "output": "15",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "9 6",
+              "output": "15",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4557",
+          "questionId": "Q4557",
+          "title": "Sum of Beauty of All Substrings",
+          "difficulty": "Easy",
+          "description": "Given an array, compute the sum of all elements.",
+          "problemStatement": "Given an array, compute the sum of all elements.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the sum.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "6",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n10 -5 4",
+              "output": "9",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "6",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n10 -5 4",
+              "output": "9",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n7",
+              "output": "7",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n0 0 1",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n5 -5 10",
+              "output": "10",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q5",
+          "questionId": "Q5",
+          "title": "Longest Palindromic Substring",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Longest Palindromic Substring' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Longest Palindromic Substring' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4569",
+          "questionId": "Q4569",
+          "title": "Longest Happy Prefix",
+          "difficulty": "Easy",
+          "description": "Check whether the second string is a prefix of the first string.",
+          "problemStatement": "Check whether the second string is a prefix of the first string.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Two lines contain strings S and P.",
+          "outputFormat": "Print YES if P is a prefix of S, otherwise NO.",
+          "sampleTestCases": [
+            {
+              "input": "algorithm\nalgo",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc\nx",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "algorithm\nalgo",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc\nx",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "testing\ntest",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "a\na",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "prefix\npre",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4563",
+          "questionId": "Q4563",
+          "title": "First Occurrence of Substring",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'First Occurrence of Substring' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'First Occurrence of Substring' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4568",
+          "questionId": "Q4568",
+          "title": "Shortest Palindrome",
+          "difficulty": "Easy",
+          "description": "Determine whether the given string is a palindrome.",
+          "problemStatement": "Determine whether the given string is a palindrome.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Input contains one string.",
+          "outputFormat": "Print YES if it is a palindrome, otherwise NO.",
+          "sampleTestCases": [
+            {
+              "input": "level",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abba",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "level",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abba",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "a",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "aabbaa",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q8647",
+          "questionId": "Q8647",
+          "title": "Typing Letter",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Typing Letter' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Typing Letter' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        }
+      ],
+      "recommendedSequence": 1,
+      "learningTrack": "Concept → Intuition → Dry Run → Guided Build → Micro Practice → Independent Practice → Mastery",
+      "prerequisites": [
+        "Variables, loops, indexing, and zero-based positions."
+      ],
+      "stepByStepLearning": {
+        "stepCount": 8,
+        "steps": [
+          {
+            "step": 1,
+            "type": "PREREQUISITE",
+            "title": "Check prerequisites",
+            "goal": "Variables, loops, indexing, and zero-based positions.",
+            "action": "Recall the prerequisite idea and answer one tiny self-check before moving on.",
+            "exitCriteria": "I can explain the prerequisite without opening another lesson."
+          },
+          {
+            "step": 2,
+            "type": "CONCEPT",
+            "title": "Build the mental model",
+            "goal": "An array stores elements in indexed contiguous positions; most problems reduce to scanning, updating, or maintaining a range invariant.",
+            "action": "Read the concept explanation and identify the input, state, operation, and desired output.",
+            "exitCriteria": "I can describe what the technique stores/changes and why it exists."
+          },
+          {
+            "step": 3,
+            "type": "RECOGNITION",
+            "title": "Learn when to use it",
+            "goal": "Look for a single pass, two-pointer movement, frequency/state tracking, or range updates.",
+            "action": "Classify two short problem statements and name the pattern before looking at solutions.",
+            "exitCriteria": "I can give at least two signals that this technique applies."
+          },
+          {
+            "step": 4,
+            "type": "DRY_RUN",
+            "title": "Trace a tiny example",
+            "goal": "Write the index, current value, and the important state after every iteration.",
+            "action": "Simulate the algorithm on paper, recording the invariant/state after each step.",
+            "exitCriteria": "I can predict the final state/output for a small example."
+          },
+          {
+            "step": 5,
+            "type": "GUIDED_BUILD",
+            "title": "Implement with scaffolding",
+            "goal": "State the invariant, initialize boundary/state variables, scan the array, update state, then return the required result.",
+            "action": "Write pseudocode from the invariant, then translate one step at a time into C++.",
+            "exitCriteria": "The guided implementation works on the basic example and one edge case."
+          },
+          {
+            "step": 6,
+            "type": "MICRO_PRACTICE",
+            "title": "Solve a small variation",
+            "goal": "Solve a one-pass maximum/minimum or first-occurrence problem by hand.",
+            "action": "Solve a tiny variation without copying the worked example.",
+            "exitCriteria": "I can adapt the approach to a changed input or requirement."
+          },
+          {
+            "step": 7,
+            "type": "INDEPENDENT_PRACTICE",
+            "title": "Climb the problem ladder",
+            "goal": "Start with the easiest related problem and move toward mixed/harder problems only after explaining the previous solution.",
+            "action": "Use the practice set in increasing difficulty. Record pattern, invariant, complexity, and failed attempts.",
+            "exitCriteria": "I can solve a fresh problem and explain why the chosen approach is correct."
+          },
+          {
+            "step": 8,
+            "type": "MASTERY",
+            "title": "Pass the mastery gate",
+            "goal": "Solve easy scans first, then two-pointer/prefix-sum/range problems while explaining the invariant.",
+            "action": "Complete the mastery checklist and one unseen variation under a reasonable time limit.",
+            "exitCriteria": "Mastery achieved when I can solve easy scans first, then two-pointer/prefix-sum/range problems while explaining the invariant."
+          }
+        ]
+      },
+      "problemSolvingChecklist": [
+        "What exactly is the input and output?",
+        "What do the constraints allow?",
+        "What is the simplest correct approach?",
+        "What work repeats?",
+        "What invariant/state should stay true?",
+        "What edge cases break the approach?",
+        "What are the time and space costs?"
+      ],
+      "masteryGate": {
+        "mustExplain": [
+          "core idea",
+          "when to use",
+          "invariant/correctness idea",
+          "time complexity",
+          "space complexity",
+          "edge cases"
+        ],
+        "mustPerform": [
+          "one unseen micro problem",
+          "one practice problem at current difficulty"
+        ],
+        "commonFailure": "Off-by-one bounds, empty arrays, duplicate values, and accidentally using stale state."
+      },
+      "_sourceFile": "dsa.json",
+      "_moduleTitle": "ARRAYS-STRINGS-ADVANCED: Strings - advanced"
+    }
+  ]
+}

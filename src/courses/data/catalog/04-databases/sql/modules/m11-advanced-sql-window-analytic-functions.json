@@ -1,0 +1,1468 @@
+{
+  "moduleId": "m11-advanced-sql-window-analytic-functions",
+  "title": "Advanced SQL: Window & Analytic Functions",
+  "description": "OVER() clause, PARTITION BY, ORDER BY frames, ROW_NUMBER(), RANK(), DENSE_RANK(), NTILE(), LAG(), and LEAD().",
+  "estimatedHours": 5.5,
+  "topics": [
+    {
+      "topicId": "t01-row-number-rank-dense-rank",
+      "title": "ROW_NUMBER, RANK & DENSE_RANK",
+      "description": "Master ranking functions and tie behavior.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 40,
+      "lessonMarkdown": "## Ranking without collapsing rows\n\nWindow functions let you calculate rankings while keeping every employee row.\n\n```sql\nSELECT employee_name, department, salary,\n       RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS salary_rank\nFROM employees;\n```\n\n`PARTITION BY` defines the groups; `ORDER BY` defines the ordering inside each group.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "## Ranking without collapsing rows\n\nWindow functions let you calculate rankings while keeping every employee row.\n\n```sql\nSELECT employee_name, department, salary,\n       RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS salary_rank\nFROM employees;\n```\n\n`PARTITION BY` defines the groups; `ORDER BY` defines the ordering inside each group."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE employees (\n    employee_id INTEGER PRIMARY KEY,\n    employee_name TEXT NOT NULL,\n    department TEXT NOT NULL,\n    salary INTEGER NOT NULL,\n    hire_date TEXT NOT NULL,\n    manager_id INTEGER\n);",
+        "seedSql": "INSERT INTO employees VALUES\n(1,'Asha','Engineering',90000,'2021-01-15',NULL),\n(2,'Ben','Engineering',70000,'2022-06-10',1),\n(3,'Cara','Engineering',75000,'2023-03-22',1),\n(4,'Dev','Sales',60000,'2020-08-01',NULL),\n(5,'Esha','Sales',50000,'2024-02-12',4),\n(6,'Farah','HR',65000,'2019-11-18',NULL),\n(7,'Gita','HR',52000,'2023-07-09',6),\n(8,'Hari','Sales',80000,'2021-05-11',4);",
+        "defaultTable": "employees",
+        "defaultQuery": "SELECT * FROM employees ORDER BY employee_id;",
+        "tasks": [
+          {
+            "taskId": "sql-m9-rank-1",
+            "instruction": "Assign row numbers within each department by salary descending.",
+            "expectedQuery": "SELECT employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) AS rn FROM employees ORDER BY department, rn;",
+            "solution": "SELECT employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) AS rn FROM employees ORDER BY department, rn;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Window",
+              "ROW_NUMBER"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee_name",
+                "department",
+                "salary",
+                "rn"
+              ],
+              "rows": [
+                [
+                  "Asha",
+                  "Engineering",
+                  90000,
+                  1
+                ],
+                [
+                  "Cara",
+                  "Engineering",
+                  75000,
+                  2
+                ],
+                [
+                  "Ben",
+                  "Engineering",
+                  70000,
+                  3
+                ],
+                [
+                  "Farah",
+                  "HR",
+                  65000,
+                  1
+                ],
+                [
+                  "Gita",
+                  "HR",
+                  52000,
+                  2
+                ],
+                [
+                  "Hari",
+                  "Sales",
+                  80000,
+                  1
+                ],
+                [
+                  "Dev",
+                  "Sales",
+                  60000,
+                  2
+                ],
+                [
+                  "Esha",
+                  "Sales",
+                  50000,
+                  3
+                ]
+              ],
+              "rowCount": 8
+            }
+          },
+          {
+            "taskId": "sql-m9-rank-2",
+            "instruction": "Rank employees within each department by salary, allowing ties.",
+            "expectedQuery": "SELECT employee_name, department, salary, RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS salary_rank FROM employees ORDER BY department, salary_rank, employee_id;",
+            "solution": "SELECT employee_name, department, salary, RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS salary_rank FROM employees ORDER BY department, salary_rank, employee_id;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Window",
+              "RANK"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee_name",
+                "department",
+                "salary",
+                "salary_rank"
+              ],
+              "rows": [
+                [
+                  "Asha",
+                  "Engineering",
+                  90000,
+                  1
+                ],
+                [
+                  "Cara",
+                  "Engineering",
+                  75000,
+                  2
+                ],
+                [
+                  "Ben",
+                  "Engineering",
+                  70000,
+                  3
+                ],
+                [
+                  "Farah",
+                  "HR",
+                  65000,
+                  1
+                ],
+                [
+                  "Gita",
+                  "HR",
+                  52000,
+                  2
+                ],
+                [
+                  "Hari",
+                  "Sales",
+                  80000,
+                  1
+                ],
+                [
+                  "Dev",
+                  "Sales",
+                  60000,
+                  2
+                ],
+                [
+                  "Esha",
+                  "Sales",
+                  50000,
+                  3
+                ]
+              ],
+              "rowCount": 8
+            }
+          },
+          {
+            "taskId": "sql-m9-rank-3",
+            "instruction": "Assign dense salary ranks within each department.",
+            "expectedQuery": "SELECT employee_name, department, salary, DENSE_RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS dense_rank FROM employees ORDER BY department, dense_rank, employee_id;",
+            "solution": "SELECT employee_name, department, salary, DENSE_RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS dense_rank FROM employees ORDER BY department, dense_rank, employee_id;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Window",
+              "DENSE_RANK"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee_name",
+                "department",
+                "salary",
+                "dense_rank"
+              ],
+              "rows": [
+                [
+                  "Asha",
+                  "Engineering",
+                  90000,
+                  1
+                ],
+                [
+                  "Cara",
+                  "Engineering",
+                  75000,
+                  2
+                ],
+                [
+                  "Ben",
+                  "Engineering",
+                  70000,
+                  3
+                ],
+                [
+                  "Farah",
+                  "HR",
+                  65000,
+                  1
+                ],
+                [
+                  "Gita",
+                  "HR",
+                  52000,
+                  2
+                ],
+                [
+                  "Hari",
+                  "Sales",
+                  80000,
+                  1
+                ],
+                [
+                  "Dev",
+                  "Sales",
+                  60000,
+                  2
+                ],
+                [
+                  "Esha",
+                  "Sales",
+                  50000,
+                  3
+                ]
+              ],
+              "rowCount": 8
+            }
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m9-rank-ch1",
+            "instruction": "Return only the highest-paid employee in each department using ROW_NUMBER.",
+            "expectedQuery": "WITH ranked AS (SELECT employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) AS rn FROM employees) SELECT employee_name, department, salary FROM ranked WHERE rn = 1 ORDER BY department;",
+            "solution": "WITH ranked AS (SELECT employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) AS rn FROM employees) SELECT employee_name, department, salary FROM ranked WHERE rn = 1 ORDER BY department;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Window",
+              "Top-1"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee_name",
+                "department",
+                "salary"
+              ],
+              "rows": [
+                [
+                  "Asha",
+                  "Engineering",
+                  90000
+                ],
+                [
+                  "Farah",
+                  "HR",
+                  65000
+                ],
+                [
+                  "Hari",
+                  "Sales",
+                  80000
+                ]
+              ],
+              "rowCount": 3
+            }
+          },
+          {
+            "taskId": "sql-m9-rank-ch2",
+            "instruction": "Return the two highest-paid employees in each department.",
+            "expectedQuery": "WITH ranked AS (SELECT employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) AS rn FROM employees) SELECT employee_name, department, salary FROM ranked WHERE rn <= 2 ORDER BY department, rn;",
+            "solution": "WITH ranked AS (SELECT employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) AS rn FROM employees) SELECT employee_name, department, salary FROM ranked WHERE rn <= 2 ORDER BY department, rn;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Window",
+              "Top-N"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "employee_name",
+                "department",
+                "salary"
+              ],
+              "rows": [
+                [
+                  "Asha",
+                  "Engineering",
+                  90000
+                ],
+                [
+                  "Cara",
+                  "Engineering",
+                  75000
+                ],
+                [
+                  "Farah",
+                  "HR",
+                  65000
+                ],
+                [
+                  "Gita",
+                  "HR",
+                  52000
+                ],
+                [
+                  "Hari",
+                  "Sales",
+                  80000
+                ],
+                [
+                  "Dev",
+                  "Sales",
+                  60000
+                ]
+              ],
+              "rowCount": 6
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Use PARTITION BY",
+        "Understand tie behavior",
+        "Solve Top-N-per-group problems"
+      ],
+      "commonMistakes": [
+        "Mixing rank functions without understanding ties",
+        "Filtering window aliases in the wrong query layer",
+        "Forgetting deterministic tie-breakers"
+      ],
+      "cheatSheet": [
+        "ROW_NUMBER unique positions",
+        "RANK ties with gaps",
+        "DENSE_RANK ties without gaps"
+      ],
+      "reflectionQuestions": [
+        "Which function should you use for Top 2 rows?",
+        "How should ties behave?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m9-rank-ex1",
+          "title": "ROW_NUMBER",
+          "task": "Give every row a unique position inside its department.",
+          "query": "SELECT employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) AS rn FROM employees;",
+          "result": {
+            "columns": [
+              "employee_name",
+              "department",
+              "salary",
+              "rn"
+            ],
+            "rows": [
+              [
+                "Asha",
+                "Engineering",
+                90000,
+                1
+              ],
+              [
+                "Cara",
+                "Engineering",
+                75000,
+                2
+              ],
+              [
+                "Ben",
+                "Engineering",
+                70000,
+                3
+              ],
+              [
+                "Farah",
+                "HR",
+                65000,
+                1
+              ],
+              [
+                "Gita",
+                "HR",
+                52000,
+                2
+              ],
+              [
+                "Hari",
+                "Sales",
+                80000,
+                1
+              ],
+              [
+                "Dev",
+                "Sales",
+                60000,
+                2
+              ],
+              [
+                "Esha",
+                "Sales",
+                50000,
+                3
+              ]
+            ],
+            "rowCount": 8
+          },
+          "explanation": "Use ROW_NUMBER when each row needs a unique position.",
+          "walkthrough": [
+            "Partition.",
+            "Sort.",
+            "Number."
+          ]
+        },
+        {
+          "exampleId": "sql-m9-rank-ex2",
+          "title": "RANK",
+          "task": "Keep ties at the same position.",
+          "query": "SELECT employee_name, department, salary, RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rnk FROM employees;",
+          "result": {
+            "columns": [
+              "employee_name",
+              "department",
+              "salary",
+              "rnk"
+            ],
+            "rows": [
+              [
+                "Asha",
+                "Engineering",
+                90000,
+                1
+              ],
+              [
+                "Cara",
+                "Engineering",
+                75000,
+                2
+              ],
+              [
+                "Ben",
+                "Engineering",
+                70000,
+                3
+              ],
+              [
+                "Farah",
+                "HR",
+                65000,
+                1
+              ],
+              [
+                "Gita",
+                "HR",
+                52000,
+                2
+              ],
+              [
+                "Hari",
+                "Sales",
+                80000,
+                1
+              ],
+              [
+                "Dev",
+                "Sales",
+                60000,
+                2
+              ],
+              [
+                "Esha",
+                "Sales",
+                50000,
+                3
+              ]
+            ],
+            "rowCount": 8
+          },
+          "explanation": "RANK is useful when equal values should share a rank.",
+          "walkthrough": [
+            "Partition.",
+            "Order.",
+            "Inspect ties."
+          ]
+        },
+        {
+          "exampleId": "sql-m9-rank-ex3",
+          "title": "Top 1 per group",
+          "task": "Rank first, then filter in an outer query.",
+          "query": "WITH ranked AS (SELECT employee_id, employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) rn FROM employees) SELECT * FROM ranked WHERE rn=1;",
+          "result": {
+            "columns": [
+              "employee_id",
+              "employee_name",
+              "department",
+              "salary",
+              "rn"
+            ],
+            "rows": [
+              [
+                1,
+                "Asha",
+                "Engineering",
+                90000,
+                1
+              ],
+              [
+                6,
+                "Farah",
+                "HR",
+                65000,
+                1
+              ],
+              [
+                8,
+                "Hari",
+                "Sales",
+                80000,
+                1
+              ]
+            ],
+            "rowCount": 3
+          },
+          "explanation": "The WHERE filter happens after the CTE produces row numbers.",
+          "walkthrough": [
+            "Create ranks.",
+            "Filter rank.",
+            "Return winners per group."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build department leaderboards with configurable tie rules.",
+      "pages": [
+        {
+          "pageId": "sql-m9-t1-p1",
+          "title": "Understand the idea",
+          "content": "Window functions calculate values across related rows without collapsing them into one row per group. The first family to learn is ranking.\n\n```sql\nROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC)\nRANK() OVER (PARTITION BY department ORDER BY salary DESC)\nDENSE_RANK() OVER (PARTITION BY department ORDER BY salary DESC)\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "ROW_NUMBER gives each row a distinct sequence within its partition."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT * FROM employees ORDER BY employee_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m9-t1-p1",
+            "question": "Which window function assigns a unique sequential number to each row?",
+            "options": [
+              "ROW_NUMBER()",
+              "RANK()",
+              "DENSE_RANK()",
+              "COUNT()"
+            ],
+            "correctAnswer": 0,
+            "explanation": "ROW_NUMBER gives each row a distinct sequence within its partition."
+          }
+        },
+        {
+          "pageId": "sql-m9-t1-p2",
+          "title": "Worked reasoning",
+          "content": "Use ORDER BY inside OVER to define ranking order.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "ROW_NUMBER gives each row a distinct sequence within its partition."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) AS rn FROM employees ORDER BY department, rn;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m9-t1-p2",
+            "question": "What happens to ties with RANK()?",
+            "options": [
+              "Tied rows receive the same rank and later ranks can skip",
+              "Every row gets a unique number",
+              "Ties are deleted",
+              "The query fails"
+            ],
+            "correctAnswer": 0,
+            "explanation": "ROW_NUMBER gives each row a distinct sequence within its partition."
+          }
+        },
+        {
+          "pageId": "sql-m9-t1-p3",
+          "title": "Predict before you run",
+          "content": "RANK assigns equal ranks to ties and leaves gaps after tied positions.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "ROW_NUMBER gives each row a distinct sequence within its partition."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "Which function removes ranking gaps after ties?"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m9-t1-p3",
+            "question": [
+              "ROW_NUMBER",
+              "RANK",
+              "DENSE_RANK",
+              "SUM"
+            ],
+            "options": 2,
+            "correctAnswer": "DENSE_RANK produces 1,2,2,3 rather than 1,2,2,4.",
+            "explanation": "ROW_NUMBER gives each row a distinct sequence within its partition."
+          }
+        },
+        {
+          "pageId": "sql-m9-t1-p4",
+          "title": "Debugging checklist",
+          "content": "A common mistake is expecting GROUP BY to preserve row-level detail; window functions are designed for that.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "ROW_NUMBER gives each row a distinct sequence within its partition."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "ROW_NUMBER() OVER (...)\nRANK() OVER (...)\nDENSE_RANK() OVER (...)"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m9-t1-p4",
+            "question": [
+              "When should ranking preserve every row?",
+              "Which ranking function fits ties?"
+            ],
+            "options": "Choose the ranking function based on how ties should behave.",
+            "correctAnswer": "## Ranking without collapsing rows\n\nWindow functions let you calculate rankings while keeping every employee row.\n\n```sql\nSELECT employee_name, department, salary,\n       RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS salary_rank\nFROM employees;\n```\n\n`PARTITION BY` defines the groups; `ORDER BY` defines the ordering inside each group.",
+            "explanation": "ROW_NUMBER gives each row a distinct sequence within its partition."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m9-rank-ex1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "ROW_NUMBER",
+          "code": "SELECT employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) AS rn FROM employees;"
+        },
+        {
+          "exampleId": "sql-m9-rank-ex2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "RANK",
+          "code": "SELECT employee_name, department, salary, RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rnk FROM employees;"
+        },
+        {
+          "exampleId": "sql-m9-rank-ex3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Top 1 per group",
+          "code": "WITH ranked AS (SELECT employee_id, employee_name, department, salary, ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC, employee_id) rn FROM employees) SELECT * FROM ranked WHERE rn=1;"
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Debug",
+        "Submit",
+        "Reflect"
+      ],
+      "scenario": "Employee leaderboard",
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 9: Window Functions & Analytical SQL",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t02-lag-lead-row-to-row-comparisons",
+      "title": "LAG, LEAD & Row-to-Row Comparisons",
+      "description": "Compare adjacent events inside ordered partitions.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 40,
+      "lessonMarkdown": "## Comparing adjacent rows\n\n`LAG` looks at an earlier row and `LEAD` at a later row.\n\n```sql\nSELECT order_id, order_date, amount,\n       LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount\nFROM orders;\n```\n\nThen derive differences such as `amount - previous_amount` in an outer query when needed.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "## Comparing adjacent rows\n\n`LAG` looks at an earlier row and `LEAD` at a later row.\n\n```sql\nSELECT order_id, order_date, amount,\n       LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount\nFROM orders;\n```\n\nThen derive differences such as `amount - previous_amount` in an outer query when needed."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE orders (\n    order_id INTEGER PRIMARY KEY,\n    customer_name TEXT NOT NULL,\n    order_date TEXT NOT NULL,\n    amount REAL NOT NULL,\n    status TEXT NOT NULL,\n    region TEXT NOT NULL\n);",
+        "seedSql": "INSERT INTO orders VALUES\n(101,'Asha','2026-01-05',1200,'Completed','South'),\n(102,'Ben','2026-01-07',800,'Completed','North'),\n(103,'Asha','2026-02-10',500,'Cancelled','South'),\n(104,'Cara','2026-02-14',1500,'Completed','West'),\n(105,'Ben','2026-03-03',900,'Pending','North'),\n(106,'Dev','2026-03-09',2000,'Completed','South'),\n(107,'Asha','2026-03-15',700,'Completed','South'),\n(108,'Cara','2026-03-20',1100,'Completed','West'),\n(109,'Esha','2026-04-02',450,'Cancelled','East'),\n(110,'Dev','2026-04-18',2100,'Completed','South');",
+        "defaultTable": "orders",
+        "defaultQuery": "SELECT * FROM orders ORDER BY order_id;",
+        "tasks": [
+          {
+            "taskId": "sql-m9-lag-1",
+            "instruction": "Show each order with the previous order amount for the same customer.",
+            "expectedQuery": "SELECT order_id, customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders ORDER BY customer_name, order_date, order_id;",
+            "solution": "SELECT order_id, customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders ORDER BY customer_name, order_date, order_id;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Window",
+              "LAG"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "order_id",
+                "customer_name",
+                "order_date",
+                "amount",
+                "previous_amount"
+              ],
+              "rows": [
+                [
+                  101,
+                  "Asha",
+                  "2026-01-05",
+                  1200,
+                  null
+                ],
+                [
+                  103,
+                  "Asha",
+                  "2026-02-10",
+                  500,
+                  1200
+                ],
+                [
+                  107,
+                  "Asha",
+                  "2026-03-15",
+                  700,
+                  500
+                ],
+                [
+                  102,
+                  "Ben",
+                  "2026-01-07",
+                  800,
+                  null
+                ],
+                [
+                  105,
+                  "Ben",
+                  "2026-03-03",
+                  900,
+                  800
+                ],
+                [
+                  104,
+                  "Cara",
+                  "2026-02-14",
+                  1500,
+                  null
+                ],
+                [
+                  108,
+                  "Cara",
+                  "2026-03-20",
+                  1100,
+                  1500
+                ],
+                [
+                  106,
+                  "Dev",
+                  "2026-03-09",
+                  2000,
+                  null
+                ],
+                [
+                  110,
+                  "Dev",
+                  "2026-04-18",
+                  2100,
+                  2000
+                ],
+                [
+                  109,
+                  "Esha",
+                  "2026-04-02",
+                  450,
+                  null
+                ]
+              ],
+              "rowCount": 10
+            }
+          },
+          {
+            "taskId": "sql-m9-lag-2",
+            "instruction": "Show each order and the amount difference from the previous order for that customer.",
+            "expectedQuery": "WITH x AS (SELECT order_id, customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders) SELECT order_id, customer_name, amount, amount - previous_amount AS difference_from_previous FROM x ORDER BY customer_name, order_date, order_id;",
+            "solution": "WITH x AS (SELECT order_id, customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders) SELECT order_id, customer_name, amount, amount - previous_amount AS difference_from_previous FROM x ORDER BY customer_name, order_date, order_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "LAG",
+              "calculation"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "order_id",
+                "customer_name",
+                "amount",
+                "difference_from_previous"
+              ],
+              "rows": [
+                [
+                  101,
+                  "Asha",
+                  1200,
+                  null
+                ],
+                [
+                  103,
+                  "Asha",
+                  500,
+                  -700
+                ],
+                [
+                  107,
+                  "Asha",
+                  700,
+                  200
+                ],
+                [
+                  102,
+                  "Ben",
+                  800,
+                  null
+                ],
+                [
+                  105,
+                  "Ben",
+                  900,
+                  100
+                ],
+                [
+                  104,
+                  "Cara",
+                  1500,
+                  null
+                ],
+                [
+                  108,
+                  "Cara",
+                  1100,
+                  -400
+                ],
+                [
+                  106,
+                  "Dev",
+                  2000,
+                  null
+                ],
+                [
+                  110,
+                  "Dev",
+                  2100,
+                  100
+                ],
+                [
+                  109,
+                  "Esha",
+                  450,
+                  null
+                ]
+              ],
+              "rowCount": 10
+            }
+          },
+          {
+            "taskId": "sql-m9-lag-3",
+            "instruction": "Show each order and the next order date for the same customer.",
+            "expectedQuery": "SELECT order_id, customer_name, order_date, LEAD(order_date) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS next_order_date FROM orders ORDER BY customer_name, order_date, order_id;",
+            "solution": "SELECT order_id, customer_name, order_date, LEAD(order_date) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS next_order_date FROM orders ORDER BY customer_name, order_date, order_id;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Window",
+              "LEAD"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "order_id",
+                "customer_name",
+                "order_date",
+                "next_order_date"
+              ],
+              "rows": [
+                [
+                  101,
+                  "Asha",
+                  "2026-01-05",
+                  "2026-02-10"
+                ],
+                [
+                  103,
+                  "Asha",
+                  "2026-02-10",
+                  "2026-03-15"
+                ],
+                [
+                  107,
+                  "Asha",
+                  "2026-03-15",
+                  null
+                ],
+                [
+                  102,
+                  "Ben",
+                  "2026-01-07",
+                  "2026-03-03"
+                ],
+                [
+                  105,
+                  "Ben",
+                  "2026-03-03",
+                  null
+                ],
+                [
+                  104,
+                  "Cara",
+                  "2026-02-14",
+                  "2026-03-20"
+                ],
+                [
+                  108,
+                  "Cara",
+                  "2026-03-20",
+                  null
+                ],
+                [
+                  106,
+                  "Dev",
+                  "2026-03-09",
+                  "2026-04-18"
+                ],
+                [
+                  110,
+                  "Dev",
+                  "2026-04-18",
+                  null
+                ],
+                [
+                  109,
+                  "Esha",
+                  "2026-04-02",
+                  null
+                ]
+              ],
+              "rowCount": 10
+            }
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m9-lag-ch1",
+            "instruction": "Find orders whose amount increased compared with the previous order for that customer.",
+            "expectedQuery": "WITH x AS (SELECT order_id, customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders) SELECT order_id, customer_name, amount, previous_amount FROM x WHERE previous_amount IS NOT NULL AND amount > previous_amount ORDER BY customer_name, order_date, order_id;",
+            "solution": "WITH x AS (SELECT order_id, customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders) SELECT order_id, customer_name, amount, previous_amount FROM x WHERE previous_amount IS NOT NULL AND amount > previous_amount ORDER BY customer_name, order_date, order_id;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "LAG",
+              "comparison"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "order_id",
+                "customer_name",
+                "amount",
+                "previous_amount"
+              ],
+              "rows": [
+                [
+                  107,
+                  "Asha",
+                  700,
+                  500
+                ],
+                [
+                  105,
+                  "Ben",
+                  900,
+                  800
+                ],
+                [
+                  110,
+                  "Dev",
+                  2100,
+                  2000
+                ]
+              ],
+              "rowCount": 3
+            }
+          },
+          {
+            "taskId": "sql-m9-lag-ch2",
+            "instruction": "For each customer, return the largest increase between consecutive orders.",
+            "expectedQuery": "WITH x AS (SELECT order_id, customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders), diffs AS (SELECT customer_name, amount - previous_amount AS diff FROM x WHERE previous_amount IS NOT NULL) SELECT customer_name, MAX(diff) AS largest_increase FROM diffs GROUP BY customer_name ORDER BY customer_name;",
+            "solution": "WITH x AS (SELECT order_id, customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders), diffs AS (SELECT customer_name, amount - previous_amount AS diff FROM x WHERE previous_amount IS NOT NULL) SELECT customer_name, MAX(diff) AS largest_increase FROM diffs GROUP BY customer_name ORDER BY customer_name;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "LAG",
+              "MAX"
+            ],
+            "hint": "Start from the requested output, identify the required table(s), then add only the SQL clauses needed to produce it.",
+            "commonMistake": "Check column names, filtering conditions, grouping level, and output order before submitting.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "customer_name",
+                "largest_increase"
+              ],
+              "rows": [
+                [
+                  "Asha",
+                  200
+                ],
+                [
+                  "Ben",
+                  100
+                ],
+                [
+                  "Cara",
+                  -400
+                ],
+                [
+                  "Dev",
+                  100
+                ]
+              ],
+              "rowCount": 4
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Define row order",
+        "Use LAG and LEAD",
+        "Derive change metrics"
+      ],
+      "commonMistakes": [
+        "Missing ORDER BY",
+        "Ignoring NULL on first/last rows",
+        "Comparing unrelated partitions"
+      ],
+      "cheatSheet": [
+        "LAG(value) OVER (PARTITION BY ... ORDER BY ...)",
+        "LEAD(value) OVER (...)"
+      ],
+      "reflectionQuestions": [
+        "What defines previous?",
+        "How should the first row be treated?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m9-lag-ex1",
+          "title": "Previous amount",
+          "task": "Read the previous row in a customer partition.",
+          "query": "SELECT order_id, customer_name, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders;",
+          "result": {
+            "columns": [
+              "order_id",
+              "customer_name",
+              "amount",
+              "previous_amount"
+            ],
+            "rows": [
+              [
+                101,
+                "Asha",
+                1200,
+                null
+              ],
+              [
+                103,
+                "Asha",
+                500,
+                1200
+              ],
+              [
+                107,
+                "Asha",
+                700,
+                500
+              ],
+              [
+                102,
+                "Ben",
+                800,
+                null
+              ],
+              [
+                105,
+                "Ben",
+                900,
+                800
+              ],
+              [
+                104,
+                "Cara",
+                1500,
+                null
+              ],
+              [
+                108,
+                "Cara",
+                1100,
+                1500
+              ],
+              [
+                106,
+                "Dev",
+                2000,
+                null
+              ],
+              [
+                110,
+                "Dev",
+                2100,
+                2000
+              ],
+              [
+                109,
+                "Esha",
+                450,
+                null
+              ]
+            ],
+            "rowCount": 10
+          },
+          "explanation": "The first row in each customer partition has no previous value.",
+          "walkthrough": [
+            "Partition by customer.",
+            "Order by date.",
+            "Read LAG result."
+          ]
+        },
+        {
+          "exampleId": "sql-m9-lag-ex2",
+          "title": "Difference",
+          "task": "Turn LAG into a change metric.",
+          "query": "WITH x AS (SELECT customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS prev FROM orders) SELECT customer_name, order_date, amount-prev AS diff FROM x;",
+          "result": {
+            "columns": [
+              "customer_name",
+              "order_date",
+              "diff"
+            ],
+            "rows": [
+              [
+                "Asha",
+                "2026-01-05",
+                null
+              ],
+              [
+                "Asha",
+                "2026-02-10",
+                -700
+              ],
+              [
+                "Asha",
+                "2026-03-15",
+                200
+              ],
+              [
+                "Ben",
+                "2026-01-07",
+                null
+              ],
+              [
+                "Ben",
+                "2026-03-03",
+                100
+              ],
+              [
+                "Cara",
+                "2026-02-14",
+                null
+              ],
+              [
+                "Cara",
+                "2026-03-20",
+                -400
+              ],
+              [
+                "Dev",
+                "2026-03-09",
+                null
+              ],
+              [
+                "Dev",
+                "2026-04-18",
+                100
+              ],
+              [
+                "Esha",
+                "2026-04-02",
+                null
+              ]
+            ],
+            "rowCount": 10
+          },
+          "explanation": "Arithmetic belongs in an outer query when you want to reuse the window result cleanly.",
+          "walkthrough": [
+            "Compute previous.",
+            "Subtract.",
+            "Handle NULL first rows."
+          ]
+        },
+        {
+          "exampleId": "sql-m9-lag-ex3",
+          "title": "Next date",
+          "task": "Look forward one event.",
+          "query": "SELECT order_id, customer_name, order_date, LEAD(order_date) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS next_order_date FROM orders;",
+          "result": {
+            "columns": [
+              "order_id",
+              "customer_name",
+              "order_date",
+              "next_order_date"
+            ],
+            "rows": [
+              [
+                101,
+                "Asha",
+                "2026-01-05",
+                "2026-02-10"
+              ],
+              [
+                103,
+                "Asha",
+                "2026-02-10",
+                "2026-03-15"
+              ],
+              [
+                107,
+                "Asha",
+                "2026-03-15",
+                null
+              ],
+              [
+                102,
+                "Ben",
+                "2026-01-07",
+                "2026-03-03"
+              ],
+              [
+                105,
+                "Ben",
+                "2026-03-03",
+                null
+              ],
+              [
+                104,
+                "Cara",
+                "2026-02-14",
+                "2026-03-20"
+              ],
+              [
+                108,
+                "Cara",
+                "2026-03-20",
+                null
+              ],
+              [
+                106,
+                "Dev",
+                "2026-03-09",
+                "2026-04-18"
+              ],
+              [
+                110,
+                "Dev",
+                "2026-04-18",
+                null
+              ],
+              [
+                109,
+                "Esha",
+                "2026-04-02",
+                null
+              ]
+            ],
+            "rowCount": 10
+          },
+          "explanation": "LEAD makes next-event analysis straightforward.",
+          "walkthrough": [
+            "Partition.",
+            "Order.",
+            "Read next value."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Analyze customer order trends and changes over time.",
+      "pages": [
+        {
+          "pageId": "sql-m9-t2-p1",
+          "title": "Understand the idea",
+          "content": "`LAG` and `LEAD` let you compare a row with a previous or next row within an ordered window. They are fundamental for time-series and sequence analysis.\n\n```sql\nLAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date)\nLEAD(amount) OVER (PARTITION BY customer_name ORDER BY order_date)\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "LAG looks backward in the window order."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT * FROM orders ORDER BY order_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m9-t2-p1",
+            "question": "Which function returns a previous row's value?",
+            "options": [
+              "LAG()",
+              "LEAD()",
+              "PREV()",
+              "BACK()"
+            ],
+            "correctAnswer": 0,
+            "explanation": "LAG looks backward in the window order."
+          }
+        },
+        {
+          "pageId": "sql-m9-t2-p2",
+          "title": "Worked reasoning",
+          "content": "Always specify an ORDER BY that defines what “previous” means.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "LAG looks backward in the window order."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT order_id, customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders ORDER BY customer_name, order_date, order_id;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m9-t2-p2",
+            "question": "What does LEAD provide?",
+            "options": [
+              "The next ordered row value",
+              "The current row value",
+              "The maximum value",
+              "The grouped average"
+            ],
+            "correctAnswer": 0,
+            "explanation": "LAG looks backward in the window order."
+          }
+        },
+        {
+          "pageId": "sql-m9-t2-p3",
+          "title": "Predict before you run",
+          "content": "LEAD looks forward.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "LAG looks backward in the window order."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "What should you do with the first row in each partition when using LAG?"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m9-t2-p3",
+            "question": [
+              "Expect NULL unless a default is supplied",
+              "Delete the row",
+              "Use MIN",
+              "Use GROUP BY"
+            ],
+            "options": 0,
+            "correctAnswer": "There is no previous row for the first row, so LAG returns NULL by default.",
+            "explanation": "LAG looks backward in the window order."
+          }
+        },
+        {
+          "pageId": "sql-m9-t2-p4",
+          "title": "Debugging checklist",
+          "content": "Do not assume the physical table order represents sequence; define order explicitly.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "LAG looks backward in the window order."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "LAG(value) OVER (...)\nLEAD(value) OVER (...)\nLAG(value,1,0) for a custom default"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m9-t2-p4",
+            "question": [
+              "What defines “previous”?",
+              "Where are LAG/LEAD useful in reporting?"
+            ],
+            "options": "Sequence analysis depends on an explicit business ordering.",
+            "correctAnswer": "## Comparing adjacent rows\n\n`LAG` looks at an earlier row and `LEAD` at a later row.\n\n```sql\nSELECT order_id, order_date, amount,\n       LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount\nFROM orders;\n```\n\nThen derive differences such as `amount - previous_amount` in an outer query when needed.",
+            "explanation": "LAG looks backward in the window order."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m9-lag-ex1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Previous amount",
+          "code": "SELECT order_id, customer_name, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS previous_amount FROM orders;"
+        },
+        {
+          "exampleId": "sql-m9-lag-ex2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Difference",
+          "code": "WITH x AS (SELECT customer_name, order_date, amount, LAG(amount) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS prev FROM orders) SELECT customer_name, order_date, amount-prev AS diff FROM x;"
+        },
+        {
+          "exampleId": "sql-m9-lag-ex3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Next date",
+          "code": "SELECT order_id, customer_name, order_date, LEAD(order_date) OVER (PARTITION BY customer_name ORDER BY order_date, order_id) AS next_order_date FROM orders;"
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Debug",
+        "Submit",
+        "Reflect"
+      ],
+      "scenario": "Customer sequence analysis",
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 9: Window Functions & Analytical SQL",
+      "practiceProblems": []
+    }
+  ]
+}

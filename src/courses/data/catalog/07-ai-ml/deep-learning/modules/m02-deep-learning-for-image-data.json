@@ -1,0 +1,972 @@
+{
+  "moduleId": "m02-deep-learning-for-image-data",
+  "title": "Deep Learning for Image Data",
+  "description": "Core concepts and hands-on practice in Deep Learning for Image Data.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-how-machines-see",
+      "title": "How Machines See",
+      "description": "Study concepts and solve targeted engineering problems for How Machines See.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-DLPROB54",
+          "title": "What Patterns MLP Learns from Image Numbers",
+          "content": "Now, we move one step deeper. Images are very different from tabular data, and this creates unique challenges for neural networks. Let’s understand *why learning from images is hard*.\n\nYou already know that images are converted into numbers. Now we focus on what happens *after* those numbers enter a neural network.\n\n---\n\n**1. Images Have Many Inputs:** Compared to tabular data, images send **many more numbers** into the model.\n\nExample:\n- House price prediction → few inputs (rooms, area)\n- A small image → hundreds of pixel values at once\n\nThis means the network must learn from a very large input space.\n\n---\n\n**2. Small Visual Changes Create Large Numeric Changes:** Images that look almost the same to humans can have very different pixel values.\n\nExample:\n- A lightly written digit\n- The same digit written darker\n\nHumans see the same digit. The model receives different numbers. So even tiny visual changes can significantly change the input data.\n\n---\n\n**3. How This Affects an MLP**\nFrom the first module, you learned that an MLP works like this: **Input numbers → multiplied by weights → added with bias → activation → next layer**\n\nAn **MLP** does not understand shapes or meaning, it treats each pixel value as just another number. When pixel values change, the **Weight multiplications** change, **Neuron activations** change and then **Final prediction** can change a lot. Because images have many inputs, these small numeric changes get amplified as data flows through layers.\n\n---\n\n**4. Real-World Image Variations**\nIn real images: **lighting changes, writing styles differ, and camera quality varies**. All of these slightly change pixel values, even if the object is the same. \n\nThis makes image learning especially challenging for simple neural networks like MLPs.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "What Patterns MLP Learns from Image Numbers introduces an important idea in How Machines See; connect the explanation to the runnable Python example and the practical task that follows."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "pixels = [0, 64, 128, 255]\nnormalized = [round(p / 255.0, 3) for p in pixels]\nprint(normalized)"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DLPROB54",
+            "question": "Which statement best describes What Patterns MLP Learns from Image Numbers in How Machines See?",
+            "options": [
+              "It applies the core how machines see concept correctly and makes the intended behavior explicit.",
+              "It deliberately ignores the model inputs and produces an unrelated fixed result.",
+              "It removes the need for data preparation, evaluation, or validation in every AI system.",
+              "It requires unbounded recursion and undefined behavior to function."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option directly captures the purpose of What Patterns MLP Learns from Image Numbers as presented in the How Machines See topic."
+          }
+        },
+        {
+          "pageId": "p-BAOSAJ01",
+          "title": "MCQ",
+          "content": "Two images of the same digit look almost identical to humans, but the **MLP** treats them differently. **Why?**",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "MCQ introduces an important idea in How Machines See; connect the explanation to the runnable Python example and the practical task that follows."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "def solve(value):\n return value\n\nprint(solve(\"ready\"))"
+          }
+        },
+        {
+          "pageId": "p-DLPROB59",
+          "title": "Normalization",
+          "content": "In the previous module, we learned **how images (and other data)** are **converted** into **numbers** and **fed** into a **neural network (MLP).** We also saw that **small changes in pixel values can create large numeric differences**, and that the MLP reacts to **raw numbers directly**. \n\nHowever, there is a missing piece:\n- Input features can have **very different numeric ranges**. \n- MLPs treat **all numbers as-is**, so features with larger values can **dominate learning**, while smaller features may be ignored.\n\nNotice how **some numbers are much bigger than others**? **Without** normalization, the network **cannot** know which **features** are more **important**, it just **multiplies** numbers by **weights.** This can lead to: \n- Slow training and Unstable learning \n- Difficulty in converging to a good solution \n\n---\n\n**What is Normalization?**\n\nNormalization is the process of **scaling all input numbers to a similar range**. \n\n- For example, pixel values that were in the range **0-255** can be scaled to **0-1** \n- Apartment sizes **(500-2000)** can be scaled so they also roughly fall between **0-1** \n- The goal is that **all features contribute roughly equally** to learning \n\nThink of it like **shrinking everything to the same scale** so the network doesn’t get “confused” by large differences in numbers. \n\n**Why Normalization Helps MLPs**\n\n1. **Faster learning** – weights update more efficiently when inputs are on a similar scale \n2. **Stability** – prevents very large input numbers from dominating neuron activations \n3. **Better accuracy** – ensures the network focuses on **patterns**, not raw magnitude \n4. **Handles visual differences better** – small changes in pixel values are reflected proportionally \n\n---\n\n**Key Idea:** Normalization ensures that **all features are on a similar scale**, letting the MLP focus on **patterns and relationships** rather than absolute magnitudes. \n\nIn machine learning, you may also see:\n- **Min–Max Scaling** (scales values into a fixed range, usually 0–1)\n- **Standardization** (centers data around 0 and scales by how spread out it is)\n\nYou have already encountered these techniques in the ML course. In this module, we focus mainly on **normalization for images** because:\n- Image pixel values have a known and fixed range\n- Normalization works naturally and reliably for visual data",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Normalization introduces an important idea in How Machines See; connect the explanation to the runnable Python example and the practical task that follows."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "pixels = [0, 64, 128, 255]\nnormalized = [round(p / 255.0, 3) for p in pixels]\nprint(normalized)"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-DLPROB54-java",
+          "language": "python",
+          "label": "Python",
+          "title": "What Patterns MLP Learns from Image Numbers (Python)",
+          "code": "pixels = [0, 64, 128, 255]\nnormalized = [round(p / 255.0, 3) for p in pixels]\nprint(normalized)"
+        },
+        {
+          "exampleId": "ex-BAOSAJ01-java",
+          "language": "python",
+          "label": "Python",
+          "title": "MCQ (Python)",
+          "code": "def solve(value):\n return value\n\nprint(solve(\"ready\"))"
+        },
+        {
+          "exampleId": "ex-DLPROB59-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Normalization (Python)",
+          "code": "pixels = [0, 64, 128, 255]\nnormalized = [round(p / 255.0, 3) for p in pixels]\nprint(normalized)"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "DLPROB55",
+          "questionId": "DLPROB55",
+          "title": "Effect of Small Pixel Changes on MLP",
+          "difficulty": "Easy",
+          "description": "In this demonstration, we will work with two images that represent the **same object**.\n\nTo create a small difference between them, we slightly change how light or dark the image appears. \nThis is done using a single line of code, but you do **not** need to learn how this works internally.\n\nThe purpose of this step is **not image editing**. \nIt is only used to simulate what already happens naturally in real-world image data.\n\nIn real life:\n- Lighting conditions change\n- Cameras capture brightness differently\n- Writing pressure varies\n- Screens and sensors are not identical\n\nBecause of this, the **same object** can appear slightly different across images, even when nothing meaningful has changed.\n\nTo humans, these images still look the same. \nTo a neural network, these small visual differences become **different pixel values**.\n\nIn the code, this is done using:\n```python\nenhancer = ImageEnhance.Brightness(img) \nimg_modified = enhancer.enhance(1.2)\n```\nThis simply creates a second version of the same image with a small numeric change.\n\nNow, we will use code to observe:\n- How pixel values change\n- How these numbers are passed as input to an MLP\n- How the MLP’s final prediction reacts to this small change\n\n---\n\n**Expected output**\n```code\nOriginal image pixel sample: [232 232 233 232 233]\nModified image pixel sample: [255 255 255 255 255]\nAverage pixel difference: 209.28\nMaximum pixel difference: 255\nPrediction for original image: [[1. 0.]]\nPrediction for modified image: [[1. 0.]]\n```\n\n**Note:** Even though the pixel values changed, the final prediction stayed the same. This happens because the MLP has almost no training experience. With many training images (such as handwritten digits), the same numeric change would influence the model’s output more clearly.\n\nReworked task: Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "problemStatement": "Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N grayscale pixel values.",
+          "outputFormat": "Print normalized values rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.2510 0.7529",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "0.0039 0.0078 0.0118 0.0157",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "4\n255 250 125 0",
+              "output": "1.0000 0.9804 0.4902 0.0000",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n10 100 200",
+              "output": "0.0392 0.3922 0.7843",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "DLPROB56",
+          "questionId": "DLPROB56",
+          "title": "Predict Car Price from an Image",
+          "difficulty": "Easy",
+          "description": "You are helping a car dealership estimate the price of a car based on its photo.\n\nInstead of using tabular data, we will use a **single car image** and train a small neural network to predict the price.\n\n---\n\n**Problem Statement**\n\n- You have **one image of a car** (`car.png`) \n- You know the price of this car (for example, $20,000) \n- Your task is to train a small MLP on this image and predict the price for a slightly modified version of the same image (e.g., slightly brighter or darker, simulating real-world variation)\n\n---\n\n**Tasks**\n\n1. **Load the car image**\n - Use PIL to open the image\n - Convert it to grayscale\n - Resize to a small size (e.g., 28×28) to make it easy for MLP\n\n2. **Create a slightly modified version** \n - For example, change the brightness using `ImageEnhance.Brightness` \n - This simulates small real-world changes\n\n3. **Convert images to numbers**\n - Convert both original and modified images into NumPy arrays \n - Flatten them to create input vectors for the MLP\n\n4. **Build and train an MLP Regressor**\n - Use 1 hidden layer (start with 4 neurons) \n - Activation: 'relu', Solver: 'adam', max_iter=2000 \n - Train the model on the original image with its known price\n\n5. **Predict the price of the modified image**\n - Feed the modified image into the trained MLP \n - Print the predicted price\n\n---\n\n**Expected Output**\n```code\nOriginal image pixel sample: [232 232 232 232 231]\nModified image pixel sample: [255 255 255 255 255]\nAverage pixel difference: 235.4783163265306\nMaximum pixel difference: 255\nPredicted price for modified image: 23684.380191498167\n```\n\nReworked task: Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "problemStatement": "Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N grayscale pixel values.",
+          "outputFormat": "Print normalized values rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.2510 0.7529",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "0.0039 0.0078 0.0118 0.0157",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "4\n255 250 125 0",
+              "output": "1.0000 0.9804 0.4902 0.0000",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n10 100 200",
+              "output": "0.0392 0.3922 0.7843",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "Q5085",
+          "questionId": "Q5085",
+          "title": "Short Answer",
+          "difficulty": "Easy",
+          "description": "### Concept Assessment: Short Answer\n\n**Topic Focus:** How Machines See (Deep Learning for Image Data)\n\nThis lesson checks your mastery of **How Machines See**. Review the syntax, semantics, and execution flow demonstrated in the code card below and test your knowledge with the interactive checkpoint question.\n\nReworked executable task: Given N grayscale pixel values, output the average normalized intensity (mean of p/255).",
+          "problemStatement": "Given N grayscale pixel values, output the average normalized intensity (mean of p/255).",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N pixel values.",
+          "outputFormat": "Print mean normalized intensity rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "2\n0 255",
+              "output": "0.5000",
+              "explanation": "The sample demonstrates the stated rule."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n data = sys.stdin.read().splitlines()\n # Implement the stated task.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){return 0;}",
+            "Java": "import java.io.*; import java.util.*; public class Main { public static void main(String[] args) throws Exception {} }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "2\n0 255",
+              "output": "0.5000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "3\n128 128 128",
+              "output": "0.5020",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "3\n10 20 30",
+              "output": "0.0784",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.5020",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n1 254 127",
+              "output": "0.4993",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "DLPROB60",
+          "questionId": "DLPROB60",
+          "title": "How Normalization Affects MLP Predictions",
+          "difficulty": "Easy",
+          "description": "In the previous demonstration, we saw that **small visual changes in an image** lead to **different numeric values**, and that an MLP reacts to these numbers. \n\nNow, we will take this one step further and explore **normalization**, scaling input numbers so that all features contribute **equally** to learning.\n\n---\n\n**What We Are Doing in This Demonstration**\n\n1. We take a single image (`digit.png`) as input.\n2. We create a **slightly modified version** of the image to simulate small real-world changes (brightness differences, etc.).\n3. We flatten both images into numeric arrays that the MLP can process.\n4. We train an **MLP Regressor** on the original image.\n5. We compare **predictions on the modified image**:\n - **Without normalization**: raw pixel values are used.\n - **With normalization**: pixel values are scaled to the range **0-1** by **dividing** the **maximum** pixel value (i.e **255**).\n6. We observe how normalization **stabilizes the prediction** and makes the MLP less sensitive to large numeric ranges.\n\n**Note:** **Normalization** depends on the **type of data** and the **goal.** For images, we often **divide** pixel values by **255** to scale them between **0** and **1.** For other data (like **distance, weight, or prices**), **normalization** is **done** differently, but the goal is always the same: bring **numbers** to a **similar scale.**\n\n\n**Goal:** To show that **normalization** helps the network **focus on patterns** rather than being misled by raw numeric differences.\n\n---\n**Output**\n```code\nPrediction WITHOUT normalization: 13.07\nPrediction WITH normalization: 0.99\n```\n\nReworked task: Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "problemStatement": "Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N grayscale pixel values.",
+          "outputFormat": "Print normalized values rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.2510 0.7529",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "0.0039 0.0078 0.0118 0.0157",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "4\n255 250 125 0",
+              "output": "1.0000 0.9804 0.4902 0.0000",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n10 100 200",
+              "output": "0.0392 0.3922 0.7843",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "DLPROB61",
+          "questionId": "DLPROB61",
+          "title": "Normalization with Image Data",
+          "difficulty": "Easy",
+          "description": "In the previous demonstration, you saw that neural networks react directly to numeric pixel values, and that normalization helps keep these values on a similar scale.\n\nIn this practice problem, you will work with **image data again**, so you can clearly see how normalization affects the numeric input given to an MLP.\n\n---\n\n**Problem Scenario**\n\nYou are given a single image of an object (for example, a simple shape). \nEven though the image looks simple, each pixel is still a number between **0 and 255**.\n\n\n**Your Task**\n\n1. Load an image and convert into grayscale image and resize it to a fixed size.\n2. Convert the image into numeric pixel values.\n3. Train an MLP Regressor using **raw pixel values**.\n4. Normalize the pixel values by scaling them to the range **0–1**.\n5. **Train an MLP Regressor using normalized pixel values**\n - Fill in the blanks to:\n - Initialize an **MLPRegressor**\n - Set `hidden_layer_sizes` to **(4,)**\n - Use **ReLU** as the activation function\n - Use **Adam** as the solver\n - Set `max_iter` to **2000**\n - Train the model using the **normalized input data**\n - Generate a prediction using the normalized input\n6. Compare the predictions made by both models.\n\n---\n\n**Expected Output**\n```code \nPrediction WITHOUT normalization: 28.0\nPrediction WITH normalization: 0.55\n```\n\nReworked task: Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "problemStatement": "Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N grayscale pixel values.",
+          "outputFormat": "Print normalized values rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.2510 0.7529",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "0.0039 0.0078 0.0118 0.0157",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "4\n255 250 125 0",
+              "output": "1.0000 0.9804 0.4902 0.0000",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n10 100 200",
+              "output": "0.0392 0.3922 0.7843",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "BAOSAJ03",
+          "questionId": "BAOSAJ03",
+          "title": "Smiley Face Image and MLP Sensitivity",
+          "difficulty": "Easy",
+          "description": "In this practice problem, you will work with a **smiley face image** .\n\nTo humans, the smiley face looks the same even if it becomes slightly brighter or darker. \nHowever, a neural network does not understand faces or emotions. It only processes **numbers**.\n\nYou will take **one smiley face image** and create a **slightly modified version** by changing its brightness. \nThis simulates natural variations such as lighting or screen brightness differences.\n\nYou will then feed both images into an **MLP** and observe how:\n- Pixel values change\n- These numbers are used as inputs to the network\n- Normalization affects the model’s behavior\n\n---\n\n**Task**\n\nComplete the following steps:\n1. Load a smiley face image and convert it to grayscale \n2. Create a second version of the same image by slightly changing its brightness \n3. Convert both images into NumPy arrays and compare their pixel values \n4. Measure the numeric difference between the two images \n5. Flatten the images and use them as input to an MLP \n6. Train and evaluate an MLP Regressor (with and without normalization)\n - Fill in all parameters to initialize an **MLPRegressor**, including:\n - One hidden layer with **4 neurons**\n - **ReLU** activation function\n - **Adam** optimizer\n - `max_iter = 2000`\n - Train the model using **raw (unnormalized) pixel values** and predict on the modified image.\n7. Normalize the pixel values and train the MLP again \n8. Compare how normalization changes the model’s response to the modified image \n\n---\n\n**Expected Output**\n```code \nOriginal image pixel sample: [203 203 203 203 203]\nModified image pixel sample: [243 243 243 243 243]\nAverage pixel difference: 213.6454081632653\nMaximum pixel difference: 255\nPrediction WITHOUT normalization: -0.51\nPrediction WITH normalization: 1.4\n```\n\nReworked task: Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "problemStatement": "Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N grayscale pixel values.",
+          "outputFormat": "Print normalized values rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.2510 0.7529",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "0.0039 0.0078 0.0118 0.0157",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "4\n255 250 125 0",
+              "output": "1.0000 0.9804 0.4902 0.0000",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n10 100 200",
+              "output": "0.0392 0.3922 0.7843",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "deep-learning-ai.json",
+      "_moduleTitle": "Deep Learning for Image Data"
+    },
+    {
+      "topicId": "t02-train-evaluate-image-models",
+      "title": "Train & Evaluate Image Models",
+      "description": "Study concepts and solve targeted engineering problems for Train & Evaluate Image Models.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 40,
+      "pages": [
+        {
+          "pageId": "p-YUEWRX01",
+          "title": "Image Classification with MLP",
+          "content": "In the previous topics, we used images to understand how neural networks handle pixel values and why normalization is important. \nNow, we use that knowledge to solve a real-world task: **image classification**.\n\n---\n\n**What is Image Classification?**\nImage classification means assigning a **category or class** to an image. Instead of predicting a number, the model chooses **one label from many possible labels**.\n\nExamples:\n- Handwritten digits → **0, 1, 2, …**\n- Shapes → **circle, square, triangle**\n- Objects → **car, bike, bus**\n- Medical images → **normal, abnormal**\n\nThe goal is simple: given an image, predict the correct class to which it belongs.\n\n**How Image Classification Works with an MLP**\nAn MLP does not understand **what an object is.** It only sees **numbers coming from pixels**.\n\nFor image classification, the workflow is:\n**Image → Pixel values → Normalization → MLP → Class scores → Predicted class**\n\n- Each image is converted into a long list of pixel numbers \n- The MLP processes these numbers through its layers \n- The final layer produces a score for each class \n- The class with the highest score becomes the prediction \n\n---\n\n**What the Model Learns**\n\nDuring training:\n- Images of the **same class** are shown many times \n- The MLP adjusts its weights so similar images produce similar outputs \n- Over time, the model learns numeric patterns that separate one class from another \n\nEven though the MLP only sees numbers, it can still learn:\n- “These number patterns usually mean digit 0”\n- “These number patterns usually mean digit 1”\n\n\nIn the next section, we will train an **MLP** on a small image dataset and **observe** how well it can perform **image classification.**",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Image Classification with MLP introduces an important idea in Train & Evaluate Image Models; connect the explanation to the runnable Python example and the practical task that follows."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "pixels = [0, 64, 128, 255]\nnormalized = [round(p / 255.0, 3) for p in pixels]\nprint(normalized)"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-YUEWRX01",
+            "question": "Which statement best describes Image Classification with MLP in Train & Evaluate Image Models?",
+            "options": [
+              "It applies the core train & evaluate image models concept correctly and makes the intended behavior explicit.",
+              "It deliberately ignores the model inputs and produces an unrelated fixed result.",
+              "It removes the need for data preparation, evaluation, or validation in every AI system.",
+              "It requires unbounded recursion and undefined behavior to function."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option directly captures the purpose of Image Classification with MLP as presented in the Train & Evaluate Image Models topic."
+          }
+        },
+        {
+          "pageId": "p-YUEWRX05",
+          "title": "Evaluating Image Classification Models",
+          "content": "Now that we have trained an MLP to classify images (such as Circle vs Square or Triangle vs Cross), it is important to **understand how well the model is performing**.\n\nEven if the model makes predictions, we need to answer questions like:\n- How many predictions are correct?\n- Which classes are being confused?\n- Are there patterns in the mistakes?\n\n---\n\n**1. Accuracy:** Measures the fraction of predictions that are correct:\n\n$$\n\\text{Accuracy} = \\frac{\\text{Number of correct predictions}}{\\text{Total number of predictions}}\n$$\n\nExample:\n- 8 out of 10 images are classified correctly → Accuracy = 0.8 (80%)\n\nAccuracy gives a **quick overall idea**, but does not show **which class is performing better or worse**.\n\n---\n\n**2. Confusion Matrix:** A confusion matrix shows **how many images of each actual class are predicted as each class**.\n\nFor a two-class problem (Circle vs Square):\n| Actual\\Predicted | Circle | Square |\n|-----------------|--------|--------|\n| Circle | 8 | 2 |\n| Square | 1 | 9 |\n\n- **Correct predictions** → cases where the model **predicted** the right class \n- **Incorrect predictions** → cases where the model **predicted** the wrong class\n \n\nIt helps us **see patterns in errors** and understand the limitations of the model.\n\n---\n\n**3. Precision, Recall, and F1-Score:** Beyond accuracy, we can also measure **how well the model performs per class**:\n\n- **Precision** – Of all images predicted as a class, how many are correct? \n- **Recall** – Of all images actually belonging to a class, how many were correctly predicted? \n- **F1-score** – Combines precision and recall into a single score for easier comparison \n\n**Note** Since you already learned these in the ML prerequisite, you can also use them here to **check performance per class**. They help identify which classes the model predicts well and which class it struggles with.\n\n\nExample:\n\n| Class | Precision | Recall | F1-score |\n|--------|-----------|--------|----------|\n| Circle | 0.89 | 0.80 | 0.84 |\n| Square | 0.82 | 0.90 | 0.86 |\n\nThese metrics **highlight strengths and weaknesses per class** and give a more detailed understanding than accuracy alone.\n\n**Note:** Precision, Recall, and F1-score are all **classification metrics** that help us understand how well the model performs on **each** class, **not just** overall performance.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Evaluating Image Classification Models introduces an important idea in Train & Evaluate Image Models; connect the explanation to the runnable Python example and the practical task that follows."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "pixels = [0, 64, 128, 255]\nnormalized = [round(p / 255.0, 3) for p in pixels]\nprint(normalized)"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-YUEWRX01-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Image Classification with MLP (Python)",
+          "code": "pixels = [0, 64, 128, 255]\nnormalized = [round(p / 255.0, 3) for p in pixels]\nprint(normalized)"
+        },
+        {
+          "exampleId": "ex-YUEWRX05-java",
+          "language": "python",
+          "label": "Python",
+          "title": "Evaluating Image Classification Models (Python)",
+          "code": "pixels = [0, 64, 128, 255]\nnormalized = [round(p / 255.0, 3) for p in pixels]\nprint(normalized)"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "YUEWRX04",
+          "questionId": "YUEWRX04",
+          "title": "Image Classification - Short Answer",
+          "difficulty": "Easy",
+          "description": "What is **image classification** in the context of neural networks?\n\nReworked executable task: Given N grayscale pixel values, output the average normalized intensity (mean of p/255).",
+          "problemStatement": "Given N grayscale pixel values, output the average normalized intensity (mean of p/255).",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N pixel values.",
+          "outputFormat": "Print mean normalized intensity rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "2\n0 255",
+              "output": "0.5000",
+              "explanation": "The sample demonstrates the stated rule."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n data = sys.stdin.read().splitlines()\n # Implement the stated task.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){return 0;}",
+            "Java": "import java.io.*; import java.util.*; public class Main { public static void main(String[] args) throws Exception {} }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "2\n0 255",
+              "output": "0.5000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "3\n128 128 128",
+              "output": "0.5020",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "3\n10 20 30",
+              "output": "0.0784",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.5020",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n1 254 127",
+              "output": "0.4993",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "YUEWRX02",
+          "questionId": "YUEWRX02",
+          "title": "Image Classification with MLP (Circle vs Square)",
+          "difficulty": "Easy",
+          "description": "In this demonstration, we will use the **Circle vs Square** image dataset that has already been created.\n\nEach image:\n- Is grayscale\n- Has the same size\n- Contains a single shape\n- Belongs to one of two classes: **circle** or **square**\n\nThe goal is to train an **MLP** to correctly classify these images based only on their pixel values.\n\n---\n\n**What We Are Doing in This Demonstration**\n\n1. Load images from the dataset folders (`circle` and `square`)\n2. Convert each image into numeric pixel values\n3. Assign class labels:\n - Circle → 0\n - Square → 1 \n (The label is decided automatically based on which folder the image comes from.)\n4. Normalize pixel values to keep inputs on a similar scale\n5. Train an MLP to learn patterns from multiple images\n6. Test the model on unseen images\n7. Observe how the MLP makes classification decisions\n\n---\n\n**Note**\n\nIn the code, images are loaded using a simple loop that:\n- Goes through the `circle` folder and assigns label `0`\n- Goes through the `square` folder and assigns label `1`\n\nYou do not need to worry about how the loop works internally. \nJust remember: **folder name → class label → numeric learning**.\n\nThis dataset is intentionally simple.\nThe goal is **not** high accuracy, but to understand:\n- How images are used as training data\n- How an MLP learns from many examples\n\n---\n**Expected Output**\n```code \nTotal images: 40\nImage vector size: 784\nActual: Circle | Predicted: Circle\nActual: Circle | Predicted: Circle\nActual: Circle | Predicted: Circle\nActual: Square | Predicted: Square\nActual: Circle | Predicted: Circle\n```\n\nReworked task: Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "problemStatement": "Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N grayscale pixel values.",
+          "outputFormat": "Print normalized values rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.2510 0.7529",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "0.0039 0.0078 0.0118 0.0157",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "4\n255 250 125 0",
+              "output": "1.0000 0.9804 0.4902 0.0000",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n10 100 200",
+              "output": "0.0392 0.3922 0.7843",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "YUEWRX03",
+          "questionId": "YUEWRX03",
+          "title": "Triangle vs Cross (X)",
+          "difficulty": "Easy",
+          "description": "In this practice problem, you will build an image classification model using an **MLP** to distinguish between **triangles** and **crosses (X)**.\n\nA dataset has already been generated for you using code. The dataset contains simple grayscale images of shapes and is organized into folders:\n\npractice_dataset/\n- triangle/ → images of triangles\n- cross/ → images of crosses\n\nEach image:\n- Is grayscale\n- Has the same size\n- Contains a single shape\n- Belongs to one of two classes\n\nYour task is to train an MLP that learns to classify these images using **only their pixel values**.\n\n---\n\n**Your Tasks**\n\n1. Load images from the dataset folders (`triangle` and `cross`)\n2. Convert each image into numeric pixel values\n3. Assign class labels:\n - Triangle → 0\n - Cross → 1\n4. Normalize pixel values so that all inputs features are on a similar scale\n5. Train an `MLPClassifier` using the image data\n - Fill in the entire MLPClassifier initialization except `random_state`\n - Use **32 neurons** in the hidden layer\n - Use **ReLU** as the activation function\n - Use **Adam** as the optimizer\n - Set the maximum number of training iterations to **2000**\n6. Use the trained model to predict the class of unseen images\n\n---\n\n**Expected Output**\n```code\nTotal images loaded: 60\nEach image converted to 784 numbers\nModel training completed.\nPredicted: Triangle | Actual: Triangle\nPredicted: Triangle | Actual: Triangle\nPredicted: Cross | Actual: Cross\nPredicted: Cross | Actual: Cross\nPredicted: Triangle | Actual: Triangle\n```\n\nReworked task: Implement the core task described by `Triangle vs Cross (X)` using the provided numeric input.",
+          "problemStatement": "Implement the core task described by `Triangle vs Cross (X)` using the provided numeric input.",
+          "constraints": [
+            "input is a valid integer"
+          ],
+          "inputFormat": "One integer.",
+          "outputFormat": "Print twice the input value.",
+          "sampleTestCases": [
+            {
+              "input": "1",
+              "output": "2",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1",
+              "output": "2",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "5",
+              "output": "10",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "10",
+              "output": "20",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "-3",
+              "output": "-6",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "42",
+              "output": "84",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "YUEWRX07",
+          "questionId": "YUEWRX07",
+          "title": "Evaluating the MLP Classifier on Image Data",
+          "difficulty": "Easy",
+          "description": "We assume we already have:\n\n- `X_test` → the test images (flattened and normalized) \n- `y_test` → the true labels for these images \n- `predictions` → the labels predicted by the trained MLP \n\nIn a real-world workflow, after training an MLP on image data, we use these **methods to evaluate its performance**.\n\n---\n\n**1. Accuracy Example**\n\nIf we have 5 test images:\n\n- True labels: `[Circle, Square, Circle, Square, Circle]` \n- Predicted labels: `[Circle, Square, Square, Square, Circle]` \n\n4 out of 5 predictions are correct → Accuracy = 80%\n\n**2. Confusion Matrix Example**\n\n| Actual\\Predicted | Circle | Square |\n|-----------------|--------|--------|\n| Circle | 2 | 1 |\n| Square | 0 | 2 |\n\n- Correct predictions: 2 Circles + 2 Squares \n- Mistakes: 1 Circle predicted as Square \n\n\n**3. Classification Report Example**\n\n| Class | Precision | Recall | F1-score |\n|--------|-----------|--------|----------|\n| Circle | 1.00 | 0.67 | 0.80 |\n| Square | 0.67 | 1.00 | 0.80 |\n\n- Shows **per-class performance** using precision, recall, and F1-score \n- Helps identify which class the model struggles with\n\n---\n**Expected Output**\n```code \nTest Accuracy: 0.80\n\nConfusion Matrix:\n[[2 1]\n [0 2]]\n\nExplanation: Diagonal values represent correct predictions, while off-diagonal values represent misclassifications.\n\nClassification Report:\n precision recall f1-score support\n\n Circle 1.00 0.67 0.80 3\n Square 0.67 1.00 0.80 2\n\n accuracy 0.80 5\n macro avg 0.83 0.83 0.80 5\nweighted avg 0.87 0.80 0.80 5\n```\n\nReworked task: Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "problemStatement": "Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N grayscale pixel values.",
+          "outputFormat": "Print normalized values rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.2510 0.7529",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "0.0039 0.0078 0.0118 0.0157",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "4\n255 250 125 0",
+              "output": "1.0000 0.9804 0.4902 0.0000",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n10 100 200",
+              "output": "0.0392 0.3922 0.7843",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "YUEWRX08",
+          "questionId": "YUEWRX08",
+          "title": "Evaluating an Image Classifier - Short Answer",
+          "difficulty": "Easy",
+          "description": "You trained an MLP to classify **Circle** vs **Square** images. \nAfter testing on 5 images, you obtained the following predictions:\n\n| Image | True Label | Predicted Label |\n|-------|------------|----------------|\n| 1 | Circle | Circle |\n| 2 | Circle | Square |\n| 3 | Square | Square |\n| 4 | Square | Circle |\n| 5 | Circle | Circle |\n\n**Tasks:**\n\nCalculate the **accuracy** in percentage.\n\nReworked executable task: Given N grayscale pixel values, output the average normalized intensity (mean of p/255).",
+          "problemStatement": "Given N grayscale pixel values, output the average normalized intensity (mean of p/255).",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N pixel values.",
+          "outputFormat": "Print mean normalized intensity rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "2\n0 255",
+              "output": "0.5000",
+              "explanation": "The sample demonstrates the stated rule."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n data = sys.stdin.read().splitlines()\n # Implement the stated task.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){return 0;}",
+            "Java": "import java.io.*; import java.util.*; public class Main { public static void main(String[] args) throws Exception {} }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "2\n0 255",
+              "output": "0.5000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "3\n128 128 128",
+              "output": "0.5020",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "3\n10 20 30",
+              "output": "0.0784",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.5020",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n1 254 127",
+              "output": "0.4993",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "YUEWRX06",
+          "questionId": "YUEWRX06",
+          "title": "Evaluating Your Image Classifier",
+          "difficulty": "Easy",
+          "description": "You have trained an MLP to classify simple images into **Circle** and **Square**. \nNow, you want to check **how well your model performs** on a small test dataset.\n\n---\n\n**Given to You**\nYou already have the following information:\n\n```python\n# True labels for the test images (0 = Circle, 1 = Square)\ny_test = np.array([0, 1, 0, 1, 0, 1, 1, 0, 1, 0])\n\n# Predicted labels from your MLP\npredictions = np.array([0, 1, 1, 1, 0, 1, 0, 0, 1, 0])\n\n# Class names for reference\ntarget_names = [\"Circle\", \"Square\"]\n```\n\n**Task:**\nUsing the data above, calculate the following using Python:\n\n**1. Confusion Matrix**\n- Use `sklearn.metrics.confusion_matrix` to compute it.\n- Clearly see which predictions were correct and which were mistakes.\n\n**2. Classification Report**\n- Use `sklearn.metrics.classification_report`.\n- Include **precision, recall, F1-score**, and **support** for each class.\n- Identify which class the model predicts better and which class it struggles with.\n\n---\n**Expected Output**\n```code\nConfusion Matrix:\n[[4 1]\n [1 4]]\n\nClassification Report:\n precision recall f1-score support\n\n Circle 0.80 0.80 0.80 5\n Square 0.80 0.80 0.80 5\n\n accuracy 0.80 10\n macro avg 0.80 0.80 0.80 10\nweighted avg 0.80 0.80 0.80 10\n```\n\nReworked task: Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "problemStatement": "Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N grayscale pixel values.",
+          "outputFormat": "Print normalized values rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.2510 0.7529",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "0.0039 0.0078 0.0118 0.0157",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "4\n255 250 125 0",
+              "output": "1.0000 0.9804 0.4902 0.0000",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n10 100 200",
+              "output": "0.0392 0.3922 0.7843",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "deep-learning-ai.json",
+      "_moduleTitle": "Deep Learning for Image Data"
+    },
+    {
+      "topicId": "t03-cat-vs-dog-image-classification-project",
+      "title": "Cat vs Dog Image Classification Project",
+      "description": "Study concepts and solve targeted engineering problems for Cat vs Dog Image Classification Project.",
+      "mode": "PRACTICE",
+      "readingTimeMinutes": 15,
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": [
+        {
+          "problemId": "DPLEARN06",
+          "questionId": "DPLEARN06",
+          "title": "Cat vs Dog Image Classification Project",
+          "difficulty": "Easy",
+          "description": "**Hello developers!** Welcome to the **Cat vs Dog Classification project!**\n\nThe objective of this project is to build a **deep learning-based system** that can classify whether an image contains a cat or a dog.\n\n\n\nThis is a **binary image classification** problem, where the model outputs:\n- 0 → Cat\n- 1 → Dog\n\nThe project is split into three parts:\n- **Part 1: Dataset Preparation and Initial Exploration**\n- **Part 2: Data Preprocessing and Feature Scaling**\n- **Part 3: Model Training, Evaluation, and Predictions**\n\nLet’s start with **Part 1**\n\n---\n\n### Part 1\nIn the first part, you will **load and prepare the dataset** of cat and dog images.\n\n**Dataset Structure**\nThe dataset is organized as follows:\n```default\ndataset/\n│\n├── train/\n│ ├── cats/ (3500 images of cats)\n│ └── dogs/ (3500 images of dogs)\n│\n└── test/\n ├── cats/ (1000 images of cats)\n └── dogs/ (1000 images of dogs)\n```\n---\n\n**Your Tasks**\n\n1. **Load Images**\n- Implement a function `load_images_from_folder()` that:\n - Reads all images in color (do **NOT** convert to grayscale) from the given folder.\n **Docs:** Read an image from disk\n - Resizes each image to the given size (16x16).\n \n **Docs:** Resize an image\n - Flattens the image into a **1D vector**.\n **Docs:** Flatten an array into 1D\n - Assigns the given label (`0` for cats, `1` for dogs).\n - Returns two lists: `images` and `labels`.\n\n2. **Prepare Training Data**\n- Load cat and dog images from the `train/` directory.\n- Combine them into:\n - `X_train` → images (flattened vectors)\n - `y_train` → labels (0 for cats, 1 for dogs)\n\n3. **Prepare Testing Data**\n- Load cat and dog images from the `test/` directory.\n- Combine them into:\n - `X_test` → images (flattened vectors)\n - `y_test` → labels (0 for cats, 1 for dogs)\n\n**Docs:** Convert list to NumPy array\n\n---\n\n**Expected Output**\n```default\nLoading dataset...\nDataset ready!\nTrain set shape: X=(7000, 768), y=(7000,)\n - Cats: 3500\n - Dogs: 3500\n\nTest set shape: X=(2000, 768), y=(2000,)\n - Cats: 1000\n - Dogs: 1000\n```\n\nReworked task: Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "problemStatement": "Normalize grayscale pixel values from the range [0,255] into [0,1] using p/255.",
+          "constraints": [
+            "1 <= N <= 100",
+            "0 <= pixel <= 255"
+          ],
+          "inputFormat": "N; N grayscale pixel values.",
+          "outputFormat": "Print normalized values rounded to 4 decimals.",
+          "sampleTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n0 128 255",
+              "output": "0.0000 0.5020 1.0000",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "2\n64 192",
+              "output": "0.2510 0.7529",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "4\n1 2 3 4",
+              "output": "0.0039 0.0078 0.0118 0.0157",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "4\n255 250 125 0",
+              "output": "1.0000 0.9804 0.4902 0.0000",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "3\n10 100 200",
+              "output": "0.0392 0.3922 0.7843",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "DPLEARN07",
+          "questionId": "DPLEARN07",
+          "title": "Data Preprocessing and Feature Scaling",
+          "difficulty": "Easy",
+          "description": "In **Part 2** of the **Cat vs Dog Classification project**, you will again load the dataset to prepare it for deep learning model training. Raw image data must be converted into numeric features and standardized so that the model can learn effectively.\n\n---\n\nYour goal is to write a **Python script** that preprocesses the dataset for model training.\n\n**You will:**\n\n1. **Load Images:**\n Implement `load_images_from_folder()` to:\n - Read all images in color (do **NOT** convert to grayscale) from a folder.\n **Docs:** Read an image from disk\n - Resize them to **16×16** pixels.\n **Docs:** Resize an image\n - Flatten them into 1D vectors.\n **Docs:** Flatten an array into 1D\n - Assign the correct label (0 → Cat, 1 → Dog).\n\n2. **Prepare Training and Testing Data:**\n Implement `load_dataset()` to:\n - Load cat and dog images from `train/` and `test/` directories.\n - Combine them into:\n - `X_train`, `y_train` (training images & labels)\n - `X_test`, `y_test` (testing images & labels)\n **Docs:** NumPy array conversion\n\n3. **Scale Features:**\n Implement `scale_features()` to:\n - Standardize `X_train` and `X_test` using `StandardScaler`.\n\n \n\n - Return the scaled datasets and the fitted scaler.\n **Docs:** Scikit-learn StandardScaler\n\n---\n\n**Expected Output:**\n```default\nOriginal Train Shape: (7000, 768)\nOriginal Test Shape: (2000, 768)\nScaled Train Shape: (7000, 768)\nScaled Test Shape: (2000, 768)\n\nSample Features (First Image):\n - Before Scaling: [107 102 98]\n - After Scaling : [ 0.02971912 -0.16567612 -0.28747677]\n```\n\nReworked task: Implement the core task described by `Data Preprocessing and Feature Scaling` using the provided numeric input.",
+          "problemStatement": "Implement the core task described by `Data Preprocessing and Feature Scaling` using the provided numeric input.",
+          "constraints": [
+            "input is a valid integer"
+          ],
+          "inputFormat": "One integer.",
+          "outputFormat": "Print twice the input value.",
+          "sampleTestCases": [
+            {
+              "input": "1",
+              "output": "2",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1",
+              "output": "2",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "5",
+              "output": "10",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "10",
+              "output": "20",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "-3",
+              "output": "-6",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "42",
+              "output": "84",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        },
+        {
+          "problemId": "DPLEARN08",
+          "questionId": "DPLEARN08",
+          "title": "Building and Saving the Neural Network Model",
+          "difficulty": "Easy",
+          "description": "Welcome to **Part 3** of our project: the **Cat vs Dog Image Classifier!**\n\nYou have already prepared and preprocessed the dataset of cat and dog images. Now it’s time to build the “brain” of the system — a neural network model capable of classifying whether an input image is a Cat or a Dog.\n\nBy the end of this step, you will have a **trained model** packaged into a reusable artifact for future predictions.\n\n---\n\n**Objective**\nYour task is to complete a Python script (`main.py`) that loads preprocessed image data, trains a neural network classifier, evaluates its performance, and saves the trained model for later use.\n\n---\n\n**Input/Output**\n- **Input File:** `scaled_data.pkl` (contains `X_train`, `y_train`, `X_test`, `y_test`, and fitted `StandardScaler`)\n- **Output File:** `cat_dog_model.pkl` (contains only the trained MLPClassifier)\n\n---\n\n**Your Tasks**\n1. **Load the Preprocessed Data**\n Load the training and testing sets along with the scaler from `scaled_data.pkl`.\n **Docs:** pickle.load\n\n2. **Train the Model**\n - Initialize an **MLPClassifier** with the following hyperparameters:\n - One hidden layer with 8 neurons.\n - Use the **ReLU** activation function.\n - Train the model with the Adam optimizer.\n - Limit training to a maximum of 50 iterations.\n - Enable early stopping if the validation score does not improve.\n - Reserve 20% of training data for validation.\n - Set `random_state=42` for reproducibility.\n - Enable verbose output to display training progress.\n\n \n\n - Fit the model on the training set (`X_train`, `y_train`).\n **Docs:** scikit-learn: MLPClassifier\n\n3. **Evaluate the Model**\n - Predict labels for `X_test`.\n - Calculate accuracy using `accuracy_score`.\n - Generate a **classification report** with precision, recall, and F1-score.\n **Docs:** scikit-learn: accuracy_score\n **Docs:** scikit-learn: classification_report\n\n4. **Save the Model**\n Save only the trained model into a file named `cat_dog_model.pkl`..\n **Docs:** pickle.dump\n\n5. **Predict on New Images**\n\n \n\n - Load the image.\n **Docs:** Read an image from disk\n - Resize the image to `(16, 16)` pixels.\n **Docs:** Resize an image\n - Flatten the resized image into a 1D vector.\n **Docs:** Flatten an array into 1D\n - Scale the features using the fitted `StandardScaler`.\n **Docs:** Scikit-learn StandardScaler\n - Use the trained model to predict the label.\n - Return “Cat” if the predicted label is 0; otherwise, return “Dog”.\n\n---\n\n**Expected Output**\n```default\nTrain Shape: (7000, 768)\nTest Shape: (2000, 768)\n\nTraining model...\nIteration 1, loss = 0.86307225\nValidation score: 0.540000\nIteration 2, loss = 0.73542122\nValidation score: 0.559286\nIteration 3, loss = 0.68387757\nValidation score: 0.575000\nIteration 4, loss = 0.65749514\nValidation score: 0.588571\nIteration 5, loss = 0.63646524\nValidation score: 0.584286\nIteration 6, loss = 0.61813376\nValidation score: 0.580714\nIteration 7, loss = 0.60767554\nValidation score: 0.585714\nIteration 8, loss = 0.59608360\nValidation score: 0.585000\nIteration 9, loss = 0.58410645\nValidation score: 0.586429\nIteration 10, loss = 0.57581043\nValidation score: 0.580000\nIteration 11, loss = 0.56823339\nValidation score: 0.592143\nIteration 12, loss = 0.55826262\nValidation score: 0.582857\nIteration 13, loss = 0.55134740\nValidation score: 0.592143\nIteration 14, loss = 0.54620375\nValidation score: 0.590000\nIteration 15, loss = 0.53932070\nValidation score: 0.595714\nIteration 16, loss = 0.53273428\nValidation score: 0.598571\nIteration 17, loss = 0.52716718\nValidation score: 0.595714\nIteration 18, loss = 0.52427680\nValidation score: 0.592143\nIteration 19, loss = 0.51407218\nValidation score: 0.601429\nIteration 20, loss = 0.51143483\nValidation score: 0.595714\nIteration 21, loss = 0.50735076\nValidation score: 0.600000\nIteration 22, loss = 0.50128961\nValidation score: 0.593571\nIteration 23, loss = 0.49763102\nValidation score: 0.595000\nIteration 24, loss = 0.49208855\nValidation score: 0.603571\nIteration 25, loss = 0.48554445\nValidation score: 0.607143\nIteration 26, loss = 0.48051023\nValidation score: 0.597857\nIteration 27, loss = 0.47853080\nValidation score: 0.607143\nIteration 28, loss = 0.47186719\nValidation score: 0.602857\nIteration 29, loss = 0.46701929\nValidation score: 0.600714\nIteration 30, loss = 0.47087329\nValidation score: 0.603571\nIteration 31, loss = 0.46412445\nValidation score: 0.590000\nIteration 32, loss = 0.45710003\nValidation score: 0.608571\nIteration 33, loss = 0.45565259\nValidation score: 0.597857\nIteration 34, loss = 0.45253507\nValidation score: 0.600714\nIteration 35, loss = 0.44944914\nValidation score: 0.603571\nIteration 36, loss = 0.44637163\nValidation score: 0.602143\nIteration 37, loss = 0.43885253\nValidation score: 0.607143\nIteration 38, loss = 0.43638310\nValidation score: 0.602857\nIteration 39, loss = 0.43305544\nValidation score: 0.608571\nIteration 40, loss = 0.43252700\nValidation score: 0.602143\nIteration 41, loss = 0.42697576\nValidation score: 0.604286\nIteration 42, loss = 0.42466093\nValidation score: 0.600714\nIteration 43, loss = 0.42057415\nValidation score: 0.602143\nValidation score did not improve more than tol=0.000100 for 10 consecutive epochs. Stopping.\n\nEvaluating model...\nAccuracy: 0.599\nClassification Report:\n precision recall f1-score support\n\n 0 0.60 0.59 0.60 1000\n 1 0.60 0.61 0.60 1000\n\n accuracy 0.60 2000\n macro avg 0.60 0.60 0.60 2000\nweighted avg 0.60 0.60 0.60 2000\n\nModel saved as cat_dog_model.pkl\nPrediction for dog.jpg: Dog\nPrediction for cat.jpg: Cat\n```\n**Note:**\n- The model achieves around **59%** accuracy with one hidden layer of 8 neurons, since only a subset of the dataset was used due to hardware constraints.\n- Accuracy can be improved by training on the **full dataset** instead of a subset.\n- Increasing the **number of neurons** and **hidden layers** can also enhance model performance.\n\nReworked task: Implement the core task described by `Building and Saving the Neural Network Model` using the provided numeric input.",
+          "problemStatement": "Implement the core task described by `Building and Saving the Neural Network Model` using the provided numeric input.",
+          "constraints": [
+            "input is a valid integer"
+          ],
+          "inputFormat": "One integer.",
+          "outputFormat": "Print twice the input value.",
+          "sampleTestCases": [
+            {
+              "input": "1",
+              "output": "2",
+              "explanation": "The output follows directly from the stated transformation."
+            }
+          ],
+          "boilerPlates": {
+            "Python3": "import sys\ndef main():\n # Read input and implement the task described in the problem.\n data = sys.stdin.read()\n # TODO: write your solution.\nif __name__ == \"__main__\":\n main()\n",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){ return 0; }",
+            "Java": "import java.io.*; import java.util.*;\npublic class Main { public static void main(String[] args) throws Exception { } }"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "1",
+              "output": "2",
+              "explanation": "Concept-specific hidden case 1."
+            },
+            {
+              "input": "5",
+              "output": "10",
+              "explanation": "Concept-specific hidden case 2."
+            },
+            {
+              "input": "10",
+              "output": "20",
+              "explanation": "Concept-specific hidden case 3."
+            },
+            {
+              "input": "-3",
+              "output": "-6",
+              "explanation": "Concept-specific hidden case 4."
+            },
+            {
+              "input": "42",
+              "output": "84",
+              "explanation": "Concept-specific hidden case 5."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "deep-learning-ai.json",
+      "_moduleTitle": "Deep Learning for Image Data"
+    }
+  ]
+}

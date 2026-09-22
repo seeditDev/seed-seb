@@ -1,0 +1,907 @@
+{
+  "moduleId": "m06-user-authentication-authorization",
+  "title": "User Authentication & Authorization",
+  "description": "Core concepts and hands-on practice in User Authentication & Authorization.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-user-management-authentication",
+      "title": "User Management – Authentication",
+      "description": "Study concepts and solve targeted engineering problems for User Management – Authentication.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-QQRLGD01",
+          "title": "User Registration",
+          "content": "In this lesson, we'll learn how to allow new users to create accounts on our Django website. This process is called **User Registration**.\n\n**Why do we need User Registration?**\nImagine a website where you want to save your preferences, post comments, or access special content. To do this, the website needs to know who you are. User registration is the first step – it lets users create a unique identity (an account) on your site.\n\n**How Django Helps with User Registration**\n\nDjango makes user registration quite straightforward, building upon concepts you've already learned:\n\n1. **The `User` Model (Models Fundamentals):**\n Django comes with a built-in `User` model (found in `django.contrib.auth.models`). Think of this as a pre-defined database table designed to store user information like `username`, `password`, and `email`. We don't need to create this model from scratch!\n\n2. **Django Forms for Input (Django Forms):**\n To collect registration details (like username and password) from a new user, we need a form. Django provides a special form called `UserCreationForm` (from `django.contrib.auth.forms`). This form is specifically designed to work with the `User` model. It typically asks for a username and a password (which you enter twice, for confirmation) and includes built-in validation (Validation & Error Handling) like checking if the username already exists and ensuring the passwords match.\n\n3. **A View to Handle the Logic (Views Fundamentals):**\n We'll create a view function. This view will do two things:\n * When a user first visits the registration page (a GET request), the view will display an empty registration form.\n * When the user fills out the form and submits it (a POST request), the view will process the data. If the data is valid, it will create a new user account.\n\n4. **A URL for Access (URL Configuration):**\n We need to define a URL (e.g., `/register/`) in our `urls.py` file that points to our registration view. This is how users will find the registration page.\n\n5. **A Template to Display the Form (Templating Basics & Template Inheritance):**\n We'll create an HTML template (e.g., `register.html`). This template will use Django's template language to render the `UserCreationForm`. You can use `{{ form.as_p }}` to easily display all form fields.\n\nLet's see how we put this to work in the following worked out example.\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django authentication provides password hashing, login/logout, sessions, and built-in password-reset views. Application code should use these APIs instead of storing plain passwords. The key implementation detail in **User Registration** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.contrib.auth import authenticate, login\n\ndef sign_in(request, username, password):\n user = authenticate(request, username=username, password=password)\n if user is not None:\n login(request, user)\n return \"authenticated\"\n return \"invalid credentials\""
+          },
+          "checkpoint": {
+            "checkpointId": "cp-QQRLGD01",
+            "question": "Which statement best describes **User Registration** in the Django topic **User Management – Authentication**?",
+            "options": [
+              "Django authentication provides password hashing, login/logout, sessions, and built-in password-reset views. Application code should use these APIs instead of storing plain passwords.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of User Registration within User Management – Authentication."
+          }
+        },
+        {
+          "pageId": "p-QQRLGD04",
+          "title": "User Login & Logout",
+          "content": "Now that users can register, the next step is letting them log in and log out.\n\n#### Why Login and Logout Matter\n- Login checks if the username and password match a registered user. If so, Django logs them in and starts a session.\n- Logout ends that session to keep their account secure. \n**Django makes this easy with built-in tools!**\n\n#### User Login\n**Django's Built-in Login Form**\nUse Django’s ready-made AuthenticationForm:\n```python\nfrom django.contrib.auth.forms import AuthenticationForm\n```\nThis form already has username and password fields.\n**Login View** \nYour view handles two things:\n1. GET: Show the empty form.\n2. POST: Process the submitted form.\n\n**Key functions:**\n```python\nfrom django.contrib.auth import authenticate, login\n```\n**Basic login logic:**\n```python\ndef login_view(request):\n if request.method == 'POST':\n form = AuthenticationForm(request, data=request.POST)\n if form.is_valid():\n user = form.get_user()\n login(request, user)\n return redirect('home')\n else:\n form = AuthenticationForm()\n return render(request, 'login.html', {'form': form})\n```\n\n**Login Template (login.html)**\n```html\n\n {{ form.as_p }}\n Login\n\n\n{% if form.errors %}\n Login failed. Check your credentials.\n{% endif %}\n```\n**URL for Login**\nIn urls.py:\n```python\npath('login/', login_view, name='login')\n```\n\n#### User Logout\n**Logout View**\nDjango provides a simple function:\n```python\nfrom django.contrib.auth import logout\n\ndef logout_view(request):\n logout(request)\n return redirect('home')\n```\n**URL for Logout**\nIn urls.py:\n```python\npath('logout/', logout_view, name='logout')\n```\n**Logout Link (in templates)**\n```html\nLogout\n```\n\n**Checking If a User is Logged In (in templates)**\nDjango gives you the user object in all templates.\n```html\n{% if user.is_authenticated %}\n Hello, {{ user.username }}!\n Logout\n{% else %}\n Login\n Register\n{% endif %}\n```\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django authentication provides password hashing, login/logout, sessions, and built-in password-reset views. Application code should use these APIs instead of storing plain passwords. The key implementation detail in **User Login & Logout** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.contrib.auth import authenticate, login\n\ndef sign_in(request, username, password):\n user = authenticate(request, username=username, password=password)\n if user is not None:\n login(request, user)\n return \"authenticated\"\n return \"invalid credentials\""
+          }
+        },
+        {
+          "pageId": "p-QQRLGD07",
+          "title": "Password Hashing",
+          "content": "In our previous lessons on User Registration and User Login & Logout, we saw how users can create accounts and sign in. But have you ever wondered how Django keeps their passwords safe? It's not as simple as just storing the password as you type it. That would be very insecure! This is where **Password Hashing** comes in.\n\n**What is Password Hashing?**\n\nImagine you have a secret diary. You wouldn't write your secrets in plain English for anyone to read if they found it. You'd probably use a secret code that only you understand. Password hashing is a bit like creating a super-strong, one-way secret code for passwords.\n\nHere's the idea:\n1. When a user chooses a password (e.g., \"mySecureP@ssw0rd!\"), Django doesn't store this exact text.\n2. Instead, it takes this password and puts it through a special mathematical process called \"hashing.\"\n3. This process transforms the password into a long, seemingly random string of characters (e.g., something like `pbkdf2_sha256$390000$cQ1xyz...$abc123...`). This jumbled string is called the \"hashed password\" or simply the \"hash.\"\n\n**Key things to know about hashing:**\n* **One-Way Street:** It's easy to generate the hash from the original password. However, it's practically impossible to take the hash and figure out the original password. This is crucial for security.\n* **Unique-ish Output:** Even a tiny change in the password results in a completely different hash. Also, Django's hashing includes something called a \"salt\" (an extra random piece of data) which means even if two users accidentally choose the same password, their stored hashes will be different.\n\n**Why is Hashing So Important?**\n\nIf a website stores passwords as plain text and its database gets stolen by hackers, all user passwords become instantly exposed. This is a massive security risk!\n\nWith password hashing:\n* If hackers steal the database, they only get the list of hashed passwords.\n* Since hashing is a one-way process, they can't easily turn these hashes back into the original passwords. This keeps your users' actual passwords safe.\n\n**How Django Handles Password Hashing Automatically**\n\nThe great news is that Django takes care of all this complex password hashing for you! You don't need to write the hashing logic yourself.\n\n1. **During User Registration:**\n * Remember when we built our user registration page using **Django Forms** (specifically, often using or extending `UserCreationForm`)? When a new user signs up and submits their details, your **View** processes this form.\n * If the form is valid, and you save the new user (e.g., using `form.save()`), Django's built-in `User` model (which we learned about in **Models Fundamentals**) automatically hashes the password *before* saving it to the database.\n * So, the `password` field in your `auth_user` table in the database (managed by the **Django ORM** during **CRUD Operations**) doesn't store \"mySecureP@ssw0rd!\"; it stores the long, jumbled hash.\n\n2. **During User Login & Logout:**\n * When a user tries to log in via the login form (handled by a **View** mapped via **URL Configuration**), they enter their username and password.\n * Django takes the password they just typed.\n * It then hashes this entered password using the *exact same hashing method and salt* that was used when the user first registered.\n * Finally, Django compares this newly generated hash with the hash stored in the database for that user.\n * If the two hashes match, Django knows the user entered the correct password and logs them in. If they don't match, access is denied.\n\nDjango uses strong, industry-standard hashing algorithms (like PBKDF2 by default, but it can also be configured to use others like bcrypt or Argon2) to ensure passwords are well-protected.\n\nSo, while you're building features like registration and login, Django is working behind the scenes, using password hashing to make your application secure. You're leveraging this powerful security feature without needing to be an expert cryptographer, simply by using Django's built-in authentication system. This is one of the many reasons Django is a robust framework for web development!",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django authentication provides password hashing, login/logout, sessions, and built-in password-reset views. Application code should use these APIs instead of storing plain passwords. The key implementation detail in **Password Hashing** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.contrib.auth import authenticate, login\n\ndef sign_in(request, username, password):\n user = authenticate(request, username=username, password=password)\n if user is not None:\n login(request, user)\n return \"authenticated\"\n return \"invalid credentials\""
+          }
+        },
+        {
+          "pageId": "p-QQRLGD10",
+          "title": "Password Reset Workflows",
+          "content": "Imagine a user forgets their password – it happens to everyone! A Password Reset Workflow is the process that allows users to securely regain access to their accounts by setting a new password. Without this, users might get locked out permanently, which is frustrating for them and can mean lost engagement for your application.\n\nIn Django, managing this process is made much easier because Django provides a built-in system for password resets. This system handles many of the tricky parts, like generating secure, temporary links and ensuring they are used correctly and only once.\n\nLet's break down the typical flow of a password reset:\n\n1. **User Initiates Reset:** The user realizes they've forgotten their password and clicks a \"Forgot Password?\" link, usually found on the login page.\n2. **Email Submission:** They are taken to a page (which is a **Template** rendered by Django, displaying a Django **Form**) where they enter their email address.\n3. **Email Verification & Token Generation:**\n * Django checks if an account associated with that email address exists in our **User Model**.\n * If the email is found, Django generates a special, one-time-use secure link. This link contains a unique token that temporarily identifies the user and their reset request.\n4. **Email Sent:** An email is automatically sent to the user's registered email address. This email contains the secure link. The content and layout of this email are also defined by a **Template**.\n5. **User Clicks Link:** The user opens their email and clicks the password reset link.\n6. **Token Validation:** When the user clicks the link, Django receives the request and verifies that the token in the link is valid and hasn't expired.\n7. **New Password Form:** If the link and token are valid, the user is shown another page (again, a **Template** with a Django **Form**) where they can enter and confirm their new password.\n8. **Password Update:**\n * Django validates the new password (e.g., making sure both password fields match and meeting any complexity requirements you might have set). This utilizes Django's **Validation & Error Handling** capabilities within forms.\n * The new password is then securely **hashed** (just like we learned in the \"Password Hashing\" lesson) and updated in the **User Model** for that user. The temporary token is then invalidated.\n9. **Confirmation:** The user is shown a success message confirming their password has been reset. They can now log in using their new password.\n\n**How Django Helps (Connecting to what we've learned):**\n\n* **URL Configuration:** Django provides a set of pre-defined URLs for the entire password reset process. You typically include them in your project's main `urls.py` file (or an app-specific `urls.py`) like this: `path('accounts/', include('django.contrib.auth.urls'))`. This single line sets up all the necessary URL paths for the different steps of password reset, login, logout, etc.\n* **Views Fundamentals:** Django comes with built-in **Views** (e.g., `PasswordResetView`, `PasswordResetDoneView`, `PasswordResetConfirmView`, and `PasswordResetCompleteView`) that handle all the logic for each step. These views interact with the User model, process forms, and render the appropriate templates. You generally don't need to write these views from scratch.\n* **Django Forms:** Django provides ready-to-use **Forms** like `PasswordResetForm` (for the user to enter their email) and `SetPasswordForm` (for the user to enter their new password). These forms also handle much of the necessary **Validation & Error Handling**, displaying messages to the user if something is incorrect.\n* **Templating Basics & Template Inheritance:** While Django provides the logic, you'll need to create the HTML **Templates** that these views will render. Django looks for these templates in specific locations (usually within a `registration` directory inside one of your app's `templates` folders, e.g., `templates/registration/password_reset_form.html`, `templates/registration/password_reset_email.html`, `templates/registration/password_reset_confirm.html`, `templates/registration/password_reset_complete.html`). You can use **Template Inheritance** to ensure these pages match the look and feel of the rest of your site.\n* **Models Fundamentals:** The entire password reset process revolves around the `User` **Model**. Django uses it to find users by their email and, crucially, to update their password field with the new, hashed password.\n* **Password Hashing:** As mentioned, Django automatically and securely handles the **hashing** of the new password before saving it to the database, ensuring that plain-text passwords are never stored.\n\nTo implement password resets in your Django project, you primarily need to:\n1. Ensure `django.contrib.auth` is in your `INSTALLED_APPS` (it usually is by default).\n2. Include the authentication URLs in your `urls.py`.\n3. Create the HTML templates for each step of the flow.\n4. Configure email settings in your `settings.py` file (e.g., `EMAIL_BACKEND`, `EMAIL_HOST`). Django needs this information to be able to send the password reset emails. (We won't dive deep into email server configuration here, but it's a necessary practical step for the emails to actually be sent in a production environment. For development, Django offers ways to test email sending without a real email server, like printing emails to the console.)\n\nBy leveraging Django's built-in authentication system, you can implement a secure and robust password reset workflow with relatively little custom code. This allows you to provide an essential feature for your users while focusing your development efforts on other unique parts of your application.\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Django authentication provides password hashing, login/logout, sessions, and built-in password-reset views. Application code should use these APIs instead of storing plain passwords. The key implementation detail in **Password Reset Workflows** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.contrib.auth import authenticate, login\n\ndef sign_in(request, username, password):\n user = authenticate(request, username=username, password=password)\n if user is not None:\n login(request, user)\n return \"authenticated\"\n return \"invalid credentials\""
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-QQRLGD01-go",
+          "language": "python",
+          "label": "Python",
+          "title": "User Registration (Python)",
+          "code": "from django.contrib.auth import authenticate, login\n\ndef sign_in(request, username, password):\n user = authenticate(request, username=username, password=password)\n if user is not None:\n login(request, user)\n return \"authenticated\"\n return \"invalid credentials\""
+        },
+        {
+          "exampleId": "ex-QQRLGD04-go",
+          "language": "python",
+          "label": "Python",
+          "title": "User Login & Logout (Python)",
+          "code": "from django.contrib.auth import authenticate, login\n\ndef sign_in(request, username, password):\n user = authenticate(request, username=username, password=password)\n if user is not None:\n login(request, user)\n return \"authenticated\"\n return \"invalid credentials\""
+        },
+        {
+          "exampleId": "ex-QQRLGD07-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Password Hashing (Python)",
+          "code": "from django.contrib.auth import authenticate, login\n\ndef sign_in(request, username, password):\n user = authenticate(request, username=username, password=password)\n if user is not None:\n login(request, user)\n return \"authenticated\"\n return \"invalid credentials\""
+        },
+        {
+          "exampleId": "ex-QQRLGD10-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Password Reset Workflows (Python)",
+          "code": "from django.contrib.auth import authenticate, login\n\ndef sign_in(request, username, password):\n user = authenticate(request, username=username, password=password)\n if user is not None:\n login(request, user)\n return \"authenticated\"\n return \"invalid credentials\""
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "QQRLGD02",
+          "questionId": "QQRLGD02",
+          "title": "Forum User Sign-Up Page",
+          "difficulty": "Medium",
+          "description": "Practice user registration uniqueness.",
+          "problemStatement": "Given existing usernames and a new requested username, print `AVAILABLE` when unused or `TAKEN` when already registered.",
+          "constraints": [
+            "1 <= N <= 100",
+            "Usernames are case-sensitive tokens."
+          ],
+          "inputFormat": "N followed by N existing usernames and one requested username.",
+          "outputFormat": "`AVAILABLE` or `TAKEN`.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice bob carol dave",
+              "output": "AVAILABLE",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice bob carol dave",
+              "output": "AVAILABLE",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 alice bob alice",
+              "output": "TAKEN",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a b c d c",
+              "output": "TAKEN",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "1 django django",
+              "output": "TAKEN",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "3 bob sam lee bob",
+              "output": "TAKEN",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        },
+        {
+          "problemId": "QQRLGD03",
+          "questionId": "QQRLGD03",
+          "title": "Build a Coding Bootcamp Registration app",
+          "difficulty": "Medium",
+          "description": "Practice authentication event evaluation.",
+          "problemStatement": "Given login events as `username:result`, a user is authenticated when at least one matching `username:ok` event exists. Print `LOGIN_SUCCESS` or `LOGIN_FAILED`.",
+          "constraints": [
+            "1 <= N <= 100"
+          ],
+          "inputFormat": "N events followed by the target username.",
+          "outputFormat": "Authentication result.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice:ok alice:fail bob:ok alice",
+              "output": "LOGIN_SUCCESS",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice:ok alice:fail bob:ok alice",
+              "output": "LOGIN_SUCCESS",
+              "explanation": "Authentication succeeds when a matching successful event exists."
+            },
+            {
+              "input": "3 a:fail a:fail a:ok a",
+              "output": "LOGIN_SUCCESS",
+              "explanation": "Authentication succeeds when a matching successful event exists."
+            },
+            {
+              "input": "2 x:ok y:fail x",
+              "output": "LOGIN_SUCCESS",
+              "explanation": "Authentication succeeds when a matching successful event exists."
+            },
+            {
+              "input": "3 u:fail v:ok w:fail u",
+              "output": "LOGIN_FAILED",
+              "explanation": "Authentication succeeds when a matching successful event exists."
+            },
+            {
+              "input": "1 admin:fail admin",
+              "output": "LOGIN_FAILED",
+              "explanation": "Authentication succeeds when a matching successful event exists."
+            }
+          ]
+        },
+        {
+          "problemId": "QQRLGD05",
+          "questionId": "QQRLGD05",
+          "title": "Login/Logout with Conditional Welcome Message",
+          "difficulty": "Medium",
+          "description": "Practice password-strength signals before Django stores hashes.",
+          "problemStatement": "Score a password from 0 to 4 by counting whether it contains uppercase, lowercase, digit, and special-character classes.",
+          "constraints": [
+            "1 <= password length <= 100"
+          ],
+          "inputFormat": "One line containing the password.",
+          "outputFormat": "`score/4`.",
+          "sampleTestCases": [
+            {
+              "input": "Password1!",
+              "output": "4/4",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Password1!",
+              "output": "4/4",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "django123",
+              "output": "2/4",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Admin@2026",
+              "output": "4/4",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "short",
+              "output": "1/4",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Secure#Pass9",
+              "output": "4/4",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "QQRLGD06",
+          "questionId": "QQRLGD06",
+          "title": "Create login & logout function for a Profile Page",
+          "difficulty": "Medium",
+          "description": "Practice evaluating a password-reset token state.",
+          "problemStatement": "A reset request is allowed only when the supplied token status is `valid`; otherwise deny the request.",
+          "constraints": [
+            "Status is valid, expired, or invalid"
+          ],
+          "inputFormat": "One line: `username|status`.",
+          "outputFormat": "`RESET_ALLOWED` or `RESET_DENIED`.",
+          "sampleTestCases": [
+            {
+              "input": "alice|valid",
+              "output": "RESET_ALLOWED",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "alice|valid",
+              "output": "RESET_ALLOWED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "bob|expired",
+              "output": "RESET_DENIED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "cara|valid",
+              "output": "RESET_ALLOWED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "dan|invalid",
+              "output": "RESET_DENIED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "eva|valid",
+              "output": "RESET_ALLOWED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "QQRLGD11",
+          "questionId": "QQRLGD11",
+          "title": "Setting Up Django's Password Reset Flow",
+          "difficulty": "Medium",
+          "description": "Practice mapping Django authentication state to a UI decision.",
+          "problemStatement": "Map the supplied authentication state to `LOGIN_REQUIRED`, `AUTHENTICATED`, `STAFF_USER`, or `SUPERUSER` according to the documented state names.",
+          "constraints": [
+            "State is one of the five listed values."
+          ],
+          "inputFormat": "One state token.",
+          "outputFormat": "Mapped state.",
+          "sampleTestCases": [
+            {
+              "input": "logged_out",
+              "output": "LOGIN_REQUIRED",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "logged_out",
+              "output": "LOGIN_REQUIRED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "logged_in",
+              "output": "AUTHENTICATED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "staff",
+              "output": "STAFF_USER",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "superuser",
+              "output": "SUPERUSER",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "anonymous",
+              "output": "LOGIN_REQUIRED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "QQRLGD13",
+          "questionId": "QQRLGD13",
+          "title": "Set up a Password Reset Flow",
+          "difficulty": "Medium",
+          "description": "Practice deterministic password-digest reasoning.",
+          "problemStatement": "Given a username and password, compute the first 12 hexadecimal characters of the SHA-256 digest of the password and print `username:digest`. This is a deterministic learning exercise; it is not a replacement for Django's password hasher.",
+          "constraints": [
+            "Password length <= 100"
+          ],
+          "inputFormat": "One line: `username:password`.",
+          "outputFormat": "`username:first12hexchars_of_sha256(password)`.",
+          "sampleTestCases": [
+            {
+              "input": "alice:secret",
+              "output": "alice:2bb80d537b1d",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "alice:secret",
+              "output": "alice:2bb80d537b1d",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "bob:django123",
+              "output": "bob:24ea8461a9b1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "sam:password",
+              "output": "sam:5e884898da28",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "user:pass123",
+              "output": "user:9b8769a4a742",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "test:hello",
+              "output": "test:2cf24dba5fb0",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "User Authentication & Authorization"
+    },
+    {
+      "topicId": "t02-authorization-permissions",
+      "title": "Authorization & Permissions",
+      "description": "Study concepts and solve targeted engineering problems for Authorization & Permissions.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-ZVTPGR01",
+          "title": "Defining User Roles",
+          "content": "Now that you understand how to authenticate users and manage their passwords, let's talk about giving different types of users different capabilities. This is where **User Roles** come in.\n\n**What are User Roles?**\n\nImagine a blog website. You might have:\n* **Readers:** People who can only read articles.\n* **Authors:** People who can write and publish their own articles.\n* **Editors:** People who can review, edit, and publish articles written by any author.\n* **Administrators:** People who can manage users, settings, and everything else.\n\nEach of these (Reader, Author, Editor, Administrator) is a \"User Role.\" A role defines what a user is allowed to do within your application.\n\n**Why Define User Roles?**\n\nDefining roles is crucial for:\n1. **Security:** Ensuring users can only access features and data appropriate for them.\n2. **Organization:** Structuring your application's logic based on user types.\n3. **User Experience:** Showing users only the options relevant to their role.\n\n**Defining Roles in Django**\n\nDjango provides a flexible way to define and manage user roles, primarily using its built-in **Groups** system, which works alongside the `User` model you learned about in \"Core Authentication\" (from `django.contrib.auth.models.User`).\n\n1. **The `User` Model's Basic Roles:**\n Your Django `User` model (which you use for authentication) has a couple of built-in fields that act like basic roles:\n * `is_staff`: A boolean field. If `True`, the user can access the Django admin site. This is useful for site administrators or content managers.\n * `is_superuser`: A boolean field. If `True`, the user has all permissions in the system without them being explicitly assigned. This is typically reserved for the main site administrator(s).\n\n2. **Using Django's `Group` Model for Custom Roles:**\n For more specific roles beyond just \"staff\" or \"superuser\" (like our \"Author\" or \"Editor\" examples), Django provides a `Group` model.\n * **What are Groups?** Think of Groups as labels or categories you can assign to users. Each group can represent a specific role.\n * **Creating Groups:** You can easily create groups like \"Authors,\" \"Editors,\" \"Premium Members,\" etc., typically through the Django admin interface (which you might have explored during the \"Core Authentication\" setup). Each group you create is essentially defining a new user role.\n * **Assigning Users to Groups:** Once you've created groups, you can assign your registered users to one or more of these groups. For instance, user 'jane_doe' could be added to the \"Authors\" group, and user 'john_smith' could be added to both \"Authors\" and \"Editors\" groups.\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Authentication identifies the user; authorization decides what that user may do. Roles, permissions, and middleware can enforce access at different layers. The key implementation detail in **Defining User Roles** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.http import HttpResponseForbidden\n\ndef staff_only(request):\n if not request.user.is_staff:\n return HttpResponseForbidden(\"Forbidden\")\n return \"staff content\""
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ZVTPGR01",
+            "question": "Which statement best describes **Defining User Roles** in the Django topic **Authorization & Permissions**?",
+            "options": [
+              "Authentication identifies the user; authorization decides what that user may do. Roles, permissions, and middleware can enforce access at different layers.",
+              "It should bypass framework validation and store unchecked request data.",
+              "It should move every responsibility into a single global function.",
+              "It should rely on undocumented server behavior instead of explicit configuration."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The first option matches the responsibility of Defining User Roles within Authorization & Permissions."
+          }
+        },
+        {
+          "pageId": "p-ZVTPGR04",
+          "title": "Managing Permissions",
+          "content": "Now that we've learned about users and how to authenticate them (from **Core Authentication**), the next step is to control what these authenticated users are allowed to *do* within our application. This is where **permissions** come into play.\n\n**What are Permissions?**\n\nThink of permissions as specific authorizations or \"keys.\" If a user has the \"key\" (permission) to perform a certain action (like opening a particular door), they can do it. Otherwise, they can't. For example:\n* Can a user create a new blog post?\n* Can they edit an existing product listing?\n* Can they delete a comment?\nPermissions provide the answers to these kinds of questions, ensuring users only access and modify what they're supposed to.\n\n**Django's Built-in Permission System**\n\nThe great news is that Django has a built-in permission system that does a lot of the work for us!\nWhen you create a new model in your `models.py` file, Django automatically creates four default permissions for that model when you run `python manage.py migrate`:\n\n1. `add_`: Permission to add new instances of the model.\n2. `change_`: Permission to modify existing instances of the model.\n3. `delete_`: Permission to delete instances of the model.\n4. `view_`: Permission to view instances of the model.\n\nFor example, if you have an app named `blog` and a model named `Post` (i.e., `class Post(models.Model): ...`), Django will automatically create the following permissions:\n* `blog.add_post`\n* `blog.change_post`\n* `blog.delete_post`\n* `blog.view_post`\n\nThe format for a permission string is `app_label.codename`, where `codename` is typically `action_modelname` (e.g., `add_post`).\n\n**Checking Permissions in Your Views** \n**Method 1: Using has_perm() inside the view** \nInside your view functions, you can check if the currently logged-in user (`request.user`) has a specific permission. The `request.user` object has a method called `has_perm()` for this. \n**Method 2: Using the @permission_required decorator** \nDjango also provides a shortcut: the @permission_required decorator. It automatically checks if the user has a permission, and if not, either redirects them to the login page or shows a 403 Forbidden page.\n\n**Showing/Hiding Content in Templates based on Permissions**\n\nYou can also check for permissions directly within your Django templates (from **Templating Basics**) to conditionally show or hide elements on a webpage. The `perms` object is available in your templates if `django.contrib.auth.context_processors.auth` is in your `TEMPLATES` setting's `context_processors` (it is by default).\n\n**Assigning Permissions: Users and Groups**\n\nSo, how do users actually get these permissions? There are two main ways:\n\n1. **Directly to Users:** You can assign permissions one-by-one directly to a specific user account. This is useful for very specific cases or for superusers, but it can become hard to manage if you have many users and many permissions.\n\n2. **Through Groups (Recommended):** This is the more organized and scalable approach.\n * A **Group** is essentially a label or a role (like \"Editors,\" \"Authors,\" \"Subscribers\").\n * You create a group (e.g., \"Editors\").\n * You assign a set of permissions to that group (e.g., \"Editors\" can `add_article`, `change_article`, `delete_article`, and `view_article`).\n * Then, you add users to that group.\n * Any user belonging to the \"Editors\" group will automatically inherit all the permissions assigned to that group.\n\nThis makes managing permissions much easier. If you need to change what \"Editors\" can do, you just modify the permissions for the \"Editors\" group, and it applies to all users in that group.\n\n**Managing Permissions and Groups via the Django Admin**\nWhen you log into the Django admin page:\n* You'll find a section (usually \"AUTHENTICATION AND AUTHORIZATION\").\n* Under this, you can manage \"Users\" and \"Groups.\"\n* For each **User**, you can see and assign specific permissions or add them to groups.\n* For each **Group**, you can define which permissions belong to that group.\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Authentication identifies the user; authorization decides what that user may do. Roles, permissions, and middleware can enforce access at different layers. The key implementation detail in **Managing Permissions** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.http import HttpResponseForbidden\n\ndef staff_only(request):\n if not request.user.is_staff:\n return HttpResponseForbidden(\"Forbidden\")\n return \"staff content\""
+          }
+        },
+        {
+          "pageId": "p-ZVTPGR10",
+          "title": "Middleware for Access Control",
+          "content": "So far in \"Authorization & Permissions,\" you've learned how to restrict access using decorators like `@login_required` and `@permission_required`. These are great for protecting individual views.\n\nBut what if you want to control access to an entire section of your site — for example, every URL under **/admin_panel/** should only be visible to staff users? Adding decorators to every view would be repetitive and harder to maintain.\n\n### This is where Middleware comes in.\n\n**What is Middleware?** \nMiddleware is like a series of checkpoints that every request passes through before reaching your views, and every response passes through before going back to the browser.\n\nDjango includes built-in middleware (like the one that sets `request.user`), and you can write your own.\n\n### How Middleware Helps with Access Control\nWith custom middleware, you can write centralized logic that runs before any view is called. \nThink of it like a security gate that checks:\n\n- What URL is being accessed? (`request.path`)\n- Who is the user? (`request.user`)\n\nBased on that, the middleware can decide:\n- Is the user logged in? (`request.user.is_authenticated`)\n- Is the user a staff member? (`request.user.is_staff`)\n- Does the user have a permission? (`request.user.has_perm(...)`)\n\n### Example: Protecting `/members/` URLs\nSuppose you want only logged-in users to access any URL under `/members/`. \nYour middleware could:\n1. Check if `request.path` starts with `/members/`\n2. If yes, check if `request.user.is_authenticated` is **True**\n3. If not authenticated, redirect to the login page or show an “Access Denied” page\n4. Otherwise, allow the request to continue.\n\nThis way, you don’t need to add `@login_required` to every `/members/` view — your middleware handles it all.\n\n### How to Set It Up\n- Create a Python class (your custom middleware)\n- Write the logic in a special method (__call__ or process_view)\n- Add the class path to the MIDDLEWARE list in settings.py\n- Make sure it comes after the authentication middleware, so request.user is available\n\n### Benefits of Using Middleware for Access Control\n- Centralized logic — write once, apply everywhere\n- Cleaner views — no repeated decorators\n- Early rejection — access is denied before views are even reached\n- Scalable — great for protecting whole areas like `/premium/`, `/admin_panel/`, etc.\n\n\n#### Video Explanation:",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Authentication identifies the user; authorization decides what that user may do. Roles, permissions, and middleware can enforce access at different layers. The key implementation detail in **Middleware for Access Control** is to keep responsibilities explicit and validate data before it crosses application boundaries."
+          },
+          "codeCard": {
+            "language": "python",
+            "code": "from django.http import HttpResponseForbidden\n\ndef staff_only(request):\n if not request.user.is_staff:\n return HttpResponseForbidden(\"Forbidden\")\n return \"staff content\""
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-ZVTPGR01-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Defining User Roles (Python)",
+          "code": "from django.http import HttpResponseForbidden\n\ndef staff_only(request):\n if not request.user.is_staff:\n return HttpResponseForbidden(\"Forbidden\")\n return \"staff content\""
+        },
+        {
+          "exampleId": "ex-ZVTPGR04-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Managing Permissions (Python)",
+          "code": "from django.http import HttpResponseForbidden\n\ndef staff_only(request):\n if not request.user.is_staff:\n return HttpResponseForbidden(\"Forbidden\")\n return \"staff content\""
+        },
+        {
+          "exampleId": "ex-ZVTPGR10-go",
+          "language": "python",
+          "label": "Python",
+          "title": "Middleware for Access Control (Python)",
+          "code": "from django.http import HttpResponseForbidden\n\ndef staff_only(request):\n if not request.user.is_staff:\n return HttpResponseForbidden(\"Forbidden\")\n return \"staff content\""
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "ZVTPGR02",
+          "questionId": "ZVTPGR02",
+          "title": "Publishing House User Roles Setup",
+          "difficulty": "Medium",
+          "description": "Practice user registration uniqueness.",
+          "problemStatement": "Given existing usernames and a new requested username, print `AVAILABLE` when unused or `TAKEN` when already registered.",
+          "constraints": [
+            "1 <= N <= 100",
+            "Usernames are case-sensitive tokens."
+          ],
+          "inputFormat": "N followed by N existing usernames and one requested username.",
+          "outputFormat": "`AVAILABLE` or `TAKEN`.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice bob carol dave",
+              "output": "AVAILABLE",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice bob carol dave",
+              "output": "AVAILABLE",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "2 alice bob alice",
+              "output": "TAKEN",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "4 a b c d c",
+              "output": "TAKEN",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "1 django django",
+              "output": "TAKEN",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "3 bob sam lee bob",
+              "output": "TAKEN",
+              "explanation": "Additional distinct case for the same documented rule."
+            }
+          ]
+        },
+        {
+          "problemId": "ZVTPGR03",
+          "questionId": "ZVTPGR03",
+          "title": "School User Role Setup",
+          "difficulty": "Medium",
+          "description": "Practice authentication event evaluation.",
+          "problemStatement": "Given login events as `username:result`, a user is authenticated when at least one matching `username:ok` event exists. Print `LOGIN_SUCCESS` or `LOGIN_FAILED`.",
+          "constraints": [
+            "1 <= N <= 100"
+          ],
+          "inputFormat": "N events followed by the target username.",
+          "outputFormat": "Authentication result.",
+          "sampleTestCases": [
+            {
+              "input": "3 alice:ok alice:fail bob:ok alice",
+              "output": "LOGIN_SUCCESS",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3 alice:ok alice:fail bob:ok alice",
+              "output": "LOGIN_SUCCESS",
+              "explanation": "Authentication succeeds when a matching successful event exists."
+            },
+            {
+              "input": "3 a:fail a:fail a:ok a",
+              "output": "LOGIN_SUCCESS",
+              "explanation": "Authentication succeeds when a matching successful event exists."
+            },
+            {
+              "input": "2 x:ok y:fail x",
+              "output": "LOGIN_SUCCESS",
+              "explanation": "Authentication succeeds when a matching successful event exists."
+            },
+            {
+              "input": "3 u:fail v:ok w:fail u",
+              "output": "LOGIN_FAILED",
+              "explanation": "Authentication succeeds when a matching successful event exists."
+            },
+            {
+              "input": "1 admin:fail admin",
+              "output": "LOGIN_FAILED",
+              "explanation": "Authentication succeeds when a matching successful event exists."
+            }
+          ]
+        },
+        {
+          "problemId": "ZVTPGR05",
+          "questionId": "ZVTPGR05",
+          "title": "Controlling Secret Note Creation Access",
+          "difficulty": "Medium",
+          "description": "Practice password-strength signals before Django stores hashes.",
+          "problemStatement": "Score a password from 0 to 4 by counting whether it contains uppercase, lowercase, digit, and special-character classes.",
+          "constraints": [
+            "1 <= password length <= 100"
+          ],
+          "inputFormat": "One line containing the password.",
+          "outputFormat": "`score/4`.",
+          "sampleTestCases": [
+            {
+              "input": "Password1!",
+              "output": "4/4",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "Password1!",
+              "output": "4/4",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "django123",
+              "output": "2/4",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Admin@2026",
+              "output": "4/4",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "short",
+              "output": "1/4",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "Secure#Pass9",
+              "output": "4/4",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "ZVTPGR05A",
+          "questionId": "ZVTPGR05A",
+          "title": "Assignment creation app with specific roles",
+          "difficulty": "Medium",
+          "description": "Practice evaluating a password-reset token state.",
+          "problemStatement": "A reset request is allowed only when the supplied token status is `valid`; otherwise deny the request.",
+          "constraints": [
+            "Status is valid, expired, or invalid"
+          ],
+          "inputFormat": "One line: `username|status`.",
+          "outputFormat": "`RESET_ALLOWED` or `RESET_DENIED`.",
+          "sampleTestCases": [
+            {
+              "input": "alice|valid",
+              "output": "RESET_ALLOWED",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "alice|valid",
+              "output": "RESET_ALLOWED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "bob|expired",
+              "output": "RESET_DENIED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "cara|valid",
+              "output": "RESET_ALLOWED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "dan|invalid",
+              "output": "RESET_DENIED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "eva|valid",
+              "output": "RESET_ALLOWED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "ZVTPGR10A",
+          "questionId": "ZVTPGR10A",
+          "title": "Protect Members Area with Middleware",
+          "difficulty": "Medium",
+          "description": "Practice mapping Django authentication state to a UI decision.",
+          "problemStatement": "Map the supplied authentication state to `LOGIN_REQUIRED`, `AUTHENTICATED`, `STAFF_USER`, or `SUPERUSER` according to the documented state names.",
+          "constraints": [
+            "State is one of the five listed values."
+          ],
+          "inputFormat": "One state token.",
+          "outputFormat": "Mapped state.",
+          "sampleTestCases": [
+            {
+              "input": "logged_out",
+              "output": "LOGIN_REQUIRED",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "logged_out",
+              "output": "LOGIN_REQUIRED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "logged_in",
+              "output": "AUTHENTICATED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "staff",
+              "output": "STAFF_USER",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "superuser",
+              "output": "SUPERUSER",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "anonymous",
+              "output": "LOGIN_REQUIRED",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        },
+        {
+          "problemId": "ZVTPGR10B",
+          "questionId": "ZVTPGR10B",
+          "title": "Build a Recipe Club with Protected Recipes",
+          "difficulty": "Medium",
+          "description": "Practice deterministic password-digest reasoning.",
+          "problemStatement": "Given a username and password, compute the first 12 hexadecimal characters of the SHA-256 digest of the password and print `username:digest`. This is a deterministic learning exercise; it is not a replacement for Django's password hasher.",
+          "constraints": [
+            "Password length <= 100"
+          ],
+          "inputFormat": "One line: `username:password`.",
+          "outputFormat": "`username:first12hexchars_of_sha256(password)`.",
+          "sampleTestCases": [
+            {
+              "input": "alice:secret",
+              "output": "alice:2bb80d537b1d",
+              "explanation": "Example input demonstrating the rule."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) {\n int n;\n scanf(\"%d\", &n);\n printf(\"%d\\n\", n);\n return 0;\n}",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n long long n; cin >> n;\n cout << n << \"\\n\";\n return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\npublic class Main {\n public static void main(String[] args) throws Exception {\n Scanner sc = new Scanner(System.in);\n if (sc.hasNextLong()) System.out.println(sc.nextLong());\n }\n}",
+            "Python3": "import sys\n\ndef solve():\n data = sys.stdin.read().strip().split()\n if data:\n print(data[0])\n\nif __name__ == \"__main__\":\n solve()",
+            "JavaScript": "const fs = require(\"fs\");\nconst data = fs.readFileSync(0, \"utf8\").trim().split(/\\s+/);\nif (data.length && data[0]) console.log(data[0]);",
+            "Go": "package main\nimport (\"fmt\"; \"bufio\"; \"os\")\nfunc main() {\n in := bufio.NewReader(os.Stdin)\n var n int\n if _, err := fmt.Fscan(in, &n); err == nil { fmt.Println(n) }\n}",
+            "Rust": "use std::io::{self, Read};\nfn main() {\n let mut s = String::new(); io::stdin().read_to_string(&mut s).unwrap();\n if let Some(x) = s.split_whitespace().next() { println!(\"{}\", x); }\n}",
+            "C#": "using System;\nclass Program {\n static void Main() {\n string s = Console.ReadLine() ?? \"\";\n if (!string.IsNullOrWhiteSpace(s)) Console.WriteLine(s.Split()[0]);\n }\n}",
+            "SQL": "-- Console-style SQL practice starter\n-- Read the problem statement and write the required query.\nSELECT 1;"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "alice:secret",
+              "output": "alice:2bb80d537b1d",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "bob:django123",
+              "output": "bob:24ea8461a9b1",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "sam:password",
+              "output": "sam:5e884898da28",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "user:pass123",
+              "output": "user:9b8769a4a742",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            },
+            {
+              "input": "test:hello",
+              "output": "test:2cf24dba5fb0",
+              "explanation": "Apply the stated Django-focused rule to the supplied input."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "django.json",
+      "_moduleTitle": "User Authentication & Authorization"
+    }
+  ]
+}

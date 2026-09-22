@@ -1,0 +1,343 @@
+{
+  "moduleId": "m02-topological-sorting",
+  "title": "Topological Sorting",
+  "description": "Core concepts and hands-on practice in Topological Sorting.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-topological-sorting",
+      "title": "Topological sorting",
+      "description": "Study concepts and solve targeted engineering problems for Topological sorting.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 40,
+      "pages": [
+        {
+          "pageId": "p-TOPOSORTDEF",
+          "title": "Basic Concepts",
+          "content": "Topological sorting is a fundamental algorithm used to linearly order the nodes of a directed acyclic graph (DAG). It is widely applied in various fields such as task scheduling, project management, and dependency resolution. \n\n\n\n**Directed Acyclic Graph (DAG):**\n\n- A DAG is a graph without cycles, meaning there are no closed loops or cycles in the graph.\nTopological sorting is applicable only to DAGs.\nTopological Order:\n\n- A topological order of a DAG is a linear ordering of its vertices such that for every directed edge (u, v), vertex u comes before v in the ordering.\nTopological ordering is not unique; a DAG can have multiple valid topological orders.\n\n- Topological sorting can be accomplished using two main algorithms: Kahn's Algorithm and Depth-First Search (DFS). We'll focus on Kahn's Algorithm for simplicity. We'll learn about each of these algorithms in coming sections. \n\nHere, let's take a look at the following directed acyclic graph:\n\n![TopoSort](https://cdn.codechef.com/images/learning/graphs-trees/topo-ordering-1.png) \n\n\nThe topological order of the graph is: 3 2 4 1\n\nAnother example:\n\n![TopoSort](https://cdn.codechef.com/images/learning/graphs-trees/topo-ordering-2.png) \\\nTopological order: 0 1 2 3 4\n\n*Explanation:*\n\nIn edge _(0, 1)_ , node $0$ comes before node $1$ hence they come in same order in given topological ordering. Similarly all directed edges are present in the same order. \n\nTopological order can be **non-unique** (for example, if there exist three vertices $a$,  $b$  and $c$  for which there exist paths from  $a$  to  $b$  and from  $a$  to  $c$  but not paths from  $b$  to  $c$  or from  $c$  to  $b$ ). \\\nThe above graph also has multiple topological orders, a second topological order is the following: 0 1 3 2 4\n\n\n\nAs you can see in all the topological orderings, each node comes before all the nodes ahead of it.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Topological sorting: focus on the core algorithm, its invariant, and its practical use rather than generic implementation advice."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\npublic class Main {\n    static int[] parent, size;\n\n    static void init(int n) {\n        parent = new int[n + 1];\n        size = new int[n + 1];\n        for (int i = 1; i <= n; i++) {\n            parent[i] = i;\n            size[i] = 1;\n        }\n    }\n\n    static int find(int x) {\n        if (parent[x] == x) return x;\n        parent[x] = find(parent[x]);\n        return parent[x];\n    }\n\n    static void union(int a, int b) {\n        a = find(a); b = find(b);\n        if (a == b) return;\n        if (size[a] < size[b]) { int t = a; a = b; b = t; }\n        parent[b] = a;\n        size[a] += size[b];\n    }\n}\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-TOPOSORTDEF",
+            "question": "Which statement correctly describes a topological ordering?",
+            "options": [
+              "For every directed edge u -> v, u appears before v.",
+              "Every vertex must have indegree zero.",
+              "It is defined only for undirected graphs.",
+              "It always produces exactly one ordering."
+            ],
+            "correctAnswer": 0,
+            "explanation": "A topological order respects the direction of every edge and exists for DAGs."
+          }
+        },
+        {
+          "pageId": "p-GRAPHMCQ15",
+          "title": "Topological Sorting Purpose",
+          "content": "Topological sorting produces an ordering of vertices in a directed acyclic graph such that every directed edge u -> v places u before v. It is useful for dependency resolution and scheduling.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Topological sorting: focus on the core algorithm, its invariant, and its practical use rather than generic implementation advice."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        int n = 4;\n        int[][] edges = {{1, 2}, {1, 3}, {3, 4}};\n        List<List<Integer>> g = new ArrayList<>();\n        for (int i=0;i<n+1;i++) g.add(new ArrayList<>());\n        for (int[] e : edges) g.get(e[0]).add(e[1]);\n        int[] indegree = new int[n+1];\n        for (int[] e : edges) indegree[e[1]]++;\n        Queue<Integer> q = new ArrayDeque<>();\n        for (int i=1;i<=n;i++) if (indegree[i]==0) q.add(i);\n        List<Integer> order = new ArrayList<>();\n        while (!q.isEmpty()) {\n            int u=q.poll(); order.add(u);\n            for (int v:g.get(u)) if (--indegree[v]==0) q.add(v);\n        }\n        System.out.println(order);\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-GRAPHMCQ16",
+          "title": "Topological Sorting Applicability",
+          "content": "A topological order exists only for a directed acyclic graph (DAG). If a directed cycle exists, no valid topological ordering can include every edge constraint.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Topological sorting: focus on the core algorithm, its invariant, and its practical use rather than generic implementation advice."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        int n = 4;\n        int[][] edges = {{1, 2}, {1, 3}, {3, 4}};\n        List<List<Integer>> g = new ArrayList<>();\n        for (int i=0;i<n+1;i++) g.add(new ArrayList<>());\n        for (int[] e : edges) g.get(e[0]).add(e[1]);\n        int[] indegree = new int[n+1];\n        for (int[] e : edges) indegree[e[1]]++;\n        Queue<Integer> q = new ArrayDeque<>();\n        for (int i=1;i<=n;i++) if (indegree[i]==0) q.add(i);\n        List<Integer> order = new ArrayList<>();\n        while (!q.isEmpty()) {\n            int u=q.poll(); order.add(u);\n            for (int v:g.get(u)) if (--indegree[v]==0) q.add(v);\n        }\n        System.out.println(order);\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-GRAPHMCQ17",
+          "title": "Topological Sort Initialization",
+          "content": "Kahn's algorithm starts by computing indegrees and placing every zero-indegree vertex into a queue. Removing a vertex decreases the indegree of its outgoing neighbors.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Topological sorting: focus on the core algorithm, its invariant, and its practical use rather than generic implementation advice."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        int n = 4;\n        int[][] edges = {{1, 2}, {1, 3}, {3, 4}};\n        List<List<Integer>> g = new ArrayList<>();\n        for (int i=0;i<n+1;i++) g.add(new ArrayList<>());\n        for (int[] e : edges) g.get(e[0]).add(e[1]);\n        int[] indegree = new int[n+1];\n        for (int[] e : edges) indegree[e[1]]++;\n        Queue<Integer> q = new ArrayDeque<>();\n        for (int i=1;i<=n;i++) if (indegree[i]==0) q.add(i);\n        List<Integer> order = new ArrayList<>();\n        while (!q.isEmpty()) {\n            int u=q.poll(); order.add(u);\n            for (int v:g.get(u)) if (--indegree[v]==0) q.add(v);\n        }\n        System.out.println(order);\n    }\n}"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-TOPOSORTDEF-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Basic Concepts (Java)",
+          "code": "import java.util.*;\n\npublic class Main {\n    static int[] parent, size;\n\n    static void init(int n) {\n        parent = new int[n + 1];\n        size = new int[n + 1];\n        for (int i = 1; i <= n; i++) {\n            parent[i] = i;\n            size[i] = 1;\n        }\n    }\n\n    static int find(int x) {\n        if (parent[x] == x) return x;\n        parent[x] = find(parent[x]);\n        return parent[x];\n    }\n\n    static void union(int a, int b) {\n        a = find(a); b = find(b);\n        if (a == b) return;\n        if (size[a] < size[b]) { int t = a; a = b; b = t; }\n        parent[b] = a;\n        size[a] += size[b];\n    }\n}\n"
+        },
+        {
+          "exampleId": "ex-GRAPHMCQ15-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Topological Sorting Purpose (Java)",
+          "code": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        int n = 4;\n        int[][] edges = {{1, 2}, {1, 3}, {3, 4}};\n        List<List<Integer>> g = new ArrayList<>();\n        for (int i=0;i<n+1;i++) g.add(new ArrayList<>());\n        for (int[] e : edges) g.get(e[0]).add(e[1]);\n        int[] indegree = new int[n+1];\n        for (int[] e : edges) indegree[e[1]]++;\n        Queue<Integer> q = new ArrayDeque<>();\n        for (int i=1;i<=n;i++) if (indegree[i]==0) q.add(i);\n        List<Integer> order = new ArrayList<>();\n        while (!q.isEmpty()) {\n            int u=q.poll(); order.add(u);\n            for (int v:g.get(u)) if (--indegree[v]==0) q.add(v);\n        }\n        System.out.println(order);\n    }\n}"
+        },
+        {
+          "exampleId": "ex-GRAPHMCQ16-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Topological Sorting Applicability (Java)",
+          "code": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        int n = 4;\n        int[][] edges = {{1, 2}, {1, 3}, {3, 4}};\n        List<List<Integer>> g = new ArrayList<>();\n        for (int i=0;i<n+1;i++) g.add(new ArrayList<>());\n        for (int[] e : edges) g.get(e[0]).add(e[1]);\n        int[] indegree = new int[n+1];\n        for (int[] e : edges) indegree[e[1]]++;\n        Queue<Integer> q = new ArrayDeque<>();\n        for (int i=1;i<=n;i++) if (indegree[i]==0) q.add(i);\n        List<Integer> order = new ArrayList<>();\n        while (!q.isEmpty()) {\n            int u=q.poll(); order.add(u);\n            for (int v:g.get(u)) if (--indegree[v]==0) q.add(v);\n        }\n        System.out.println(order);\n    }\n}"
+        },
+        {
+          "exampleId": "ex-GRAPHMCQ17-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Topological Sort Initialization (Java)",
+          "code": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        int n = 4;\n        int[][] edges = {{1, 2}, {1, 3}, {3, 4}};\n        List<List<Integer>> g = new ArrayList<>();\n        for (int i=0;i<n+1;i++) g.add(new ArrayList<>());\n        for (int[] e : edges) g.get(e[0]).add(e[1]);\n        int[] indegree = new int[n+1];\n        for (int[] e : edges) indegree[e[1]]++;\n        Queue<Integer> q = new ArrayDeque<>();\n        for (int i=1;i<=n;i++) if (indegree[i]==0) q.add(i);\n        List<Integer> order = new ArrayList<>();\n        while (!q.isEmpty()) {\n            int u=q.poll(); order.add(u);\n            for (int v:g.get(u)) if (--indegree[v]==0) q.add(v);\n        }\n        System.out.println(order);\n    }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "Q4331",
+          "questionId": "Q4331",
+          "title": "Topological Sort - using DFS",
+          "difficulty": "Medium",
+          "description": "Produce a topological ordering of a directed graph using DFS. Visit outgoing neighbors in ascending order and output the reverse DFS finishing order. Report IMPOSSIBLE if a cycle exists.",
+          "problemStatement": "Produce a topological ordering of a directed graph using DFS. Visit outgoing neighbors in ascending order and output the reverse DFS finishing order. Report IMPOSSIBLE if a cycle exists.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "0 <= M <= 200000",
+            "Vertex labels are between 1 and N.",
+            "The graph contains no duplicate edge unless otherwise stated."
+          ],
+          "inputFormat": "First line N M; next M lines contain directed edges u v.",
+          "outputFormat": "Print the DFS-based topological order separated by spaces, or IMPOSSIBLE when the graph contains a directed cycle.",
+          "sampleTestCases": [
+            {
+              "input": "4 3\n1 2\n1 3\n3 4",
+              "output": "1 3 4 2",
+              "explanation": ""
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){return 0;}",
+            "Java": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        // Implement the required graph/DSU algorithm.\n    }\n}",
+            "Python3": "import sys\n# Read stdin and write the required answer.",
+            "JavaScript": "const fs = require(\"fs\");\nconst input = fs.readFileSync(0, \"utf8\").trim();\n// Solve the problem.",
+            "Go": "package main\nimport \"fmt\"\nfunc main(){ _ = fmt.Println }",
+            "Rust": "fn main() {}",
+            "C#": "using System;\nclass Program { static void Main() {} }",
+            "SQL": "-- This is an algorithmic graph problem; use the supplied language template."
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4 3\n1 2\n1 3\n3 4",
+              "output": "1 3 4 2"
+            },
+            {
+              "input": "5 4\n1 2\n2 3\n1 4\n4 5",
+              "output": "1 4 5 2 3"
+            },
+            {
+              "input": "3 3\n1 2\n2 3\n1 3",
+              "output": "1 2 3"
+            },
+            {
+              "input": "4 4\n1 2\n2 3\n3 4\n1 3",
+              "output": "1 2 3 4"
+            },
+            {
+              "input": "3 3\n1 2\n2 3\n3 1",
+              "output": "IMPOSSIBLE"
+            }
+          ]
+        },
+        {
+          "problemId": "Q4332",
+          "questionId": "Q4332",
+          "title": "Topological Sort - Using BFS",
+          "difficulty": "Medium",
+          "description": "Produce the lexicographically smallest topological ordering using Kahn's algorithm. When several vertices have indegree zero, choose the smallest numbered vertex.",
+          "problemStatement": "Produce the lexicographically smallest topological ordering using Kahn's algorithm. When several vertices have indegree zero, choose the smallest numbered vertex.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "0 <= M <= 200000",
+            "Vertex labels are between 1 and N.",
+            "The graph contains no duplicate edge unless otherwise stated."
+          ],
+          "inputFormat": "First line N M; next M lines contain directed edges u v.",
+          "outputFormat": "Print the lexicographically smallest topological order, or IMPOSSIBLE if a directed cycle exists.",
+          "sampleTestCases": [
+            {
+              "input": "4 3\n1 2\n1 3\n3 4",
+              "output": "1 2 3 4",
+              "explanation": ""
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){return 0;}",
+            "Java": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        // Implement the required graph/DSU algorithm.\n    }\n}",
+            "Python3": "import sys\n# Read stdin and write the required answer.",
+            "JavaScript": "const fs = require(\"fs\");\nconst input = fs.readFileSync(0, \"utf8\").trim();\n// Solve the problem.",
+            "Go": "package main\nimport \"fmt\"\nfunc main(){ _ = fmt.Println }",
+            "Rust": "fn main() {}",
+            "C#": "using System;\nclass Program { static void Main() {} }",
+            "SQL": "-- This is an algorithmic graph problem; use the supplied language template."
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4 3\n1 2\n1 3\n3 4",
+              "output": "1 2 3 4"
+            },
+            {
+              "input": "5 4\n1 2\n2 3\n1 4\n4 5",
+              "output": "1 2 3 4 5"
+            },
+            {
+              "input": "4 2\n2 4\n1 3",
+              "output": "1 2 3 4"
+            },
+            {
+              "input": "6 5\n1 4\n2 4\n2 5\n3 5\n4 6",
+              "output": "1 2 3 4 5 6"
+            },
+            {
+              "input": "3 3\n1 2\n2 3\n3 1",
+              "output": "IMPOSSIBLE"
+            }
+          ]
+        },
+        {
+          "problemId": "Q4333",
+          "questionId": "Q4333",
+          "title": "Find Course Schedule",
+          "difficulty": "Medium",
+          "description": "A course dependency (a,b) means course b must be completed before course a. Determine whether all courses can be completed without violating dependencies.",
+          "problemStatement": "A course dependency (a,b) means course b must be completed before course a. Determine whether all courses can be completed without violating dependencies.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "0 <= M <= 200000",
+            "Vertex labels are between 1 and N.",
+            "The graph contains no duplicate edge unless otherwise stated."
+          ],
+          "inputFormat": "First line N M; next M lines contain a b, meaning b must come before a.",
+          "outputFormat": "Print YES when all courses can be scheduled, otherwise NO.",
+          "sampleTestCases": [
+            {
+              "input": "4 3\n2 1\n3 2\n4 2",
+              "output": "YES",
+              "explanation": ""
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){return 0;}",
+            "Java": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        // Implement the required graph/DSU algorithm.\n    }\n}",
+            "Python3": "import sys\n# Read stdin and write the required answer.",
+            "JavaScript": "const fs = require(\"fs\");\nconst input = fs.readFileSync(0, \"utf8\").trim();\n// Solve the problem.",
+            "Go": "package main\nimport \"fmt\"\nfunc main(){ _ = fmt.Println }",
+            "Rust": "fn main() {}",
+            "C#": "using System;\nclass Program { static void Main() {} }",
+            "SQL": "-- This is an algorithmic graph problem; use the supplied language template."
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4 3\n2 1\n3 2\n4 2",
+              "output": "YES"
+            },
+            {
+              "input": "4 4\n2 1\n3 2\n4 3\n1 4",
+              "output": "NO"
+            },
+            {
+              "input": "5 3\n2 1\n3 1\n5 4",
+              "output": "YES"
+            },
+            {
+              "input": "3 2\n1 2\n1 3",
+              "output": "YES"
+            },
+            {
+              "input": "5 5\n1 2\n2 3\n3 1\n4 5\n5 2",
+              "output": "NO"
+            }
+          ]
+        },
+        {
+          "problemId": "Q4336",
+          "questionId": "Q4336",
+          "title": "Get all ancestors",
+          "difficulty": "Medium",
+          "description": "For every vertex in a DAG, list all of its ancestors (vertices from which it is reachable). Output ancestors in ascending order.",
+          "problemStatement": "For every vertex in a DAG, list all of its ancestors (vertices from which it is reachable). Output ancestors in ascending order.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "0 <= M <= 200000",
+            "Vertex labels are between 1 and N.",
+            "The graph contains no duplicate edge unless otherwise stated."
+          ],
+          "inputFormat": "First line N M; next M lines contain directed edges u v.",
+          "outputFormat": "For vertices 1..N, print: count followed by the sorted ancestor list. Print only the count when it is zero.",
+          "sampleTestCases": [
+            {
+              "input": "4 3\n1 2\n2 3\n1 4",
+              "output": "0\n1 1\n2 1 2\n1 1",
+              "explanation": ""
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void) { return 0; }",
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\nint main(){return 0;}",
+            "Java": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        // Implement the required graph/DSU algorithm.\n    }\n}",
+            "Python3": "import sys\n# Read stdin and write the required answer.",
+            "JavaScript": "const fs = require(\"fs\");\nconst input = fs.readFileSync(0, \"utf8\").trim();\n// Solve the problem.",
+            "Go": "package main\nimport \"fmt\"\nfunc main(){ _ = fmt.Println }",
+            "Rust": "fn main() {}",
+            "C#": "using System;\nclass Program { static void Main() {} }",
+            "SQL": "-- This is an algorithmic graph problem; use the supplied language template."
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4 3\n1 2\n2 3\n1 4",
+              "output": "0\n1 1\n2 1 2\n1 1"
+            },
+            {
+              "input": "5 5\n1 2\n1 3\n2 4\n3 4\n4 5",
+              "output": "0\n1 1\n1 1\n3 1 2 3\n4 1 2 3 4"
+            },
+            {
+              "input": "3 0",
+              "output": "0\n0\n0"
+            },
+            {
+              "input": "4 3\n1 2\n2 4\n1 3",
+              "output": "0\n1 1\n1 1\n2 1 2"
+            },
+            {
+              "input": "5 5\n1 3\n2 3\n3 4\n2 5\n1 5",
+              "output": "0\n0\n2 1 2\n3 1 2 3\n2 1 2"
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "graphs-advanced.json",
+      "_moduleTitle": "Topological Sorting"
+    }
+  ]
+}

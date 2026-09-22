@@ -7,6 +7,9 @@
  */
 
 export const getStorageJson = (key, fallback = {}) => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return fallback;
+  }
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return fallback;
@@ -18,6 +21,9 @@ export const getStorageJson = (key, fallback = {}) => {
 };
 
 export const setStorageJson = (key, value) => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return;
+  }
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (err) {

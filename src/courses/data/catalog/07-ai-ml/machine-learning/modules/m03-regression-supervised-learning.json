@@ -1,0 +1,1057 @@
+{
+  "moduleId": "m03-regression-supervised-learning",
+  "title": "Regression (Supervised Learning)",
+  "description": "Core concepts and hands-on practice in Regression (Supervised Learning).",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-basics-of-regression",
+      "title": "Basics of Regression",
+      "description": "Study concepts and solve targeted engineering problems for Basics of Regression.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-MLPROB32",
+          "title": "Predicting the Future- Linear Regression Intuition",
+          "content": "Imagine you have data about students’ **study hours** and their **exam scores**:\n\n| Study Hours | Exam Score |\n| ----------- | ---------- |\n| 1 | 40 |\n| 2 | 50 |\n| 3 | 60 |\n| 4 | 70 |\n\n**Question:** If a student studies for **5 hours**, what score do you think they’ll get?\n\n**Try to guess the score by looking at the pattern in the table.**\n\n---\n\n**Spotting the Pattern**\n\n* Look at the numbers. the score seems to **increase as study hours increase**.\n* You can draw a rough line through these points:\n\n\n\n\n* Formula for the line would be: ```y = mx + c```\n Where:\n ```y``` = predicted exam score\n ```x``` = study hours\n ```m``` = slope of the line (how much the score increases per additional hour of study)\n ```c``` = y-intercept (score when study hours = 0)\n* This line is your **“prediction line”**, it shows the trend of the data.\n* Linear regression is **the process of finding the best line** that predicts new values accurately.\n\n---\n\n**Key Takeaway**\n\n* You’ve just done linear regression in your head! \n* Machine learning will **teach computers to do this automatically** for much bigger datasets.\n* For now, focus on **understanding the pattern visually**.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Predicting the Future- Linear Regression Intuition in Basics of Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB32",
+            "question": "In Basics of Regression, what is the key consideration regarding Predicting the Future- Linear Regression Intuition?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB34",
+          "title": "Finding the Best Line",
+          "content": "| Study Hours | Exam Score | Coordinates (x, y) |\n| ----------- | ---------- | ------------------ |\n| 1 | 40 | (1, 40) |\n| 2 | 50 | (2, 50) |\n| 3 | 65 | (3, 65) |\n| 4 | 70 | (4, 70) |\n\n* Notice: the points are **not perfectly in a straight line**.\n\n---\n\n**Step 1: Draw a Rough Line**\n\n* Plot each point using its coordinates `(Study Hours, Exam Score)`.\n* Draw a **rough prediction line** that **passes near most points**. For this example, it roughly passes through `(1, 42)` and `(4, 68)`:\n\n\n\n\n* This is your **best-fit line** conceptually — it **doesn’t have to pass through all points**.\n\n---\n\n**Step 2: Calculate Errors (Conceptually)**\n\n* **Error for each point:** vertical distance from point to the line.\n\n```\n- Point (1,40): slightly below line → small negative error\n- Point (2,50): slightly below line → small negative error\n- Point (3,65): slightly above line → small positive error\n- Point (4,70): slightly above line → small positive error\n```\n\n* We **square the errors** when calculating total error so that **positive and negative errors don’t cancel each other out**, and larger mistakes are penalized more.\n* Total squared error is the sum of all individual squared distances.\n\n---\n\n**Step 3: Adjust the Line**\n\n* Move the line slightly up or down to **reduce total errors**.\n* Repeat until the line is as close as possible to all points.\n* Final **best-fit line** (approximate): passes near `(1,42)` and `(4,68)`.\n\n---\n\n**Step 4: Make Predictions**\n\n* **New student studies 3.5 hours → follow the line → predicted score ≈ 66**\n\n---\n\n**Key Takeaway**\n\n* The **best line** minimizes errors across all points.\n* It doesn’t pass exactly through every point but **balances errors**.\n* Each point `(x, y)` represents an actual measurement.\n* Squaring the errors ensures that **all deviations contribute positively**, and **larger mistakes matter more**.\n* Once the line is found, you can **predict any new value**.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Finding the Best Line in Basics of Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB34",
+            "question": "In Basics of Regression, what is the key consideration regarding Finding the Best Line?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB37",
+          "title": "Predicting Curved Patterns- Polynomial Regression",
+          "content": "Imagine tracking **temperature vs ice cream sales** over a month. The data looks like this:\n\n| Temperature (°C) | Sales |\n| ---------------- | ----- |\n| 20 | 50 |\n| 22 | 60 |\n| 24 | 85 |\n| 26 | 110 |\n| 28 | 150 |\n| 30 | 200 |\n\n**Notice how the points **curve upwards**? A straight line won’t capture this pattern well.**\n\n\n\n\n\n- As you can see from the graph, a straight line is not a good fit for this data.\n- The blue points represent the actual sales data, while the red line shows the best-fit straight line (from a linear regression model).\n- The line fails to accurately represent the trend because the increase in sales accelerates as the temperature rises, indicating a non-linear relationship.\n\n---\n\n**Intuition**\n\n* Linear regression fits a **straight line**, which works for simple trends.\n* But many real-world patterns **curve**.\n* **Polynomial regression** lets us fit a **curve** through the data, capturing nonlinear trends.\n\n---\n\n**Example Thought Experiment**\n\n* Temperature = 25°C\n* A straight line might predict **80 sales** (underestimate).\n* A curved line might predict **95 sales**, which is closer to reality.\n\n---\n\n**Key Takeaways**\n\n1. Linear regression → straight line\n2. Polynomial regression → flexible curve\n3. Goal → predict new points as accurately as possible",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Predicting Curved Patterns- Polynomial Regression in Basics of Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB37",
+            "question": "In Basics of Regression, what is the key consideration regarding Predicting Curved Patterns- Polynomial Regression?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB38",
+          "title": "Finding the Best Curve",
+          "content": "| Study Hours | Exam Score | Coordinates (x, y) |\n| ----------- | ---------- | ------------------ |\n| 1 | 40 | (1, 40) |\n| 2 | 50 | (2, 50) |\n| 3 | 65 | (3, 65) |\n| 4 | 70 | (4, 70) |\n| 5 | 85 | (5, 85) |\n\n* Notice: the points **cannot be well-approximated by a straight line** — a curve fits better.\n\n\n\n---\n\n**Step 1: Plot the Points**\n\n* Plot each point using its coordinates `(Study Hours, Exam Score)`.\n* Observe the **trend is not linear**, it **curves upwards**.\n\n\n\n---\n\n**Step 2: Draw a Rough Curve**\n\n* Draw a **rough prediction curve** passing close to most points.\n* Conceptually, the curve **follows the trend**: rises slowly at first, then faster later.\n* This is your **best-fit curve** for the dataset — it doesn’t have to pass through every point exactly.\n\n---\n\n**Step 3: Calculate Errors (Conceptually)**\n\n* **Error for each point:** vertical distance from the point to the curve.\n\n```kjk\n- Point (1,40): slightly below curve → small negative error\n- Point (2,50): slightly below curve → small negative error\n- Point (3,65): near curve → almost zero error\n- Point (4,70): slightly above curve → small positive error\n- Point (5,85): slightly above curve → small positive error\n```\n\n* **Square the errors** to avoid cancellation and penalize larger mistakes more.\n* Total squared error = sum of all individual squared distances from points to curve.\n\n---\n\n**Step 4: Adjust the Curve**\n* Move parts of the curve slightly up/down to **reduce total squared errors**.\n* Repeat until the curve **fits most points as closely as possible**.\n* This gives the **best-fit polynomial curve**.\n\n---\n\n**Step 5: Make Predictions**\n\n* **New student studies 3.5 hours → follow the curve → predicted score ≈ 63**\n\n---\n\n**Key Takeaways**\n\n* The **best polynomial curve** minimizes errors across all points.\n* It does **not pass exactly through every point**, but balances the errors.\n* Each point `(x, y)` represents a real measurement.\n* Squaring the errors ensures **all deviations contribute positively**, and **larger mistakes matter more**.\n* Using a very high degree in polynomial regression can lead to **overfitting**, and it is not considered an ideal approach.\n* Once the curve is found, you can **predict any new value**.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Finding the Best Curve in Basics of Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB38",
+            "question": "In Basics of Regression, what is the key consideration regarding Finding the Best Curve?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB39",
+          "title": "MCQ - 1",
+          "content": "In Linear Regression, which statement about **Mean Squared Error (MSE)** is correct?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding MCQ - 1 in Basics of Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB39",
+            "question": "In Basics of Regression, what is the key consideration regarding MCQ - 1?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB141",
+          "title": "MCQ - 2",
+          "content": "Select the graph where the curve best shows that as temperature increases, sales also increase, with the curve smoothly following the data points.\n\n| **A.** | **B.** |\n|--------|--------|\n| | |\n\n| **C.** | **D.** |\n|--------|--------|\n| | |",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding MCQ - 2 in Basics of Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB141",
+            "question": "In Basics of Regression, what is the key consideration regarding MCQ - 2?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB41",
+          "title": "MCQ - 3",
+          "content": "A teacher notices that studying very few or very many hours leads to lower exam scores, while medium study hours give higher scores. Which model is most suitable?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding MCQ - 3 in Basics of Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB41",
+            "question": "In Basics of Regression, what is the key consideration regarding MCQ - 3?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB40",
+          "title": "MCQ - 4",
+          "content": "An automobile company predicts mileage (mpg) from engine size. What kind of relationship does **Linear Regression** model here?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding MCQ - 4 in Basics of Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB40",
+            "question": "In Basics of Regression, what is the key consideration regarding MCQ - 4?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-MLPROB32-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Predicting the Future- Linear Regression Intuition (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB34-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Finding the Best Line (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB37-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Predicting Curved Patterns- Polynomial Regression (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB38-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Finding the Best Curve (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB39-java",
+          "language": "java",
+          "label": "Java",
+          "title": "MCQ - 1 (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB141-java",
+          "language": "java",
+          "label": "Java",
+          "title": "MCQ - 2 (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB41-java",
+          "language": "java",
+          "label": "Java",
+          "title": "MCQ - 3 (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB40-java",
+          "language": "java",
+          "label": "Java",
+          "title": "MCQ - 4 (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "MLPROB35",
+          "questionId": "MLPROB35",
+          "title": "Linear Regression - Worked Example",
+          "difficulty": "Easy",
+          "description": "We’ve seen how to draw a line manually and understand errors. Now, let’s see how a computer does the **same thing automatically**.\n\n* We’ll use a tool called **`LinearRegression`** from Python’s **scikit-learn** library.\n* **Important:** Don’t worry about the syntax or math inside. Focus on what each step **does**.\n\n---\n\n\n\n**What’s Happening Here?**\n\n1. **`model = LinearRegression()`** → We create a “prediction machine.”\n2. **`.fit()`** → Shows the data to the machine. It **figures out the best line** automatically.\n3. **`.predict()`** → Gives a new value (e.g., 3.5 hours) and asks the machine:\n “What score do you think this student will get?”\n **Note:** Sklearn expects input as a 2D array (matrix), hence the double brackets. eg. **model.predict([3.5])** or\n**model.predict([[3.5], [5], [8]])**.\n4. **Output** → The predicted score ≈ 66\n\n---\n\n**Why This Matters**\n\n* The computer does **exactly what we did manually**, but much faster and with **lots of data**.\n* You **don’t need to draw or calculate** errors yourself, the model handles it.\n* Once trained, the model can **predict any new input** almost instantly.\n\n---\n\n**Key Takeaway:**\nLinear regression is just a way for a machine to **learn patterns from past data** and **predict future outcomes**, just like we did with our line, but automatically!",
+          "problemStatement": "We’ve seen how to draw a line manually and understand errors. Now, let’s see how a computer does the **same thing automatically**.\n\n* We’ll use a tool called **`LinearRegression`** from Python’s **scikit-learn** library.\n* **Important:** Don’t worry about the syntax or math inside. Focus on what each step **does**.\n\n---\n\n\n\n**What’s Happening Here?**\n\n1. **`model = LinearRegression()`** → We create a “prediction machine.”\n2. **`.fit()`** → Shows the data to the machine. It **figures out the best line** automatically.\n3. **`.predict()`** → Gives a new value (e.g., 3.5 hours) and asks the machine:\n “What score do you think this student will get?”\n **Note:** Sklearn expects input as a 2D array (matrix), hence the double brackets. eg. **model.predict([3.5])** or\n**model.predict([[3.5], [5], [8]])**.\n4. **Output** → The predicted score ≈ 66\n\n---\n\n**Why This Matters**\n\n* The computer does **exactly what we did manually**, but much faster and with **lots of data**.\n* You **don’t need to draw or calculate** errors yourself, the model handles it.\n* Once trained, the model can **predict any new input** almost instantly.\n\n---\n\n**Key Takeaway:**\nLinear regression is just a way for a machine to **learn patterns from past data** and **predict future outcomes**, just like we did with our line, but automatically!",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB36",
+          "questionId": "MLPROB36",
+          "title": "Linear Regression - Practice Problem",
+          "difficulty": "Easy",
+          "description": "We have a new dataset of students’ **study hours** and their **exam scores**. Your goal is to **predict the score** for a student who studies a certain number of hours.\n\n| Study Hours | Exam Score |\n| ----------- | ---------- |\n| 1 | 42 |\n| 2 | 48 |\n| 3 | 60 |\n| 4 | 68 |\n| 5 | ? |\n\n---\n\n**What You Should Do**\n\n1. **Use the previous steps** we learned:\n * Plot the points (optional).\n * Draw a rough **best-fit line** OR\n * Imagine the computer learning the line automatically.\n2. **Predict the exam score** for a student who studies **5 hours**.\n\n\n---\n\n**Expected Output After Completing the Code**\n\n```cd\n[77] # approx value\n```",
+          "problemStatement": "We have a new dataset of students’ **study hours** and their **exam scores**. Your goal is to **predict the score** for a student who studies a certain number of hours.\n\n| Study Hours | Exam Score |\n| ----------- | ---------- |\n| 1 | 42 |\n| 2 | 48 |\n| 3 | 60 |\n| 4 | 68 |\n| 5 | ? |\n\n---\n\n**What You Should Do**\n\n1. **Use the previous steps** we learned:\n * Plot the points (optional).\n * Draw a rough **best-fit line** OR\n * Imagine the computer learning the line automatically.\n2. **Predict the exam score** for a student who studies **5 hours**.\n\n\n---\n\n**Expected Output After Completing the Code**\n\n```cd\n[77] # approx value\n```",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB149",
+          "questionId": "MLPROB149",
+          "title": "Linear Regression - Practice Problem 2",
+          "difficulty": "Easy",
+          "description": "We have a new dataset of employees’ **study hours** and their **exam scores**. Your goal is to **predict the score** for an employee who studies a certain number of hours.\n\n| EmployeeID | Name | Hours_Studied | Exam_Score |\n|------------|-------|---------------|------------|\n| 1 | John | 1 | 45 |\n| 2 | Sarah | 2 | 50 |\n| 3 | Amit | 3 | 60 |\n| 4 | Emma | 4 | 65 |\n| 5 | Liam | 5 | ? |\n\n---\n\n**Task**\n\n1. Load the dataset `employee_study.csv` using **pandas**.\n2. Select the feature **Hours_Studied** and the label **Exam_Score**.\n3. Create a **Linear Regression model** using `sklearn.linear_model.LinearRegression`.\n4. Train the model on the dataset.\n5. Predict the **exam score** for an employee who studies **6 hours**.\n6. Print the predicted score.\n\n---\n\n**Expected Output**\n\n```code\n[81.5]\n```",
+          "problemStatement": "We have a new dataset of employees’ **study hours** and their **exam scores**. Your goal is to **predict the score** for an employee who studies a certain number of hours.\n\n| EmployeeID | Name | Hours_Studied | Exam_Score |\n|------------|-------|---------------|------------|\n| 1 | John | 1 | 45 |\n| 2 | Sarah | 2 | 50 |\n| 3 | Amit | 3 | 60 |\n| 4 | Emma | 4 | 65 |\n| 5 | Liam | 5 | ? |\n\n---\n\n**Task**\n\n1. Load the dataset `employee_study.csv` using **pandas**.\n2. Select the feature **Hours_Studied** and the label **Exam_Score**.\n3. Create a **Linear Regression model** using `sklearn.linear_model.LinearRegression`.\n4. Train the model on the dataset.\n5. Predict the **exam score** for an employee who studies **6 hours**.\n6. Print the predicted score.\n\n---\n\n**Expected Output**\n\n```code\n[81.5]\n```",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB42",
+          "questionId": "MLPROB42",
+          "title": "Worked Example - Polynomial Regression",
+          "difficulty": "Easy",
+          "description": "Not all relationships are **straight lines**.\\\nFor example, salary doesn’t always increase in a perfect line with years of experience:\n\n* Early in your career → salary rises quickly.\n* Later → growth slows down and levels off.\n\nThis kind of pattern needs a **curve**, which polynomial regression can model.\n\n---\n\n**What’s Happening Here?**\n1. **PolynomialFeatures** → Creates new features:\n * For 6 years → `[1, 6, 36]` (1, x, x²)\n This lets the model **draw a curve** instead of a straight line.\n2. **`.fit()`** → Finds the best **curved relationship** between experience and salary.\n3. **`.predict()`** → At 6 years, the model estimates ≈ **\\$90k salary**.\n\n---\n\n**Why This Matters**\n\n* A **straight line** would oversimplify the growth of salary.\n* A **polynomial curve** bends to fit reality better.\n* We still don’t do the math — the computer handles it.\n\n---\n\n**Key Takeaway:**\nPolynomial regression is a way of telling the computer:\n“Don’t just draw a line — draw a **curve** that follows the data more realistically.”",
+          "problemStatement": "Not all relationships are **straight lines**.\\\nFor example, salary doesn’t always increase in a perfect line with years of experience:\n\n* Early in your career → salary rises quickly.\n* Later → growth slows down and levels off.\n\nThis kind of pattern needs a **curve**, which polynomial regression can model.\n\n---\n\n**What’s Happening Here?**\n1. **PolynomialFeatures** → Creates new features:\n * For 6 years → `[1, 6, 36]` (1, x, x²)\n This lets the model **draw a curve** instead of a straight line.\n2. **`.fit()`** → Finds the best **curved relationship** between experience and salary.\n3. **`.predict()`** → At 6 years, the model estimates ≈ **\\$90k salary**.\n\n---\n\n**Why This Matters**\n\n* A **straight line** would oversimplify the growth of salary.\n* A **polynomial curve** bends to fit reality better.\n* We still don’t do the math — the computer handles it.\n\n---\n\n**Key Takeaway:**\nPolynomial regression is a way of telling the computer:\n“Don’t just draw a line — draw a **curve** that follows the data more realistically.”",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB43",
+          "questionId": "MLPROB43",
+          "title": "Polynomial Regression - Practice Problem",
+          "difficulty": "Easy",
+          "description": "- We’re studying how a car’s **speed** affects its **fuel efficiency (mileage in km/l)**.\n- Notice how mileage **increases at first** but then starts to **drop at higher speeds** (because the engine works harder). This creates a **curved pattern** — perfect for polynomial regression!\n\n| Speed (km/h) | Mileage (km/l) |\n| ------------ | -------------- |\n| 20 | 8 |\n| 40 | 15 |\n| 60 | 22 |\n| 80 | 20 |\n| 100 | 15 |\n| 120 | ? |\n\n---\n\n**What You Should Do**\n\n1. Look at the table — a straight line won’t fit well here.\n2. Use **polynomial regression (degree=2 or 3)** to capture the curve.\n3. Predict the mileage at **120 km/h**.\n\n---\n\n\n\n**Expected Output After Completing the Code**\n\n```sd\nPredicted mileage at 120 km/h: [5.2]\n```\n\n---\n\n**Key Learning**\n\n* When data **rises then falls**, straight lines fail.\n* Polynomial regression lets the machine draw a **curve** that matches the real-world trend.\n* The model can then **predict values** even outside the obvious data points.",
+          "problemStatement": "- We’re studying how a car’s **speed** affects its **fuel efficiency (mileage in km/l)**.\n- Notice how mileage **increases at first** but then starts to **drop at higher speeds** (because the engine works harder). This creates a **curved pattern** — perfect for polynomial regression!\n\n| Speed (km/h) | Mileage (km/l) |\n| ------------ | -------------- |\n| 20 | 8 |\n| 40 | 15 |\n| 60 | 22 |\n| 80 | 20 |\n| 100 | 15 |\n| 120 | ? |\n\n---\n\n**What You Should Do**\n\n1. Look at the table — a straight line won’t fit well here.\n2. Use **polynomial regression (degree=2 or 3)** to capture the curve.\n3. Predict the mileage at **120 km/h**.\n\n---\n\n\n\n**Expected Output After Completing the Code**\n\n```sd\nPredicted mileage at 120 km/h: [5.2]\n```\n\n---\n\n**Key Learning**\n\n* When data **rises then falls**, straight lines fail.\n* Polynomial regression lets the machine draw a **curve** that matches the real-world trend.\n* The model can then **predict values** even outside the obvious data points.",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "machine-learning.json",
+      "_moduleTitle": "Regression (Supervised Learning)"
+    },
+    {
+      "topicId": "t02-evaluation-metrics-for-regression",
+      "title": "Evaluation Metrics for Regression",
+      "description": "Study concepts and solve targeted engineering problems for Evaluation Metrics for Regression.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-MLPROB48",
+          "title": "Model Evaluation for Regression",
+          "content": "So far, we have learned how to **fit models** like Linear Regression and Polynomial Regression.\nBut an important question remains:\n\n---\n\n**How do we know if our model is “good”?**\n\nImagine you built two different models for predicting house prices:\n* Model A gives predictions *close* to actual prices.\n* Model B’s predictions are *all over the place*.\nWithout a way to **measure errors**, we can’t say which model is better.\n\n---\n\n**Why Evaluate a Model?**\n\n* To check **how close predictions are** to the real values.\n* To compare **different models** (e.g., linear vs polynomial).\n* To decide if our model needs improvement.\n\n$$\n\\text{Error} = \\text{Actual Value} - \\text{Predicted Value}\n$$\n- If we collect all errors, we can calculate **metrics** that summarize model performance.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Model Evaluation for Regression in Evaluation Metrics for Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB48",
+            "question": "In Evaluation Metrics for Regression, what is the key consideration regarding Model Evaluation for Regression?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB49",
+          "title": "Mean Absolute Error (MAE)",
+          "content": "The **simplest way** to measure how good a regression model is →\ncheck how far predictions are from actual values **on average**.\n\n---\n\n**Formula**\n\n$$\nMAE = \\frac{1}{n} \\sum_{i=1}^{n} |y_i - \\hat{y}_i|\n$$\n\n* $y_i$ = actual value\n* $\\hat{y}_i$ = predicted value\n* $|\\cdot|$ = absolute value (ignores sign)\n\n- Think of MAE as: *“On average, how many marks (or units) is my prediction off?”*\n\n---\n\n**Example:**\n\n| Actual (y) | Predicted (ŷ) | Error (y - ŷ) | Absolute Error |\n| ---------- | ------------- | ------------- | -------------- |\n| 50 | 48 | -2 | 2 |\n| 60 | 65 | +5 | 5 |\n| 70 | 68 | -2 | 2 |\n| 80 | 75 | -5 | 5 |\n\n* Total Absolute Error = 2 + 5 + 2 + 5 = 14\n* MAE = 14 / 4 = **3.5**\n\nOur model is off by about **3.5 marks on average**.\n\n---\n\n**Why MAE is Useful**\n\n* **Easy to understand** → same units as the target (marks, prices, etc.).\n* **Tells average mistake size** clearly.\n* Doesn’t punish large errors too harshly (treats all errors equally).",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Mean Absolute Error (MAE) in Evaluation Metrics for Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB49",
+            "question": "In Evaluation Metrics for Regression, what is the key consideration regarding Mean Absolute Error (MAE)?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB54",
+          "title": "Mean Squared Error (MSE)",
+          "content": "* Now that we’ve seen **MAE**, let’s move to another common evaluation metric:\n**Mean Squared Error (MSE).**\n* MSE measures how far predictions are from actual values.\n* Instead of just taking absolute errors, it **squares the errors first** and then takes the average.\n\n$$\nMSE = \\frac{1}{n} \\sum_{i=1}^n (y_i - \\hat{y}_i)^2\n$$\n\n---\n\n**Why Square the Errors?**\n\n1. **No Negative Canceling** → Squaring ensures errors don’t cancel out.\n2. **Penalizes Large Mistakes** → Bigger errors grow much more after squaring.\n\nExample:\n\n* Error = 2 → $2^2 = 4$\n* Error = 5 → $5^2 = 25$ (much bigger impact!)\n\n---\n\n**Intuition**\n\n* **MAE** → “On average, how much am I off?”\n* **MSE** → “On average, how big are my squared mistakes?”\n* If you want to **heavily punish large mistakes**, MSE is better.\n\n---\n\n**Example (Conceptual)**\n\nSuppose we predict exam scores:\n\n| Student | Actual (y) | Predicted (ŷ) | Error (y-ŷ) | Squared Error |\n| ------- | ---------- | ------------- | ----------- | ------------- |\n| A | 50 | 48 | -2 | 4 |\n| B | 60 | 65 | -5 | 25 |\n| C | 70 | 68 | +2 | 4 |\n| D | 80 | 75 | -5 | 25 |\n\n$$\nMSE = \\frac{4 + 25 + 4 + 25}{4} = \\frac{58}{4} = 14.5\n$$\n\nThe **Mean Squared Error = 14.5**\n\n---\n\n\n* The number itself doesn’t use the same units (it’s in **squared units**).\n* If scores are in marks → MSE is in marks².\n* That’s why sometimes people prefer **RMSE (Root Mean Squared Error)** to bring it back to the same unit.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Mean Squared Error (MSE) in Evaluation Metrics for Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB54",
+            "question": "In Evaluation Metrics for Regression, what is the key consideration regarding Mean Squared Error (MSE)?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB63",
+          "title": "MCQ",
+          "content": "Two models predict house prices. Model A errors: 2k, 3k, 5k. Model B errors: 1k, 2k, 10k. Why might **MSE (Mean Squared Error)** prefer Model **A** over Model **B** even if MAE is similar?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding MCQ in Evaluation Metrics for Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB63",
+            "question": "In Evaluation Metrics for Regression, what is the key consideration regarding MCQ?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB55",
+          "title": "R Square Score (Coefficient of Determination)",
+          "content": "When we build a regression model, we want to know **how well it explains the data**.\nThis is where **R² (R-squared)** comes in.\n\n---\n\n**What is R²?**\n\n* R² tells us **how much better our model is compared to just guessing the average**.\n* It measures the proportion of the variation in the target (label) that the model can explain.\n\n---\n\n**Intuition**\n\nImagine we want to predict **Exam Score** from **Study Hours**:\n\n* A **bad model** → always predicts the average exam score (say 62).\n* A **good model** → predicts close to the actual scores.\n\nR² compares your model to the “average guess” baseline.\n\n$$\nR^2 = 1 - \\frac{\\text{Model Error}}{\\text{Average Guess Error}}\n$$\n\n\n* If the model’s error is **much smaller than the average guess’s error**, R² will be **close to 1**.\n* If the model is **no better than the average guess**, R² will be **0**.\n* If the model is **worse than guessing**, R² can be **negative**.\n\n---\n\n**Example**\n\nSuppose actual exam scores are:\n\n| Actual | Model Prediction | Error |\n| ------ | ---------------- | ----- |\n| 50 | 52 | 2 |\n| 60 | 65 | 5 |\n| 70 | 68 | 2 |\n| 80 | 78 | 2 |\n\n* **Model Error (MSE)** = average of squared errors = small\n* **Baseline Error (MSE of always predicting the mean)** = larger\n\nSo,\n\n$$\nR^2 = 1 - \\frac{\\text{small error}}{\\text{large error}} \\approx 0.9\n$$\n\nThat means the model explains **90% of the variation** in exam scores.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding R Square Score (Coefficient of Determination) in Evaluation Metrics for Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB55",
+            "question": "In Evaluation Metrics for Regression, what is the key consideration regarding R Square Score (Coefficient of Determination)?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB61",
+          "title": "MCQ",
+          "content": "A model predicts exam scores **R² = 0.85**. What does this indicate?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding MCQ in Evaluation Metrics for Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB61",
+            "question": "In Evaluation Metrics for Regression, what is the key consideration regarding MCQ?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB58",
+          "title": "Overfitting and Underfitting",
+          "content": "- When we train a machine learning model, we want it to **learn patterns** from data that help it make good predictions on **new, unseen data**. \n- But sometimes, the model doesn’t behave as expected. This is where **underfitting** and **overfitting** come in.\n\n---\n\n**Underfitting**\n- Happens when the model is **too simple** to capture the patterns in the data. \n- Example: Trying to fit a straight line through data that clearly follows a curve. \n- Result: The model makes **poor predictions on both training and test data**.\n- Signs of underfitting: Low training and test accuracy \n\n---\n\n**Overfitting**\n- Happens when the model is **too complex** and memorizes the training data instead of learning general patterns. \n- Example: A very wiggly polynomial curve that passes through almost every training point. \n- Result: **High training accuracy, but poor test accuracy**.\n- Signs of overfitting: Very high training accuracy and low test accuracy \n\n\n \n \n \n Underfitting\n \n \n \n Good Fit\n \n \n \n Overfitting\n \n \n \n\n\n\n---\n\n**A good model finds the **balance**:**\n- Learns the important patterns from training data \n- Still performs well on unseen test data",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Overfitting and Underfitting in Evaluation Metrics for Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB58",
+            "question": "In Evaluation Metrics for Regression, what is the key consideration regarding Overfitting and Underfitting?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-MLPROB62",
+          "title": "MCQ",
+          "content": "You fit a 10th-degree polynomial to 10 data points. The model predicts perfectly for training data but poorly for new data. What is happening?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding MCQ in Evaluation Metrics for Regression is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MLPROB62",
+            "question": "In Evaluation Metrics for Regression, what is the key consideration regarding MCQ?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Machine Learning",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Machine Learning, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-MLPROB48-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Model Evaluation for Regression (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB49-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Mean Absolute Error (MAE) (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB54-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Mean Squared Error (MSE) (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB63-java",
+          "language": "java",
+          "label": "Java",
+          "title": "MCQ (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB55-java",
+          "language": "java",
+          "label": "Java",
+          "title": "R Square Score (Coefficient of Determination) (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB61-java",
+          "language": "java",
+          "label": "Java",
+          "title": "MCQ (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB58-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Overfitting and Underfitting (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        },
+        {
+          "exampleId": "ex-MLPROB62-java",
+          "language": "java",
+          "label": "Java",
+          "title": "MCQ (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "MLPROB50",
+          "questionId": "MLPROB50",
+          "title": "Mean Absolute Error (MAE) - Worked Example",
+          "difficulty": "Easy",
+          "description": "Let’s calculate MAE step by step with a small dataset.\n\n---\n\n**Example: Predicting Exam Scores**\n\n| Student | Actual Score (y) | Predicted Score (ŷ) | Error (y - ŷ) | Absolute Error |\n| ------- | ---------------- | ------------------- | ------------- | -------------- |\n| A | 50 | 48 | -2 | 2 |\n| B | 60 | 65 | -5 | 5 |\n| C | 70 | 68 | +2 | 2 |\n| D | 80 | 75 | -5 | 5 |\n\n---\n\n**Step 1: Find Errors**\n\n$$\nError = y - \\hat{y}\n$$\n\n* A: $50 - 48 = 2$\n* B: $60 - 65 = -5$\n* C: $70 - 68 = 2$\n* D: $80 - 75 = 5$\n\n---\n\n**Step 2: Take Absolute Errors**\n\n$$\n|Error|\n$$\n\n* A: 2\n* B: 5\n* C: 2\n* D: 5\n\n---\n\n**Step 3: Average the Absolute Errors**\n\n$$\nMAE = \\frac{2 + 5 + 2 + 5}{4} = \\frac{14}{4} = 3.5\n$$\n\nThe **Mean Absolute Error = 3.5**",
+          "problemStatement": "Let’s calculate MAE step by step with a small dataset.\n\n---\n\n**Example: Predicting Exam Scores**\n\n| Student | Actual Score (y) | Predicted Score (ŷ) | Error (y - ŷ) | Absolute Error |\n| ------- | ---------------- | ------------------- | ------------- | -------------- |\n| A | 50 | 48 | -2 | 2 |\n| B | 60 | 65 | -5 | 5 |\n| C | 70 | 68 | +2 | 2 |\n| D | 80 | 75 | -5 | 5 |\n\n---\n\n**Step 1: Find Errors**\n\n$$\nError = y - \\hat{y}\n$$\n\n* A: $50 - 48 = 2$\n* B: $60 - 65 = -5$\n* C: $70 - 68 = 2$\n* D: $80 - 75 = 5$\n\n---\n\n**Step 2: Take Absolute Errors**\n\n$$\n|Error|\n$$\n\n* A: 2\n* B: 5\n* C: 2\n* D: 5\n\n---\n\n**Step 3: Average the Absolute Errors**\n\n$$\nMAE = \\frac{2 + 5 + 2 + 5}{4} = \\frac{14}{4} = 3.5\n$$\n\nThe **Mean Absolute Error = 3.5**",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB51",
+          "questionId": "MLPROB51",
+          "title": "Mean Absolute Error (MAE) - Practice Problem",
+          "difficulty": "Easy",
+          "description": "We’re testing how well our prediction model works. \nTo do this, we compare the **actual values** (true outcomes) with the **predicted values** (model’s output). \n\nThe **Mean Absolute Error (MAE)** tells us, on average, how far our predictions are from the actual results. \n\n- Smaller MAE = better predictions \n- Larger MAE = less accurate model \n\n---\n\n**Example Dataset** \n\n| Actual (y_true) | Predicted (y_pred) |\n|-----------------|---------------------|\n| 30 | 28 |\n| 45 | 50 |\n| 50 | 47 |\n| 65 | 60 |\n| 80 | 85 |\n\n\n\n**Task**\n\n1. Use `mean_absolute_error` from **scikit-learn**. \n2. Pass `y_true` and `y_pred` to it. \n3. Print the **MAE value**. \n\n---\n\n\n**Expected Output**\n\n```code\nMAE: 4.0\n```",
+          "problemStatement": "We’re testing how well our prediction model works. \nTo do this, we compare the **actual values** (true outcomes) with the **predicted values** (model’s output). \n\nThe **Mean Absolute Error (MAE)** tells us, on average, how far our predictions are from the actual results. \n\n- Smaller MAE = better predictions \n- Larger MAE = less accurate model \n\n---\n\n**Example Dataset** \n\n| Actual (y_true) | Predicted (y_pred) |\n|-----------------|---------------------|\n| 30 | 28 |\n| 45 | 50 |\n| 50 | 47 |\n| 65 | 60 |\n| 80 | 85 |\n\n\n\n**Task**\n\n1. Use `mean_absolute_error` from **scikit-learn**. \n2. Pass `y_true` and `y_pred` to it. \n3. Print the **MAE value**. \n\n---\n\n\n**Expected Output**\n\n```code\nMAE: 4.0\n```",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB52",
+          "questionId": "MLPROB52",
+          "title": "Mean Squared Error(MSE) - Worked Example",
+          "difficulty": "Easy",
+          "description": "Let’s calculate MSE step by step with a small dataset.\n\n**Example: Predicting Exam Scores**\n\n| Student | Actual Score (y) | Predicted Score (ŷ) | Error (y - ŷ) | Squared Error |\n|---------|------------------|----------------------|---------------|----------------|\n| A | 50 | 48 | -2 | 4 |\n| B | 60 | 65 | -5 | 25 |\n| C | 70 | 68 | 2 | 4 |\n| D | 80 | 75 | -5 | 25 |\n\n---\n\n**Step 1: Find Errors**\nThe error is calculated as:\n\n$$\nError = y - \\hat{y}\n$$\n\n- A: \\(50 - 48 = -2\\) \n- B: \\(60 - 65 = -5\\) \n- C: \\(70 - 68 = 2\\) \n- D: \\(80 - 75 = 5\\) \n\n---\n\n**Step 2: Square the Errors**\nThe squared error is:\n\n$$\n(Error)^2\n$$\n\n- A: \\((-2)^2 = 4\\) \n- B: \\((-5)^2 = 25\\) \n- C: \\(2^2 = 4\\) \n- D: \\(5^2 = 25\\) \n\n---\n\n**Step 3: Average the Squared Errors**\nThe Mean Squared Error (MSE) is the average of all squared errors:\n\n$$\nMSE = \\frac{4 + 25 + 4 + 25}{4}\n$$\n\n$$\nMSE = \\frac{58}{4} = 14.5\n$$\n\n**Step 4: Root Mean Squared Error (RMSE)**\n\n$$\nRMSE = \\sqrt{MSE}\n$$\n\n$$\nRMSE = \\sqrt{14.5} \\approx 3.8079\n$$\n\n\n---\n\n**Mean Squared Error (MSE): 14.5**\n**Root Mean Squared Error (RMSE): 3.81**",
+          "problemStatement": "Let’s calculate MSE step by step with a small dataset.\n\n**Example: Predicting Exam Scores**\n\n| Student | Actual Score (y) | Predicted Score (ŷ) | Error (y - ŷ) | Squared Error |\n|---------|------------------|----------------------|---------------|----------------|\n| A | 50 | 48 | -2 | 4 |\n| B | 60 | 65 | -5 | 25 |\n| C | 70 | 68 | 2 | 4 |\n| D | 80 | 75 | -5 | 25 |\n\n---\n\n**Step 1: Find Errors**\nThe error is calculated as:\n\n$$\nError = y - \\hat{y}\n$$\n\n- A: \\(50 - 48 = -2\\) \n- B: \\(60 - 65 = -5\\) \n- C: \\(70 - 68 = 2\\) \n- D: \\(80 - 75 = 5\\) \n\n---\n\n**Step 2: Square the Errors**\nThe squared error is:\n\n$$\n(Error)^2\n$$\n\n- A: \\((-2)^2 = 4\\) \n- B: \\((-5)^2 = 25\\) \n- C: \\(2^2 = 4\\) \n- D: \\(5^2 = 25\\) \n\n---\n\n**Step 3: Average the Squared Errors**\nThe Mean Squared Error (MSE) is the average of all squared errors:\n\n$$\nMSE = \\frac{4 + 25 + 4 + 25}{4}\n$$\n\n$$\nMSE = \\frac{58}{4} = 14.5\n$$\n\n**Step 4: Root Mean Squared Error (RMSE)**\n\n$$\nRMSE = \\sqrt{MSE}\n$$\n\n$$\nRMSE = \\sqrt{14.5} \\approx 3.8079\n$$\n\n\n---\n\n**Mean Squared Error (MSE): 14.5**\n**Root Mean Squared Error (RMSE): 3.81**",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB53",
+          "questionId": "MLPROB53",
+          "title": "Mean Squared Error(MSE) - Practice Problem",
+          "difficulty": "Easy",
+          "description": "We’re testing how well our prediction model works. \nTo do this, we compare the **actual values (true outcomes)** with the **predicted values (model’s output)**.\n\nThe **Mean Squared Error (MSE)** measures the average of the **squared differences** between actual and predicted values. \n\n- Smaller MSE = better predictions \n- Larger MSE = less accurate model \n\n---\n\n**Example Dataset**\n\n| Actual (y_true) | Predicted (y_pred) |\n|-----------------|------------------|\n| 72 | 70 |\n| 88 | 90 |\n| 95 | 92 |\n| 60 | 65 |\n\n---\n\n**Task**\n\n1. Import `mean_squared_error` from `scikit-learn`. \n2. Pass `y_true` and `y_pred` to it. \n3. Print the **MSE value**. \n4. Print the **RMSE value**. \n\n---\n\n**Expected Output**\n\n```code\nMean Squared Error (MSE): 10.5\nRoot Mean Squared Error (RMSE): 3.24\n```",
+          "problemStatement": "We’re testing how well our prediction model works. \nTo do this, we compare the **actual values (true outcomes)** with the **predicted values (model’s output)**.\n\nThe **Mean Squared Error (MSE)** measures the average of the **squared differences** between actual and predicted values. \n\n- Smaller MSE = better predictions \n- Larger MSE = less accurate model \n\n---\n\n**Example Dataset**\n\n| Actual (y_true) | Predicted (y_pred) |\n|-----------------|------------------|\n| 72 | 70 |\n| 88 | 90 |\n| 95 | 92 |\n| 60 | 65 |\n\n---\n\n**Task**\n\n1. Import `mean_squared_error` from `scikit-learn`. \n2. Pass `y_true` and `y_pred` to it. \n3. Print the **MSE value**. \n4. Print the **RMSE value**. \n\n---\n\n**Expected Output**\n\n```code\nMean Squared Error (MSE): 10.5\nRoot Mean Squared Error (RMSE): 3.24\n```",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB56",
+          "questionId": "MLPROB56",
+          "title": "R Square - Worked Example",
+          "difficulty": "Easy",
+          "description": "Let’s calculate **R²** using a small dataset.\n\n---\n\n**Problem Statement**\n\nWe want to check how well a regression model predicts **Exam Scores** from **Study Hours**.\nWe will:\n\n1. Create a tiny dataset.\n2. Train a simple Linear Regression model.\n3. Calculate **R² score** using scikit-learn.\n\n\n---\n\n**Step-by-Step Explanation**\n\n1. **Dataset** → Exam Scores increase as Study Hours increase.\n2. **Train a model** → Linear Regression finds the best-fit line.\n3. **Predict values** → Model makes predictions for the same inputs.\n4. **Calculate R²** → Compare how much better the model is compared to predicting just the average.\n\n---\n\n**Interpretation: The model explains **97% of the variation** in exam scores. That’s a **very good fit!****",
+          "problemStatement": "Let’s calculate **R²** using a small dataset.\n\n---\n\n**Problem Statement**\n\nWe want to check how well a regression model predicts **Exam Scores** from **Study Hours**.\nWe will:\n\n1. Create a tiny dataset.\n2. Train a simple Linear Regression model.\n3. Calculate **R² score** using scikit-learn.\n\n\n---\n\n**Step-by-Step Explanation**\n\n1. **Dataset** → Exam Scores increase as Study Hours increase.\n2. **Train a model** → Linear Regression finds the best-fit line.\n3. **Predict values** → Model makes predictions for the same inputs.\n4. **Calculate R²** → Compare how much better the model is compared to predicting just the average.\n\n---\n\n**Interpretation: The model explains **97% of the variation** in exam scores. That’s a **very good fit!****",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB57",
+          "questionId": "MLPROB57",
+          "title": "R Square - Practice Problem",
+          "difficulty": "Easy",
+          "description": "We’re testing how well our prediction model works. \nTo do this, we compare the **actual values (true outcomes)** with the **predicted values (model’s output)**. \n\nThe **R² Score** (Coefficient of Determination) tells us how much of the variation in the actual values can be explained by the model. \n\n- **R² close to 1 → Very good model fit** \n- **R² around 0 → Weak model fit** \n- **R² < 0 → Model performs worse than a simple average line** \n\n---\n\n**Example Dataset**\n\n| Sleep Hours (X) | Productivity Score (y) |\n|-----------------|-------------------------|\n| 4 | 50 |\n| 5 | 60 |\n| 6 | 65 |\n| 7 | 75 |\n| 8 | 85 |\n\n---\n\n**Task**\n\n- Use `LinearRegression` from scikit-learn to train a model. \n- Predict the values of `Productivity_Score` from `Sleep_Hours`. \n- Use `r2_score(y, y_pred)` to calculate the R² value. \n- Print the R² score. \n\n---\n\n**Expected Output**\n```code\nActual Scores: [50, 60, 65, 75, 85]\nPredicted Scores: [np.float64(50.0), np.float64(58.5), np.float64(67.0), np.float64(75.5), np.float64(84.0)]\nR² Score: 0.99\n```",
+          "problemStatement": "We’re testing how well our prediction model works. \nTo do this, we compare the **actual values (true outcomes)** with the **predicted values (model’s output)**. \n\nThe **R² Score** (Coefficient of Determination) tells us how much of the variation in the actual values can be explained by the model. \n\n- **R² close to 1 → Very good model fit** \n- **R² around 0 → Weak model fit** \n- **R² < 0 → Model performs worse than a simple average line** \n\n---\n\n**Example Dataset**\n\n| Sleep Hours (X) | Productivity Score (y) |\n|-----------------|-------------------------|\n| 4 | 50 |\n| 5 | 60 |\n| 6 | 65 |\n| 7 | 75 |\n| 8 | 85 |\n\n---\n\n**Task**\n\n- Use `LinearRegression` from scikit-learn to train a model. \n- Predict the values of `Productivity_Score` from `Sleep_Hours`. \n- Use `r2_score(y, y_pred)` to calculate the R² value. \n- Print the R² score. \n\n---\n\n**Expected Output**\n```code\nActual Scores: [50, 60, 65, 75, 85]\nPredicted Scores: [np.float64(50.0), np.float64(58.5), np.float64(67.0), np.float64(75.5), np.float64(84.0)]\nR² Score: 0.99\n```",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB59",
+          "questionId": "MLPROB59",
+          "title": "Overfitting and Underfitting - Worked Example",
+          "difficulty": "Easy",
+          "description": "Let’s continue with our **Study Hours vs Exam Score** dataset:\n\n| Study Hours | Exam Score |\n| ----------- | ---------- |\n| 1 | 40 |\n| 2 | 50 |\n| 3 | 65 |\n| 4 | 70 |\n| 5 | 85 |\n| 6 | 90 |\n| 7 | 95 |\n\n---\n\n**Step 1: Try a **Simple Model (Linear Regression)****\n\n* A straight line cannot capture the upward curve.\n* This is called **Underfitting**, the model is **too simple**.\n\n---\n\n**Step 2: Try a **Polynomial Model (Quadratic)****\n\n* A 2nd-degree curve (parabola-like) captures the trend quite well.\n* This is a **Good Fit**, the model balances complexity and accuracy.\n\n---\n\n**Step 3: Try a **Very Complex Model (6th Degree Polynomial)****\n\n* The curve passes **exactly through all points** but wiggles unnecessarily.\n* This is **Overfitting**, the model is **too complex**, learning noise rather than the real trend.\n\n---\n\n**Expected Output**\n```code \nPlots saved as fitting_examples.png\n```\n\n\n\n**Note:** Graphs are saved as PNG, download/open the file to view results",
+          "problemStatement": "Let’s continue with our **Study Hours vs Exam Score** dataset:\n\n| Study Hours | Exam Score |\n| ----------- | ---------- |\n| 1 | 40 |\n| 2 | 50 |\n| 3 | 65 |\n| 4 | 70 |\n| 5 | 85 |\n| 6 | 90 |\n| 7 | 95 |\n\n---\n\n**Step 1: Try a **Simple Model (Linear Regression)****\n\n* A straight line cannot capture the upward curve.\n* This is called **Underfitting**, the model is **too simple**.\n\n---\n\n**Step 2: Try a **Polynomial Model (Quadratic)****\n\n* A 2nd-degree curve (parabola-like) captures the trend quite well.\n* This is a **Good Fit**, the model balances complexity and accuracy.\n\n---\n\n**Step 3: Try a **Very Complex Model (6th Degree Polynomial)****\n\n* The curve passes **exactly through all points** but wiggles unnecessarily.\n* This is **Overfitting**, the model is **too complex**, learning noise rather than the real trend.\n\n---\n\n**Expected Output**\n```code \nPlots saved as fitting_examples.png\n```\n\n\n\n**Note:** Graphs are saved as PNG, download/open the file to view results",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "MLPROB60",
+          "questionId": "MLPROB60",
+          "title": "Overfitting and Underfitting - Practice Problem",
+          "difficulty": "Easy",
+          "description": "We’re testing how well a polynomial regression model can fit a dataset. \nTo do this, we compare the **actual values** (true outcomes) with the **predicted values** (model’s output).\n\n---\n\n**Example Dataset**\n\n| Study Hours (X) | Exam Score (y) |\n|-----------------|----------------|\n| 2 | 30 |\n| 4 | 45 |\n| 6 | 55 |\n| 8 | 65 |\n| 10 | 70 |\n| 12 | 80 |\n| 14 | 85 |\n\n---\n\n**Task**\n\n1. Use `PolynomialFeatures` from `sklearn.preprocessing` to transform the input data into polynomial features. \n2. Train a `LinearRegression` model on the transformed features. \n3. Make predictions for test points using the trained model. \n4. Observe how the model’s predictions change with polynomial degree and how underfitting and overfitting appear visually. \n\n---\n\n**Expected Output**\n```code \nPlots saved as fitting_examples.png\n```\n\n\n**Note: ** Graphs are saved as PNG, download/open the file to view results",
+          "problemStatement": "We’re testing how well a polynomial regression model can fit a dataset. \nTo do this, we compare the **actual values** (true outcomes) with the **predicted values** (model’s output).\n\n---\n\n**Example Dataset**\n\n| Study Hours (X) | Exam Score (y) |\n|-----------------|----------------|\n| 2 | 30 |\n| 4 | 45 |\n| 6 | 55 |\n| 8 | 65 |\n| 10 | 70 |\n| 12 | 80 |\n| 14 | 85 |\n\n---\n\n**Task**\n\n1. Use `PolynomialFeatures` from `sklearn.preprocessing` to transform the input data into polynomial features. \n2. Train a `LinearRegression` model on the transformed features. \n3. Make predictions for test points using the trained model. \n4. Observe how the model’s predictions change with polynomial degree and how underfitting and overfitting appear visually. \n\n---\n\n**Expected Output**\n```code \nPlots saved as fitting_examples.png\n```\n\n\n**Note: ** Graphs are saved as PNG, download/open the file to view results",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "machine-learning.json",
+      "_moduleTitle": "Regression (Supervised Learning)"
+    },
+    {
+      "topicId": "t03-project-linear-regression",
+      "title": "Project : Linear Regression",
+      "description": "Study concepts and solve targeted engineering problems for Project : Linear Regression.",
+      "mode": "PRACTICE",
+      "readingTimeMinutes": 10,
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": [
+        {
+          "problemId": "MLPROB260",
+          "questionId": "MLPROB260",
+          "title": "Linear Regression Project",
+          "difficulty": "Easy",
+          "description": "We’re testing how well our linear regression model can predict exam scores. \nTo do this, we load a dataset of hours studied and actual exam scores, train a linear regression model, and make predictions.\n\nLinear Regression finds the **line of best fit**, which minimizes the squared errors between actual and predicted values.\n\n**Smaller MSE = better predictions** \n**Larger MSE = less accurate model**\n\n---\n\n**Example Dataset (`students.csv`)**\n\n| Hours_Studied | Exam_Score |\n|---------------|------------|\n| 2 | 50 |\n| 4 | 60 |\n| 6 | 70 |\n| 8 | 80 |\n\n---\n\n**Task**\n\n1. Load the dataset `students.csv` using pandas. \n2. Define the feature column (`Hours_Studied`) and target column (`Exam_Score`). \n3. Create a `LinearRegression` model and fit it to the data. \n4. Predict the exam score for a student who studies 5 hours. \n5. Calculate the **Mean Squared Error (MSE)** of your model on the training data using `mean_squared_error` from `sklearn.metrics`. \n6. Print the predicted score and the MSE.\n\n---\n\n**Expected Output**\n```code\nPredicted exam score for studying 5 hours is: 65.0\nMean Squared Error of the model: 0.0\n```",
+          "problemStatement": "We’re testing how well our linear regression model can predict exam scores. \nTo do this, we load a dataset of hours studied and actual exam scores, train a linear regression model, and make predictions.\n\nLinear Regression finds the **line of best fit**, which minimizes the squared errors between actual and predicted values.\n\n**Smaller MSE = better predictions** \n**Larger MSE = less accurate model**\n\n---\n\n**Example Dataset (`students.csv`)**\n\n| Hours_Studied | Exam_Score |\n|---------------|------------|\n| 2 | 50 |\n| 4 | 60 |\n| 6 | 70 |\n| 8 | 80 |\n\n---\n\n**Task**\n\n1. Load the dataset `students.csv` using pandas. \n2. Define the feature column (`Hours_Studied`) and target column (`Exam_Score`). \n3. Create a `LinearRegression` model and fit it to the data. \n4. Predict the exam score for a student who studies 5 hours. \n5. Calculate the **Mean Squared Error (MSE)** of your model on the training data using `mean_squared_error` from `sklearn.metrics`. \n6. Print the predicted score and the MSE.\n\n---\n\n**Expected Output**\n```code\nPredicted exam score for studying 5 hours is: 65.0\nMean Squared Error of the model: 0.0\n```",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "machine-learning.json",
+      "_moduleTitle": "Regression (Supervised Learning)"
+    },
+    {
+      "topicId": "t04-project-polynomial-regression",
+      "title": "Project : Polynomial Regression",
+      "description": "Study concepts and solve targeted engineering problems for Project : Polynomial Regression.",
+      "mode": "PRACTICE",
+      "readingTimeMinutes": 10,
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": [
+        {
+          "problemId": "MLPROB83",
+          "questionId": "MLPROB83",
+          "title": "Polynomial Regression Project",
+          "difficulty": "Easy",
+          "description": "We’re testing how well our **polynomial regression model** can predict exam scores. \nPolynomial regression allows us to fit a **curved relationship** between hours studied and exam scores, instead of just a straight line.\n\nPolynomial Regression uses higher-degree polynomial features (like \\(x^2, x^3, ...\\)) to better capture patterns in the data.\n\n- **Smaller MSE** = better predictions \n- **Larger MSE** = less accurate model \n\n---\n\n**Example Dataset (`students.csv`)**\n\n| Hours_Studied | Exam_Score |\n|---------------|------------|\n| 1 | 35 |\n| 2 | 40 |\n| 3 | 50 |\n| 4 | 60 |\n| 5 | 65 |\n| 6 | 70 |\n| 7 | 78 |\n| 8 | 85 |\n| 9 | 93 |\n| 10 | 105 |\n\n---\n\n**Task**\n\n1. Load the dataset `students.csv` using **pandas**. \n2. Define the **feature column** (`Hours_Studied`) and the **target column** (`Exam_Score`). \n3. Use `PolynomialFeatures` from `sklearn.preprocessing` to generate polynomial terms (e.g., \\(x, x^2, x^3\\)). \n4. Create a **LinearRegression** model and fit it to the polynomial features. \n5. Predict the exam score for a student who studies **5 hours**. \n6. Calculate the **Mean Squared Error (MSE)** of your model on the training data using `mean_squared_error` from `sklearn.metrics`. \n7. Print the **predicted score** and the **MSE**. \n8. Plot the actual data points and the **polynomial regression curve**. \n\n---\n\n**Expected Output**\n```code\nPredicted exam score for studying 5 hours is: 63.84242424242424\nMean Squared Error of the model: 3.281666666666667\n```",
+          "problemStatement": "We’re testing how well our **polynomial regression model** can predict exam scores. \nPolynomial regression allows us to fit a **curved relationship** between hours studied and exam scores, instead of just a straight line.\n\nPolynomial Regression uses higher-degree polynomial features (like \\(x^2, x^3, ...\\)) to better capture patterns in the data.\n\n- **Smaller MSE** = better predictions \n- **Larger MSE** = less accurate model \n\n---\n\n**Example Dataset (`students.csv`)**\n\n| Hours_Studied | Exam_Score |\n|---------------|------------|\n| 1 | 35 |\n| 2 | 40 |\n| 3 | 50 |\n| 4 | 60 |\n| 5 | 65 |\n| 6 | 70 |\n| 7 | 78 |\n| 8 | 85 |\n| 9 | 93 |\n| 10 | 105 |\n\n---\n\n**Task**\n\n1. Load the dataset `students.csv` using **pandas**. \n2. Define the **feature column** (`Hours_Studied`) and the **target column** (`Exam_Score`). \n3. Use `PolynomialFeatures` from `sklearn.preprocessing` to generate polynomial terms (e.g., \\(x, x^2, x^3\\)). \n4. Create a **LinearRegression** model and fit it to the polynomial features. \n5. Predict the exam score for a student who studies **5 hours**. \n6. Calculate the **Mean Squared Error (MSE)** of your model on the training data using `mean_squared_error` from `sklearn.metrics`. \n7. Print the **predicted score** and the **MSE**. \n8. Plot the actual data points and the **polynomial regression curve**. \n\n---\n\n**Expected Output**\n```code\nPredicted exam score for studying 5 hours is: 63.84242424242424\nMean Squared Error of the model: 3.281666666666667\n```",
+          "constraints": [
+            "- $1 \\leq T \\leq 100$\n- $1 \\leq N \\leq 100$\n- $1 \\leq M \\leq N\\cdot(N-1)/2$\n- $1 \\leq u_i, v_i \\leq N$\n- $u_i \\neq v_i$ for each $1 \\leq i \\leq M$.\n- The sum of $N$ over all test cases won't exceed $100$."
+          ],
+          "inputFormat": "- The first line of input will contain a single integer $T$, denoting the number of test cases.\n- Each test case consists of multiple lines of input.\n - The first line of each test case contains two space-separated integers $N$ and $M$ — the number of vertices and edges of the graph, respectively.\n - The next $M$ lines describe the edges. The $i$-th of these $M$ lines contains two space-separated integers $u_i$ and $v_i$, denoting an edge between $u_i$ and $v_i$.",
+          "outputFormat": "For each test case, output on a new line the number of good subgraphs of $G$, modulo $10^9 + 7$.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "machine-learning.json",
+      "_moduleTitle": "Regression (Supervised Learning)"
+    }
+  ]
+}

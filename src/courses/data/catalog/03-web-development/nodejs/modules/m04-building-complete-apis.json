@@ -1,0 +1,765 @@
+{
+  "moduleId": "m04-building-complete-apis",
+  "title": "Building Complete APIs",
+  "description": "Core concepts and hands-on practice in Building Complete APIs.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-rest-api-design",
+      "title": "REST API Design",
+      "description": "Study concepts and solve targeted engineering problems for REST API Design.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-JBFUYU01",
+          "title": "REST Principles and Conventions",
+          "content": "Welcome! So far, you've built web applications using Node.js and Express that often send back HTML pages using `Templates & Views`. Now, we're shifting our focus to building APIs (Application Programming Interfaces).\n\nThink of an API as a waiter in a restaurant. You (the \"client,\" like a mobile app or a website's front-end) don't go into the kitchen (the \"server,\" our Node.js application) to get your food. Instead, you give your order to the waiter, who communicates with the kitchen and brings your food back. The API is that waiter, providing a standardized way for the client to talk to the server.\n\n**What is REST?**\n\nREST (**RE**presentational **S**tate **T**ransfer) isn't a technology or a library; it's a set of rules or architectural principles for designing networked applications. When we build an API that follows these rules, we call it a \"RESTful API.\" Following these conventions makes our API predictable, reliable, and easy for other developers to use.\n\nLet's look at the core principles of REST in a simple way.\n\n**1. Client-Server Architecture**\n\nThis principle states that the client (the one making the request) and the server (the one responding to the request) should be separate.\n\n* **What you know:** You have already seen this in action! Your **Express Server** is the server. The client could be a web browser, a mobile app, or another server.\n* **Why it's important:** By keeping them separate, we can develop the client and server independently. The team building a mobile app doesn't need to know how your Node.js server gets data from **MongoDB**; they only need to know how to ask for it.\n\n**2. Stateless**\n\nThis is one of the most important rules. \"Stateless\" means that the server does not store any information about the client between requests. Every single request from a client must contain all the information the server needs to fulfill that request.\n\n* **Analogy:** Imagine talking to someone with no short-term memory. Every time you speak, you have to re-introduce yourself and provide the full context.\n* **In practice:** The server doesn't remember who you are from one API call to the next. If you ask for page 1 of a list of products, and then ask for page 2, the second request must explicitly say \"give me page 2\". The server won't remember that you just asked for page 1. This makes our application simpler and more scalable.\n\n**3. Uniform Interface**\n\nThis principle ensures that there's a consistent way of interacting with the server, regardless of the client or the type of data. It's like having a single, universal remote control for all your devices. This is achieved through a few key conventions:\n\n* **Resources are identified by URLs:** In a REST API, everything is a \"resource.\" A user is a resource, a blog post is a resource, a product is a resource. We've already modeled these resources using **Mongoose Schemas**. Each resource has a unique identifier, which is its URL (e.g., `/api/users/1`, `/api/products/45`). We've already built something similar with **Routing** in Express.\n* **We interact with representations:** When a client asks for a resource, it doesn't get the actual object from our **MongoDB** database. Instead, it gets a \"representation\" of that resource's state, usually in JSON format. You've already practiced this by sending JSON data in your Express routes using `res.json()`.\n\nIn the upcoming lessons, we'll dive deep into two other crucial parts of the Uniform Interface: how we structure these URLs (`API endpoint structure`) and how we use standard **HTTP Methods** (like GET, POST, PUT, DELETE) to tell the server what action to perform on a resource (`HTTP methods for CRUD operations`).\n\nBy following these REST principles, we create APIs that are like well-organized public libraries: everyone knows where to go to find a book (the URL), how to ask for it (the HTTP method), and what they'll get back (a JSON representation).",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding REST Principles and Conventions in REST API Design is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-JBFUYU01",
+            "question": "In REST API Design, what is the key consideration regarding REST Principles and Conventions?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-JBFUYU04",
+          "title": "API Endpoint Structure",
+          "content": "Think back to when you first learned about **Express Routing & Middleware**. You created routes like `app.get('/about', ...)` or `app.post('/contact', ...)`. An API endpoint is essentially the same concept: it's a specific URL that your application listens to in order to perform an action or provide data.\n\nIn REST API design, we structure these URLs (endpoints) in a logical and predictable way, centered around **\"resources\"**.\n\n### What is a Resource?\n\nA resource is the fundamental concept in any REST API. It's an object or a representation of \"something\" that has data associated with it. This should sound familiar! Think of the **Mongoose Models** you created, like `User`, `Product`, or `Post`. These are your resources.\n\nWhen we design endpoints, we use plural nouns to refer to these resources.\n\n* If your Mongoose model is `User`, the resource name is `/users`.\n* If your model is `Product`, the resource name is `/products`.\n\n### The Anatomy of an Endpoint\n\nLet's break down a typical API endpoint:\n\n`http://localhost:3000/api/v1/users`\n\n* **`http://localhost:3000`**: This is the base URL of your server.\n* **`/api/`**: This is a common convention. It's a prefix used to differentiate your API routes from other routes that might serve web pages (like you did with **Templates & Views**).\n* **`/v1/`**: This is for versioning. If you ever need to make major changes to your API in the future, you can release a `/v2/` without breaking the applications that use the original `/v1/`. It's a best practice for maintainability.\n* **`/users`**: This is the resource path. This endpoint refers to the entire collection of users. In your Express code, this would correspond to a route handler like `router.get('/users', ...)`, which might fetch all documents from your `users` collection in MongoDB.\n\n### Accessing a Specific Resource\n\nWhat if you don't want all users, but just one specific user? We use route parameters, just like you did in Express.\n\n`http://localhost:3000/api/v1/users/60c72b2f9b1d8c001f8e4a9c`\n\n* **`/users/:id`**: This is the route pattern you would define in Express.\n* **`/60c72b2f9b1d8c001f8e4a9c`**: This is the actual `_id` of a specific user document in your MongoDB database. Your route handler would use this ID to query the database and return just that one user.\n\n### Handling Data Relationships\n\nRemember the **Data Relationships** topic? Your endpoint structure can reflect those relationships. For example, if a `user` can have many `posts`, you could design an endpoint like this:\n\n`http://localhost:3000/api/v1/users/60c72b2f9b1d8c001f8e4a9c/posts`\n\nThis endpoint clearly communicates its purpose: \"Get all the posts that belong to the user with this specific ID\". This makes your API intuitive and easy to understand.\n\nIn summary, a good endpoint structure is:\n\n1. **Based on nouns (resources)**, not verbs. Use `/users`, not `/getAllUsers`.\n2. **Uses plural nouns** for collections (`/users`, `/products`).\n3. **Uses IDs** to access specific items in a collection (`/users/:id`).\n4. Can be **nested to show relationships** (`/users/:userId/posts`).\n\nBy following these simple rules, you create a clean, predictable, and scalable structure for your API.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding API Endpoint Structure in REST API Design is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-JBFUYU04",
+            "question": "In REST API Design, what is the key consideration regarding API Endpoint Structure?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-JBFUYU07",
+          "title": "HTTP Methods for CRUD Operations",
+          "content": "Welcome! So far, you've learned how to set up an Express server, define routes, and perform database operations with Mongoose. Now, let's connect these concepts to build a well-structured API.\n\nIn a REST API, we use standard HTTP methods to signal what we want to do with a resource (like a blog post, a user, or a product). These actions are often referred to by the acronym **CRUD**:\n\n* **C**reate: Add a new piece of data.\n* **R**ead: Get an existing piece of data.\n* **U**pdate: Change an existing piece of data.\n* **D**elete: Remove a piece of data.\n\nConveniently, these CRUD operations map directly to the common HTTP methods you've seen in Express. Let's see how they work together, using a \"Post\" model from Mongoose as our example.\n\n### 1. CREATE -> POST\n\nWhen a client wants to **create** a new resource, it sends a `POST` request. The data for the new resource is typically sent in the request body (`req.body`).\n\nIn Express, we use the `app.post()` method to handle this. This maps directly to a Mongoose `create()` operation.\n\n```javascript\n// A client sends a POST request to '/posts' to create a new post\napp.post('/posts', (req, res) => {\n // req.body contains the data for the new post, e.g., { title: \"My First Post\", content: \"Hello World!\" }\n \n // We use the Mongoose 'create' method we learned about\n Post.create(req.body)\n .then(newPost => {\n // Send back the newly created post\n res.status(201).json(newPost); \n });\n});\n```\n**Action:** Creating a new blog post.\n**HTTP Method:** `POST`\n**Express Method:** `app.post()`\n**Database Operation:** `Create`\n\n---\n\n### 2. READ -> GET\n\nWhen a client wants to **read** or retrieve data, it sends a `GET` request. This is the most common method, used whenever you visit a website in your browser.\n\nIn Express, we use `app.get()`. This maps to Mongoose `find()` or `findById()` operations.\n\n```javascript\n// To get ALL posts\napp.get('/posts', (req, res) => {\n // We use Mongoose 'find' to get all documents in the collection\n Post.find({})\n .then(posts => {\n res.json(posts);\n });\n});\n\n// To get ONE specific post by its ID\napp.get('/posts/:id', (req, res) => {\n // We use Mongoose 'findById' to get a single document\n Post.findById(req.params.id)\n .then(post => {\n res.json(post);\n });\n});\n```\n**Action:** Reading one or more blog posts.\n**HTTP Method:** `GET`\n**Express Method:** `app.get()`\n**Database Operation:** `Read`\n\n---\n\n### 3. UPDATE -> PUT / PATCH\n\nWhen a client needs to **update** an existing resource, it can use a `PUT` or `PATCH` request.\n\n* `PUT`: Replaces the **entire** resource with the new data provided.\n* `PATCH`: Applies a **partial** update to the resource (e.g., changing only the title).\n\nFor simplicity, we'll focus on `PUT`. In Express, we use `app.put()`. This maps to a Mongoose `findByIdAndUpdate()` operation.\n\n```javascript\n// A client sends a PUT request to '/posts/:id' to update a specific post\napp.put('/posts/:id', (req, res) => {\n // The ID of the post to update is in req.params.id\n // The new data for the post is in req.body\n \n // We use Mongoose 'findByIdAndUpdate'\n Post.findByIdAndUpdate(req.params.id, req.body, { new: true }) // {new: true} sends back the updated document\n .then(updatedPost => {\n res.json(updatedPost);\n });\n});\n```\n**Action:** Updating an existing blog post.\n**HTTP Method:** `PUT` (or `PATCH`)\n**Express Method:** `app.put()`\n**Database Operation:** `Update`\n\n---\n\n### 4. DELETE -> DELETE\n\nFinally, when a client wants to **delete** a resource, it sends a `DELETE` request.\n\nIn Express, we use `app.delete()`. This maps directly to a Mongoose `findByIdAndDelete()` operation.\n\n```javascript\n// A client sends a DELETE request to '/posts/:id' to remove a specific post\napp.delete('/posts/:id', (req, res) => {\n // The ID of the post to delete is in req.params.id\n \n // We use Mongoose 'findByIdAndDelete'\n Post.findByIdAndDelete(req.params.id)\n .then(deletedPost => {\n res.json({ message: \"Post deleted successfully.\" });\n });\n});\n```\n**Action:** Deleting a blog post.\n**HTTP Method:** `DELETE`\n**Express Method:** `app.delete()`\n**Database Operation:** `Delete`\n\n### Summary Table\n\n| CRUD Operation | HTTP Method | Express Route Example | Description |\n| :------------- | :---------- | :------------------------ | :--------------------------------- |\n| **C**reate | `POST` | `app.post('/posts', ...)` | Create a new post. |\n| **R**ead | `GET` | `app.get('/posts', ...)` | Get a list of all posts. |\n| **R**ead | `GET` | `app.get('/posts/:id', ...)`| Get a single post by its ID. |\n| **U**pdate | `PUT` | `app.put('/posts/:id', ...)`| Replace an existing post. |\n| **D**elete | `DELETE` | `app.delete('/posts/:id', ...)`| Delete a post by its ID. |\n\nBy following this convention, you create a predictable and standard API that is easy for other developers and applications to understand and use.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding HTTP Methods for CRUD Operations in REST API Design is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-JBFUYU07",
+            "question": "In REST API Design, what is the key consideration regarding HTTP Methods for CRUD Operations?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-JBFUYU01-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "REST Principles and Conventions (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-JBFUYU04-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "API Endpoint Structure (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-JBFUYU07-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "HTTP Methods for CRUD Operations (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "JBFUYU02",
+          "questionId": "JBFUYU02",
+          "title": "Mapping REST Principles to a To-Do List API",
+          "difficulty": "Easy",
+          "description": "Great job understanding the core principles of REST! Now, let's put that knowledge into practice.\n\nGiven is a very simple Express application for a To-Do list. Instead of using a database, it uses a hardcoded JavaScript array to store the tasks. This keeps the code simple so we can focus on the concepts.\n\n#### Task:\nYour task is to add all the important REST methods according to the route. Like `get`, `post`, `put`, `delete`.\n\n\n### Note:\nThe frontend ` mini POSTMAN` is build for just testing the URLs we are buidling in this problem. \\\nDon't worry about how it works, just focus on the backend you are learning. We will learn about how to connect the backend and frontend in the future lessons.",
+          "problemStatement": "Great job understanding the core principles of REST! Now, let's put that knowledge into practice.\n\nGiven is a very simple Express application for a To-Do list. Instead of using a database, it uses a hardcoded JavaScript array to store the tasks. This keeps the code simple so we can focus on the concepts.\n\n#### Task:\nYour task is to add all the important REST methods according to the route. Like `get`, `post`, `put`, `delete`.\n\n\n### Note:\nThe frontend ` mini POSTMAN` is build for just testing the URLs we are buidling in this problem. \\\nDon't worry about how it works, just focus on the backend you are learning. We will learn about how to connect the backend and frontend in the future lessons.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "JBFUYU03",
+          "questionId": "JBFUYU03",
+          "title": "Refactoring to RESTful Resource Naming",
+          "difficulty": "Easy",
+          "description": "Fantastic! You have learned to identify REST principles in existing code. Now it's time to apply that knowledge by refactoring a non-RESTful API into a proper RESTful one.\n\nYour task is to modify the provided code to align with the **Uniform Interface** principle of REST. Specifically, you need to change the endpoint paths to be resource-oriented.\n\n#### Task:\n1. The URI for the collection of all books should be `/books`.\n2. The URI for a single book should be `/books/:id`.\n3. You only need to change the first argument in the `app.get()` and `app.post()` methods. Do not change the logic inside the handler functions.",
+          "problemStatement": "Fantastic! You have learned to identify REST principles in existing code. Now it's time to apply that knowledge by refactoring a non-RESTful API into a proper RESTful one.\n\nYour task is to modify the provided code to align with the **Uniform Interface** principle of REST. Specifically, you need to change the endpoint paths to be resource-oriented.\n\n#### Task:\n1. The URI for the collection of all books should be `/books`.\n2. The URI for a single book should be `/books/:id`.\n3. You only need to change the first argument in the `app.get()` and `app.post()` methods. Do not change the logic inside the handler functions.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "JBFUYU05",
+          "questionId": "JBFUYU05",
+          "title": "University Course Catalog API Routes",
+          "difficulty": "Easy",
+          "description": "You are building an API for a university's course management system. Your task is to set up the basic endpoint structure for handling \"Courses\".\n\nYou'll be working with a dedicated router file for courses. This router will be mounted in your main server file under the base path `/api/v1/courses`. This is a common practice you learned about in **Routing & Middleware**.\n\nFollowing the REST conventions you just learned:\n\n1. **Get all courses:** This endpoint should represent the entire collection of courses.\n\n\n2. **Get a single course:** This endpoint should use a route parameter to identify a specific course by its ID.\n\n\n3. **Get all students for a course:** This endpoint should be nested to show the relationship between a course and its students. It should also use a route parameter to identify the specific course.\n\n\n\n#### Task:\nComplete the `index.js` code to include the `courses.js` file from route folder for the APIs to work correctly.",
+          "problemStatement": "You are building an API for a university's course management system. Your task is to set up the basic endpoint structure for handling \"Courses\".\n\nYou'll be working with a dedicated router file for courses. This router will be mounted in your main server file under the base path `/api/v1/courses`. This is a common practice you learned about in **Routing & Middleware**.\n\nFollowing the REST conventions you just learned:\n\n1. **Get all courses:** This endpoint should represent the entire collection of courses.\n\n\n2. **Get a single course:** This endpoint should use a route parameter to identify a specific course by its ID.\n\n\n3. **Get all students for a course:** This endpoint should be nested to show the relationship between a course and its students. It should also use a route parameter to identify the specific course.\n\n\n\n#### Task:\nComplete the `index.js` code to include the `courses.js` file from route folder for the APIs to work correctly.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "JBFUYU06",
+          "questionId": "JBFUYU06",
+          "title": "Book Library API Endpoint Structure",
+          "difficulty": "Easy",
+          "description": "Now it's your turn to practice! You're building a basic API for a book library system. Your goal is to define the API endpoint structure for \"Books\" and their associated \"Reviews\".\n\nJust like in the example, you will use a separate router file for all book-related routes. This router will then be integrated into your main server file and mounted on the base path `/api/v1/books`. This reinforces the good practices you learned in the **Routing & Middleware** topic.\n\nBased on REST conventions for structuring endpoints, you need to create routes for the following three actions:\n\n1. **Get all books:** An endpoint that represents the collection of all books.\n2. **Get a single book:** An endpoint that uses a route parameter to find a specific book by its ID.\n3. **Get all reviews for a book:** A nested endpoint that shows the relationship between a book and its reviews. It should also use a route parameter for the book's ID.\n\nFor this problem, you do not need to implement any database logic. Your route handlers should simply send back a plain text string to confirm that the correct route was reached. This will test your understanding of routing and endpoint structure.",
+          "problemStatement": "Now it's your turn to practice! You're building a basic API for a book library system. Your goal is to define the API endpoint structure for \"Books\" and their associated \"Reviews\".\n\nJust like in the example, you will use a separate router file for all book-related routes. This router will then be integrated into your main server file and mounted on the base path `/api/v1/books`. This reinforces the good practices you learned in the **Routing & Middleware** topic.\n\nBased on REST conventions for structuring endpoints, you need to create routes for the following three actions:\n\n1. **Get all books:** An endpoint that represents the collection of all books.\n2. **Get a single book:** An endpoint that uses a route parameter to find a specific book by its ID.\n3. **Get all reviews for a book:** A nested endpoint that shows the relationship between a book and its reviews. It should also use a route parameter for the book's ID.\n\nFor this problem, you do not need to implement any database logic. Your route handlers should simply send back a plain text string to confirm that the correct route was reached. This will test your understanding of routing and endpoint structure.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "JBFUYU08",
+          "questionId": "JBFUYU08",
+          "title": "Todo List CRUD API",
+          "difficulty": "Easy",
+          "description": "Great job on understanding the basics of mapping CRUD operations to HTTP methods! Now it's time to put that knowledge into practice.\n\nYou are building the backend for a simple To-Do List application. You have already been provided with the basic Express server setup, a Mongoose connection, and a `Todo` model.\n\nThe `Todo` model has a very simple structure:\n* `description`: A `String` describing the task.\n* `completed`: A `Boolean` indicating if the task is done (defaults to `false`).\n\nYour job is to complete the API by implementing the four core CRUD endpoints. You need to fill in the logic for each route to interact with the MongoDB database using Mongoose.\n\n#### Task using Mongoose functions:\n\n1. **`POST /todos`**: Complete the code to save new data in databse.\n2. **`GET /todos`**: Complete the code to find all the todos.\n3. **`PUT /todos/:id`**: Complete the code to find and update the todo with the particular id.\n4. **`DELETE /todos/:id`**: Complete the code to delete the todo with the given id.",
+          "problemStatement": "Great job on understanding the basics of mapping CRUD operations to HTTP methods! Now it's time to put that knowledge into practice.\n\nYou are building the backend for a simple To-Do List application. You have already been provided with the basic Express server setup, a Mongoose connection, and a `Todo` model.\n\nThe `Todo` model has a very simple structure:\n* `description`: A `String` describing the task.\n* `completed`: A `Boolean` indicating if the task is done (defaults to `false`).\n\nYour job is to complete the API by implementing the four core CRUD endpoints. You need to fill in the logic for each route to interact with the MongoDB database using Mongoose.\n\n#### Task using Mongoose functions:\n\n1. **`POST /todos`**: Complete the code to save new data in databse.\n2. **`GET /todos`**: Complete the code to find all the todos.\n3. **`PUT /todos/:id`**: Complete the code to find and update the todo with the particular id.\n4. **`DELETE /todos/:id`**: Complete the code to delete the todo with the given id.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "JBFUYU09",
+          "questionId": "JBFUYU09",
+          "title": "Personal Bookshelf API",
+          "difficulty": "Easy",
+          "description": "Fantastic! You've successfully mapped CRUD operations to HTTP methods for a To-Do list. Now, let's reinforce that knowledge with a different real-world example.\n\nImagine you are creating a backend service for a \"Personal Bookshelf\" application where users can keep track of the books they own. You have been given the basic Express server and a Mongoose `Book` model.\n\nThe `Book` model has the following schema:\n* `title`: A `String` for the book's title.\n* `author`: A `String` for the author's name.\n* `pages`: A `Number` for the total page count.\n\nYour goal is to implement the complete set of CRUD endpoints for managing these books. You will need to write the logic for each route to perform the correct database operation using Mongoose.\n\n**Your Task:**\n\n1. **`POST /books`**: Create a new book. The book's details will be provided in the request body (`req.body`). The server should respond with the newly created book object.\n2. **`GET /books`**: Retrieve a list of all books in the collection.\n3. **`PUT /books/:id`**: Update an existing book's details using its ID. The ID will be in `req.params.id`, and the update information will be in `req.body`. The server should respond with the **updated** book object.\n4. **`DELETE /books/:id`**: Remove a book from the collection by its ID (`req.params.id`). The server should respond with the book object that was deleted.\n\nRemember to use the appropriate HTTP method for each action and the corresponding Mongoose function you've learned about.",
+          "problemStatement": "Fantastic! You've successfully mapped CRUD operations to HTTP methods for a To-Do list. Now, let's reinforce that knowledge with a different real-world example.\n\nImagine you are creating a backend service for a \"Personal Bookshelf\" application where users can keep track of the books they own. You have been given the basic Express server and a Mongoose `Book` model.\n\nThe `Book` model has the following schema:\n* `title`: A `String` for the book's title.\n* `author`: A `String` for the author's name.\n* `pages`: A `Number` for the total page count.\n\nYour goal is to implement the complete set of CRUD endpoints for managing these books. You will need to write the logic for each route to perform the correct database operation using Mongoose.\n\n**Your Task:**\n\n1. **`POST /books`**: Create a new book. The book's details will be provided in the request body (`req.body`). The server should respond with the newly created book object.\n2. **`GET /books`**: Retrieve a list of all books in the collection.\n3. **`PUT /books/:id`**: Update an existing book's details using its ID. The ID will be in `req.params.id`, and the update information will be in `req.body`. The server should respond with the **updated** book object.\n4. **`DELETE /books/:id`**: Remove a book from the collection by its ID (`req.params.id`). The server should respond with the book object that was deleted.\n\nRemember to use the appropriate HTTP method for each action and the corresponding Mongoose function you've learned about.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "nodejs.json",
+      "_moduleTitle": "Building Complete APIs"
+    },
+    {
+      "topicId": "t02-file-uploads-external-apis",
+      "title": "File Uploads & External APIs",
+      "description": "Study concepts and solve targeted engineering problems for File Uploads & External APIs.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-ICCLGM01",
+          "title": "Basic file upload with multer",
+          "content": "Alright, let's learn how to handle file uploads in our Node.js applications using a popular middleware called Multer. We've already covered how to set up an Express server, handle requests, and use middleware. Multer builds on these concepts to make file uploads easier.\n\nImagine you want users to upload profile pictures or documents to your website. Multer helps us process these files when they're sent from the client (like a web browser) to our server.\n\n**What is Multer?**\n\nMulter is a Node.js middleware for handling `multipart/form-data`, which is primarily used for uploading files. It's very efficient and makes the process of receiving and saving files straightforward.\n\n**How to use Multer:**\n\n1. **Install Multer:**\n\n First, you need to add Multer to your project. Open your terminal and navigate to your project directory. Then, run:\n\n ```bash\n npm install multer\n ```\n\n2. **Import Multer in your Express app:**\n\n In your main application file (e.g., `app.js`), require the `multer` module:\n\n ```javascript\n const express = require('express');\n const multer = require('multer'); // Import Multer\n const app = express();\n ```\n\n3. **Configure Multer:**\n\n You need to tell Multer where to store the uploaded files. A simple way is to store them in a directory on your server. Let's create a directory called `uploads` in your project:\n\n ```bash\n mkdir uploads\n ```\n\n Now, configure Multer to use this directory:\n\n ```javascript\n const upload = multer({ dest: 'uploads/' }); // Configure Multer to store files in the 'uploads' directory\n ```\n\n The `dest` option specifies the destination folder for the uploaded files.\n\n4. **Create a Route to Handle File Uploads:**\n\n Now, let's create an Express route that uses Multer middleware to handle file uploads. We'll use the `upload.single()` middleware to handle a single file upload. The argument to `upload.single()` is the name of the file field in your HTML form (e.g., 'profileImage').\n\n ```javascript\n app.post('/profile', upload.single('profileImage'), function (req, res) {\n // req.file is the `profileImage` file\n // req.body will hold the text fields, if there were any\n console.log(req.file); // Information about the uploaded file\n res.send('File uploaded successfully!');\n });\n ```\n\n In this example:\n\n * `'/profile'` is the route where the file will be uploaded.\n * `upload.single('profileImage')` is the Multer middleware that handles the file upload. It looks for a field named 'profileImage' in the form data.\n * `req.file` contains information about the uploaded file (filename, size, mimetype, etc.).\n * `req.body` will contain any other form fields that are sent along with the file.\n\n5. **Create an HTML Form:**\n\n To test your upload endpoint, you'll need an HTML form that allows users to select and upload files. Create an HTML file (e.g., `index.html`) with the following content:\n\n ```html\n \n \n \n File Upload Example\n \n \n \n \n \n \n \n \n ```\n\n * The `enctype=\"multipart/form-data\"` attribute is crucial for file uploads. It tells the browser to encode the form data in a way that includes files.\n * The `name=\"profileImage\"` attribute in the `` tag *must* match the argument you passed to `upload.single()` in your Express route.\n\n6. **Start your server:**\n\n Make sure you start your Express server using `node app.js` or `nodemon app.js` (if you have nodemon installed).\n\n7. **Testing:**\n\n Open `index.html` in your browser, select a file, and click \"Upload Profile Image.\" Check your server's console for the `req.file` output, and check the `uploads` directory to see if the file was saved there.\n\n**Important Notes:**\n\n* **Error Handling:** In a real-world application, you should add error handling to your route to catch any errors that might occur during the upload process.\n* **File Naming:** Multer will automatically generate a unique name for the uploaded file. You can customize this by providing a `filename` function in the Multer configuration.\n* **Storage Options:** The `dest` option is the simplest way to store files, but Multer also supports more advanced storage options, like storing files in memory or using cloud storage services. We'll explore more advanced options later.\n\nThis is a basic example to get you started with file uploads in Node.js using Multer. You can now upload files to your server.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Basic file upload with multer in File Uploads & External APIs is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ICCLGM01",
+            "question": "In File Uploads & External APIs, what is the key consideration regarding Basic file upload with multer?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-ICCLGM07",
+          "title": "Making HTTP Requests to External APIs",
+          "content": "Okay, let's learn how to make your Node.js application talk to other services on the internet using HTTP requests. This is super useful for things like fetching data from a weather API, translating text, or anything else where you need to get information from another server.\n\nThink of it like ordering food. Your Node.js app is you, the external API is the restaurant, and the HTTP request is your order.\n\nWe'll be using a built-in Node.js module called `https` and a popular npm package called `axios` to make these requests. `https` is part of Node.js core, so you don't need to install it. `axios` provides a cleaner and easier-to-use API for making HTTP requests, so we'll focus on that.\n\n**1. Install Axios:**\n\nFirst, you'll need to install `axios`. Open your terminal in your project directory and run:\n\n```bash\nnpm install axios\n```\n\n**2. Making a GET Request:**\n\nA GET request is used to retrieve data from a server. Let's say we want to fetch some data from a public API (like a JSON placeholder API). Here's how you would do it:\n\n```javascript\nconst axios = require('axios');\n\naxios.get('https://jsonplaceholder.typicode.com/todos/1')\n .then(response => {\n // `response` is an object containing the server's response.\n // `response.data` contains the actual data returned by the API (usually JSON).\n\n console.log('Data from API:', response.data);\n })\n .catch(error => {\n // Handle any errors that occurred during the request.\n console.error('Error fetching data:', error);\n });\n\nconsole.log('Fetching data...'); //This will most likely run before the API call finishes\n```\n\nIn this example:\n\n* `require('axios')` imports the `axios` library.\n* `axios.get('https://jsonplaceholder.typicode.com/todos/1')` sends a GET request to the specified URL.\n* `.then()` is a promise that executes when the request is successful. The `response` object contains all the information from the server, including the data.\n* `response.data` is where the actual data (in this case, JSON) from the API is stored.\n* `.catch()` is a promise that executes if there's an error during the request. It's important to handle errors gracefully.\n\n**3. Making a POST Request:**\n\nA POST request is used to send data to a server, often to create or update something. Let's say we want to send some data to the API to create a new \"todo\".\n\n```javascript\nconst axios = require('axios');\n\nconst dataToSend = {\n title: 'My New Todo',\n completed: false,\n userId: 1\n};\n\naxios.post('https://jsonplaceholder.typicode.com/todos', dataToSend)\n .then(response => {\n console.log('Todo created:', response.data);\n })\n .catch(error => {\n console.error('Error creating todo:', error);\n });\n\n```\n\nKey points:\n\n* We create a `dataToSend` object containing the data we want to send to the API. This is often a JSON object.\n* `axios.post('https://jsonplaceholder.typicode.com/todos', dataToSend)` sends a POST request to the specified URL, including the `dataToSend` in the request body. The API will receive this data.\n* The rest of the code is similar to the GET request, handling the response and potential errors.\n\n**4. Understanding Asynchronous Nature**\n\nIt's crucial to remember that HTTP requests are asynchronous. This means that the code after `axios.get()` or `axios.post()` will continue to execute *before* the API call finishes. That's why we use `.then()` and `.catch()` to handle the response when it eventually arrives, preventing our program from crashing. The `console.log('Fetching data...')` statement from the GET request example will execute before the API returns its data. This is due to the asynchronous nature of JavaScript and the way promises work.\n\n**5. Quick Recap**\n\n* We use the `axios` library to make HTTP requests.\n* `axios.get()` is for fetching data.\n* `axios.post()` is for sending data.\n* `.then()` handles successful responses.\n* `.catch()` handles errors.\n* HTTP requests are asynchronous, so use `.then()` and `.catch()` to handle the results.\n\nThat's the basics of making HTTP requests to external APIs in Node.js. You can now fetch data from other services and integrate them into your applications. In the next lessons, we'll dive into API keys, authentication, and error handling.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Making HTTP Requests to External APIs in File Uploads & External APIs is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ICCLGM07",
+            "question": "In File Uploads & External APIs, what is the key consideration regarding Making HTTP Requests to External APIs?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-ESPGRY01",
+          "title": "Integrating Third-Party Services",
+          "content": "Okay, let's talk about integrating third-party services into your Node.js API. Think of third-party services as tools or functionalities built by other companies that you can use in your application. Examples include sending emails (like using SendGrid or Mailgun), processing payments (like Stripe or PayPal), or using a weather API (like OpenWeatherMap).\n\nWhy use them? Because they save you a *ton* of time and effort. Instead of building these complex features from scratch, you can leverage existing, well-maintained services.\n\nHere's how it generally works, building on what we've already learned about APIs and making HTTP requests:\n\n1. **Choose a Service:** First, identify the service you need (e.g., sending emails). Research different providers and choose one that fits your needs and budget.\n\n2. **Sign Up & Get API Keys:** You'll usually need to create an account with the service provider. They'll give you API keys or credentials. These keys are like passwords for your application to access their service. *Treat these keys like passwords! Do not hardcode them directly into your application code!* We'll cover safer handling of these keys in the next lesson.\n\n3. **Install a Library (Usually):** Most services have Node.js libraries (using `npm install`) that simplify making requests to their API. For example, if you're using Twilio to send SMS messages, you'd install the `twilio` package: `npm install twilio`. If a library doesn't exist, you can use the built-in `http` or `https` modules, or the `axios` package (which we've likely used before for interacting with our own APIs or external APIs), to make HTTP requests.\n\n4. **Make API Requests:** Use the library or `http`/`https`/`axios` to send requests to the third-party service's API endpoints. You'll typically need to include your API key in the request (often in the headers or as a query parameter).\n\n5. **Handle the Response:** The third-party service will send back a response (usually in JSON format). Parse this response to get the data you need and handle any errors.\n\nLet's illustrate with a simple example using the `axios` package to fetch weather data from a hypothetical weather API:\n\n```javascript\n// Import necessary modules/packages\nconst express = require('express'); // Assuming you are building an API\nconst axios = require('axios');\n\nconst app = express();\nconst port = 3000;\n\n// Replace with your actual API key and the weather API endpoint\nconst apiKey = 'YOUR_WEATHER_API_KEY'; //Remember: Don't hardcode this!\nconst weatherApiUrl = 'https://api.example.com/weather';\n\napp.get('/weather/:city', async (req, res) => {\n const city = req.params.city;\n\n try {\n // Make the API request to the weather service\n const response = await axios.get(`${weatherApiUrl}?q=${city}&appid=${apiKey}`);\n\n // Extract relevant data from the response\n const temperature = response.data.main.temp;\n const description = response.data.weather[0].description;\n\n // Format the response\n const weatherData = {\n city: city,\n temperature: temperature,\n description: description,\n };\n\n // Send the formatted response back to the client\n res.json(weatherData);\n\n } catch (error) {\n // Handle errors (we'll improve error handling later)\n console.error(error);\n res.status(500).json({ error: 'Failed to fetch weather data' });\n }\n});\n\napp.listen(port, () => {\n console.log(`Server listening on port ${port}`);\n});\n```\n\n**Explanation:**\n\n* We use `express` to create an API endpoint `/weather/:city`.\n* We use `axios` to make a GET request to the weather API. We construct the URL, including the city and API key.\n* We use `async/await` to handle the asynchronous nature of the API request.\n* We extract the temperature and description from the API response.\n* We send a JSON response back to the client with the weather data.\n* We use a `try...catch` block to handle potential errors. This is crucial because external APIs can be unreliable.\n\n**Key Takeaways:**\n\n* Integrating third-party services saves development time and effort.\n* Always handle API keys securely.\n* Use libraries to simplify API requests.\n* Handle errors gracefully, as external services can be unreliable.\n* Use `try...catch` blocks and proper error handling.\n* Use the concepts of `express`, `axios`, `http`, `https`, `npm install` and `async/await`.\n\nThis is a basic example. Real-world integrations can be more complex, requiring you to handle authentication, rate limits, and different data formats. But the core principles remain the same.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Integrating Third-Party Services in File Uploads & External APIs is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ESPGRY01",
+            "question": "In File Uploads & External APIs, what is the key consideration regarding Integrating Third-Party Services?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-ICCLGM01-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Basic file upload with multer (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-ICCLGM07-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Making HTTP Requests to External APIs (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-ESPGRY01-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Integrating Third-Party Services (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "ICCLGM02",
+          "questionId": "ICCLGM02",
+          "title": "Avatar Upload Service",
+          "difficulty": "Easy",
+          "description": "Alright, let's learn how to handle file uploads in our Node.js applications using a popular middleware called Multer. We've already covered how to set up an Express server, handle requests, and use middleware. Multer builds on these concepts to make file uploads easier.\n\nImagine you want users to upload profile pictures or documents to your website. Multer helps us process these files when they're sent from the client (like a web browser) to our server.\n\n**Your Task:**\n\nCreate a directory named `avatars` to store the uploaded images.",
+          "problemStatement": "Alright, let's learn how to handle file uploads in our Node.js applications using a popular middleware called Multer. We've already covered how to set up an Express server, handle requests, and use middleware. Multer builds on these concepts to make file uploads easier.\n\nImagine you want users to upload profile pictures or documents to your website. Multer helps us process these files when they're sent from the client (like a web browser) to our server.\n\n**Your Task:**\n\nCreate a directory named `avatars` to store the uploaded images.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "ICCLGM03",
+          "questionId": "ICCLGM03",
+          "title": "Document Upload Service",
+          "difficulty": "Easy",
+          "description": "Now let's practice how to upload any file and encode it according to our needs and uniqueness. In this code we are uploading any file using HTML as frontend and multer for handling the upload and storage of the file.\n\n\n#### Task:\n1. Complete the code for multer storage configuration. To store the file in the `documents` folder.\n2. Complete the code to upload the file for multer storage.",
+          "problemStatement": "Now let's practice how to upload any file and encode it according to our needs and uniqueness. In this code we are uploading any file using HTML as frontend and multer for handling the upload and storage of the file.\n\n\n#### Task:\n1. Complete the code for multer storage configuration. To store the file in the `documents` folder.\n2. Complete the code to upload the file for multer storage.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "ICCLGM08",
+          "questionId": "ICCLGM08",
+          "title": "Weather Data",
+          "difficulty": "Easy",
+          "description": "You're going to build a simple application that fetches weather data for a city using a public weather API. For this exercise, we'll use the OpenWeatherMap API.\n\nThe API endpoint is: `https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true`\n\nThis endpoint returns current weather data for Berlin, Germany.\n\n#### Task:\n1. Install the axios liberary in the terminal. (`npm i axios`)\n2. Import the axios liberary in the code.",
+          "problemStatement": "You're going to build a simple application that fetches weather data for a city using a public weather API. For this exercise, we'll use the OpenWeatherMap API.\n\nThe API endpoint is: `https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true`\n\nThis endpoint returns current weather data for Berlin, Germany.\n\n#### Task:\n1. Install the axios liberary in the terminal. (`npm i axios`)\n2. Import the axios liberary in the code.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "ICCLGM09",
+          "questionId": "ICCLGM09",
+          "title": "Fetch a Random Dog Image",
+          "difficulty": "Easy",
+          "description": "In this task, you will use the Dog API to fetch a random dog image URL and display it in the console.\n\nThe API endpoint is: `https://dog.ceo/api/breeds/image/random`\n\nThis endpoint returns a JSON object with a key called `message` that contains the URL of a random dog image. Your task is to make a GET request to this endpoint using `axios` and print the image URL to the console.\n\n#### Task:\n1. Complete the api route to get the image and send show it on the html page.\n\n\n#### Note:\nYou can read about this api [here](https://dog.ceo/dog-api/).",
+          "problemStatement": "In this task, you will use the Dog API to fetch a random dog image URL and display it in the console.\n\nThe API endpoint is: `https://dog.ceo/api/breeds/image/random`\n\nThis endpoint returns a JSON object with a key called `message` that contains the URL of a random dog image. Your task is to make a GET request to this endpoint using `axios` and print the image URL to the console.\n\n#### Task:\n1. Complete the api route to get the image and send show it on the html page.\n\n\n#### Note:\nYou can read about this api [here](https://dog.ceo/dog-api/).",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "ESPGRY02",
+          "questionId": "ESPGRY02",
+          "title": "Random Joke API",
+          "difficulty": "Easy",
+          "description": "You are tasked with creating an API endpoint that fetches a random joke from a third-party joke API and returns it to the client. You will use Express to create the API endpoint and `axios` to make the request to the third-party API.\n\nHere's how it generally works:\n\n1. **Choose a Service:** In this case, we've already chosen a joke API for you. You can use a free joke API like \"https://official-joke-api.appspot.com/random_joke\".\n\n2. **Sign Up & Get API Keys:** Some APIs require you to sign up and get API keys. This particular Joke API doesn't need one, which simplifies things. If it did, you'd need to make sure to handle the key securely, which we will cover in the next lesson.\n\n3. **Install a Library (Usually):** We will be using the `axios` package to make HTTP requests to the joke API.\n\n4. **Make API Requests:** Use the `axios` to send requests to the third-party service's API endpoints.\n\n5. **Handle the Response:** The third-party service will send back a response (usually in JSON format). Parse this response to get the data you need and handle any errors.\n\nYour goal is to create an Express route `/joke` that fetches a random joke from the API and returns it in the following JSON format:\n\n```json\n{\n \"setup\": \"Why don't scientists trust atoms?\",\n \"punchline\": \"Because they make up everything!\"\n}\n```\n\nHandle any potential errors and return a 500 status code with an error message if the joke cannot be fetched.",
+          "problemStatement": "You are tasked with creating an API endpoint that fetches a random joke from a third-party joke API and returns it to the client. You will use Express to create the API endpoint and `axios` to make the request to the third-party API.\n\nHere's how it generally works:\n\n1. **Choose a Service:** In this case, we've already chosen a joke API for you. You can use a free joke API like \"https://official-joke-api.appspot.com/random_joke\".\n\n2. **Sign Up & Get API Keys:** Some APIs require you to sign up and get API keys. This particular Joke API doesn't need one, which simplifies things. If it did, you'd need to make sure to handle the key securely, which we will cover in the next lesson.\n\n3. **Install a Library (Usually):** We will be using the `axios` package to make HTTP requests to the joke API.\n\n4. **Make API Requests:** Use the `axios` to send requests to the third-party service's API endpoints.\n\n5. **Handle the Response:** The third-party service will send back a response (usually in JSON format). Parse this response to get the data you need and handle any errors.\n\nYour goal is to create an Express route `/joke` that fetches a random joke from the API and returns it in the following JSON format:\n\n```json\n{\n \"setup\": \"Why don't scientists trust atoms?\",\n \"punchline\": \"Because they make up everything!\"\n}\n```\n\nHandle any potential errors and return a 500 status code with an error message if the joke cannot be fetched.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "ESPGRY03",
+          "questionId": "ESPGRY03",
+          "title": "Fetch a Random Activity",
+          "difficulty": "Easy",
+          "description": "You are tasked with creating an API endpoint that fetches a random activity from the Bored API (which suggests random activities). You will use Express to create the API endpoint and `axios` to make the request to the third-party API.\n\n#### Task:\n\nYour goal is to create an Express route `/` that fetches a random activity from the API and returns it in the following JSON format. The JSON object returned by the Bored API has many fields, but you only need to return the `activity` and the `type` fields.\n`API` to use=`https://bored-api.appbrewery.com/random`.\n\n\n#### Expected outputs.\n```json\n{\n \"activity\": \"Learn how to use a french press\",\n \"type\": \"relaxation\"\n}\n```",
+          "problemStatement": "You are tasked with creating an API endpoint that fetches a random activity from the Bored API (which suggests random activities). You will use Express to create the API endpoint and `axios` to make the request to the third-party API.\n\n#### Task:\n\nYour goal is to create an Express route `/` that fetches a random activity from the API and returns it in the following JSON format. The JSON object returned by the Bored API has many fields, but you only need to return the `activity` and the `type` fields.\n`API` to use=`https://bored-api.appbrewery.com/random`.\n\n\n#### Expected outputs.\n```json\n{\n \"activity\": \"Learn how to use a french press\",\n \"type\": \"relaxation\"\n}\n```",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "nodejs.json",
+      "_moduleTitle": "Building Complete APIs"
+    },
+    {
+      "topicId": "t03-api-integration",
+      "title": "API Integration",
+      "description": "Study concepts and solve targeted engineering problems for API Integration.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 20,
+      "pages": [
+        {
+          "pageId": "p-ESPGRY01",
+          "title": "Integrating Third-Party Services",
+          "content": "Okay, let's talk about integrating third-party services into your Node.js API. Think of third-party services as tools or functionalities built by other companies that you can use in your application. Examples include sending emails (like using SendGrid or Mailgun), processing payments (like Stripe or PayPal), or using a weather API (like OpenWeatherMap).\n\nWhy use them? Because they save you a *ton* of time and effort. Instead of building these complex features from scratch, you can leverage existing, well-maintained services.\n\nHere's how it generally works, building on what we've already learned about APIs and making HTTP requests:\n\n1. **Choose a Service:** First, identify the service you need (e.g., sending emails). Research different providers and choose one that fits your needs and budget.\n\n2. **Sign Up & Get API Keys:** You'll usually need to create an account with the service provider. They'll give you API keys or credentials. These keys are like passwords for your application to access their service. *Treat these keys like passwords! Do not hardcode them directly into your application code!* We'll cover safer handling of these keys in the next lesson.\n\n3. **Install a Library (Usually):** Most services have Node.js libraries (using `npm install`) that simplify making requests to their API. For example, if you're using Twilio to send SMS messages, you'd install the `twilio` package: `npm install twilio`. If a library doesn't exist, you can use the built-in `http` or `https` modules, or the `axios` package (which we've likely used before for interacting with our own APIs or external APIs), to make HTTP requests.\n\n4. **Make API Requests:** Use the library or `http`/`https`/`axios` to send requests to the third-party service's API endpoints. You'll typically need to include your API key in the request (often in the headers or as a query parameter).\n\n5. **Handle the Response:** The third-party service will send back a response (usually in JSON format). Parse this response to get the data you need and handle any errors.\n\nLet's illustrate with a simple example using the `axios` package to fetch weather data from a hypothetical weather API:\n\n```javascript\n// Import necessary modules/packages\nconst express = require('express'); // Assuming you are building an API\nconst axios = require('axios');\n\nconst app = express();\nconst port = 3000;\n\n// Replace with your actual API key and the weather API endpoint\nconst apiKey = 'YOUR_WEATHER_API_KEY'; //Remember: Don't hardcode this!\nconst weatherApiUrl = 'https://api.example.com/weather';\n\napp.get('/weather/:city', async (req, res) => {\n const city = req.params.city;\n\n try {\n // Make the API request to the weather service\n const response = await axios.get(`${weatherApiUrl}?q=${city}&appid=${apiKey}`);\n\n // Extract relevant data from the response\n const temperature = response.data.main.temp;\n const description = response.data.weather[0].description;\n\n // Format the response\n const weatherData = {\n city: city,\n temperature: temperature,\n description: description,\n };\n\n // Send the formatted response back to the client\n res.json(weatherData);\n\n } catch (error) {\n // Handle errors (we'll improve error handling later)\n console.error(error);\n res.status(500).json({ error: 'Failed to fetch weather data' });\n }\n});\n\napp.listen(port, () => {\n console.log(`Server listening on port ${port}`);\n});\n```\n\n**Explanation:**\n\n* We use `express` to create an API endpoint `/weather/:city`.\n* We use `axios` to make a GET request to the weather API. We construct the URL, including the city and API key.\n* We use `async/await` to handle the asynchronous nature of the API request.\n* We extract the temperature and description from the API response.\n* We send a JSON response back to the client with the weather data.\n* We use a `try...catch` block to handle potential errors. This is crucial because external APIs can be unreliable.\n\n**Key Takeaways:**\n\n* Integrating third-party services saves development time and effort.\n* Always handle API keys securely.\n* Use libraries to simplify API requests.\n* Handle errors gracefully, as external services can be unreliable.\n* Use `try...catch` blocks and proper error handling.\n* Use the concepts of `express`, `axios`, `http`, `https`, `npm install` and `async/await`.\n\nThis is a basic example. Real-world integrations can be more complex, requiring you to handle authentication, rate limits, and different data formats. But the core principles remain the same.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Integrating Third-Party Services in API Integration is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ESPGRY01",
+            "question": "In API Integration, what is the key consideration regarding Integrating Third-Party Services?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-ESPGRY04",
+          "title": "Environment-Based Configuration",
+          "content": "Alright, let's talk about environment-based configuration in your Node.js API. Think of it as a way to tailor your API's behavior depending on where it's running – your local development machine, a testing server, or the live production environment. We don't want to hardcode sensitive information like API keys or database connection strings directly into our code. That's bad practice! Instead, we use environment variables.\n\n**What are Environment Variables?**\n\nEnvironment variables are like global settings for your system or a specific application. They're key-value pairs that are accessible by your Node.js application.\n\n**Why use them?**\n\n* **Security:** Keep sensitive data (API keys, database passwords) out of your codebase.\n* **Flexibility:** Easily change settings without modifying your code. Deploy the same code to different environments with different configurations.\n* **Maintainability:** Makes your code cleaner and easier to manage.\n\n**How to use them in Node.js:**\n\nNode.js provides access to environment variables through the `process.env` object. It's a global object, so you can access it from anywhere in your code.\n\n**Example:**\n\nLet's say you're building an API that connects to a MongoDB database (like we learned in the MongoDB Setup, Mongoose Fundamentals, and Practical Database Operations topics). You might have different database URLs for your development and production environments.\n\n1. **Set Environment Variables:**\n\n * **Locally:** You can set environment variables directly in your terminal before running your Node.js application. For example (using bash):\n\n ```bash\n export MONGODB_URI=\"mongodb://localhost:27017/mydevdb\"\n export API_KEY=\"your_dev_api_key\"\n node app.js\n ```\n\n * **Using `.env` files (Recommended for development):** A common practice is to use a `.env` file (make sure to add this file to your `.gitignore` to prevent committing secrets!) to store environment variables locally. You'll need a package like `dotenv` to load these variables into `process.env`.\n\n First, install `dotenv`:\n\n ```bash\n npm install dotenv\n ```\n\n Then, create a `.env` file in your project's root directory:\n\n ```\n MONGODB_URI=mongodb://localhost:27017/mydevdb\n API_KEY=your_dev_api_key\n PORT=3000\n ```\n\n And in your `app.js` or main application file, require and configure `dotenv` at the very top:\n\n ```javascript\n require('dotenv').config(); // Load environment variables from .env file\n const express = require('express');\n const mongoose = require('mongoose'); // Assuming you're using Mongoose\n\n const app = express();\n const port = process.env.PORT || 3000; // Use the PORT env variable or default to 3000\n\n // Connect to MongoDB using the environment variable\n mongoose.connect(process.env.MONGODB_URI, {\n useNewUrlParser: true,\n useUnifiedTopology: true,\n })\n .then(() => console.log('Connected to MongoDB'))\n .catch(err => console.error('MongoDB connection error:', err));\n\n // ... rest of your Express app setup (routes, middleware, etc.)\n\n app.listen(port, () => {\n console.log(`Server listening on port ${port}`);\n });\n ```\n\n2. **Access Environment Variables in Your Code:**\n\n Now, you can access these variables in your code using `process.env`:\n\n ```javascript\n const apiKey = process.env.API_KEY;\n const dbUri = process.env.MONGODB_URI;\n console.log(\"API Key:\", apiKey);\n console.log(\"Database URI:\", dbUri);\n ```\n\n**Putting it Together (Example with Express and MongoDB):**\n\nImagine you're building an Express API (as we learned in Express Setup & Basics, Routing & Middleware, and Handling Requests & Data) that interacts with a MongoDB database. You might have different database credentials for development and production.\n\n```javascript\nrequire('dotenv').config(); // Load environment variables from .env\n\nconst express = require('express');\nconst mongoose = require('mongoose');\n\nconst app = express();\nconst port = process.env.PORT || 3000;\n\n// MongoDB connection string from environment variable\nconst dbUri = process.env.MONGODB_URI;\n\nmongoose.connect(dbUri, {\n useNewUrlParser: true,\n useUnifiedTopology: true,\n})\n.then(() => console.log('Connected to MongoDB'))\n.catch((err) => console.error('MongoDB connection error:', err));\n\n\napp.get('/', (req, res) => {\n res.send('Hello World!');\n});\n\napp.listen(port, () => {\n console.log(`Server listening on port ${port}`);\n});\n```\n\n**Key Takeaways:**\n\n* Use environment variables to store configuration settings that vary between environments.\n* Use `dotenv` (and a `.env` file) for local development to manage these variables easily. Remember to `.gitignore` your `.env` file!\n* Access environment variables in your Node.js code using `process.env`.\n\nBy using environment-based configuration, you make your API more secure, flexible, and maintainable. It's a fundamental practice in building robust Node.js applications.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Environment-Based Configuration in API Integration is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-ESPGRY04",
+            "question": "In API Integration, what is the key consideration regarding Environment-Based Configuration?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-ESPGRY01-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Integrating Third-Party Services (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-ESPGRY04-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Environment-Based Configuration (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "ESPGRY02",
+          "questionId": "ESPGRY02",
+          "title": "Random Joke API",
+          "difficulty": "Easy",
+          "description": "You are tasked with creating an API endpoint that fetches a random joke from a third-party joke API and returns it to the client. You will use Express to create the API endpoint and `axios` to make the request to the third-party API.\n\nHere's how it generally works:\n\n1. **Choose a Service:** In this case, we've already chosen a joke API for you. You can use a free joke API like \"https://official-joke-api.appspot.com/random_joke\".\n\n2. **Sign Up & Get API Keys:** Some APIs require you to sign up and get API keys. This particular Joke API doesn't need one, which simplifies things. If it did, you'd need to make sure to handle the key securely, which we will cover in the next lesson.\n\n3. **Install a Library (Usually):** We will be using the `axios` package to make HTTP requests to the joke API.\n\n4. **Make API Requests:** Use the `axios` to send requests to the third-party service's API endpoints.\n\n5. **Handle the Response:** The third-party service will send back a response (usually in JSON format). Parse this response to get the data you need and handle any errors.\n\nYour goal is to create an Express route `/joke` that fetches a random joke from the API and returns it in the following JSON format:\n\n```json\n{\n \"setup\": \"Why don't scientists trust atoms?\",\n \"punchline\": \"Because they make up everything!\"\n}\n```\n\nHandle any potential errors and return a 500 status code with an error message if the joke cannot be fetched.",
+          "problemStatement": "You are tasked with creating an API endpoint that fetches a random joke from a third-party joke API and returns it to the client. You will use Express to create the API endpoint and `axios` to make the request to the third-party API.\n\nHere's how it generally works:\n\n1. **Choose a Service:** In this case, we've already chosen a joke API for you. You can use a free joke API like \"https://official-joke-api.appspot.com/random_joke\".\n\n2. **Sign Up & Get API Keys:** Some APIs require you to sign up and get API keys. This particular Joke API doesn't need one, which simplifies things. If it did, you'd need to make sure to handle the key securely, which we will cover in the next lesson.\n\n3. **Install a Library (Usually):** We will be using the `axios` package to make HTTP requests to the joke API.\n\n4. **Make API Requests:** Use the `axios` to send requests to the third-party service's API endpoints.\n\n5. **Handle the Response:** The third-party service will send back a response (usually in JSON format). Parse this response to get the data you need and handle any errors.\n\nYour goal is to create an Express route `/joke` that fetches a random joke from the API and returns it in the following JSON format:\n\n```json\n{\n \"setup\": \"Why don't scientists trust atoms?\",\n \"punchline\": \"Because they make up everything!\"\n}\n```\n\nHandle any potential errors and return a 500 status code with an error message if the joke cannot be fetched.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "ESPGRY03",
+          "questionId": "ESPGRY03",
+          "title": "Fetch a Random Activity",
+          "difficulty": "Easy",
+          "description": "You are tasked with creating an API endpoint that fetches a random activity from the Bored API (which suggests random activities). You will use Express to create the API endpoint and `axios` to make the request to the third-party API.\n\n#### Task:\n\nYour goal is to create an Express route `/` that fetches a random activity from the API and returns it in the following JSON format. The JSON object returned by the Bored API has many fields, but you only need to return the `activity` and the `type` fields.\n`API` to use=`https://bored-api.appbrewery.com/random`.\n\n\n#### Expected outputs.\n```json\n{\n \"activity\": \"Learn how to use a french press\",\n \"type\": \"relaxation\"\n}\n```",
+          "problemStatement": "You are tasked with creating an API endpoint that fetches a random activity from the Bored API (which suggests random activities). You will use Express to create the API endpoint and `axios` to make the request to the third-party API.\n\n#### Task:\n\nYour goal is to create an Express route `/` that fetches a random activity from the API and returns it in the following JSON format. The JSON object returned by the Bored API has many fields, but you only need to return the `activity` and the `type` fields.\n`API` to use=`https://bored-api.appbrewery.com/random`.\n\n\n#### Expected outputs.\n```json\n{\n \"activity\": \"Learn how to use a french press\",\n \"type\": \"relaxation\"\n}\n```",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "nodejs.json",
+      "_moduleTitle": "Building Complete APIs"
+    }
+  ]
+}

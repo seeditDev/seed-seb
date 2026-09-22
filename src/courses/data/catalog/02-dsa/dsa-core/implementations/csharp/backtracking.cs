@@ -1,0 +1,22 @@
+/**
+ * C# Implementation: Backtracking
+ * Invariant: Pruned state space exploration, O(b^d)
+ */
+using System;
+using System.Collections.Generic;
+
+namespace Seed.DSA.Core
+{
+    public class Backtracking<T>
+    {
+        private readonly List<T> _items = new List<T>();
+
+        // TODO: Implement algorithm operations
+        public void Add(T item)
+        {
+            _items.Add(item);
+        }
+
+        public int Count => _items.Count;
+    }
+}

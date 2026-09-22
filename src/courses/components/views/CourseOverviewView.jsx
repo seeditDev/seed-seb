@@ -66,10 +66,22 @@ const CourseOverviewView = ({
   const durationData = calculateCourseDuration(course);
 
   const toggleModule = (modId) => {
-    setExpandedModules(prev => {
-      if (prev[modId]) return {};
-      return { [modId]: true };
-    });
+    setExpandedModules(prev => ({
+      ...prev,
+      [modId]: !prev[modId]
+    }));
+  };
+
+  const handleToggleExpandAll = () => {
+    const modules = course?.modules || [];
+    const allExpanded = modules.length > 0 && modules.every(m => expandedModules[m.moduleId]);
+    if (allExpanded) {
+      setExpandedModules({});
+    } else {
+      const all = {};
+      modules.forEach(m => { all[m.moduleId] = true; });
+      setExpandedModules(all);
+    }
   };
 
   const totalModules = course?.modules?.length || course?.modulesCount || 1;
@@ -475,13 +487,41 @@ const CourseOverviewView = ({
                 {totalModules} {totalModules === 1 ? 'module' : 'modules'} • {totalLessons} {totalLessons === 1 ? 'lesson' : 'lessons'} • Structured for hands-on interactive mastery
               </p>
             </div>
-            <div className="curriculum-overall-progress">
-              <div className="progress-ring-mini">
-                <span className="ring-val">{progressPct}%</span>
-              </div>
-              <div className="progress-text-col">
-                <span className="overall-label">Overall Progress</span>
-                <span className="overall-sub">{completedModulesCount} of {totalModules} modules completed</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="curriculum-expand-toggle-btn"
+                onClick={handleToggleExpandAll}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  background: 'var(--lp-surface-hover, #f1f5f9)',
+                  border: '1px solid var(--lp-border, #e2e8f0)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'var(--lp-text, #0f172a)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {course?.modules?.length > 0 && course.modules.every(m => expandedModules[m.moduleId]) ? (
+                  <><FaCompress style={{ fontSize: '10px' }} /> Collapse All</>
+                ) : (
+                  <><FaExpand style={{ fontSize: '10px' }} /> Expand All</>
+                )}
+              </button>
+
+              <div className="curriculum-overall-progress">
+                <div className="progress-ring-mini">
+                  <span className="ring-val">{progressPct}%</span>
+                </div>
+                <div className="progress-text-col">
+                  <span className="overall-label">Overall Progress</span>
+                  <span className="overall-sub">{completedModulesCount} of {totalModules} modules completed</span>
+                </div>
               </div>
             </div>
           </div>

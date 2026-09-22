@@ -16,7 +16,7 @@
  *               └── solution.<ext>     # Solution source code with metadata header
  */
 
-import { db, auth } from '../lib/firebase-config';
+import { db, auth } from '../lib/firebase-config.js';
 import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { GithubAuthProvider, linkWithPopup, signInWithPopup } from 'firebase/auth';
 
@@ -620,12 +620,50 @@ export function formatProblemReadme(question) {
   return md;
 }
 
+export function formatProjectReadme(project) {
+  const pTitle = project.title || 'React Project';
+  const pCat = project.category || 'React Development';
+  const pDesc = project.description || 'Guided project completed in SEED Learning Lab.';
+  const skills = project.skills || [];
+  const files = project.files || [];
+
+  let md = `# 🚀 ${pTitle}\n\n`;
+  md += `![Category](https://img.shields.io/badge/Track-${encodeURIComponent(pCat)}-blue?style=flat-square) `;
+  md += `![Status](https://img.shields.io/badge/Milestones-Completed%20%E2%9C%93-brightgreen?style=flat-square) `;
+  md += `![Verified](https://img.shields.io/badge/SEED--Learning--Lab-Verified-purple?style=flat-square)\n\n`;
+  md += `## 📖 Project Overview\n\n${pDesc}\n\n`;
+
+  if (skills.length > 0) {
+    md += `## 🛠️ Key Technologies & Concepts\n\n`;
+    skills.forEach((s) => {
+      md += `- \`${s}\`\n`;
+    });
+    md += `\n`;
+  }
+
+  md += `## 📂 Project Structure\n\n\`\`\`text\n`;
+  files.forEach((f) => {
+    md += `${f.path}\n`;
+  });
+  md += `\`\`\`\n\n`;
+
+  md += `## 💻 Running Locally\n\n`;
+  md += `To run this project on your local workstation:\n\n`;
+  md += `\`\`\`bash\n# 1. Install dependencies\nnpm install\n\n# 2. Start dev server\nnpm run dev\n\`\`\`\n\n`;
+  md += `---\n*Crafted in the [SEED Learning Lab](https://seed-it.com).*\n`;
+
+  return md;
+}
+
 /**
  * Generate root portfolio README.md with summary counters and interactive indexes.
  */
 export function generateRootReadme(manifest) {
   const problems = Object.values(manifest.problems || {}).sort(
     (a, b) => new Date(b.lastSolvedAt).getTime() - new Date(a.lastSolvedAt).getTime()
+  );
+  const projects = Object.values(manifest.projects || {}).sort(
+    (a, b) => new Date(b.completedAt || 0).getTime() - new Date(a.completedAt || 0).getTime()
   );
 
   const total = problems.length;
@@ -656,9 +694,23 @@ export function generateRootReadme(manifest) {
 
   md += `## 📊 Progress & Statistics\n\n`;
   md += `![Total Solved](https://img.shields.io/badge/Solved-${total}%20Problems-blue?style=for-the-badge&logo=codeforces) `;
+  if (projects.length > 0) {
+    md += `![Projects Built](https://img.shields.io/badge/Projects-${projects.length}%20Built-purple?style=for-the-badge&logo=react) `;
+  }
   md += `![Easy](https://img.shields.io/badge/Easy-${easy}-brightgreen?style=for-the-badge) `;
   md += `![Medium](https://img.shields.io/badge/Medium-${medium}-orange?style=for-the-badge) `;
   md += `![Hard](https://img.shields.io/badge/Hard-${hard}-red?style=for-the-badge)\n\n`;
+
+  if (projects.length > 0) {
+    md += `## 🚀 Full-Stack & Frontend Capstone Projects\n\n`;
+    md += `| Project | Track | Skills & Technologies | Status | Repository Folder |\n`;
+    md += `| :--- | :--- | :--- | :---: | :---: |\n`;
+    projects.forEach((proj) => {
+      const skillsBadge = (proj.skills || []).map((s) => `\`${s}\``).join(' ');
+      md += `| **${proj.title}** | ${proj.category || 'React'} | ${skillsBadge || 'Full-Stack'} | Completed ✓ | [Explore](./${proj.folderPath}) |\n`;
+    });
+    md += `\n`;
+  }
 
   if (Object.keys(langCounts).length > 0) {
     md += `### 💻 Languages Breakdown\n\n`;
@@ -934,3 +986,132 @@ export async function batchSyncAllSolved(uid, onProgress = null) {
 
   return { synced, errors, total };
 }
+
+/**
+ * Pushes a complete guided capstone project directory and documentation to the student's GitHub portfolio repo.
+ *
+ * @param {string} uid            - User ID
+ * @param {object} projectData    - { id, title, category, description, files: [{path, content}], skills }
+ * @returns {Promise<object>}     - { success, repoUrl, projectUrl, folderPath, filesCount }
+ */
+export async function syncProjectToGitHub(uid, projectData) {
+  try {
+    const config = uid ? await fetchGitHubConfigFromFirestore(uid) : getGitHubConfig();
+    if (!config || !config.isConnected) {
+      return { success: false, message: 'GitHub not connected. Please connect your GitHub account in Settings.' };
+    }
+
+    const { token, username, name, email, repo, isPrivate } = config;
+    const authorInfo = { name: name || username, email: email || `${username}@users.noreply.github.com` };
+
+    // 1. Ensure target repo exists
+    const repoInfo = await getOrCreateRepo(token, username, repo, isPrivate);
+
+    const projId = projectData.projectId || projectData.id || 'react-project';
+    const projTitle = projectData.title || 'React Project';
+    const projCat = projectData.category || 'React Development';
+    const catSlug = slugify(projCat);
+    const projSlug = slugify(projTitle || projId);
+    const folderPath = `Projects/${catSlug}/${projSlug}`;
+
+    // 2. Commit each source file in projectData.files
+    const files = projectData.files || [];
+    for (const f of files) {
+      const filePath = `${folderPath}/${f.path}`;
+      const existingFile = await getRepoFile(token, username, repo, filePath);
+      await putRepoFile(
+        token,
+        username,
+        repo,
+        filePath,
+        f.content,
+        `Feat(${projSlug}): Update ${f.path} | SEED Learning Lab`,
+        existingFile.sha,
+        authorInfo
+      );
+      // Wait polite delay to avoid hitting GitHub API burst limits
+      await new Promise((r) => setTimeout(r, 400));
+    }
+
+    // 3. Commit Project README.md
+    const projectReadmeContent = formatProjectReadme({
+      ...projectData,
+      title: projTitle,
+      category: projCat,
+      folderPath,
+      files,
+    });
+    const readmeFilePath = `${folderPath}/README.md`;
+    const existingReadme = await getRepoFile(token, username, repo, readmeFilePath);
+    await putRepoFile(
+      token,
+      username,
+      repo,
+      readmeFilePath,
+      projectReadmeContent,
+      `Docs(${projSlug}): Project README and Setup Guide | SEED Learning Lab`,
+      existingReadme.sha,
+      authorInfo
+    );
+
+    // 4. Update manifest & root portfolio README
+    try {
+      const manifestFile = await getRepoFile(token, username, repo, '.seed-tracker.json');
+      let manifest = { version: '1.0.0', lastSynced: new Date().toISOString(), problems: {}, projects: {} };
+      if (manifestFile.exists && manifestFile.content) {
+        try {
+          manifest = JSON.parse(manifestFile.content);
+          if (!manifest.projects) manifest.projects = {};
+        } catch (_) {}
+      }
+
+      manifest.projects[projSlug] = {
+        id: projId,
+        title: projTitle,
+        category: projCat,
+        folderPath,
+        skills: projectData.skills || [],
+        completedAt: new Date().toISOString(),
+      };
+      manifest.lastSynced = new Date().toISOString();
+
+      await putRepoFile(
+        token,
+        username,
+        repo,
+        '.seed-tracker.json',
+        JSON.stringify(manifest, null, 2),
+        `Update sync manifest: project [${projTitle}] | SEED-IT`,
+        manifestFile.sha,
+        authorInfo
+      );
+
+      const rootReadmeFile = await getRepoFile(token, username, repo, 'README.md');
+      const newRootReadme = generateRootReadme(manifest);
+      await putRepoFile(
+        token,
+        username,
+        repo,
+        'README.md',
+        newRootReadme,
+        `Update portfolio showcase: project [${projTitle}] | SEED-IT`,
+        rootReadmeFile.sha,
+        authorInfo
+      );
+    } catch (mErr) {
+      console.warn('[githubSyncService] Manifest/Root project update note:', mErr);
+    }
+
+    return {
+      success: true,
+      repoUrl: repoInfo.htmlUrl,
+      projectUrl: `${repoInfo.htmlUrl}/tree/${repoInfo.defaultBranch || 'main'}/${folderPath}`,
+      folderPath,
+      filesCount: files.length,
+    };
+  } catch (err) {
+    console.error('[githubSyncService] syncProjectToGitHub error:', err);
+    return { success: false, error: err.message };
+  }
+}
+

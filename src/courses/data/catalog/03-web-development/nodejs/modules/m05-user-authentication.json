@@ -1,0 +1,560 @@
+{
+  "moduleId": "m05-user-authentication",
+  "title": "User Authentication",
+  "description": "Core concepts and hands-on practice in User Authentication.",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-authentication-basics",
+      "title": "Authentication Basics",
+      "description": "Study concepts and solve targeted engineering problems for Authentication Basics.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 30,
+      "pages": [
+        {
+          "pageId": "p-BIVSBQ01",
+          "title": "Understanding Authentication vs. Authorization",
+          "content": "Welcome to the basics of authentication in Node.js! Before we start writing code to secure our applications, it's crucial to understand two fundamental concepts that are often confused: **Authentication** and **Authorization**.\n\nLet's use a simple real-world analogy: imagine you're trying to get into a secure office building.\n\n1. **Authentication**: You walk up to the front desk and show the security guard your employee ID card. The guard looks at your picture and name on the card to verify that you are indeed the employee you claim to be. This process of verifying your identity is **Authentication**. It answers the question: \"**Who are you?**\"\n\n2. **Authorization**: Now that the guard knows who you are, you proceed to a specific lab room. You swipe your ID card on the door. The system checks if your employee profile grants you access to this particular lab. A junior developer might be denied, but a senior scientist's card would unlock the door. This process of checking your permissions is **Authorization**. It answers the question: \"**What are you allowed to do?**\"\n\n### How This Applies to Our Node.js App\n\nLet's see how these concepts translate to the Express applications we've been building.\n\n#### Authentication in Practice\n\nThink about a login form.\n* A user enters their email and password and clicks \"Login\". This sends an `HTTP POST` request to a route we define, like `/login`.\n* Our Express route handler receives the request body containing the email and password.\n* It then uses Mongoose to query our MongoDB database to find a user with that email.\n* If a user is found, our code will then check if the password they submitted matches the one we have stored for them. (We'll learn *how* to do this securely in the next lesson).\n* If the credentials are correct, the user is successfully **authenticated**. Our application now knows who this user is.\n\n\n#### Authorization in Practice\n\nAuthorization happens *after* a user is authenticated.\n* Imagine our authenticated user now tries to access a special admin page by sending a `GET` request to `/admin/dashboard`.\n* This route should be protected. We can use **Middleware**, a concept you're already familiar with, to guard it.\n* This middleware's job is to check if the currently logged-in user has the permission to view the admin dashboard. We might check a `role` field in their user document from MongoDB (e.g., `user.role === 'admin'`).\n* If they have the 'admin' role, they are **authorized**. The middleware calls `next()` and allows the request to proceed to the main route handler, which renders the dashboard.\n* If they don't have the 'admin' role, they are **not authorized**. The middleware can redirect them or send back an \"Access Denied\" (403 Forbidden) response.\n\n### Summary\n\n* **Authentication** = Identity Check. Are you who you say you are? (e.g., Logging in)\n* **Authorization** = Permission Check. Are you allowed to access this resource? (e.g., Checking if a user is an admin)\n\nRemember this sequence: a user must first be **authenticated** before the system can determine if they are **authorized** to do something.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Understanding Authentication vs. Authorization in Authentication Basics is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-BIVSBQ01",
+            "question": "In Authentication Basics, what is the key consideration regarding Understanding Authentication vs. Authorization?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-BIVSBQ04",
+          "title": "Password hashing with bcrypt",
+          "content": "Welcome! In our last lesson, we learned the difference between authentication and authorization. Now, let's dive into a critical part of authentication: how to handle user passwords securely.\n\n### Why Not Just Store Passwords?\n\nImagine you're building an application using Express and MongoDB. A user signs up with an email and a password. The most straightforward idea might be to save their password directly in your user document in the database, like this:\n\n```json\n// In MongoDB\n{\n \"email\": \"user@example.com\",\n \"password\": \"mySuperSecretPassword123\" \n}\n```\n\nThis is **extremely dangerous!** If a hacker ever gained access to your database, they would instantly have the plain text passwords for all of your users. Since many people reuse passwords across different websites, this could compromise their email, bank, and social media accounts. We must **never** store passwords in plain text.\n\n### The Solution: Hashing\n\nThe solution is **hashing**. Hashing is a one-way process that transforms a piece of data (like a password) into a unique, fixed-length string of characters called a \"hash\".\n\nThink of it like a blender. You can put a banana and some milk in to make a smoothie. But you can't take the smoothie and get the original banana and milk back out. It's a one-way street.\n\nA key property of a simple hash function is that the same input will always produce the same output.\n`hash(\"password123\")` -> `j2g9d8f...` (always the same)\n\nThis is better, but still has a weakness. Attackers have pre-computed lists of hashes for common passwords, called \"rainbow tables\". They can quickly look up a hash and find the original password.\n\n### A Better Solution: bcrypt\n\nThis is where a library like **bcrypt** comes in. It's a special password-hashing function designed to be slow and secure. `bcrypt` improves on simple hashing in two major ways:\n\n1. **Salting:** Before hashing a password, `bcrypt` adds a random string of data to it, called a \"salt\". This salt is then stored as part of the final hash. Because the salt is random for each user, two users with the same password will have completely different hashes stored in the database. This makes rainbow tables useless.\n\n2. **Cost Factor (Work Factor):** `bcrypt` is intentionally slow. We can control how slow it is with a \"cost factor\" (also called salt rounds). A higher cost factor means it takes more computing power to calculate the hash. This is a good thing! It makes it incredibly difficult and time-consuming for an attacker to try and guess passwords (a \"brute-force\" attack).\n\n### Using bcrypt in Node.js\n\nLet's see how to use it. First, you need to install the package in your project:\n\n```bash\nnpm install bcrypt\n```\n\n**1. Hashing a Password**\n\nWhen a user registers, you'll hash their password before saving it. `bcrypt.hash()` is an asynchronous function, so we'll use `async/await`, which you learned about in \"Asynchronous JavaScript Basics\".\n\n```javascript\nconst bcrypt = require('bcrypt');\n\nasync function hashPassword() {\n const myPassword = 'admin123';\n \n // The '10' is the cost factor. Higher is more secure but slower.\n const saltRounds = 10; \n \n const hashedPassword = await bcrypt.hash(myPassword, saltRounds);\n \n console.log('Original Password:', myPassword);\n console.log('Hashed Password:', hashedPassword);\n\n // You would now save this 'hashedPassword' in your MongoDB user document\n // instead of the original password.\n}\n\nhashPassword();\n```\nIf you run this, you'll see the original password and a long, complex hash. Notice the hash looks something like `$2b$10$...`. It actually contains the algorithm version, the cost factor, the salt, and the hash itself, all bundled together!\n\n**2. Comparing a Password**\n\nLater, when a user tries to log in, you need to check if the password they entered is correct. You **don't** hash the stored password again. Instead, you use `bcrypt.compare()` to compare the plain text password they entered with the hash you have stored in the database.\n\n`bcrypt` is smart enough to extract the salt from your stored hash and use it to perform the comparison.\n\n```javascript\nconst bcrypt = require('bcrypt');\n\nasync function checkPassword() {\n const plainTextPassword = 'admin123'; // Password from login form\n \n // The hash you stored in your database during registration\n const hashedPasswordFromDB = '$2b$10$wEHLd4J8dWTKAPdGz7h0z.01sB0iVz0z9fF6.LqG0Sg8q.1q.0q.S'; \n \n const isMatch = await bcrypt.compare(plainTextPassword, hashedPasswordFromDB);\n \n if (isMatch) {\n console.log('Password is correct!');\n } else {\n console.log('Incorrect password.');\n }\n}\n\ncheckPassword();\n```\n\nAnd that's the core of it! By using `bcrypt`, we can securely handle user passwords without ever storing them in a readable format.\n\nIn the next lesson, we will use this knowledge to build a complete \"User registration flow\" with an Express server and a MongoDB database.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Password hashing with bcrypt in Authentication Basics is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-BIVSBQ04",
+            "question": "In Authentication Basics, what is the key consideration regarding Password hashing with bcrypt?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-BIVSBQ01-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Understanding Authentication vs. Authorization (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-BIVSBQ04-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Password hashing with bcrypt (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "BIVSBQ02",
+          "questionId": "BIVSBQ02",
+          "title": "Library Access Control",
+          "difficulty": "Easy",
+          "description": "You are building a simple management system for a library. The system has two types of users: 'librarians' and 'members'.\n\nIn this code we implement the core logic for **authentication** and **authorization** based on a user's role.\n\n#### What we are doing in this code:\n\n1. **Authentication**: In the `handleLogin` function, you must verify if the provided username and password match a user in our mock `users` database. This is checking **\"Who are you?\"**.\n2. **Authorization**: In the `isLibrarian` function, you must check if a given user has the 'librarian' role. This function will be used to protect actions that only librarians can perform, like adding a new book. This is checking **\"What are you allowed to do?\"**.\n\n\n#### Task:\nComplete the blank in the code to check if the user is librarian or not.",
+          "problemStatement": "You are building a simple management system for a library. The system has two types of users: 'librarians' and 'members'.\n\nIn this code we implement the core logic for **authentication** and **authorization** based on a user's role.\n\n#### What we are doing in this code:\n\n1. **Authentication**: In the `handleLogin` function, you must verify if the provided username and password match a user in our mock `users` database. This is checking **\"Who are you?\"**.\n2. **Authorization**: In the `isLibrarian` function, you must check if a given user has the 'librarian' role. This function will be used to protect actions that only librarians can perform, like adding a new book. This is checking **\"What are you allowed to do?\"**.\n\n\n#### Task:\nComplete the blank in the code to check if the user is librarian or not.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "BIVSBQ03",
+          "questionId": "BIVSBQ03",
+          "title": "Blog Post Creation: Auth vs. Authorization",
+          "difficulty": "Easy",
+          "description": "You are working on a new blog platform. On this platform, there are two types of users: 'authors' who can write and publish new posts, and 'readers' who can only read existing posts.\n\n#### Task:\n\n1. **Authentication**: First, you must verify that the user exists and has provided the correct password. This is answering the question: **\"Are you who you say you are?\"**\n2. **Authorization**: If the user is successfully authenticated, you must then check if they have the necessary permissions (i.e., the 'author' role) to create a post. This is answering the question: **\"Are you allowed to do this?\"**\n3. **Export**: Export the users database and createpost function.\n\n\n#### Expected output:",
+          "problemStatement": "You are working on a new blog platform. On this platform, there are two types of users: 'authors' who can write and publish new posts, and 'readers' who can only read existing posts.\n\n#### Task:\n\n1. **Authentication**: First, you must verify that the user exists and has provided the correct password. This is answering the question: **\"Are you who you say you are?\"**\n2. **Authorization**: If the user is successfully authenticated, you must then check if they have the necessary permissions (i.e., the 'author' role) to create a post. This is answering the question: **\"Are you allowed to do this?\"**\n3. **Export**: Export the users database and createpost function.\n\n\n#### Expected output:",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "BIVSBQ05",
+          "questionId": "BIVSBQ05",
+          "title": "Password Verification Helper",
+          "difficulty": "Easy",
+          "description": "Great job on learning the basics of `bcrypt`! Now it's time to put your knowledge to the test.\n\nImagine you are building the login logic for an application. You've already retrieved a user's data from your MongoDB database. This user object contains their email and, importantly, their **hashed password** that was created when they registered.\n\nYou'll be working with a pre-defined `mockUserFromDB` object to simulate data retrieved from a database.\n\n#### Task:\nComplete the code to check if the user is valid or not.",
+          "problemStatement": "Great job on learning the basics of `bcrypt`! Now it's time to put your knowledge to the test.\n\nImagine you are building the login logic for an application. You've already retrieved a user's data from your MongoDB database. This user object contains their email and, importantly, their **hashed password** that was created when they registered.\n\nYou'll be working with a pre-defined `mockUserFromDB` object to simulate data retrieved from a database.\n\n#### Task:\nComplete the code to check if the user is valid or not.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "BIVSBQ06",
+          "questionId": "BIVSBQ06",
+          "title": "Create a Password Hashing Helper",
+          "difficulty": "Easy",
+          "description": "Now that you've learned how to *compare* a plain-text password with an existing hash, let's tackle the other side of the coin: creating the hash in the first place!\n\nThis is a critical step in any user registration process. We never, ever store a user's password in plain text. Instead, we store a secure, one-way hash of it.\n\n**Your Task:**\n\nYou are building a helper function that will be used in your application's registration flow. This function will take a user's chosen password and convert it into a secure `bcrypt` hash. With salt rounds value 10.",
+          "problemStatement": "Now that you've learned how to *compare* a plain-text password with an existing hash, let's tackle the other side of the coin: creating the hash in the first place!\n\nThis is a critical step in any user registration process. We never, ever store a user's password in plain text. Instead, we store a secure, one-way hash of it.\n\n**Your Task:**\n\nYou are building a helper function that will be used in your application's registration flow. This function will take a user's chosen password and convert it into a secure `bcrypt` hash. With salt rounds value 10.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "nodejs.json",
+      "_moduleTitle": "User Authentication"
+    },
+    {
+      "topicId": "t02-session-token-management",
+      "title": "Session & Token Management",
+      "description": "Study concepts and solve targeted engineering problems for Session & Token Management.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-CPCZFD01",
+          "title": "Understanding Sessions vs. Tokens",
+          "content": "Hello there! In our previous lessons on **Authentication Basics** and **API Development**, we learned how to verify a user's credentials (like username and password) against our **MongoDB** database. But we ran into a fundamental challenge of the web: **HTTP is stateless**.\n\nWhat does \"stateless\" mean? It means every single request you make to a server is treated as a brand new, independent event. The server has no memory of your previous requests. So, even if you successfully log in with one request, the server will have no idea who you are on the very next request. You'd have to send your username and password every single time! That's not practical or secure.\n\nTo solve this, we need a way for our server to \"remember\" who is making a request. This is where session and token management comes in. Both are methods to keep a user logged in after their initial authentication. Let's explore the two main approaches.\n\n### 1. Sessions (The Server-Side \"Coat Check\")\n\nImagine you go to a fancy restaurant. You hand your coat to the attendant (you log in). They take your coat, store it in a numbered slot in the back room (the server's memory or database), and give you a small ticket with that number on it (a \"Session ID\").\n\nNow, you can enjoy your meal. If you need your coat for any reason (you want to access a protected route), you just show your ticket. The attendant takes the ticket, finds your coat in the back room using the number, and brings it to you. The ticket itself is just a simple reference; all the important stuff (your coat) is kept securely in the back room (the server).\n\nThis is exactly how sessions work:\n\n1. **Login:** A user sends their username and password to your Node.js server.\n2. **Create Session:** If the credentials are correct, the server creates a unique Session ID (the \"ticket\") and stores it along with the user's data (like their user ID from MongoDB) on the server itself. This can be in memory, or more permanently in a database.\n3. **Send Cookie:** The server sends this unique Session ID back to the user's browser, usually inside a cookie.\n4. **Subsequent Requests:** For every follow-up request to the server, the browser automatically includes the cookie with the Session ID.\n5. **Validation:** Your Express server (likely using **middleware**) reads the Session ID from the cookie, looks it up in its own storage, finds the associated user data, and knows \"Ah, this is a request from User X\".\n\n**Key takeaway for Sessions:** The server does the hard work of remembering. The state (who the user is) is maintained on the server.\n\n### 2. Tokens (The Self-Contained \"VIP Pass\")\n\nNow, imagine a different scenario: a music festival. To get in, you show your ID and ticket at the main gate (you log in). Instead of giving you a simple claim ticket, they give you a VIP wristband. This wristband is special. It has your name, your access level (e.g., \"All Access\"), and an un-copyable holographic seal to prove it's authentic.\n\nWith this wristband, you can enter any stage or VIP area. The security guard at each entrance doesn't need to check a master list. They just look at your wristband, see that it's valid and authentic, and let you through. The wristband itself contains all the information they need.\n\nThis is how tokens work:\n\n1. **Login:** A user sends their username and password to your server.\n2. **Create Token:** If the credentials are correct, the server creates a special, digitally signed string of characters called a token (the \"VIP Pass\"). This token contains user information (like the user ID) directly within it. The digital signature ensures the token cannot be secretly modified.\n3. **Send Token:** The server sends this token back to the client.\n4. **Subsequent Requests:** It's now the client's job to store this token (e.g., in the browser's local storage) and include it in every future request, usually in a special `Authorization` header.\n5. **Validation:** For each request, the server's middleware looks at the token. It checks the digital signature to ensure it's authentic and hasn't been tampered with. If the signature is valid, the server trusts the information inside the token and knows \"Ah, this is a request from User X\". The server doesn't need to look up anything in its own database to know who the user is.\n\n**Key takeaway for Tokens:** The server is stateless. The state (who the user is) is contained within the token and managed by the client.\n\n### Summary: Sessions vs. Tokens\n\n| Feature | Sessions | Tokens |\n| ---------------- | --------------------------------------------- | ----------------------------------------------------------------- |\n| **State** | Stateful (Server stores session data) | Stateless (Server stores nothing; token is self-contained) |\n| **Storage** | Client stores a simple ID (in a cookie) | Client stores the entire token (e.g., in local storage) |\n| **How it's sent**| Automatically via Cookies | Manually added to an `Authorization` header by the client |\n| **Scalability** | Can be complex to scale with many users | Scales very well, great for modern **REST APIs** and microservices |\n| **Analogy** | A coat check ticket | An all-access VIP pass |\n\nIn this topic, we will be focusing on the **token-based approach**, as it is the modern standard for building scalable and decoupled applications, especially for the **REST APIs** we've been building. In the next lesson, we'll dive into the most popular type of token: the **JSON Web Token (JWT)**.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Understanding Sessions vs. Tokens in Session & Token Management is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPCZFD01",
+            "question": "In Session & Token Management, what is the key consideration regarding Understanding Sessions vs. Tokens?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-CPCZFD02",
+          "title": "MCQ",
+          "content": "Why is HTTP considered stateless?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding MCQ in Session & Token Management is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPCZFD02",
+            "question": "In Session & Token Management, what is the key consideration regarding MCQ?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-CPCZFD03",
+          "title": "Express Request Inspector",
+          "content": "Which approach is easier to scale for distributed systems and microservices?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Express Request Inspector in Session & Token Management is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPCZFD03",
+            "question": "In Session & Token Management, what is the key consideration regarding Express Request Inspector?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-CPCZFD04",
+          "title": "JSON Web Tokens (JWT) basics",
+          "content": "In our last lesson, we explored the difference between session-based and token-based authentication. We learned that tokens are a modern, stateless way to handle user identity, which is especially useful for the REST APIs we've been building with Express.\n\nNow, let's dive into the most popular standard for creating these tokens: **JSON Web Tokens**, or **JWTs** (pronounced \"jots\").\n\n### What is a JWT?\n\nThink of a JWT as a secure, self-contained digital ID card. When a user logs into your application, your server verifies their credentials (like username and password) from your MongoDB database. If they are correct, the server issues them a JWT. The user then includes this JWT with every future request to prove who they are.\n\nThe server can look at this \"ID card\" and trust that it's legitimate without having to re-check the database every single time.\n\n### The Structure of a JWT\n\nA JWT isn't just a random string of text. It's carefully structured and consists of three parts, separated by dots (`.`):\n\n`HEADER.PAYLOAD.SIGNATURE`\n\nLet's break down each part using our ID card analogy:\n\n1. **Header:** This is like the metadata on the ID card. It contains information about the token itself, such as the type of token (`JWT`) and the signing algorithm used to create it. It basically says, \"This is a JWT, and here's how it was secured.\"\n\n2. **Payload:** This is the main part of the ID card, containing the user's information. This is the \"JSON\" part of the name, as the data is stored in JSON format. It contains claims, which are statements about a user. For example, we could include the user's ID from our MongoDB database (`_id`) and their username. This is the data our server will use to identify the user.\n\n *Important:* The data in the Header and Payload is encoded, but **not encrypted**. This means anyone can easily read it. Therefore, you should **never** store sensitive information like passwords in the payload.\n\n3. **Signature:** This is the most critical part—it's the ID card's tamper-proof seal. The signature is created by the server using:\n * The encoded Header\n * The encoded Payload\n * A secret key that **only the server knows**.\n\nThis signature guarantees the integrity of the token. If a malicious user tries to change the user ID in the payload, the signature will no longer match. When your Express server receives a token, it will re-calculate the signature and check if it matches the one on the token. If it doesn't, the server knows the token has been tampered with and will reject the request.\n\nIn the next lesson, we'll see exactly how to use a library in our Node.js application to create and verify these powerful tokens.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding JSON Web Tokens (JWT) basics in Session & Token Management is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPCZFD04",
+            "question": "In Session & Token Management, what is the key consideration regarding JSON Web Tokens (JWT) basics?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-CPCZFD05",
+          "title": "JWT Component Assembly",
+          "content": "Why should sensitive data like passwords NOT be stored in the JWT payload?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding JWT Component Assembly in Session & Token Management is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPCZFD05",
+            "question": "In Session & Token Management, what is the key consideration regarding JWT Component Assembly?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-CPCZFD06",
+          "title": "JWT Part Encoder",
+          "content": "What does the header of a JWT contain?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding JWT Part Encoder in Session & Token Management is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPCZFD06",
+            "question": "In Session & Token Management, what is the key consideration regarding JWT Part Encoder?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-CPCZFD07",
+          "title": "Creating and verifying JWTs",
+          "content": "Now that we understand the structure of a JSON Web Token (JWT), let's get practical. In this lesson, we'll learn how to create (or \"sign\") and verify JWTs within our Node.js and Express applications.\n\n### The Tool for the Job: `jsonwebtoken`\n\nTo work with JWTs in Node.js, we don't have to build everything from scratch. We can use a popular and trusted library called `jsonwebtoken`. Think of it like using Mongoose for MongoDB or Express for our web server—it simplifies a complex task.\n\nFirst, you'll need to install it in your project using `npm`, just like you did for Express or Mongoose:\n```bash\nnpm install jsonwebtoken\n```\n\n### Creating (Signing) a JWT\n\nWhen a user successfully authenticates (for example, by providing the correct username and password, a concept from \"Authentication Basics\"), we need to create a token for them. This process is called **signing**. We use the `jwt.sign()` method for this.\n\nLet's look at the main parts needed to create a token:\n\n1. **Payload**: This is the data we want to store inside the token. A common and secure practice is to include the user's unique `_id` from our MongoDB database. **Important:** Never put sensitive information like passwords in the payload!\n2. **Secret Key**: This is a secret string that only our server knows. It's used to create the signature part of the JWT, ensuring that nobody else can create valid tokens for our application. This key should be long, complex, and stored securely (for example, in an environment variable), not written directly in your code.\n3. **Options**: We can specify extra options, like how long the token should be valid. Setting an expiration time is crucial for security.\n\nHere's how you would sign a token in your code:\n\n```javascript\n// Import the library at the top of your file\nconst jwt = require('jsonwebtoken');\n\n// Imagine we found a user in our database after they logged in\nconst userFromDB = {\n _id: '60c72b2f9b1d8c001f8e4a3c', // This is the user's MongoDB ID\n username: 'testuser'\n};\n\n// 1. The payload for our token\nconst payload = { \n id: userFromDB._id \n};\n\n// 2. Our secret key (should be from an environment variable in a real app!)\nconst secretKey = 'this-is-a-super-secret-key-that-should-be-long';\n\n// 3. Options, like setting an expiration time (e.g., '1h' for 1 hour, '7d' for 7 days)\nconst options = { \n expiresIn: '1h' \n};\n\n// Creating the token by signing the payload with the secret key\nconst token = jwt.sign(payload, secretKey, options);\n\nconsole.log(token);\n// Output will be a long string like: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwYzcyYjJmOWI...\n```\nThis `token` is what we would send back to the user's browser or mobile app after they log in.\n\n### Verifying a JWT\n\nWhen the user makes a new request to a part of our API, they will send this token back to us (usually in a request header, which we learned about in \"Handling Requests & Data\"). Our server then needs to **verify** it to make sure it's valid and hasn't been changed.\n\nFor this, we use the `jwt.verify()` method. It needs two things:\n\n1. **The Token**: The token string sent by the user.\n2. **The Secret Key**: The **exact same** secret key we used to sign the token. If the key is different, verification will fail.\n\nHere's how verification works:\n\n```javascript\n// Let's use the token we created above\nconst receivedToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwYzcyYjJmOWI...';\n\n// The same secret key is needed for verification\nconst secretKey = 'this-is-a-super-secret-key-that-should-be-long';\n\ntry {\n // Verifying the token. If it's valid, it returns the decoded payload.\n const decodedPayload = jwt.verify(receivedToken, secretKey);\n\n console.log('Token is valid!');\n console.log(decodedPayload);\n // Output: { id: '60c72b2f9b1d8c001f8e4a3c', iat: 1623668527, exp: 1623672127 }\n \n // We can now trust this ID and use it to find the user in our database\n // For example: User.findById(decodedPayload.id)\n\n} catch (error) {\n // If verification fails, the library throws an error\n console.error('Token is not valid:', error.message);\n // The error message could be 'invalid signature' or 'jwt expired'\n}\n```\n\nNotice we use a `try...catch` block. This is a great way to handle potential errors, a concept from \"Asynchronous JavaScript Basics\". If `jwt.verify()` fails, our `catch` block will run. If it succeeds, we get the original payload back and can be confident that the request is coming from an authenticated user.\n\nThis process of signing and verifying tokens is the core mechanism we'll use in the next lessons to build a full login/logout system and protect our API routes.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Creating and verifying JWTs in Session & Token Management is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-CPCZFD07",
+            "question": "In Session & Token Management, what is the key consideration regarding Creating and verifying JWTs?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-UJOEMD07",
+          "title": "Basic CORS setup",
+          "content": "Imagine you've built a fantastic REST API using Express, just like we did in the \"API Development\" lessons. It's running on your computer at `http://localhost:5000`. Now, you want to build a separate front-end web page (maybe using HTML and vanilla JavaScript for now) that runs at `http://localhost:3000` to display data from your API.\n\nWhen your web page at port `3000` tries to make a request to your API at port `5000`, the web browser will step in and block it! You'll see an error in the browser's console that mentions \"CORS\" or \"Same-Origin Policy\".\n\n### What is the Same-Origin Policy?\n\nThe **Same-Origin Policy** is a critical security feature built into all modern web browsers. It dictates that a web page can only request resources from the **same origin** it was loaded from. An \"origin\" is defined by the combination of the protocol (like `http`), domain (`localhost`), and port (`5000`).\n\nIn our example:\n* Front-end Origin: `http://localhost:3000`\n* Back-end API Origin: `http://localhost:5000`\n\nSince the ports are different, the browser considers them different origins and blocks the request to protect the user from potentially malicious scripts.\n\n### How do we fix this? With CORS!\n\n**CORS** stands for **Cross-Origin Resource Sharing**. It's a mechanism that allows a server to indicate to the browser that it's okay to accept requests from different origins. Think of it as your server giving the browser permission to relax the Same-Origin Policy for your API.\n\nIn Express, the easiest way to enable CORS is by using a **middleware**, a concept we learned about in the \"Routing & Middleware\" topic. There's a very popular package simply called `cors` that handles all the hard work for us.\n\n### Setting up Basic CORS\n\n**Step 1: Install the `cors` package**\n\nOpen your terminal in your Node.js project directory and run:\n```bash\nnpm install cors\n```\n\n**Step 2: Use the `cors` middleware in your Express app**\n\nIn your main server file (e.g., `app.js` or `index.js`), you need to `require` the package and tell your Express app to use it.\n\n```javascript\nconst express = require('express');\nconst cors = require('cors'); // 1. Import the cors package\nconst app = express();\nconst port = 5000;\n\n// 2. Use the cors middleware for all incoming requests\n// This line of code is the key!\napp.use(cors());\n\n// Your existing routes\napp.get('/api/posts', (req, res) => {\n // We can imagine this data comes from our MongoDB database\n const posts = [\n { id: 1, title: 'Hello Node.js', content: 'This is my first post!' },\n { id: 2, title: 'Understanding CORS', content: 'CORS is easy with Express!' }\n ];\n res.json(posts);\n});\n\napp.listen(port, () => {\n console.log(`Server running on http://localhost:${port}`);\n});\n```\n\n**What does `app.use(cors())` do?**\n\nWhen you add `app.use(cors())`, the `cors` middleware automatically adds special HTTP headers to every response your server sends. One of these headers is `Access-Control-Allow-Origin: *`.\n\nWhen the browser receives this header, it understands that the server permits requests from *any* origin (the `*` is a wildcard). As a result, it allows your front-end application to access the data from the API, and the CORS error disappears!\n\nThis basic setup is perfect for development and for creating public APIs that anyone can access. You have now successfully configured your server to handle cross-origin requests, a fundamental step in building secure and functional web applications.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Basic CORS setup in Session & Token Management is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "javascript",
+            "code": "// Write your JavaScript code here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-UJOEMD07",
+            "question": "In Session & Token Management, what is the key consideration regarding Basic CORS setup?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in Back-end development using Node JS Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Back-end development using Node JS Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-CPCZFD01-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Understanding Sessions vs. Tokens (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-CPCZFD02-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "MCQ (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-CPCZFD03-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Express Request Inspector (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-CPCZFD04-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "JSON Web Tokens (JWT) basics (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-CPCZFD05-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "JWT Component Assembly (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-CPCZFD06-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "JWT Part Encoder (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-CPCZFD07-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Creating and verifying JWTs (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        },
+        {
+          "exampleId": "ex-UJOEMD07-javascript",
+          "language": "javascript",
+          "label": "JavaScript",
+          "title": "Basic CORS setup (JavaScript)",
+          "code": "// Write your JavaScript code here\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "CPCZFD08",
+          "questionId": "CPCZFD08",
+          "title": "Digital Ticket JWT Creation and Verification",
+          "difficulty": "Easy",
+          "description": "You're working for a company called \"EventMaster\" that sells tickets to events. They want to move from paper tickets to a modern digital system using JSON Web Tokens (JWTs). \n\n#### Task:\nComplete the code to simulate verifying the ticket.",
+          "problemStatement": "You're working for a company called \"EventMaster\" that sells tickets to events. They want to move from paper tickets to a modern digital system using JSON Web Tokens (JWTs). \n\n#### Task:\nComplete the code to simulate verifying the ticket.",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        },
+        {
+          "problemId": "CPCZFD09",
+          "questionId": "CPCZFD09",
+          "title": "JWT token generation",
+          "difficulty": "Easy",
+          "description": "You are building the backend for your website and want to store the token in the user's browser. The backend should only generate and send the JWT token based on the username provided by the user.\n\n#### Task:\n\nComplete the route `/generate-token`:\n 1. Take the user input from the html as username.\n 2. The token includes a payload with sub: username and is signed using the secret key.\n 3. The token is set to expire in 5 minutes.\n 4. The backend then returns the generated token as a JSON response to the frontend.\n\n\n#### Note:\nThe token itself is not stored on the backend. It is the frontend’s responsibility to take the token from the response and store it in the browser, for example in `localStorage`, `sessionStorage`, or cookies.\n\nTherefore, the backend only handles token generation and signing, while the frontend handles storage and later usage of the token.\n\nYou can see the stored token like this:",
+          "problemStatement": "You are building the backend for your website and want to store the token in the user's browser. The backend should only generate and send the JWT token based on the username provided by the user.\n\n#### Task:\n\nComplete the route `/generate-token`:\n 1. Take the user input from the html as username.\n 2. The token includes a payload with sub: username and is signed using the secret key.\n 3. The token is set to expire in 5 minutes.\n 4. The backend then returns the generated token as a JSON response to the frontend.\n\n\n#### Note:\nThe token itself is not stored on the backend. It is the frontend’s responsibility to take the token from the response and store it in the browser, for example in `localStorage`, `sessionStorage`, or cookies.\n\nTherefore, the backend only handles token generation and signing, while the frontend handles storage and later usage of the token.\n\nYou can see the stored token like this:",
+          "constraints": [
+            "Time Limit: 1s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Standard input",
+          "outputFormat": "Standard output",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "10",
+              "explanation": "Sum of the elements is 10."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\n\nint main() {\n // Write your C code here\n return 0;\n}",
+            "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n // Write your C++ code here\n return 0;\n}",
+            "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}",
+            "Python3": "# Write your Python code here\n",
+            "JavaScript": "// Write your JavaScript code here\n",
+            "Go": "package main\n\nimport \"fmt\"\n\nfunc main() {\n // Write your Go code here\n}",
+            "Rust": "fn main() {\n // Write your Rust code here\n}",
+            "C#": "using System;\n\nclass Program {\n static void Main() {\n // Write your C# code here\n }\n}",
+            "SQL": "-- Write your SQL query here\n"
+          }
+        }
+      ],
+      "_sourceFile": "nodejs.json",
+      "_moduleTitle": "User Authentication"
+    }
+  ]
+}

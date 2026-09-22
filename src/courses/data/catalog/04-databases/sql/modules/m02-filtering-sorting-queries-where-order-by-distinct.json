@@ -1,0 +1,539 @@
+{
+  "moduleId": "m02-filtering-sorting-queries-where-order-by-distinct",
+  "title": "Filtering & Sorting Queries (WHERE, ORDER BY, DISTINCT)",
+  "description": "WHERE clause, comparison operators, logical operators (AND, OR, NOT), ORDER BY ascending/descending, LIMIT, and DISTINCT values.",
+  "estimatedHours": 3.5,
+  "topics": [
+    {
+      "topicId": "t01-sql-lesson-4-filtering-and-sorting-query-results",
+      "title": "SQL Lesson 4: Filtering and sorting Query results",
+      "description": "Interactive lesson on SQL Lesson 4: Filtering and sorting Query results. Learn the concept, run worked queries against a resettable SQLite dataset, inspect results, then solve guided and challenge tasks.",
+      "mode": "SQL_INTERACTIVE",
+      "readingTimeMinutes": 15,
+      "lessonMarkdown": "Even though the data in a database may be unique, the results of any particular query may not be – \ntake our Movies table for example, many different movies can be released the same year.  In such cases, \nSQL provides a convenient way to discard rows that have a duplicate column value by using the `DISTINCT`\nkeyword.\n\n> **Select query with unique results**\n```sql\nSELECT **DISTINCT** column, another_column, ...\nFROM mytable\nWHERE *condition(s)*;\n```\n\nSince the `DISTINCT` keyword will blindly remove duplicate rows, we will learn in a future lesson\nhow to discard duplicates based on specific columns using grouping and the `GROUP BY` clause.\n\n### Ordering results\n\nUnlike our neatly ordered table in the last few lessons, most data in real databases are added in no\nparticular column order.  As a result, it can be difficult to read through and understand the results \nof a query as the size of a table increases to thousands or even millions rows.\nTo help with this, SQL provides a way to sort your results by a given column in ascending or descending \norder using the `ORDER BY` clause.\n\n> **Select query with ordered results**\n```sql\nSELECT column, another_column, ...\nFROM mytable\nWHERE *condition(s)*\n**ORDER BY column ASC/DESC**;\n```\n\nWhen an `ORDER BY` clause is specified, each row is sorted alpha-numerically based on the specified\ncolumn's value.  In some databases, you can also specify a collation to better sort data containing\ninternational text.\n\n### Limiting results to a subset\n\nAnother clause which is commonly used with the `ORDER BY` clause are the `LIMIT` and `OFFSET` clauses, \nwhich are a useful optimization to indicate to the database the subset of the results you care about.\nThe `LIMIT` will reduce the number of rows to return, and the optional `OFFSET` will specify where to \nbegin counting the number rows from.\n\n> **Select query with limited rows**\n```sql\nSELECT column, another_column, ...\nFROM mytable\nWHERE *condition(s)*\nORDER BY column ASC/DESC\n**LIMIT num_limit OFFSET num_offset**;\n```\n\nIf you think about websites like Reddit or Pinterest, the front page is a list of links sorted by popularity \nand time, and each subsequent page can be represented by sets of links at different offsets in the \ndatabase.  Using these clauses, the database can then execute queries faster and more efficiently\nby processing and returning only the requested content.\n\n    Did you know?\n    \n    If you are curious about when the `LIMIT` and `OFFSET` are applied relative \n    to the other parts of a query, they are generally done last after the other clauses have been applied.  \n    We'll touch more on this in Lesson 12: Order of execution\n    after introducting a few more parts of the query.\n    \n\n### Exercise\n\nThere are a few concepts in this lesson, but all are pretty straight-forward to apply.  To spice things \nup, we've gone and scrambled the **Movies** table for you in the exercise to better mimic what kind of\ndata you might see in real life.  Try and use the necessary keywords and clauses introduced above in \nyour queries.",
+      "lessonContent": {
+        "textAndVisuals": {
+          "content": "Even though the data in a database may be unique, the results of any particular query may not be – \ntake our Movies table for example, many different movies can be released the same year.  In such cases, \nSQL provides a convenient way to discard rows that have a duplicate column value by using the `DISTINCT`\nkeyword.\n\n> **Select query with unique results**\n```sql\nSELECT **DISTINCT** column, another_column, ...\nFROM mytable\nWHERE *condition(s)*;\n```\n\nSince the `DISTINCT` keyword will blindly remove duplicate rows, we will learn in a future lesson\nhow to discard duplicates based on specific columns using grouping and the `GROUP BY` clause.\n\n### Ordering results\n\nUnlike our neatly ordered table in the last few lessons, most data in real databases are added in no\nparticular column order.  As a result, it can be difficult to read through and understand the results \nof a query as the size of a table increases to thousands or even millions rows.\nTo help with this, SQL provides a way to sort your results by a given column in ascending or descending \norder using the `ORDER BY` clause.\n\n> **Select query with ordered results**\n```sql\nSELECT column, another_column, ...\nFROM mytable\nWHERE *condition(s)*\n**ORDER BY column ASC/DESC**;\n```\n\nWhen an `ORDER BY` clause is specified, each row is sorted alpha-numerically based on the specified\ncolumn's value.  In some databases, you can also specify a collation to better sort data containing\ninternational text.\n\n### Limiting results to a subset\n\nAnother clause which is commonly used with the `ORDER BY` clause are the `LIMIT` and `OFFSET` clauses, \nwhich are a useful optimization to indicate to the database the subset of the results you care about.\nThe `LIMIT` will reduce the number of rows to return, and the optional `OFFSET` will specify where to \nbegin counting the number rows from.\n\n> **Select query with limited rows**\n```sql\nSELECT column, another_column, ...\nFROM mytable\nWHERE *condition(s)*\nORDER BY column ASC/DESC\n**LIMIT num_limit OFFSET num_offset**;\n```\n\nIf you think about websites like Reddit or Pinterest, the front page is a list of links sorted by popularity \nand time, and each subsequent page can be represented by sets of links at different offsets in the \ndatabase.  Using these clauses, the database can then execute queries faster and more efficiently\nby processing and returning only the requested content.\n\n    Did you know?\n    \n    If you are curious about when the `LIMIT` and `OFFSET` are applied relative \n    to the other parts of a query, they are generally done last after the other clauses have been applied.  \n    We'll touch more on this in Lesson 12: Order of execution\n    after introducting a few more parts of the query.\n    \n\n### Exercise\n\nThere are a few concepts in this lesson, but all are pretty straight-forward to apply.  To spice things \nup, we've gone and scrambled the **Movies** table for you in the exercise to better mimic what kind of\ndata you might see in real life.  Try and use the necessary keywords and clauses introduced above in \nyour queries."
+        }
+      },
+      "sqlExercise": {
+        "schemaSql": "CREATE TABLE movies (\n    id integer primary key autoincrement,\n    title text,\n    director text,\n    year integer, \n    length_minutes integer\n);",
+        "seedSql": "INSERT INTO movies (id, title, director, year, length_minutes) VALUES\n(1, 'Toy Story', 'John Lasseter', 1995, 81),\n(2, 'A Bug''s Life', 'John Lasseter', 1998, 95),\n(3, 'Toy Story 2', 'John Lasseter', 1999, 93),\n(4, 'Monsters, Inc.', 'Pete Docter', 2001, 92),\n(5, 'Finding Nemo', 'Andrew Stanton', 2003, 107),\n(6, 'The Incredibles', 'Brad Bird', 2004, 116),\n(7, 'Cars', 'John Lasseter', 2006, 117),\n(8, 'Ratatouille', 'Brad Bird', 2007, 115),\n(9, 'WALL-E', 'Andrew Stanton', 2008, 104),\n(10, 'Up', 'Pete Docter', 2009, 101),\n(11, 'Toy Story 3', 'Lee Unkrich', 2010, 103),\n(12, 'Cars 2', 'John Lasseter', 2011, 120),\n(13, 'Brave', 'Brenda Chapman', 2012, 102),\n(14, 'Monsters University', 'Dan Scanlon', 2013, 110);\n",
+        "defaultTable": "movies",
+        "defaultQuery": "-- Write your SQL statement below to solve the exercise tasks:\nSELECT * FROM movies LIMIT 10;",
+        "tasks": [
+          {
+            "instruction": "List all directors of Pixar movies (alphabetically), without duplicates",
+            "expectedQuery": "SELECT DISTINCT director FROM movies\nORDER BY director ASC;",
+            "solution": "SELECT DISTINCT director FROM movies\nORDER BY director ASC;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "ORDER BY",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 4: Filtering and sorting Query results concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m1-t4-task-1"
+          },
+          {
+            "instruction": "List the last four Pixar movies released (ordered from most recent to least)",
+            "expectedQuery": "SELECT title FROM movies\nORDER BY year DESC\nLIMIT 4;",
+            "solution": "SELECT title FROM movies\nORDER BY year DESC\nLIMIT 4;",
+            "orderSensitive": false,
+            "difficulty": "Easy",
+            "conceptTags": [
+              "LIMIT",
+              "ORDER BY",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 4: Filtering and sorting Query results concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m1-t4-task-2"
+          },
+          {
+            "instruction": "List the first five Pixar movies sorted alphabetically",
+            "expectedQuery": "SELECT title FROM movies\nORDER BY title ASC\nLIMIT 5;",
+            "solution": "SELECT title FROM movies\nORDER BY title ASC\nLIMIT 5;",
+            "orderSensitive": false,
+            "difficulty": "Medium",
+            "conceptTags": [
+              "LIMIT",
+              "ORDER BY",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 4: Filtering and sorting Query results concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m1-t4-task-3"
+          },
+          {
+            "instruction": "List the next five Pixar movies sorted alphabetically",
+            "expectedQuery": "SELECT title FROM movies\nORDER BY title ASC\nLIMIT 5 OFFSET 5;",
+            "solution": "SELECT title FROM movies\nORDER BY title ASC\nLIMIT 5 OFFSET 5;",
+            "orderSensitive": false,
+            "difficulty": "Medium",
+            "conceptTags": [
+              "LIMIT",
+              "ORDER BY",
+              "SELECT"
+            ],
+            "hint": "Start by identifying the table, the columns the task asks you to return or modify, and the condition that limits the target rows.",
+            "commonMistake": "Write the query in small pieces and run it against the live dataset before submitting.",
+            "learningObjective": "Apply the 4: Filtering and sorting Query results concept to a concrete data task.",
+            "validationMode": "RESULT_SET",
+            "taskId": "sql-m1-t4-task-4"
+          }
+        ],
+        "challengeTasks": [
+          {
+            "taskId": "sql-m1-t4-challenge-1",
+            "instruction": "List the three longest movies from shortest? Return the three longest in descending length",
+            "expectedQuery": "SELECT title, length_minutes FROM movies ORDER BY length_minutes DESC LIMIT 3;",
+            "solution": "SELECT title, length_minutes FROM movies ORDER BY length_minutes DESC LIMIT 3;",
+            "difficulty": "Medium",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 4: Filtering and sorting Query results"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "title",
+                "length_minutes"
+              ],
+              "rows": [
+                [
+                  "Cars 2",
+                  120
+                ],
+                [
+                  "Cars",
+                  117
+                ],
+                [
+                  "The Incredibles",
+                  116
+                ]
+              ],
+              "rowCount": 3
+            }
+          },
+          {
+            "taskId": "sql-m1-t4-challenge-2",
+            "instruction": "Return movies alphabetically from the sixth through tenth position",
+            "expectedQuery": "SELECT title FROM movies ORDER BY title ASC LIMIT 5 OFFSET 5;",
+            "solution": "SELECT title FROM movies ORDER BY title ASC LIMIT 5 OFFSET 5;",
+            "difficulty": "Hard",
+            "conceptTags": [
+              "Challenge",
+              "SQL Lesson 4: Filtering and sorting Query results"
+            ],
+            "hint": "Break the requirement into source table, selected columns, filters, grouping/ordering, and then run it before submitting.",
+            "commonMistake": "Do not add clauses that are not required; verify the output columns and row ordering.",
+            "validationMode": "RESULT_SET",
+            "expectedPreview": {
+              "columns": [
+                "title"
+              ],
+              "rows": [
+                [
+                  "Monsters University"
+                ],
+                [
+                  "Monsters, Inc."
+                ],
+                [
+                  "Ratatouille"
+                ],
+                [
+                  "The Incredibles"
+                ],
+                [
+                  "Toy Story"
+                ]
+              ],
+              "rowCount": 5
+            }
+          }
+        ]
+      },
+      "learningObjectives": [
+        "Remove duplicates with DISTINCT.",
+        "Sort with ORDER BY.",
+        "Control page size with LIMIT and OFFSET.",
+        "Explain why deterministic ordering matters for pagination."
+      ],
+      "commonMistakes": [
+        "Using LIMIT without ORDER BY when a stable page is required.",
+        "Thinking DISTINCT applies to only one selected column.",
+        "Using OFFSET without understanding that it skips rows after earlier clauses."
+      ],
+      "cheatSheet": "SELECT DISTINCT col FROM table ORDER BY col ASC LIMIT 10 OFFSET 20;",
+      "reflectionQuestions": [
+        "What changes if you remove one clause from the query?",
+        "Which part of the task is row-level filtering versus result shaping?",
+        "Can you explain the query to another learner without reading the SQL?"
+      ],
+      "workedExamples": [
+        {
+          "exampleId": "sql-m1-t4-ex1",
+          "title": "Unique values",
+          "task": "List directors once.",
+          "query": "SELECT DISTINCT director FROM movies ORDER BY director;",
+          "result": {
+            "columns": [
+              "director"
+            ],
+            "rows": [
+              [
+                "Andrew Stanton"
+              ],
+              [
+                "Brad Bird"
+              ],
+              [
+                "Brenda Chapman"
+              ],
+              [
+                "Dan Scanlon"
+              ],
+              [
+                "John Lasseter"
+              ],
+              [
+                "Lee Unkrich"
+              ],
+              [
+                "Pete Docter"
+              ]
+            ],
+            "rowCount": 7
+          },
+          "explanation": "DISTINCT applies to the full selected row.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m1-t4-ex2",
+          "title": "Top-N",
+          "task": "Find the four most recent movies.",
+          "query": "SELECT title, year FROM movies ORDER BY year DESC LIMIT 4;",
+          "result": {
+            "columns": [
+              "title",
+              "year"
+            ],
+            "rows": [
+              [
+                "Monsters University",
+                2013
+              ],
+              [
+                "Brave",
+                2012
+              ],
+              [
+                "Cars 2",
+                2011
+              ],
+              [
+                "Toy Story 3",
+                2010
+              ]
+            ],
+            "rowCount": 4
+          },
+          "explanation": "Sort first, then keep the requested number.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        },
+        {
+          "exampleId": "sql-m1-t4-ex3",
+          "title": "Page 2",
+          "task": "Return rows 6-10 of an alphabetical list.",
+          "query": "SELECT title FROM movies ORDER BY title LIMIT 5 OFFSET 5;",
+          "result": {
+            "columns": [
+              "title"
+            ],
+            "rows": [
+              [
+                "Monsters University"
+              ],
+              [
+                "Monsters, Inc."
+              ],
+              [
+                "Ratatouille"
+              ],
+              [
+                "The Incredibles"
+              ],
+              [
+                "Toy Story"
+              ]
+            ],
+            "rowCount": 5
+          },
+          "explanation": "OFFSET 5 skips the first page.",
+          "walkthrough": [
+            "Identify the source table or joined tables.",
+            "Select only the columns needed for the requested output.",
+            "Add filtering, grouping, or sorting clauses only when the requirement calls for them.",
+            "Run the query and compare the result shape with the requirement."
+          ]
+        }
+      ],
+      "miniProjectPrompt": "Build a small report from this topic's dataset. Start with the simplest query that returns the required rows, then add only the clauses needed for filtering, relationships, aggregation, or presentation.",
+      "pages": [
+        {
+          "pageId": "p-sql-m1-t4-concept",
+          "title": "Concept: SQL Lesson 4: Filtering and sorting Query results",
+          "content": "### What you'll learn\n- Remove duplicates with DISTINCT.\n- Sort with ORDER BY.\n- Control page size with LIMIT and OFFSET.\n- Explain why deterministic ordering matters for pagination.\n\n### Why this matters\nSQL is easiest to master when you connect each clause to a concrete change in the result set. This lesson uses the live database already attached to the exercise, so you can run the examples and inspect the result.\n\n### Rule of thumb\n`SELECT DISTINCT col FROM table ORDER BY col ASC LIMIT 10 OFFSET 20;`",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT DISTINCT director FROM movies ORDER BY director;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m1-t4-concept",
+            "question": "Which approach best matches the goal of this lesson?",
+            "options": [
+              "SELECT DISTINCT director FROM movies ORDER BY director;",
+              "Start by changing unrelated tables.",
+              "Return every column for every task.",
+              "Skip the live result and guess."
+            ],
+            "correctAnswer": 0,
+            "explanation": "The best approach starts from the requested result and uses only the SQL clauses needed to produce it."
+          }
+        },
+        {
+          "pageId": "p-sql-m1-t4-trace",
+          "title": "Worked example: trace the query",
+          "content": "Let's trace this example step by step.\n\n**Task:** List directors once.\n\n**Query:**\n```sql\nSELECT DISTINCT director FROM movies ORDER BY director;\n```\n\n1. Identify the source.\n2. Identify the requested output columns.\n3. Apply filtering/grouping/sorting if present.\n4. Compare the returned rows with the task requirement.\n\n**Teaching point:** DISTINCT applies to the full selected row.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Start from the data and output contract, then add clauses deliberately."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT DISTINCT director FROM movies ORDER BY director;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m1-t4-trace",
+            "question": "What should you identify before adding advanced clauses?",
+            "options": [
+              "The required output and source data",
+              "A random index",
+              "A transaction log",
+              "An unrelated table"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Start from the data and output contract, then add clauses deliberately."
+          }
+        },
+        {
+          "pageId": "p-sql-m1-t4-check",
+          "title": "Common mistakes and challenge",
+          "content": "### Common mistakes\n- Using LIMIT without ORDER BY when a stable page is required.\n- Thinking DISTINCT applies to only one selected column.\n- Using OFFSET without understanding that it skips rows after earlier clauses.\n\n### Try this before Submit\nRun the query with a small change and predict how the result should change. Then restore it and submit the exact task.\n\n### Self-check\nCan you explain why the query returns exactly the rows shown?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key concept",
+            "text": "Prediction plus result inspection builds reliable query reasoning."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "SELECT DISTINCT director FROM movies ORDER BY director;"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-sql-m1-t4-check",
+            "question": "What is the most useful self-check?",
+            "options": [
+              "Predict the result before running and explain any difference",
+              "Add SELECT * to every query",
+              "Ignore row counts",
+              "Only check whether the editor accepted the query"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Prediction plus result inspection builds reliable query reasoning."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "sql-m1-t4-code-1",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Unique values",
+          "code": "SELECT DISTINCT director FROM movies ORDER BY director;",
+          "description": "DISTINCT applies to the full selected row."
+        },
+        {
+          "exampleId": "sql-m1-t4-code-2",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Top-N",
+          "code": "SELECT title, year FROM movies ORDER BY year DESC LIMIT 4;",
+          "description": "Sort first, then keep the requested number."
+        },
+        {
+          "exampleId": "sql-m1-t4-code-3",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Page 2",
+          "code": "SELECT title FROM movies ORDER BY title LIMIT 5 OFFSET 5;",
+          "description": "OFFSET 5 skips the first page."
+        }
+      ],
+      "workedExampleCount": 3,
+      "challengeTaskCount": 2,
+      "learningPath": [
+        "Learn",
+        "Observe",
+        "Predict",
+        "Run",
+        "Modify",
+        "Submit",
+        "Reflect"
+      ],
+      "_sourceFile": "sql-interactive.json",
+      "_moduleTitle": "Module 1: Querying Data with SELECT",
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t02-data-data-everywhere",
+      "title": "Data data everywhere",
+      "description": "Study concepts and solve targeted engineering problems for Data data everywhere.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 15,
+      "pages": [
+        {
+          "pageId": "p-SQW01",
+          "title": "Data is for everyone!",
+          "content": "Welcome to the learning path on using **SQL at Work**.\n\nFrom information on Covid-19 cases to e-commerce transactions, from marketing funnels related to webpage traffic to credit card fraud, there is almost infinite data generated around us.\n\nThe ability to convert data into actionable information is now a necessarily skill required by all professionals - technical as well as non-technical. \n- Analytics requires and helps develop good problem solving skills.\n- Analytics requires professionals to develop a good understanding of the underlying business / marketing / operations / financial metrics\n- Analytics profiles and professionals are usually handsomely compensated",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Data is for everyone! in Data data everywhere is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "-- Write your SQL query here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SQW01",
+            "question": "In Data data everywhere, what is the key consideration regarding Data is for everyone!?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in SQL at Work Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In SQL at Work Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SQW02",
+          "title": "Different tools used in analytics at work",
+          "content": "Some common tools used for analytics\n- Microsoft Excel: Excel is a widely-used tool for data analysis and visualisation, offering features such as pivot tables, charts, and data filtering.\n- SQL: SQL is a programming language used to manage and analyse relational databases.\\\nIt can be used to extract, manipulate, and summarise data.\n- Tableau: Tableau is a data visualisation tool that allows users to create interactive dashboards and reports. It offers drag-and-drop functionality and a variety of chart types.\n- Python: Python is a popular programming language for data analysis, offering libraries such as Pandas and Numpy for data manipulation and visualisation.\n- R: R is a programming language and software environment for statistical computing and graphics. \\\nIt offers a wide range of tools for data analysis and visualisation, including packages such as ggplot2 and dplyr.\n- Power BI: Power BI is a business analytics service provided by Microsoft that allows users to create interactive visualisations and reports.\n\nResearch a bit more and answer the question to proceed!",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding Different tools used in analytics at work in Data data everywhere is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "-- Write your SQL query here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SQW02",
+            "question": "In Data data everywhere, what is the key consideration regarding Different tools used in analytics at work?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in SQL at Work Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In SQL at Work Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        },
+        {
+          "pageId": "p-SQW03",
+          "title": "SQL",
+          "content": "SQL (Structured Query Language) is a programming language used to manage and manipulate relational databases. It is a standard language used to interact with database systems and is used by developers, data analysts, and database administrators to manage, manipulate, and extract data from databases.\n\nWhile Excel and Google Sheets have their strengths, SQL offers several key advantages when it comes to data analysis and manipulation, particularly when working with large or complex datasets.\n- Scalability: SQL is designed to handle large volumes of data and can easily scale to handle datasets that exceed the capacity of Excel or Google Sheets. This is particularly important when working with big data\n- Speed and performance: SQL is designed for efficient data processing and can perform complex queries and operations much faster than Excel or Google Sheets.\n\nAnswer this question about SQL to proceed!",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Engineering Principle",
+            "text": "Understanding SQL in Data data everywhere is vital for architectural correctness and optimal performance."
+          },
+          "codeCard": {
+            "language": "sql",
+            "code": "-- Write your SQL query here\n"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-SQW03",
+            "question": "In Data data everywhere, what is the key consideration regarding SQL?",
+            "options": [
+              "Ensures correct data encapsulation, invariant safety, and expected execution in SQL at Work Mastery",
+              "Relies on unconstrained global mutable memory buffers across thread boundaries",
+              "Bypasses syntax validation and type checking at compile/runtime",
+              "Forces unbounded recursion without an explicit termination condition"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In SQL at Work Mastery, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-SQW01-sql",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Data is for everyone! (SQL)",
+          "code": "-- Write your SQL query here\n"
+        },
+        {
+          "exampleId": "ex-SQW02-sql",
+          "language": "sql",
+          "label": "SQL",
+          "title": "Different tools used in analytics at work (SQL)",
+          "code": "-- Write your SQL query here\n"
+        },
+        {
+          "exampleId": "ex-SQW03-sql",
+          "language": "sql",
+          "label": "SQL",
+          "title": "SQL (SQL)",
+          "code": "-- Write your SQL query here\n"
+        }
+      ],
+      "practiceProblems": [],
+      "_sourceFile": "sql-at-work.json",
+      "_moduleTitle": "Analytics using SQL"
+    }
+  ]
+}

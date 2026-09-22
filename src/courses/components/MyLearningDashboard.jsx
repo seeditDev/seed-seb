@@ -88,7 +88,12 @@ const MyLearningDashboard = ({ onOpenCourse, onExploreCourses, user, totalXP, se
     const comp = [];
 
     enrolledIds.forEach(cid => {
-      const course = allCourses.find(c => c.courseId === cid || c.slug === cid);
+      const course = allCourses.find(c => 
+        c.courseId === cid || 
+        c.slug === cid || 
+        c.id === cid || 
+        (c.folderName && c.folderName === cid)
+      );
       if (!course) return;
 
       const prog = courseProgressMap[course.courseId] || createInitialCourseProgress(course);

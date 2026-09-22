@@ -1,0 +1,123 @@
+{
+  "moduleId": "m05-module-5-react-hooks-useeffect-useref",
+  "title": "Module 5: React Hooks (useEffect, useRef)",
+  "description": "Core concepts and hands-on practice in Module 5: React Hooks (useEffect, useRef).",
+  "estimatedHours": 3,
+  "topics": [
+    {
+      "topicId": "t01-5-1-useeffect-cleanups",
+      "title": "5.1 useEffect & Cleanups",
+      "description": "Manage timers, intervals, and event listeners safely with cleanup functions.",
+      "mode": "REACT_INTERACTIVE",
+      "readingTimeMinutes": 15,
+      "lessonMarkdown": "# 5.1 useEffect & Cleanups\n\n## First question: what is an effect?\n\nA React render should describe the UI.\n\nSometimes your component also needs to synchronize with something outside that render calculation:\n\n- timer\n- browser document title\n- network request\n- event listener\n- subscription\n- external widget\n\nThat is where `useEffect` is useful.\n\n---\n\n## 1. Basic shape\n\n```jsx\nimport { useEffect } from \"react\";\n\nuseEffect(() => {\n  // side-effect work\n});\n```\n\nA dependency array controls when the effect is re-synchronized:\n\n```jsx\nuseEffect(() => {\n  // ...\n}, []);\n```\n\nThe empty array means the effect does not re-run because of ordinary state/prop dependency changes after mounting. Note that development Strict Mode can intentionally run setup/cleanup more than once to help reveal bugs.\n\n---\n\n## 2. Timer example\n\n```jsx\nuseEffect(() => {\n  const timer = setInterval(() => {\n    console.log(\"tick\");\n  }, 1000);\n\n  return () => {\n    clearInterval(timer);\n  };\n}, []);\n```\n\nWhy cleanup?\n\nBecause an interval keeps running until it is stopped.\n\nWithout cleanup you can create:\n\n- duplicate timers\n- memory leaks\n- unexpected updates\n- code that keeps running after the component is gone\n\n---\n\n## 3. Digital clock\n\n```jsx\nconst [time, setTime] = useState(\n  new Date().toLocaleTimeString()\n);\n\nuseEffect(() => {\n  const timer = setInterval(() => {\n    setTime(new Date().toLocaleTimeString());\n  }, 1000);\n\n  return () => clearInterval(timer);\n}, []);\n```\n\nThe render reads `time`.\n\nThe effect updates `time` every second.\n\nThe component renders again.\n\n---\n\n## 4. Dependency array mental model\n\nConsider:\n\n```jsx\nuseEffect(() => {\n  console.log(\"runs after every render\");\n});\n```\n\nNo dependency array.\n\n```jsx\nuseEffect(() => {\n  console.log(\"runs after initial mount\");\n}, []);\n```\n\nEmpty dependency array.\n\n```jsx\nuseEffect(() => {\n  console.log(\"runs when roomId changes\");\n}, [roomId]);\n```\n\nOne dependency.\n\nThe exact behavior also interacts with development Strict Mode, so do not use mount-only wording as a guarantee that setup runs exactly once in all environments.\n\n---\n\n## 5. Cleanup happens before the next setup when dependencies change\n\n```jsx\nuseEffect(() => {\n  const connection = connect(roomId);\n\n  return () => {\n    connection.disconnect();\n  };\n}, [roomId]);\n```\n\nWhen `roomId` changes, React cleans up the previous connection before synchronizing with the new one.\n\nThis is a powerful pattern for subscriptions and external resources.\n\n---\n\n## 6. `useEffect` is not \"do everything here\"\n\nA common beginner mistake is putting ordinary calculations into effects.\n\nInstead of:\n\n```jsx\nuseEffect(() => {\n  setTotal(price * quantity);\n}, [price, quantity]);\n```\n\nyou can usually calculate:\n\n```jsx\nconst total = price * quantity;\n```\n\nUse an effect when you are synchronizing with something outside React.\n\n---\n\n## 7. Example: document title\n\n```jsx\nuseEffect(() => {\n  document.title = `Cart (${count})`;\n}, [count]);\n```\n\nWhen the cart count changes, React synchronizes the browser tab title.\n\n---\n\n## 8. Example: event listener cleanup\n\n```jsx\nuseEffect(() => {\n  function handleResize() {\n    console.log(window.innerWidth);\n  }\n\n  window.addEventListener(\"resize\", handleResize);\n\n  return () => {\n    window.removeEventListener(\"resize\", handleResize);\n  };\n}, []);\n```\n\nThe exact same pattern appears:\n\n```text\nstart subscription\n       ↓\ncomponent active\n       ↓\ncleanup subscription\n```\n\n---\n\n## 9. Fetching data: the basic pattern\n\nA simple introductory pattern is:\n\n```jsx\nconst [users, setUsers] = useState([]);\nconst [loading, setLoading] = useState(true);\n\nuseEffect(() => {\n  fetch(\"/api/users\")\n    .then(response => response.json())\n    .then(data => setUsers(data))\n    .finally(() => setLoading(false));\n}, []);\n```\n\nReal applications also need error handling, cancellation or race protection where appropriate, loading states, and a strategy for caching/revalidation.\n\n---\n\n## 10. Cleanup and memory\n\nCleanup is not just a performance trick. It expresses ownership:\n\n> \"While this component needs this external resource, keep it active. When it no longer needs it, stop it.\"\n\nThat concept will help you later with subscriptions, WebSockets, observers, intervals, and timers.\n\n---\n\n## Complete example\n\n```jsx\nimport { useEffect, useState } from \"react\";\n\nexport default function App() {\n  const [time, setTime] = useState(\n    new Date().toLocaleTimeString()\n  );\n\n  useEffect(() => {\n    const interval = setInterval(() => {\n      setTime(new Date().toLocaleTimeString());\n    }, 1000);\n\n    return () => {\n      clearInterval(interval);\n    };\n  }, []);\n\n  return (\n    <main>\n      <h1>{time}</h1>\n      <p>Clock is running.</p>\n    </main>\n  );\n}\n```\n\n---\n\n## Common mistakes\n\n- Forgetting cleanup for ongoing resources.\n- Leaving dependencies out when the effect reads reactive values.\n- Using effects for values that can be calculated during render.\n- Starting a timer or subscription in the component body.\n- Assuming an effect with `[]` means \"exactly once under every circumstance\".\n\nFurther reading:\n- React: Synchronizing with Effects — https://react.dev/learn/synchronizing-with-effects\n- React: Lifecycle of Reactive Effects — https://react.dev/learn/lifecycle-of-reactive-effects\n- W3Schools: React useEffect — https://www.w3schools.com/react/react_useeffect.asp\n- GeeksforGeeks: Fetching Data Using useEffect and useState — https://www.geeksforgeeks.org/reactjs/fetching-data-from-an-api-with-useeffect-and-usestate-hook/\n\n---\n\n## 11. `useRef`: remembering a value without causing a render\n\n`useRef` is useful when you need a value that persists between renders but changing it should not itself trigger a re-render.\n\n```jsx\nimport { useRef } from \"react\";\n\nfunction App() {\n  const inputRef = useRef(null);\n\n  const focusInput = () => {\n    inputRef.current.focus();\n  };\n\n  return (\n    <>\n      <input ref={inputRef} />\n      <button onClick={focusInput}>\n        Focus input\n      </button>\n    </>\n  );\n}\n```\n\nThe ref object stays the same between renders.\n\nBefore the input is connected:\n\n```javascript\ninputRef.current\n```\n\nmay be `null`.\n\nAfter React attaches the ref to the input, `current` points to the DOM element.\n\n---\n\n## `useRef` vs `useState`\n\nUse state when changing the value should update the UI:\n\n```javascript\nconst [count, setCount] = useState(0);\n```\n\nUse a ref when you need to remember something without rendering a new UI value:\n\n```javascript\nconst timerRef = useRef(null);\n```\n\nCommon ref uses:\n\n- focus an input\n- store a timer ID\n- remember a DOM node\n- keep a mutable value across renders when UI does not depend on that change\n\nDo not use refs as a replacement for normal application state.\n\n",
+      "reactExercise": {
+        "title": "Exercise: Digital Clock Timer",
+        "category": "React Hooks",
+        "difficulty": "Intermediate",
+        "description": "Implement a digital clock that updates every second using useEffect.",
+        "defaultCode": "import React, { useState, useEffect } from 'react';\n\nexport default function App() {\n  const [time, setTime] = useState(new Date().toLocaleTimeString());\n\n  useEffect(() => {\n    // TODO: Set up an interval that updates `time` every 1000ms using setTime(new Date().toLocaleTimeString())\n    // Make sure to return a cleanup function that calls clearInterval(timer)!\n\n  }, []);\n\n  return (\n    <div style={{ padding: '24px', fontFamily: 'sans-serif', textAlign: 'center' }}>\n      <h2>Live Digital Clock</h2>\n      <h1 id=\"clock-display\" style={{ fontFamily: 'monospace', fontSize: '36px', color: '#0284c7' }}>\n        {time}\n      </h1>\n    </div>\n  );\n}\n",
+        "tasks": [
+          {
+            "id": 1,
+            "instruction": "Clock display #clock-display renders a time string containing a colon.",
+            "domSelector": "#clock-display",
+            "expectedText": ":",
+            "failMessage": "Expected the clock display to contain a time with a colon separator."
+          },
+          {
+            "id": 2,
+            "instruction": "Create an interval that runs every 1000 milliseconds.",
+            "testRegex": "setInterval\\s*\\(",
+            "failMessage": "Expected setInterval(...) in the useEffect."
+          },
+          {
+            "id": 3,
+            "instruction": "Clean up the interval with clearInterval when the effect is cleaned up.",
+            "testRegex": "clearInterval\\s*\\(",
+            "failMessage": "Expected clearInterval(...) cleanup for the interval."
+          },
+          {
+            "id": 4,
+            "instruction": "Use an empty dependency array for the clock effect.",
+            "testRegex": "useEffect\\s*\\([\\s\\S]*\\[\\]\\s*\\)",
+            "failMessage": "Expected the clock effect to use an empty dependency array."
+          }
+        ],
+        "solution": "import React, { useState, useEffect } from 'react';\n\nexport default function App() {\n  const [time, setTime] = useState(new Date().toLocaleTimeString());\n\n  useEffect(() => {\n    const interval = setInterval(() => {\n      setTime(new Date().toLocaleTimeString());\n    }, 1000);\n    return () => clearInterval(interval);\n  }, []);\n\n  return (\n    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>\n      <h2>Live Clock</h2>\n      <h1 id=\"clock-display\">{time}</h1>\n      <span style={{ color: '#16a34a', fontWeight: 600 }}>● Live Ticking</span>\n    </div>\n  );\n}\n"
+      },
+      "_sourceFile": "react-js.json",
+      "_moduleTitle": "Module 5: React Hooks (useEffect, useRef)",
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": []
+    },
+    {
+      "topicId": "t02-5-2-custom-hooks-in-multi-file-architecture",
+      "title": "5.2 Custom Hooks in Multi-File Architecture",
+      "description": "Encapsulate stateful logic in dedicated files under src/hooks/ and import them across multiple components.",
+      "mode": "VSCODE_STUDIO",
+      "readingTimeMinutes": 20,
+      "codeStudio": {
+        "projectId": "react-custom-hooks-architecture",
+        "title": "Custom Hooks & Business Logic Separation",
+        "category": "React Architecture",
+        "description": "Learn to extract stateful logic into a reusable custom Hook.\n\nThe goal is not to create a magical new React feature. A custom Hook is simply a JavaScript function whose name begins with `use` and that can call other Hooks. The Hook should hide reusable behavior while the component decides how to display it.\n\nFlow:\nApp.jsx → useToggle(false) → [value, toggle]\n                    ↓\n              button + conditional UI\n\nImportant beginner rule: Hooks must be called at the top level of components or custom Hooks, not inside loops, conditions, or event handlers.",
+        "skills": [
+          "Custom Hooks",
+          "useState",
+          "Hook Naming",
+          "Code Reusability",
+          "Top-Level Hook Calls",
+          "Multi-File Architecture"
+        ],
+        "files": {
+          "src/App.jsx": "import React from 'react';\nimport { useToggle } from './hooks/useToggle';\nimport './styles.css';\n\nexport default function App() {\n  // TODO: Call useToggle(false) to get [isExpanded, toggleExpanded]\n  const [isExpanded, toggleExpanded] = useToggle(false);\n\n  return (\n    <div className=\"accordion-card\">\n      <div className=\"header-row\">\n        <h3>Server Metrics</h3>\n        <button \n          id=\"toggle-panel-btn\" \n          className=\"btn-primary\" \n          onClick={toggleExpanded}\n        >\n          {isExpanded ? 'Hide Details ▲' : 'Show Details ▼'}\n        </button>\n      </div>\n\n      {isExpanded && (\n        <div id=\"panel-details\" className=\"details-box\">\n          <p>CPU Utilization: <strong>14.2%</strong></p>\n          <p>Memory Usage: <strong>2.1 GB / 8 GB</strong></p>\n          <p>Network Status: <span style={{ color: '#16a34a' }}>Healthy 🟢</span></p>\n        </div>\n      )}\n    </div>\n  );\n}\n",
+          "src/hooks/useToggle.js": "import { useState } from 'react';\n\n/**\n * Custom Hook: useToggle\n * Provides boolean state and a toggle function.\n */\nexport function useToggle(initialValue = false) {\n  // TODO 1: Initialize boolean state with initialValue using useState\n  // TODO 2: Create a toggle function that flips state between true and false\n  // TODO 3: Return [value, toggle]\n  \n  return [false, () => {}]; // Replace with your hook implementation\n}\n",
+          "src/styles.css": ".accordion-card {\n  max-width: 440px;\n  margin: 0 auto;\n  padding: 20px;\n  border: 1px solid #e2e8f0;\n  border-radius: 10px;\n  background: #ffffff;\n  font-family: Inter, sans-serif;\n}\n.header-row {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n.header-row h3 {\n  margin: 0;\n  font-size: 16px;\n}\n.details-box {\n  margin-top: 14px;\n  padding-top: 12px;\n  border-top: 1px solid #f1f5f9;\n  font-size: 13.5px;\n  color: #334155;\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n}\n"
+        },
+        "tasks": [
+          {
+            "id": 1,
+            "instruction": "Verify custom hook exists in src/hooks/useToggle.js.",
+            "requiredFile": "src/hooks/useToggle.js",
+            "failMessage": "Expected file \"src/hooks/useToggle.js\" to exist."
+          },
+          {
+            "id": 2,
+            "instruction": "Verify src/App.jsx imports useToggle from './hooks/useToggle'.",
+            "targetFile": "src/App.jsx",
+            "fileContentRegex": "import\\s+\\{\\s*useToggle\\s*\\}\\s+from\\s+['\\\"]\\.\\/hooks\\/useToggle['\\\"]",
+            "failMessage": "Expected App.jsx to import useToggle from ./hooks/useToggle."
+          },
+          {
+            "id": 3,
+            "instruction": "Initially, button displays 'Show Details ▼'.",
+            "domSelector": "#toggle-panel-btn",
+            "expectedText": "Show Details",
+            "failMessage": "Expected button to initially say 'Show Details'."
+          },
+          {
+            "id": 4,
+            "instruction": "Clicking #toggle-panel-btn expands details and displays CPU Utilization.",
+            "domSelector": "#toggle-panel-btn",
+            "simulateAction": "click",
+            "afterActionSelector": "#panel-details",
+            "afterActionExpectedText": "CPU Utilization",
+            "failMessage": "Clicking toggle should reveal panel details."
+          }
+        ],
+        "solutionFiles": {
+          "src/App.jsx": "import React from 'react';\nimport { useToggle } from './hooks/useToggle';\nimport './styles.css';\n\nexport default function App() {\n  const [isExpanded, toggleExpanded] = useToggle(false);\n\n  return (\n    <div className=\"accordion-card\">\n      <div className=\"header-row\">\n        <h3>Server Metrics</h3>\n        <button \n          id=\"toggle-panel-btn\" \n          className=\"btn-primary\" \n          onClick={toggleExpanded}\n        >\n          {isExpanded ? 'Hide Details ▲' : 'Show Details ▼'}\n        </button>\n      </div>\n\n      {isExpanded && (\n        <div id=\"panel-details\" className=\"details-box\">\n          <p>CPU Utilization: <strong>14.2%</strong></p>\n          <p>Memory Usage: <strong>2.1 GB / 8 GB</strong></p>\n          <p>Network Status: <span style={{ color: '#16a34a' }}>Healthy 🟢</span></p>\n        </div>\n      )}\n    </div>\n  );\n}\n",
+          "src/hooks/useToggle.js": "import { useState } from 'react';\n\n/**\n * Custom Hook: useToggle\n * Provides boolean state and a toggle function.\n */\nexport function useToggle(initialValue = false) {\n  const [value, setValue] = useState(initialValue);\n  const toggle = () => setValue(prev => !prev);\n  return [value, toggle];\n}\n",
+          "src/styles.css": ".accordion-card {\n  max-width: 440px;\n  margin: 0 auto;\n  padding: 20px;\n  border: 1px solid #e2e8f0;\n  border-radius: 10px;\n  background: #ffffff;\n  font-family: Inter, sans-serif;\n}\n.header-row {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}\n.header-row h3 {\n  margin: 0;\n  font-size: 16px;\n}\n.details-box {\n  margin-top: 14px;\n  padding-top: 12px;\n  border-top: 1px solid #f1f5f9;\n  font-size: 13.5px;\n  color: #334155;\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n}\n"
+        }
+      },
+      "_sourceFile": "react-js.json",
+      "_moduleTitle": "Module 5: React Hooks (useEffect, useRef)",
+      "pages": [],
+      "codeExamples": [],
+      "practiceProblems": []
+    }
+  ]
+}

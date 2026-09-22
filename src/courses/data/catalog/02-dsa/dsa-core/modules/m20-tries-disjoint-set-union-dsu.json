@@ -1,0 +1,1894 @@
+{
+  "moduleId": "m20-tries-disjoint-set-union-dsu",
+  "title": "Tries & Disjoint Set Union (DSU)",
+  "description": "Prefix tree (Trie) insertion, search, prefix matching, Disjoint Set Union with path compression and union by rank, and Kruskal’s integration.",
+  "estimatedHours": 5,
+  "topics": [
+    {
+      "topicId": "t01-fundamentals-of-tries",
+      "title": "Fundamentals of Tries",
+      "description": "Study concepts and solve targeted engineering problems for Fundamentals of Tries.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 35,
+      "pages": [
+        {
+          "pageId": "dsa-m54-t1-step-v2-01",
+          "title": "Step 1 — Start Here",
+          "sectionType": "LEARNING_MAP",
+          "content": "### Before you code\n**Prerequisite:** Trees, strings, arrays, and references.\n\nThis topic follows a deliberate sequence. Do not skip directly to the hardest practice set.\n\n**Your learning route**\n1. Build the mental model.\n2. Learn when the pattern applies.\n3. Dry-run a tiny example.\n4. Build the algorithm with guidance.\n5. Solve a micro variation.\n6. Progress through the practice ladder.\n7. Pass the mastery gate.\n\n**First question to answer:** What information must remain correct after every step of the algorithm?",
+          "teachingGoal": "Know the prerequisite, learning sequence, and invariant you will track."
+        },
+        {
+          "pageId": "dsa-m54-t1-step-v2-02",
+          "title": "Step 2 — Build the Mental Model",
+          "sectionType": "CONCEPT",
+          "content": "### Understand before implementing\nA trie stores strings by shared prefixes, making prefix-oriented queries proportional to key length rather than the number of stored words.\n\n**Recognition rule**\nLook for many prefix queries, autocomplete, dictionary matching, or shared-prefix grouping.\n\n**Do not memorize a code template yet.** First identify what state the algorithm must maintain and what information it can safely discard.",
+          "teachingGoal": "Explain the idea in plain language and identify when it should be considered."
+        },
+        {
+          "pageId": "dsa-m54-t1-step-v2-03",
+          "title": "Step 3 — Worked Dry Run",
+          "sectionType": "DRY_RUN",
+          "content": "### Trace before code\nDraw the trie for a few short words and follow one insertion/search path character by character.\n\nUse a table with four columns:\n- **Step / index**\n- **Current input/state**\n- **Important invariant**\n- **Decision / next state**\n\nThen test one boundary case before implementing.",
+          "teachingGoal": "Trace the state transition without depending on the final code."
+        },
+        {
+          "pageId": "dsa-m54-t1-step-v2-04",
+          "title": "Step 4 — Guided Build",
+          "sectionType": "GUIDED_BUILD",
+          "content": "### Build it in small pieces\nChoose node representation -> insert characters -> mark word termination -> traverse for search/prefix query.\n\n**Guided order**\n1. Write the inputs and outputs.\n2. State the invariant.\n3. Write pseudocode.\n4. Implement only the first transition.\n5. Test on the tiny example.\n6. Add the remaining loop/recursion/structure.\n7. Test an edge case.\n8. State time and space complexity.\n\n**Common trap:** Forgetting end-of-word markers, duplicate words, or allocating/visiting the wrong child.",
+          "teachingGoal": "Turn the mental model into a correct implementation without jumping straight to a full template."
+        },
+        {
+          "pageId": "p-TRIE01",
+          "title": "Need of Trie",
+          "content": "Have you ever wondered how a search suggestion works, how a massive website like Google can look through billions of search strings, match them with the string typed by you and show you similar strings that might auto-complete your sentence, all in an instant. How a document editor can check the word typed by you against all the words in the dictionary in an instant to see if your spelling is correct or not?  \n\nThese operations and much more are done by a data structure called **Trie** and in this course you will learn all you need to know to implement and use tries yourself.\n\nOperations of tries that you will learn in this course are:\n- Insertion\n- Search\n- Deletion\n- Print\n\n### Applications of Trie\n- Auto-Complete Systems\n- Spell Checkers\n- Prefix Matching\n- Dictionary Implementations\n- Text Compressions\n- Genomic Sequence Analysis\n- Routing Information Protocol\n- Contact Management\n- Word Games\n- Compiler Design",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Need of Trie and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string a = \"algorithm\";\n    string prefix = a.substr(0, 4);\n    cout << prefix << '\\n';\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-TRIE01",
+            "question": "Which principle is most important when working with Need of Trie?",
+            "options": [
+              "Apply the correct algorithmic idea and handle the specified edge cases",
+              "Ignore the input specification",
+              "Use unrelated data structures",
+              "Assume the largest possible answer is always correct"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The lesson on Need of Trie is mastered by applying the intended algorithm correctly and respecting the problem constraints."
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-TRIE01-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Need of Trie (C++)",
+          "code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string a = \"algorithm\";\n    string prefix = a.substr(0, 4);\n    cout << prefix << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-TRIE01-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Need of Trie (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "TRIE02",
+          "questionId": "TRIE02",
+          "title": "Structure of Trie",
+          "difficulty": "Easy",
+          "description": "Using a dictionary of words, count how many words start with the given prefix.",
+          "problemStatement": "Using a dictionary of words, count how many words start with the given prefix.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The next N lines contain words. The final line contains prefix P.",
+          "outputFormat": "Print the number of dictionary words beginning with P.",
+          "sampleTestCases": [
+            {
+              "input": "3\ncat\ncar\ndog\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\napple\napp\nape\na",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\ncat\ncar\ndog\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\napple\napp\nape\na",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\ncode\ncoder\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\na\na",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\ntree\ntrie\nt",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "TRIE03",
+          "questionId": "TRIE03",
+          "title": "Insertion in Trie",
+          "difficulty": "Easy",
+          "description": "Using a dictionary of words, count how many words start with the given prefix.",
+          "problemStatement": "Using a dictionary of words, count how many words start with the given prefix.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The next N lines contain words. The final line contains prefix P.",
+          "outputFormat": "Print the number of dictionary words beginning with P.",
+          "sampleTestCases": [
+            {
+              "input": "3\ncat\ncar\ndog\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\napple\napp\nape\na",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\ncat\ncar\ndog\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\napple\napp\nape\na",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\ncode\ncoder\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\na\na",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\ntree\ntrie\nt",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "TRIE13",
+          "questionId": "TRIE13",
+          "title": "Rearrange Pseudo-Code for Insertion",
+          "difficulty": "Easy",
+          "description": "Reverse the order of the elements in the given array.",
+          "problemStatement": "Reverse the order of the elements in the given array.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the reversed array.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "4 3 2 1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4\n1 2 3 4",
+              "output": "4 3 2 1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n5",
+              "output": "5",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n0 1 0",
+              "output": "0 1 0",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n-2 7 3",
+              "output": "3 7 -2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "5\n9 8 7 6 5",
+              "output": "5 6 7 8 9",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "TRIE04",
+          "questionId": "TRIE04",
+          "title": "Searching",
+          "difficulty": "Easy",
+          "description": "Given an array and a target value, find the first index at which the target occurs, or -1 if it is absent.",
+          "problemStatement": "Given an array and a target value, find the first index at which the target occurs, or -1 if it is absent.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers. The third line contains target X.",
+          "outputFormat": "Print the first zero-based index of X, or -1.",
+          "sampleTestCases": [
+            {
+              "input": "4\n1 4 7 9\n7",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n2 5 8\n1",
+              "output": "-1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "4\n1 4 7 9\n7",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n2 5 8\n1",
+              "output": "-1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "4\n3 3 5 7\n3",
+              "output": "0",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n-2 0 4\n-2",
+              "output": "0",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n10 20 30\n25",
+              "output": "-1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "TRIE05",
+          "questionId": "TRIE05",
+          "title": "Deletion",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Deletion' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Deletion' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "TRIE06",
+          "questionId": "TRIE06",
+          "title": "Implementation",
+          "difficulty": "Easy",
+          "description": "Solve the DSA task described by 'Implementation' by processing the supplied input and producing the requested result.",
+          "problemStatement": "Solve the DSA task described by 'Implementation' by processing the supplied input and producing the requested result.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The second line contains N integers.",
+          "outputFormat": "Print the requested result.",
+          "sampleTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\n1 2 3",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n4 4 4",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\n10 20",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\n0",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\n7 1 9",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        }
+      ],
+      "recommendedSequence": 1,
+      "learningTrack": "Concept → Intuition → Dry Run → Guided Build → Micro Practice → Independent Practice → Mastery",
+      "prerequisites": [
+        "Trees, strings, arrays, and references."
+      ],
+      "stepByStepLearning": {
+        "stepCount": 8,
+        "steps": [
+          {
+            "step": 1,
+            "type": "PREREQUISITE",
+            "title": "Check prerequisites",
+            "goal": "Trees, strings, arrays, and references.",
+            "action": "Recall the prerequisite idea and answer one tiny self-check before moving on.",
+            "exitCriteria": "I can explain the prerequisite without opening another lesson."
+          },
+          {
+            "step": 2,
+            "type": "CONCEPT",
+            "title": "Build the mental model",
+            "goal": "A trie stores strings by shared prefixes, making prefix-oriented queries proportional to key length rather than the number of stored words.",
+            "action": "Read the concept explanation and identify the input, state, operation, and desired output.",
+            "exitCriteria": "I can describe what the technique stores/changes and why it exists."
+          },
+          {
+            "step": 3,
+            "type": "RECOGNITION",
+            "title": "Learn when to use it",
+            "goal": "Look for many prefix queries, autocomplete, dictionary matching, or shared-prefix grouping.",
+            "action": "Classify two short problem statements and name the pattern before looking at solutions.",
+            "exitCriteria": "I can give at least two signals that this technique applies."
+          },
+          {
+            "step": 4,
+            "type": "DRY_RUN",
+            "title": "Trace a tiny example",
+            "goal": "Draw the trie for a few short words and follow one insertion/search path character by character.",
+            "action": "Simulate the algorithm on paper, recording the invariant/state after each step.",
+            "exitCriteria": "I can predict the final state/output for a small example."
+          },
+          {
+            "step": 5,
+            "type": "GUIDED_BUILD",
+            "title": "Implement with scaffolding",
+            "goal": "Choose node representation -> insert characters -> mark word termination -> traverse for search/prefix query.",
+            "action": "Write pseudocode from the invariant, then translate one step at a time into C++.",
+            "exitCriteria": "The guided implementation works on the basic example and one edge case."
+          },
+          {
+            "step": 6,
+            "type": "MICRO_PRACTICE",
+            "title": "Solve a small variation",
+            "goal": "Insert three words with one shared prefix and trace a search.",
+            "action": "Solve a tiny variation without copying the worked example.",
+            "exitCriteria": "I can adapt the approach to a changed input or requirement."
+          },
+          {
+            "step": 7,
+            "type": "INDEPENDENT_PRACTICE",
+            "title": "Climb the problem ladder",
+            "goal": "Start with the easiest related problem and move toward mixed/harder problems only after explaining the previous solution.",
+            "action": "Use the practice set in increasing difficulty. Record pattern, invariant, complexity, and failed attempts.",
+            "exitCriteria": "I can solve a fresh problem and explain why the chosen approach is correct."
+          },
+          {
+            "step": 8,
+            "type": "MASTERY",
+            "title": "Pass the mastery gate",
+            "goal": "Implement insertion/search and explain the O(L) dependence on key length.",
+            "action": "Complete the mastery checklist and one unseen variation under a reasonable time limit.",
+            "exitCriteria": "Mastery achieved when I can implement insertion/search and explain the o(l) dependence on key length."
+          }
+        ]
+      },
+      "problemSolvingChecklist": [
+        "What exactly is the input and output?",
+        "What do the constraints allow?",
+        "What is the simplest correct approach?",
+        "What work repeats?",
+        "What invariant/state should stay true?",
+        "What edge cases break the approach?",
+        "What are the time and space costs?"
+      ],
+      "masteryGate": {
+        "mustExplain": [
+          "core idea",
+          "when to use",
+          "invariant/correctness idea",
+          "time complexity",
+          "space complexity",
+          "edge cases"
+        ],
+        "mustPerform": [
+          "one unseen micro problem",
+          "one practice problem at current difficulty"
+        ],
+        "commonFailure": "Forgetting end-of-word markers, duplicate words, or allocating/visiting the wrong child."
+      },
+      "_sourceFile": "dsa.json",
+      "_moduleTitle": "TRIES: Learn Tries"
+    },
+    {
+      "topicId": "t02-applications-of-tries",
+      "title": "Applications of Tries",
+      "description": "Study concepts and solve targeted engineering problems for Applications of Tries.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 30,
+      "pages": [
+        {
+          "pageId": "dsa-m54-t2-step-v2-01",
+          "title": "Step 1 — Start Here",
+          "sectionType": "LEARNING_MAP",
+          "content": "### Before you code\n**Prerequisite:** Trees, strings, arrays, and references.\n\nThis topic follows a deliberate sequence. Do not skip directly to the hardest practice set.\n\n**Your learning route**\n1. Build the mental model.\n2. Learn when the pattern applies.\n3. Dry-run a tiny example.\n4. Build the algorithm with guidance.\n5. Solve a micro variation.\n6. Progress through the practice ladder.\n7. Pass the mastery gate.\n\n**First question to answer:** What information must remain correct after every step of the algorithm?",
+          "teachingGoal": "Know the prerequisite, learning sequence, and invariant you will track."
+        },
+        {
+          "pageId": "dsa-m54-t2-step-v2-02",
+          "title": "Step 2 — Build the Mental Model",
+          "sectionType": "CONCEPT",
+          "content": "### Understand before implementing\nA trie stores strings by shared prefixes, making prefix-oriented queries proportional to key length rather than the number of stored words.\n\n**Recognition rule**\nLook for many prefix queries, autocomplete, dictionary matching, or shared-prefix grouping.\n\n**Do not memorize a code template yet.** First identify what state the algorithm must maintain and what information it can safely discard.",
+          "teachingGoal": "Explain the idea in plain language and identify when it should be considered."
+        },
+        {
+          "pageId": "p-TRIE07",
+          "title": "Applications of Tries",
+          "content": "Tries have many applications in string searching and comparisons. In this course we will be implementing the following programs using tries.\n- Spelling Checker\n- Auto-complete \n- Longest Common Prefix in the given strings  \nSolving these basic trie questions will give you a greater understanding of tries and after this you will be able to solve most basic trie questions.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Applications of Tries and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string a = \"algorithm\";\n    string prefix = a.substr(0, 4);\n    cout << prefix << '\\n';\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-TRIE07",
+            "question": "Which principle is most important when working with Applications of Tries?",
+            "options": [
+              "Apply the correct algorithmic idea and handle the specified edge cases",
+              "Ignore the input specification",
+              "Use unrelated data structures",
+              "Assume the largest possible answer is always correct"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The lesson on Applications of Tries is mastered by applying the intended algorithm correctly and respecting the problem constraints."
+          }
+        },
+        {
+          "pageId": "p-TRIE08",
+          "title": "Spell-Check MCQ",
+          "content": "There exists a special dictionary with only specific words. These words are entered in a trie which is given below.\n```\n          [e         t]\n          /         / \\\n        [i]       [h]  [w]\n        /        /       \\\n      [g]      [r]       [o]\n      /        /           \\\n    [h]     [e  o]        [end]\n    /       /    \\\n  [t]     [e]     [n]\n  /       /         \\\n[end]   [end]        [e]\n                       \\\n                      [end]\n\n```\nDo the words trees and throne exist in this dictionary?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Spell-Check MCQ and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string a = \"algorithm\";\n    string prefix = a.substr(0, 4);\n    cout << prefix << '\\n';\n    return 0;\n}"
+          }
+        },
+        {
+          "pageId": "p-TRIE10",
+          "title": "Auto-Complete MCQ",
+          "content": "Given the prefix string S = \"sa\", what are the string can be formed from the following trie which starts with \"sa\".\n```\n               [s]\n               /\n         [a______o]\n        /         \\\n     [f______v]    [end]\n     /        \\\n    [e]       [e]\n    /           \\\n[[r],end]    [[d],end]\n   /              \\\n[end]             [end]\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Focus on the core idea in Auto-Complete MCQ and choose an implementation that remains correct on edge cases and within the stated complexity."
+          },
+          "codeCard": {
+            "language": "cpp",
+            "code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string a = \"algorithm\";\n    string prefix = a.substr(0, 4);\n    cout << prefix << '\\n';\n    return 0;\n}"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-TRIE07-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Applications of Tries (C++)",
+          "code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string a = \"algorithm\";\n    string prefix = a.substr(0, 4);\n    cout << prefix << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-TRIE08-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Spell-Check MCQ (C++)",
+          "code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string a = \"algorithm\";\n    string prefix = a.substr(0, 4);\n    cout << prefix << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-TRIE10-cpp",
+          "language": "cpp",
+          "label": "C++",
+          "title": "Auto-Complete MCQ (C++)",
+          "code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string a = \"algorithm\";\n    string prefix = a.substr(0, 4);\n    cout << prefix << '\\n';\n    return 0;\n}"
+        },
+        {
+          "exampleId": "ex-TRIE07-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Applications of Tries (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-TRIE08-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Spell-Check MCQ (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-TRIE10-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Auto-Complete MCQ (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "TRIE09",
+          "questionId": "TRIE09",
+          "title": "Spell Check",
+          "difficulty": "Easy",
+          "description": "Using a dictionary of words, count how many words start with the given prefix.",
+          "problemStatement": "Using a dictionary of words, count how many words start with the given prefix.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The next N lines contain words. The final line contains prefix P.",
+          "outputFormat": "Print the number of dictionary words beginning with P.",
+          "sampleTestCases": [
+            {
+              "input": "3\ncat\ncar\ndog\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\napple\napp\nape\na",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\ncat\ncar\ndog\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\napple\napp\nape\na",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\ncode\ncoder\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\na\na",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\ntree\ntrie\nt",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4286",
+          "questionId": "Q4286",
+          "title": "Auto-Complete",
+          "difficulty": "Easy",
+          "description": "Using a dictionary of words, count how many words start with the given prefix.",
+          "problemStatement": "Using a dictionary of words, count how many words start with the given prefix.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "The first line contains N. The next N lines contain words. The final line contains prefix P.",
+          "outputFormat": "Print the number of dictionary words beginning with P.",
+          "sampleTestCases": [
+            {
+              "input": "3\ncat\ncar\ndog\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\napple\napp\nape\na",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "3\ncat\ncar\ndog\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "3\napple\napp\nape\na",
+              "output": "3",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\ncode\ncoder\nc",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "1\na\na",
+              "output": "1",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "2\ntree\ntrie\nt",
+              "output": "2",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        },
+        {
+          "problemId": "Q4545",
+          "questionId": "Q4545",
+          "title": "Longest Common Prefix",
+          "difficulty": "Easy",
+          "description": "Check whether the second string is a prefix of the first string.",
+          "problemStatement": "Check whether the second string is a prefix of the first string.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "Values fit within signed 32-bit integers",
+            "Time Limit: 2s",
+            "Memory Limit: 256MB"
+          ],
+          "inputFormat": "Two lines contain strings S and P.",
+          "outputFormat": "Print YES if P is a prefix of S, otherwise NO.",
+          "sampleTestCases": [
+            {
+              "input": "algorithm\nalgo",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc\nx",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "boilerPlates": {
+            "C": "#include <stdio.h>\nint main(void){ return 0; }\n",
+            "C++": "#include <iostream>\nusing namespace std;\nint main(){ return 0; }\n",
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }\n",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == '__main__':\n    main()\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "algorithm\nalgo",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "abc\nx",
+              "output": "NO",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "testing\ntest",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "a\na",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            },
+            {
+              "input": "prefix\npre",
+              "output": "YES",
+              "explanation": "Covers an important boundary or representative case for the task."
+            }
+          ],
+          "learningStage": {
+            "1": "Understand: restate the problem and extract the constraints.",
+            "2": "Example: solve the sample manually and record the state.",
+            "3": "Baseline: describe the simplest correct approach before optimizing.",
+            "4": "Pattern: identify the data structure/algorithm that removes repeated work.",
+            "5": "Proof: state the invariant or reason the approach is correct.",
+            "6": "Verification: test normal, smallest, largest, duplicate, and boundary cases.",
+            "7": "Complexity: state time and auxiliary space before submitting."
+          },
+          "coachingPrompts": {
+            "beforeCoding": "What is the simplest correct solution?",
+            "duringCoding": "What invariant should remain true after every iteration/transition?",
+            "afterCoding": "Which edge case would most likely break this implementation?",
+            "reflection": "What made the chosen approach better than the baseline?"
+          },
+          "progressionRole": "Foundation"
+        }
+      ],
+      "recommendedSequence": 2,
+      "learningTrack": "Concept → Intuition → Dry Run → Guided Build → Micro Practice → Independent Practice → Mastery",
+      "prerequisites": [
+        "Trees, strings, arrays, and references."
+      ],
+      "stepByStepLearning": {
+        "stepCount": 8,
+        "steps": [
+          {
+            "step": 1,
+            "type": "PREREQUISITE",
+            "title": "Check prerequisites",
+            "goal": "Trees, strings, arrays, and references.",
+            "action": "Recall the prerequisite idea and answer one tiny self-check before moving on.",
+            "exitCriteria": "I can explain the prerequisite without opening another lesson."
+          },
+          {
+            "step": 2,
+            "type": "CONCEPT",
+            "title": "Build the mental model",
+            "goal": "A trie stores strings by shared prefixes, making prefix-oriented queries proportional to key length rather than the number of stored words.",
+            "action": "Read the concept explanation and identify the input, state, operation, and desired output.",
+            "exitCriteria": "I can describe what the technique stores/changes and why it exists."
+          },
+          {
+            "step": 3,
+            "type": "RECOGNITION",
+            "title": "Learn when to use it",
+            "goal": "Look for many prefix queries, autocomplete, dictionary matching, or shared-prefix grouping.",
+            "action": "Classify two short problem statements and name the pattern before looking at solutions.",
+            "exitCriteria": "I can give at least two signals that this technique applies."
+          },
+          {
+            "step": 4,
+            "type": "DRY_RUN",
+            "title": "Trace a tiny example",
+            "goal": "Draw the trie for a few short words and follow one insertion/search path character by character.",
+            "action": "Simulate the algorithm on paper, recording the invariant/state after each step.",
+            "exitCriteria": "I can predict the final state/output for a small example."
+          },
+          {
+            "step": 5,
+            "type": "GUIDED_BUILD",
+            "title": "Implement with scaffolding",
+            "goal": "Choose node representation -> insert characters -> mark word termination -> traverse for search/prefix query.",
+            "action": "Write pseudocode from the invariant, then translate one step at a time into C++.",
+            "exitCriteria": "The guided implementation works on the basic example and one edge case."
+          },
+          {
+            "step": 6,
+            "type": "MICRO_PRACTICE",
+            "title": "Solve a small variation",
+            "goal": "Insert three words with one shared prefix and trace a search.",
+            "action": "Solve a tiny variation without copying the worked example.",
+            "exitCriteria": "I can adapt the approach to a changed input or requirement."
+          },
+          {
+            "step": 7,
+            "type": "INDEPENDENT_PRACTICE",
+            "title": "Climb the problem ladder",
+            "goal": "Start with the easiest related problem and move toward mixed/harder problems only after explaining the previous solution.",
+            "action": "Use the practice set in increasing difficulty. Record pattern, invariant, complexity, and failed attempts.",
+            "exitCriteria": "I can solve a fresh problem and explain why the chosen approach is correct."
+          },
+          {
+            "step": 8,
+            "type": "MASTERY",
+            "title": "Pass the mastery gate",
+            "goal": "Implement insertion/search and explain the O(L) dependence on key length.",
+            "action": "Complete the mastery checklist and one unseen variation under a reasonable time limit.",
+            "exitCriteria": "Mastery achieved when I can implement insertion/search and explain the o(l) dependence on key length."
+          }
+        ]
+      },
+      "problemSolvingChecklist": [
+        "What exactly is the input and output?",
+        "What do the constraints allow?",
+        "What is the simplest correct approach?",
+        "What work repeats?",
+        "What invariant/state should stay true?",
+        "What edge cases break the approach?",
+        "What are the time and space costs?"
+      ],
+      "masteryGate": {
+        "mustExplain": [
+          "core idea",
+          "when to use",
+          "invariant/correctness idea",
+          "time complexity",
+          "space complexity",
+          "edge cases"
+        ],
+        "mustPerform": [
+          "one unseen micro problem",
+          "one practice problem at current difficulty"
+        ],
+        "commonFailure": "Forgetting end-of-word markers, duplicate words, or allocating/visiting the wrong child."
+      },
+      "_sourceFile": "dsa.json",
+      "_moduleTitle": "TRIES: Learn Tries"
+    },
+    {
+      "topicId": "t03-fundamentals-of-dsu",
+      "title": "Fundamentals of DSU",
+      "description": "Learn fundamentals of dsu through focused explanations and DSU practice.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "p-DSU09",
+          "title": "Example Use Of DSU",
+          "content": "Suppose there is a network of friends in a social networking site and you wanted to check if two people are connected. \n\n\n\nYou would typically traverse the whole network containing person 1 to check if person 2 is present on the same network.\\\nThis task can be done more efficiently without traversing the whole network with the help of a data structure called Disjoint Set Union or DSU.\\\nTasks like finding connected components, finding minimum spanning tree, identifying connected components in images and checking if two components are connected in networks like social networks and computer networks can be done very efficiently using DSU.  \n\nIn this course you'll learn all you need to know about DSU.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Example Use Of DSU focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static class DSU {\n        int[] parent;\n        DSU(int n) { parent = new int[n]; for (int i = 0; i < n; i++) parent[i] = i; }\n        int find(int x) {\n            while (parent[x] != x) x = parent[x];\n            return x;\n        }\n        void union(int a, int b) {\n            a = find(a); b = find(b);\n            if (a != b) parent[b] = a;\n        }\n    }\n    public static void main(String[] args) {\n        DSU dsu = new DSU(5);\n        dsu.union(0, 1);\n        dsu.union(3, 4);\n        System.out.println(dsu.find(1) == dsu.find(0));\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DSU09",
+            "question": "Which statement best describes the purpose of DSU's find operation?",
+            "options": [
+              "It returns the representative of the set containing an element.",
+              "It always creates a new set for the element.",
+              "It sorts every element in the data structure.",
+              "It deletes the representative of a set."
+            ],
+            "correctAnswer": 0,
+            "explanation": "find follows parent links to the set representative; path compression can also shorten future searches."
+          }
+        },
+        {
+          "pageId": "p-DSU01",
+          "title": "Introduction to Disjoint Set Union",
+          "content": "### Disjoint Set Union  \n**Disjoint Set Union** or **DSU** is a data structure used to represents a group of unique elements as part of different sets. These sets are represented by a leader element.  \n**For Example**  \nAssume we have 8 nodes: **0, 1, 2, 3, 4, 5, 6, 7**  \nAt first they all belong to individual sets.  \n```\n{0}     {1}      {2}      {3}       {4}        {5}          {6}        {7}\n```\nIf we add a connection or an edge between 1 and 3 then the sets become\n```\n{0}   {12->1<-3}      {5}          {6}        {7}   \n```\nNow there are 5 sets and the second set is identified by the leader 1.\n\nWe store a set in the form of trees with the root of the tree being the leader of the set.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Introduction to Disjoint Set Union focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static class DSU {\n        int[] parent;\n        DSU(int n) { parent = new int[n]; for (int i = 0; i < n; i++) parent[i] = i; }\n    }\n    public static void main(String[] args) {\n        DSU dsu = new DSU(4);\n        System.out.println(Arrays.toString(dsu.parent));\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-DSU02",
+          "title": "Need of DSU",
+          "content": "DSU is very useful when dealing with data containing elements connected with one another. \nSome common uses of DSU include:  \n- Keeping track of connected components in a graph\n- Detecting cycles in a graph \n- Identifying mutual friends\n- Calculating the minimum spanning tree in a graph\n- Checking connected components in a computer network or social network\n\n**For example**  \n   \nIn this graph, we have seven components. A, B, C, and D would have the same leader in a DSU and thus would be in the same set. Similarly, G and F would have the same leader and thus would be in the same set. And E will be in another set. Thus making it very easy to find connected components in a graph.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Need of DSU focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static class DSU {\n        int[] parent;\n        DSU(int n) { parent = new int[n]; for (int i = 0; i < n; i++) parent[i] = i; }\n        int find(int x) {\n            return parent[x] == x ? x : find(parent[x]);\n        }\n        void union(int a, int b) {\n            int ra = find(a), rb = find(b);\n            if (ra != rb) parent[rb] = ra;\n        }\n    }\n    public static void main(String[] args) {\n        DSU dsu = new DSU(6);\n        dsu.union(0, 1);\n        dsu.union(1, 2);\n        System.out.println(dsu.find(0) == dsu.find(2));\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-DSU03",
+          "title": "Functions in DSU",
+          "content": "There are two main operations in DSU:  \n- **Find** - used to find the representative or leader of the set to which the element belongs\n- **Union** - used to combine two sets\n\nThese are the only two functions a DSU provides, but they can be used to solve a wide variety of problems.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Functions in DSU focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static class DSU {\n        int[] parent;\n        DSU(int n) { parent = new int[n]; for (int i = 0; i < n; i++) parent[i] = i; }\n        int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }\n        boolean union(int a, int b) {\n            int ra = find(a), rb = find(b);\n            if (ra == rb) return false;\n            parent[rb] = ra;\n            return true;\n        }\n    }\n    public static void main(String[] args) {\n        DSU dsu = new DSU(4);\n        System.out.println(dsu.union(0, 1));\n        System.out.println(dsu.find(1));\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-DSU16",
+          "title": "Find in DSU",
+          "content": "To store the elements in a DSU, we maintain an array called **parent**. The **parent** array holds the value of parent element for each element. If the element has no parent, it is saved as its own parent. At the beginning, when the graph has no edges or connections every element is its own parent.\n\nThe below set of elements will be represented like this in the parent array:  \n0 -> 1 -> 2 -> 3  \n4  \n5\n\nParent array => [1, 2, 3, 3, 4, 5]\n\nThe parent of 0 is 1, 1 is 2, 2 is 3 and 3 is 3 itself. Same for 4 and 5.\n\nIn a DSU each set is represented by the leader (or the element with no parent). To find the leader of a set we recursively go to the parent of the current element until we reach an element which is its own parent. Then we return that element. Read the pseudo-code for better understanding \n\n#### Pseudo-Code\n```python\nfunction find(element){\n    if (parent[element] == element) \n        return element\n    else\n        return find(parent[element])\n}\n```\n\n#### Dry-Run\nLet's assume we have a DSU having the following set:\n```\n     0\n   /   \\\n  1     2\n /\n3\n```\nThis will have the following parent array $P$ = [0, 0, 0, 1].  \nHere the ${P_i}$ is the parent of index $i$.\nIf we call find(3), it will run in following steps.\n- parent[3] is 1 which is not equal to 3, so we call find(1).\n- parent[1] is 0 which is not equal to 1, so we call find(0).\n- parent[0] is 0 which equal to 0, so we return 0.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Find in DSU focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static class DSU {\n        int[] parent;\n        DSU(int n) { parent = new int[n]; for (int i = 0; i < n; i++) parent[i] = i; }\n        int find(int x) {\n            if (parent[x] == x) return x;\n            return parent[x] = find(parent[x]);\n        }\n    }\n    public static void main(String[] args) {\n        DSU dsu = new DSU(4);\n        dsu.parent = new int[]{0, 0, 1, 2};\n        System.out.println(dsu.find(3)); // 0\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-DSU17",
+          "title": "Union in DSU",
+          "content": "Union operation is used to join two sets into a single set.\n\nWe first check if the elements are already in the same set. This can be checked by performing find on both elements and comparing their results. If they have the same leader, we don't have to do anything as they are already in the same set. Otherwise, we set the one set's leader as the parent of another set's leader. Read the pseudo code for better understanding\n\n```python\nfunction union(a, b) {\n    leader_a = find(a)\n    leader_b = find(b)\n    if(leader_a != leader_b){\n        parent[leader_b] = leader_a\n    }\n}\n```\n\n#### Dry-Run ####\nLet's assume we have a DSU having the following sets:\n```\n     0\n   /   \\\n  1     2\n /\n3\n     4\n   /   \\\n  5     6\n```\nThis will have the following parent array $P$ = [0, 0, 0, 1, 4, 4, 4].  \nHere the ${P_i}$ is the parent of index $i$.  \nIf we call union(3, 5), it will run in following steps.\n- leader_a will be set to the value returned by find(3) which will be 0.\n- leader_b will be set to the value returned by find(5) which will be 4.\n- Since leader_a and leader_b are not equal they currently do not belong to the same group.\n- So we set parent[leader_a] equal to leader_b\n- Thus the new sets will look like this:\n```\n     0\n   / | \\\n  1  2  4\n /     /  \\\n3     5    6\n```",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Union in DSU focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static class DSU {\n        int[] parent;\n        DSU(int n) { parent = new int[n]; for (int i = 0; i < n; i++) parent[i] = i; }\n        int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }\n        void union(int a, int b) {\n            int ra = find(a), rb = find(b);\n            if (ra != rb) parent[rb] = ra;\n        }\n    }\n    public static void main(String[] args) {\n        DSU dsu = new DSU(4);\n        dsu.union(0, 1);\n        dsu.union(1, 2);\n        System.out.println(dsu.find(2));\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-DSU04",
+          "title": "Dry run MCQ",
+          "content": "Given a DSU with parent array [3, 0, 1, 3]. What will the value returned by find(2)?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Dry run MCQ focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static int[] parent = {3, 0, 1, 3};\n    static int find(int x) {\n        if (parent[x] == x) return x;\n        return find(parent[x]);\n    }\n    public static void main(String[] args) {\n        System.out.println(find(2)); // 3\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-DSU18",
+          "title": "Time Complexity of Naive DSU implementation",
+          "content": "In the basic implementation, in worst case, nodes can form long chains. For example:  \n1 <- 2 <- 3 <- 4 <- 5 <- 6 <- 7 <- 8 <- 9  \nFor 9, the dsuFind function will have to traverse through all the nodes to find the leader. Making the worst case time complexity $O(N)$.  \n  \nWe can greatly improve this and make it more efficient by applying some heuristics to avoid long chains from forming.  \n\nThrough these optimizations, we can achieve a time complexity of almost $O(1)$ (the worst-case time complexity of O($\\alpha$(n)) where $\\alpha$(n) is inverse Ackermann function which grows very slowly. In fact it grows so slowly, that it doesn't exceed $4$  for all reasonable $n$.).",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Time Complexity of Naive DSU implementation focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static int[] parent;\n    static int find(int x) {\n        int steps = 0;\n        while (parent[x] != x) { x = parent[x]; steps++; }\n        return steps;\n    }\n    public static void main(String[] args) {\n        parent = new int[]{0,0,1,2,3};\n        System.out.println(find(4)); // 4 links in a chain\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-DSU06",
+          "title": "Optimization 1 - Find",
+          "content": "### Optimization 1 - Path Compression \nWhen we call find(v) for a vertex v to find the leader of the set v belongs to, we call find(v). Find(v) goes through all the vertices between **v** and the leader.\n\nIf we save the leader in this process, then next time when we need to call find(u) for any vertex in the path from **v** to leader, we can directly return the leader.  \n\n## Pseudo-code\n```python\nfunction find(element) {\n    if (parent[element] == element) \n    {\n        return element\n    }\n    else\n    {\n        leader_element = find(parent[element])\n        # The optimization step to store the leader as parent for each node\n        parent[element] = leader_element\n        return leader_element\n    }\n}\n```\nIn this code all that's changed is that we update the parent of the element to the leader of the set before returning the leader.  \n## For Example  \nIn the set  \n```\n      3\n     /  \n    4\n   /  \n  5\n /\n6\n```\nWhen we call find(6), the following steps occur:\n- find(6) calls find(5)\n- find(4) calls find(4)\n- find(4) calls find(3)\n- 3 is the parent of itself so it is the leader, so it returns itself.\n- At find(4) before returning 3 it sets the parent of 4 as 3 which is already the case.\n- At find(5) before returning 3 it sets the parent of 5 as 3.\n- At find(6) before returning 3 it sets the parent of 6 as 3.\nNow the updated set is\n```\n  3\n /|\\\n4 5 6\n```\nThus next time we can find the leader in just one or two operations.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Optimization 1 - Find focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static int[] parent;\n    static int find(int x) {\n        if (parent[x] == x) return x;\n        return parent[x] = find(parent[x]);\n    }\n    public static void main(String[] args) {\n        parent = new int[]{0,0,1,2,3};\n        int root = find(4);\n        System.out.println(root);\n        System.out.println(Arrays.toString(parent));\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-DSU07",
+          "title": "Optimization 2 - Union",
+          "content": "In our current implementation when we perform union the second tree always gets attached to the first one. This can again lead to long chains.  \n\n### Example \nSuppose we have following operation: **union(1, 2)**  \nThis creates the tree: 11 1 <--2  \n     ^\n     |\n     4\n```\n\nThis heuristic helped us in improving the complexity by changing the leader of as few nodes as possible in each **union** operation.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Optimization 2 - Union focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static int[] parent, size;\n    static int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }\n    static void union(int a, int b) {\n        a = find(a); b = find(b);\n        if (a == b) return;\n        if (size[a] < size[b]) { int t = a; a = b; b = t; }\n        parent[b] = a;\n        size[a] += size[b];\n    }\n    public static void main(String[] args) {\n        int n = 6;\n        parent = new int[n]; size = new int[n];\n        for (int i = 0; i < n; i++) { parent[i] = i; size[i] = 1; }\n        union(0, 1); union(2, 3); union(0, 2);\n        System.out.println(find(3));\n    }\n}"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-DSU09-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Example Use Of DSU (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU01-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Introduction to Disjoint Set Union (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU02-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Need of DSU (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU03-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Functions in DSU (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU16-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Find in DSU (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU17-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Union in DSU (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU04-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Dry run MCQ (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU18-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Time Complexity of Naive DSU implementation (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU06-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Optimization 1 - Find (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU07-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Optimization 2 - Union (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "DSU05",
+          "questionId": "DSU05",
+          "title": "Naive DSU Implementation",
+          "difficulty": "Easy",
+          "description": "Implement a basic Disjoint Set Union using a parent array. Support union operations and report the representative returned by each find query.",
+          "problemStatement": "Given N elements numbered 0 to N-1 and Q operations, implement the naive DSU. A union a b operation merges the sets containing a and b by making the representative of b's set point to the representative of a's set. A find x operation prints the representative reached by repeatedly following parent links. Do not use path compression or union by size.",
+          "constraints": [
+            "1 <= N <= 100000",
+            "1 <= Q <= 100000",
+            "0 <= a,b,x < N"
+          ],
+          "inputFormat": "First line: N Q. Each of the next Q lines is either `union a b` or `find x`.",
+          "outputFormat": "Print one representative per find query, each on its own line.",
+          "sampleTestCases": [
+            {
+              "input": "5 7\nunion 1 0\nunion 2 1\nfind 0\nfind 1\nfind 2\nfind 3\nfind 4",
+              "output": "2\n2\n2\n3\n4",
+              "explanation": "Each union merges the two current sets; find returns the representative."
+            }
+          ],
+          "boilerPlates": {
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Implement the required DSU operations.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Implement the required DSU operations.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == \"__main__\":\n    main()\n",
+            "JavaScript": "const fs = require(\"fs\");\nconst input = fs.readFileSync(0, \"utf8\").trim();\n// Implement the required DSU operations.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "5 6\nunion 1 0\nunion 2 1\nfind 0\nfind 2\nfind 3\nfind 4",
+              "output": "2\n2\n3\n4",
+              "explanation": "Naive DSU operations processed with parent links."
+            },
+            {
+              "input": "6 6\nfind 5\nunion 0 5\nfind 5\nunion 2 3\nunion 3 4\nfind 4",
+              "output": "5\n0\n2",
+              "explanation": "Naive DSU operations processed with parent links."
+            },
+            {
+              "input": "4 5\nunion 0 1\nunion 1 2\nunion 2 3\nfind 3\nfind 0",
+              "output": "0\n0",
+              "explanation": "Naive DSU operations processed with parent links."
+            },
+            {
+              "input": "7 6\nunion 1 2\nunion 3 4\nunion 5 6\nunion 2 3\nfind 6\nfind 0",
+              "output": "5\n0",
+              "explanation": "Naive DSU operations processed with parent links."
+            },
+            {
+              "input": "8 7\nunion 7 6\nunion 6 5\nfind 7\nfind 4\nunion 0 1\nunion 1 2\nfind 2",
+              "output": "7\n4\n0",
+              "explanation": "Naive DSU operations processed with parent links."
+            }
+          ]
+        },
+        {
+          "problemId": "Q4285",
+          "questionId": "Q4285",
+          "title": "Optimized Implementation of DSU",
+          "difficulty": "Easy",
+          "description": "Implement DSU with path compression and union by size. Process union/find commands efficiently.",
+          "problemStatement": "Given N elements numbered 0 to N-1 and Q operations, maintain disjoint sets. For `union a b`, merge the two components using union by size. For `find x`, print the representative of x using path compression.",
+          "constraints": [
+            "1 <= N <= 200000",
+            "1 <= Q <= 200000",
+            "0 <= a,b,x < N"
+          ],
+          "inputFormat": "First line: N Q. Each of the next Q lines is either `union a b` or `find x`.",
+          "outputFormat": "Print one representative per find query, each on its own line. Any representative produced by the specified deterministic union-by-size rule is valid; ties keep the first root as the parent.",
+          "sampleTestCases": [
+            {
+              "input": "6 6\nunion 0 1\nunion 2 3\nunion 1 2\nfind 0\nfind 3\nfind 5",
+              "output": "0\n0\n5",
+              "explanation": "Representative labels depend on union-by-size choices; all members of a component share one root."
+            }
+          ],
+          "boilerPlates": {
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Implement the required DSU operations.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Implement the required DSU operations.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == \"__main__\":\n    main()\n",
+            "JavaScript": "const fs = require(\"fs\");\nconst input = fs.readFileSync(0, \"utf8\").trim();\n// Implement the required DSU operations.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "5 6\nunion 0 1\nunion 1 2\nfind 2\nfind 0\nunion 3 4\nfind 4",
+              "output": "0\n0\n3",
+              "explanation": "The optimized implementation returns the same representative semantics while keeping trees shallow."
+            },
+            {
+              "input": "9 7\nunion 0 8\nunion 2 3\nunion 3 4\nunion 4 5\nfind 5\nfind 8\nfind 6",
+              "output": "2\n0\n6",
+              "explanation": "The optimized implementation returns the same representative semantics while keeping trees shallow."
+            },
+            {
+              "input": "6 6\nunion 0 1\nunion 2 3\nunion 4 5\nunion 0 2\nfind 3\nfind 5",
+              "output": "0\n4",
+              "explanation": "The optimized implementation returns the same representative semantics while keeping trees shallow."
+            },
+            {
+              "input": "7 7\nunion 1 2\nunion 2 3\nunion 3 4\nunion 4 5\nfind 5\nfind 1\nfind 6",
+              "output": "1\n1\n6",
+              "explanation": "The optimized implementation returns the same representative semantics while keeping trees shallow."
+            },
+            {
+              "input": "10 7\nunion 9 8\nunion 7 6\nunion 8 7\nunion 1 2\nunion 2 3\nfind 3\nfind 9",
+              "output": "1\n9",
+              "explanation": "The optimized implementation returns the same representative semantics while keeping trees shallow."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "dsu.json",
+      "_moduleTitle": "DSU"
+    },
+    {
+      "topicId": "t04-applications-of-dsus",
+      "title": "Applications of DSUs",
+      "description": "Learn applications of dsus through focused explanations and DSU practice.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 30,
+      "pages": [
+        {
+          "pageId": "p-DSU10",
+          "title": "MCQ",
+          "content": "In the following DSU\n```\n        1                      16\n       /|\\                    /  \\\n      2 3 4                  17   18\n     /|\\  |\\\n    5 6 7 8 9\n   / \\   /   \\\n  10 11 12   13\n /             \\\n14              15\n```\nWhat will be the output of find(14), find(3), find(17) and find(18)?",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "MCQ focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static int find(int[] p, int x) { return p[x] == x ? x : (p[x] = find(p, p[x])); }\n    public static void main(String[] args) {\n        int[] p = {0, 1, 1, 1, 1, 3, 3, 3, 8};\n        System.out.println(find(p, 5));\n        System.out.println(find(p, 8));\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DSU10",
+            "question": "Why can DSU efficiently answer whether two vertices belong to the same connected component?",
+            "options": [
+              "Their roots are equal exactly when they belong to the same DSU set.",
+              "Every vertex always has a unique root.",
+              "DSU requires a full graph traversal for every query.",
+              "Connected components are stored as sorted arrays."
+            ],
+            "correctAnswer": 0,
+            "explanation": "After processing unions, two vertices are in the same component when their find results are equal."
+          }
+        },
+        {
+          "pageId": "p-DSU12",
+          "title": "MCQ",
+          "content": "Given the parent array = [0, 1, 1, 1, 1, 3, 3, 3, 8]. What is the number of different connected components in this DSU",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "MCQ focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static int find(int[] p, int x) { return p[x] == x ? x : (p[x] = find(p, p[x])); }\n    public static void main(String[] args) {\n        int[] p = {0, 1, 1, 1, 1, 3, 3, 3, 8};\n        int roots = 0;\n        for (int i = 0; i < p.length; i++) if (find(p, i) == i) roots++;\n        System.out.println(roots);\n    }\n}"
+          }
+        },
+        {
+          "pageId": "p-DSU15",
+          "title": "Summary",
+          "content": "Good work completing the DSU learning course. After successfully completing this course now you are equipped with the knowledge of :\n- The data structure DSU and it's functions with major optimizations which allow the functions to have the worst-case time complexity of O($\\alpha$(n)) where $\\alpha$(n) is inverse Ackermann function which grows very slowly. In fact it grows so slowly, that it doesn't exceed $4$  for all reasonable $n$.\n- You can efficiently tell if two elements in a graph belong to the same connected component.\n- You can count connected components in a graph.\n- You can calculate the number of elements in each connected component.",
+          "callout": {
+            "type": "KEY_CONCEPT",
+            "title": "Key takeaway",
+            "text": "Summary focuses on a concrete DSU technique: maintaining representatives, merging sets, or exploiting DSU efficiency."
+          },
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\n\nclass Main {\n    static class DSU {\n        int[] parent, size;\n        DSU(int n) {\n            parent = new int[n]; size = new int[n];\n            for (int i = 0; i < n; i++) parent[i] = i;\n            Arrays.fill(size, 1);\n        }\n        int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }\n        void union(int a, int b) {\n            a = find(a); b = find(b);\n            if (a == b) return;\n            if (size[a] < size[b]) { int t=a; a=b; b=t; }\n            parent[b] = a; size[a] += size[b];\n        }\n    }\n    public static void main(String[] args) {\n        DSU d = new DSU(5); d.union(0,1); d.union(1,2);\n        System.out.println(d.find(2) == d.find(0));\n    }\n}"
+          }
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "ex-DSU10-java",
+          "language": "java",
+          "label": "Java",
+          "title": "MCQ (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU12-java",
+          "language": "java",
+          "label": "Java",
+          "title": "MCQ (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        },
+        {
+          "exampleId": "ex-DSU15-java",
+          "language": "java",
+          "label": "Java",
+          "title": "Summary (Java)",
+          "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your Java code here\n    }\n}"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "DSU11",
+          "questionId": "DSU11",
+          "title": "Check if two elements are connected",
+          "difficulty": "Easy",
+          "description": "Determine whether pairs of vertices belong to the same connected component using DSU.",
+          "problemStatement": "You are given N people and M undirected connections. After processing the connections, answer Q queries. For each pair x,y print `Yes` when x and y are in the same connected component, otherwise print `No`.",
+          "constraints": [
+            "1 <= N <= 200000",
+            "0 <= M,Q <= 200000",
+            "0 <= a,b,x,y < N"
+          ],
+          "inputFormat": "First line N M; next M lines contain edges; next line Q; next Q lines contain query pairs.",
+          "outputFormat": "For each query print `Yes` or `No` on a separate line.",
+          "sampleTestCases": [
+            {
+              "input": "10 4\n1 2\n2 3\n3 4\n4 5\n8\n5 1\n1 2\n2 3\n4 5\n0 1\n0 9\n9 8\n8 7",
+              "output": "Yes\nYes\nYes\nYes\nNo\nNo\nNo\nNo",
+              "explanation": ""
+            }
+          ],
+          "boilerPlates": {
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Implement the required DSU operations.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Implement the required DSU operations.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == \"__main__\":\n    main()\n",
+            "JavaScript": "const fs = require(\"fs\");\nconst input = fs.readFileSync(0, \"utf8\").trim();\n// Implement the required DSU operations.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "5 2\n0 1\n1 2\n4\n0 2\n0 3\n3 4\n4 4",
+              "output": "Yes\nNo\nNo\nYes",
+              "explanation": "Queries are answered by comparing DSU representatives."
+            },
+            {
+              "input": "6 3\n0 1\n2 3\n3 4\n4\n0 4\n2 4\n1 3\n5 5",
+              "output": "No\nYes\nNo\nYes",
+              "explanation": "Queries are answered by comparing DSU representatives."
+            },
+            {
+              "input": "7 3\n1 2\n2 3\n4 5\n4\n1 3\n1 4\n4 5\n0 6",
+              "output": "Yes\nNo\nYes\nNo",
+              "explanation": "Queries are answered by comparing DSU representatives."
+            },
+            {
+              "input": "4 0\n\n4\n0 0\n0 1\n2 3\n3 3",
+              "output": "Yes\nNo\nNo\nYes",
+              "explanation": "Queries are answered by comparing DSU representatives."
+            },
+            {
+              "input": "8 4\n0 7\n1 2\n2 3\n4 5\n5\n0 3\n1 3\n4 5\n6 7\n0 6",
+              "output": "No\nYes\nYes\nNo\nNo",
+              "explanation": "Queries are answered by comparing DSU representatives."
+            }
+          ]
+        },
+        {
+          "problemId": "DSU13",
+          "questionId": "DSU13",
+          "title": "Count Connected Components",
+          "difficulty": "Easy",
+          "description": "Count the connected components of an undirected graph using DSU.",
+          "problemStatement": "Given N nodes and M undirected connections, output the total number of connected components.",
+          "constraints": [
+            "1 <= N <= 200000",
+            "0 <= M <= 200000",
+            "0 <= a,b < N"
+          ],
+          "inputFormat": "First line N M. Next M lines contain an edge a b.",
+          "outputFormat": "Print the number of connected components.",
+          "sampleTestCases": [
+            {
+              "input": "10 5\n0 1\n1 2\n2 3\n3 4\n4 5",
+              "output": "5",
+              "explanation": ""
+            }
+          ],
+          "boilerPlates": {
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Implement the required DSU operations.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Implement the required DSU operations.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == \"__main__\":\n    main()\n",
+            "JavaScript": "const fs = require(\"fs\");\nconst input = fs.readFileSync(0, \"utf8\").trim();\n// Implement the required DSU operations.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "5 2\n0 1\n1 2\n",
+              "output": "3",
+              "explanation": "Each successful union reduces the number of connected components by one."
+            },
+            {
+              "input": "6 3\n0 1\n2 3\n4 5\n",
+              "output": "3",
+              "explanation": "Each successful union reduces the number of connected components by one."
+            },
+            {
+              "input": "8 0\n",
+              "output": "8",
+              "explanation": "Each successful union reduces the number of connected components by one."
+            },
+            {
+              "input": "7 5\n0 1\n1 2\n3 4\n4 5\n5 6\n",
+              "output": "2",
+              "explanation": "Each successful union reduces the number of connected components by one."
+            },
+            {
+              "input": "10 6\n0 1\n1 2\n2 3\n4 5\n6 7\n7 8\n",
+              "output": "4",
+              "explanation": "Each successful union reduces the number of connected components by one."
+            }
+          ]
+        },
+        {
+          "problemId": "DSU14",
+          "questionId": "DSU14",
+          "title": "Biggest Friend Group",
+          "difficulty": "Easy",
+          "description": "Find the size of the largest connected component in an undirected friendship graph.",
+          "problemStatement": "You are given N people and M undirected friendship connections. Two people belong to the same friend group when they are connected directly or through other people. Output the size of the largest friend group. An isolated person forms a group of size 1.",
+          "constraints": [
+            "1 <= N <= 200000",
+            "0 <= M <= 200000",
+            "0 <= a,b < N"
+          ],
+          "inputFormat": "First line N M. Next M lines contain a b.",
+          "outputFormat": "Print one integer: the size of the largest connected component.",
+          "sampleTestCases": [
+            {
+              "input": "10 5\n0 1\n1 2\n2 3\n3 4\n4 5",
+              "output": "6",
+              "explanation": ""
+            }
+          ],
+          "boilerPlates": {
+            "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Implement the required DSU operations.\n    return 0;\n}",
+            "Java": "import java.io.*;\nimport java.util.*;\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        // Implement the required DSU operations.\n    }\n}",
+            "Python3": "import sys\n\ndef main():\n    pass\n\nif __name__ == \"__main__\":\n    main()\n",
+            "JavaScript": "const fs = require(\"fs\");\nconst input = fs.readFileSync(0, \"utf8\").trim();\n// Implement the required DSU operations.\n"
+          },
+          "hiddenTestCases": [
+            {
+              "input": "5 2\n0 1\n1 2\n",
+              "output": "3",
+              "explanation": "The maximum component size is maintained as unions merge sets."
+            },
+            {
+              "input": "6 3\n0 1\n2 3\n3 4\n",
+              "output": "3",
+              "explanation": "The maximum component size is maintained as unions merge sets."
+            },
+            {
+              "input": "8 0\n",
+              "output": "1",
+              "explanation": "The maximum component size is maintained as unions merge sets."
+            },
+            {
+              "input": "7 5\n0 1\n1 2\n3 4\n4 5\n5 6\n",
+              "output": "4",
+              "explanation": "The maximum component size is maintained as unions merge sets."
+            },
+            {
+              "input": "10 5\n0 1\n1 2\n2 3\n4 5\n4 6\n",
+              "output": "4",
+              "explanation": "The maximum component size is maintained as unions merge sets."
+            }
+          ]
+        }
+      ],
+      "_sourceFile": "dsu.json",
+      "_moduleTitle": "DSU"
+    },
+    {
+      "topicId": "t05-ordered-event-lookup",
+      "title": "Ordered Event Lookup",
+      "description": "Use upper bound over timestamps/versions to retrieve the latest valid state. Includes guided dry runs, Java 17 implementation, independent practice, and interview transfer.",
+      "mode": "TEXT",
+      "readingTimeMinutes": 45,
+      "pages": [
+        {
+          "pageId": "binary-search-new-m9-t1-p1",
+          "title": "Why This Topic Matters",
+          "sectionType": "CONCEPT",
+          "content": "Use upper bound over timestamps/versions to retrieve the latest valid state.",
+          "teachingGoal": "Explain why Ordered Event Lookup is useful."
+        },
+        {
+          "pageId": "binary-search-new-m9-t1-p2",
+          "title": "Intuition",
+          "sectionType": "INTUITION",
+          "content": "Start from a brute-force mental model, then ask what structure lets us remove half the candidates. State the invariant before writing the loop.",
+          "teachingGoal": "Explain the intuition for Ordered Event Lookup.",
+          "suggestedVisual": "Candidate interval shrinking from two sides."
+        },
+        {
+          "pageId": "binary-search-new-m9-t1-p3",
+          "title": "Worked Example 1",
+          "sectionType": "WORKED_EXAMPLE",
+          "content": "Upper bound",
+          "teachingGoal": "Trace the first example of Ordered Event Lookup.",
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,4,8};int x=6,l=0,r=a.length;while(l<r){int m=(l+r)/2;if(a[m]<=x)l=m+1;else r=m;}System.out.println(l-1);\n  }\n}\n"
+          }
+        },
+        {
+          "pageId": "binary-search-new-m9-t1-p4",
+          "title": "Worked Example 2",
+          "sectionType": "WORKED_EXAMPLE",
+          "content": "Upper bound",
+          "teachingGoal": "Trace a second variation and compare its boundary rule.",
+          "codeCard": {
+            "language": "java",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,4,8};int x=6,l=0,r=a.length;while(l<r){int m=(l+r)/2;if(a[m]<=x)l=m+1;else r=m;}System.out.println(l-1);\n  }\n}\n"
+          }
+        },
+        {
+          "pageId": "binary-search-new-m9-t1-p5",
+          "title": "Debugging Clinic",
+          "sectionType": "DEBUGGING",
+          "content": "Test empty/small input where allowed, target at an endpoint, target absent, repeated values where relevant, and the largest numeric answer. Never change a pointer without preserving the invariant.",
+          "teachingGoal": "Debug common Ordered Event Lookup failures."
+        },
+        {
+          "pageId": "binary-search-new-m9-t1-p6",
+          "title": "Mastery Gate",
+          "sectionType": "MASTERY",
+          "content": "Explain the candidate space, predicate/order, boundary convention, termination, and complexity. Then solve one nearby problem without looking at the worked code.",
+          "teachingGoal": "Pass the mastery gate for Ordered Event Lookup."
+        }
+      ],
+      "codeExamples": [
+        {
+          "exampleId": "binary-search-new-m9-t1-ex1",
+          "language": "java",
+          "label": "Java",
+          "title": "Latest",
+          "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,4,8};int x=6,l=0,r=a.length;while(l<r){int m=(l+r)/2;if(a[m]<=x)l=m+1;else r=m;}System.out.println(l-1);\n  }\n}\n"
+        },
+        {
+          "exampleId": "binary-search-new-m9-t1-ex2",
+          "language": "java",
+          "label": "Java",
+          "title": "Latest",
+          "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    int[] a={1,4,8};int x=6,l=0,r=a.length;while(l<r){int m=(l+r)/2;if(a[m]<=x)l=m+1;else r=m;}System.out.println(l-1);\n  }\n}\n"
+        }
+      ],
+      "practiceProblems": [
+        {
+          "problemId": "LC981-ADAPT",
+          "questionId": "LC981-ADAPT",
+          "title": "Time Based Key-Value Store",
+          "difficulty": "Medium",
+          "description": "For each GET query, return the value with the greatest timestamp not exceeding the query timestamp.",
+          "problemStatement": "For each GET query, return the value with the greatest timestamp not exceeding the query timestamp.",
+          "constraints": [
+            "Follow the stated input size and complexity target."
+          ],
+          "inputFormat": "A sequence of SET/GET operations.",
+          "outputFormat": "Value or EMPTY.",
+          "sampleTestCases": [
+            {
+              "input": "4\nSET foo bar 1\nSET foo baz 4\nGET foo 3\nGET foo 4",
+              "output": "bar\nbaz",
+              "explanation": "At time 3 the latest valid entry is timestamp 1."
+            }
+          ],
+          "hiddenTestCases": [
+            {
+              "input": "2\nSET a x 5\nGET a 2",
+              "output": "EMPTY",
+              "explanation": "No valid timestamp exists."
+            }
+          ],
+          "boilerPlates": {
+            "Java": "import java.util.*;\npublic class Main { public static void main(String[] args) { } }"
+          },
+          "referenceSolution": {
+            "language": "Java",
+            "version": "17",
+            "code": "import java.util.*;\npublic class Main {\n  public static void main(String[] args) {\n    Scanner s=new Scanner(System.in);int n=s.nextInt();Map<String,List<int[]>> ts=new HashMap<>();Map<String,List<String>> vals=new HashMap<>();for(int i=0;i<n;i++){String op=s.next();String key=s.next();if(op.equals(\"SET\")){String v=s.next();int time=s.nextInt();ts.computeIfAbsent(key,z->new ArrayList<>()).add(new int[]{time,0});vals.computeIfAbsent(key,z->new ArrayList<>()).add(v);}else{int time=s.nextInt();List<int[]> times=ts.get(key);if(times==null){System.out.println(\"EMPTY\");continue;}int l=0,r=times.size();while(l<r){int m=(l+r)/2;if(times.get(m)[0]<=time)l=m+1;else r=m;}System.out.println(l==0?\"EMPTY\":vals.get(key).get(l-1));}}\n  }\n}\n"
+          },
+          "editorial": "For each key, timestamps are ordered; use upper bound to select the latest valid entry.",
+          "learningSequence": [
+            "Understand",
+            "Identify search space",
+            "Write invariant",
+            "Dry run",
+            "Implement",
+            "Test boundaries",
+            "Explain complexity"
+          ],
+          "hints": [
+            "What remains possible?",
+            "Why is the predicate ordered or monotonic?",
+            "Which bound should move?"
+          ],
+          "tags": [
+            "upper-bound",
+            "design"
+          ],
+          "source": {
+            "platform": "LeetCode",
+            "problemNumber": 981,
+            "problemTitle": "Time Based Key-Value Store",
+            "url": "https://leetcode.com/problems/time-based-key-value-store/",
+            "pattern": "upper-bound",
+            "integration": "Paraphrased practice adaptation; solve the SEED version first, then compare the approach with the original LeetCode problem.",
+            "adaptationId": "LC981-ADAPT"
+          }
+        }
+      ],
+      "learningObjectives": [
+        "Explain Ordered Event Lookup.",
+        "Implement the pattern in Java 17.",
+        "Handle boundary and termination cases.",
+        "Transfer the pattern to an interview problem."
+      ],
+      "keyConcepts": [
+        "Ordered Event Lookup",
+        "Invariant",
+        "Search space",
+        "Boundary conditions"
+      ],
+      "commonMistakes": [
+        "Off-by-one errors",
+        "Wrong candidate interval",
+        "Non-monotonic predicate",
+        "Overflow",
+        "Stopping before the boundary is proven"
+      ],
+      "learningPath": [
+        "1. Prerequisite",
+        "2. Core concept",
+        "3. Pattern intuition",
+        "4. Visualization",
+        "5. Dry run",
+        "6. Guided Java implementation",
+        "7. Micro practice",
+        "8. Independent practice",
+        "9. LeetCode transfer",
+        "10. Mastery gate"
+      ],
+      "masteryGate": {
+        "required": "Pass checkpoint and solve one nearby variation without hints.",
+        "minimumPracticeSolved": 1
+      },
+      "leetCodeTransfer": [
+        {
+          "number": 981,
+          "title": "Time Based Key-Value Store",
+          "problemId": "LC981-ADAPT",
+          "url": "https://leetcode.com/problems/time-based-key-value-store/",
+          "pattern": "upper-bound"
+        }
+      ],
+      "_sourceFile": "binary-search-new.json",
+      "_moduleTitle": "Interview Pattern Fusion"
+    }
+  ]
+}

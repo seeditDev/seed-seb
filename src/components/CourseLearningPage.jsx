@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from './router-compat';
 import CourseLearningPlayer from '../courses/components/CourseLearningPlayer';
-import { COURSE_CATALOG } from '../courses/data/courseCatalogData';
+import { COURSE_CATALOG, getCourseById, hydrateFullCourse } from '../courses/data/courseCatalogData';
 import { fetchLiveCoursesFromFirestore } from '../courses/services/courseMetadataService';
 import { fetchCourse } from '../services/codingQuestionBankService';
 import SecurityWatermark from './SecurityWatermark';
@@ -51,12 +51,13 @@ const CourseLearningPage = () => {
       setError(null);
 
       try {
-        // 1. Check sessionStorage cache
+        // 1. Check sessionStorage cache (ensure it is fully hydrated with topics)
         const cachedRaw = sessionStorage.getItem(`seed_learning_course_${courseId}`);
         if (cachedRaw) {
           try {
             const cached = JSON.parse(cachedRaw);
-            if (cached && (cached.courseId === courseId || cached.slug === courseId || cached.id === courseId)) {
+            const isHydrated = Boolean(cached?.modules?.[0]?.topics && Array.isArray(cached.modules[0].topics) && cached.modules[0].topics.length > 0);
+            if (isHydrated && cached && (cached.courseId === courseId || cached.slug === courseId || cached.id === courseId)) {
               if (isMounted) {
                 setCourse(cached);
                 setLoading(false);
@@ -72,15 +73,36 @@ const CourseLearningPage = () => {
         let matched = catalog.find(c => 
           String(c.courseId).toLowerCase() === String(courseId).toLowerCase() || 
           String(c.slug).toLowerCase() === String(courseId).toLowerCase() || 
-          String(c.id).toLowerCase() === String(courseId).toLowerCase()
+          String(c.id).toLowerCase() === String(courseId).toLowerCase() ||
+          (c.folderName && String(c.folderName).toLowerCase() === String(courseId).toLowerCase())
         );
 
-        // 3. Fallback to codingQuestionBankService fetchCourse
+        // 3. Fallback to getCourseById and codingQuestionBankService fetchCourse
+        if (!matched) {
+          matched = getCourseById(courseId);
+        }
+
         if (!matched) {
           try {
             const directCourse = await fetchCourse(courseId);
             if (directCourse && (directCourse.courseId || directCourse.title || directCourse.id)) {
               matched = directCourse;
+            }
+          } catch (_) {}
+        }
+
+        // 4. Hydrate full course modules if needed
+        if (matched) {
+          try {
+            const targetId = matched.slug || matched.courseId || matched.id || courseId;
+            const hydrated = await hydrateFullCourse(targetId);
+            if (hydrated && hydrated.modules && hydrated.modules.length > 0) {
+              matched = {
+                ...matched,
+                ...hydrated,
+                courseId: matched.courseId || hydrated.courseId,
+                title: matched.title || hydrated.title
+              };
             }
           } catch (_) {}
         }
@@ -189,11 +211,11 @@ const CourseLearningPage = () => {
     <div
       className="course-learning-page-root"
       style={{
-        minHeight: '100vh',
+        height: '100vh',
+        maxHeight: '100vh',
         width: '100%',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        background: 'var(--bg-primary, #0f172a)',
+        overflow: 'hidden',
+        background: '#f8fafc',
         display: 'flex',
         flexDirection: 'column'
       }}
