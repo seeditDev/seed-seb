@@ -8578,6 +8578,18 @@
           "codeCard": {
             "language": "cpp",
             "code": "#include <iostream>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> values = {2, 4, 6};\n    cout << \"size=\" << values.size() << \"\\n\";\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DSAAGP385",
+            "question": "What is the primary memory difference between a standard C++ array and a std::vector?",
+            "options": [
+              "A vector manages a dynamically resizable heap buffer while built-in arrays have fixed compile-time size",
+              "A vector stores elements in non-contiguous memory like a linked list",
+              "A vector cannot be indexed using square brackets []",
+              "Built-in arrays automatically double their capacity when full"
+            ],
+            "correctAnswer": 0,
+            "explanation": "std::vector maintains contiguous heap storage that dynamically resizes (typically doubling capacity) when full, whereas built-in arrays have fixed immutable capacity allocated on stack or static memory."
           }
         },
         {
@@ -8592,6 +8604,18 @@
           "codeCard": {
             "language": "cpp",
             "code": "#include <iostream>\n#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> v = {1, 2, 3};\n    for (auto it = v.begin(); it != v.end(); ++it) {\n        cout << *it << ' ';\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DSAAGP386",
+            "question": "What is the difference between vector size and vector capacity?",
+            "options": [
+              "size is the number of active elements; capacity is the total allocated memory slots available before reallocating",
+              "size is measured in bytes; capacity is measured in element count",
+              "size and capacity are always identical at every point in time",
+              "capacity shrinks automatically every time an element is popped"
+            ],
+            "correctAnswer": 0,
+            "explanation": "size() represents the count of elements currently held. capacity() represents the allocated buffer storage. push_back() only reallocates when size() == capacity()."
           }
         },
         {
@@ -8606,6 +8630,18 @@
           "codeCard": {
             "language": "cpp",
             "code": "#include <vector>\nusing namespace std;\n\nint main() {\n    vector<int> v = {1, 2, 3};\n    return v.size() == 3 ? 0 : 1;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DSAAGP387",
+            "question": "What is the amortized time complexity of push_back in a dynamic array / vector?",
+            "options": [
+              "O(1) Amortized constant time",
+              "O(N) Linear time for every append",
+              "O(log N) Logarithmic time",
+              "O(N^2) Quadratic time"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Because the capacity doubles upon becoming full, an expensive O(N) reallocation copy happens only after N/2 cheap O(1) insertions, yielding O(1) amortized time per operation."
           }
         },
         {
@@ -8620,6 +8656,18 @@
           "codeCard": {
             "language": "cpp",
             "code": "#include <iostream>\n#include <vector>\nusing namespace std;\n\nvector<int> fibonacci(int n) {\n    vector<int> result;\n    for (int i = 0; i < n; ++i) {\n        if (i == 0) result.push_back(0);\n        else if (i == 1) result.push_back(1);\n        else result.push_back(result[i - 1] + result[i - 2]);\n    }\n    return result;\n}\n\nint main() {\n    for (int x : fibonacci(5)) cout << x << ' ';\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-DSCPPAS244",
+            "question": "When generating a dynamic sequence using std::vector, what happens to memory when elements are added using push_back beyond current capacity?",
+            "options": [
+              "The vector allocates a new contiguous buffer (typically 2x size), copies existing elements, and releases old memory",
+              "The vector links a new non-contiguous memory node to the end",
+              "A runtime bad_alloc error is thrown immediately",
+              "The vector converts itself into a linked list in RAM"
+            ],
+            "correctAnswer": 0,
+            "explanation": "To maintain contiguous memory, std::vector reallocates a larger memory block (usually doubling capacity), copies/moves the existing elements over, and frees the previous memory block."
           }
         },
         {
@@ -12992,7 +13040,7 @@
           "pageId": "binary-search-new-m4-t1-p3",
           "title": "Worked Example 1",
           "sectionType": "WORKED_EXAMPLE",
-          "content": "Routing",
+          "content": "### Worked Example: Rotated Array Search Routing\n\nGiven rotated array `[4, 5, 6, 7, 0, 1, 2]` and target `0`:\n1. `l = 0`, `r = 6`. Mid = 3 (`arr[3] = 7`).\n2. Identify which half is normally sorted: Since `arr[l] <= arr[mid]` (`4 <= 7`), the left half `[4..7]` is sorted.\n3. Check if target lies in the sorted left half: `4 <= target && target < 7` is false for 0.\n4. Therefore target must lie in the right half: `l = mid + 1 = 4`.\n5. Next iteration finds `arr[4] = 0 == target`. Return index 4.",
           "teachingGoal": "Trace the first example of Search Rotated Array.",
           "codeCard": {
             "language": "java",
@@ -13003,7 +13051,7 @@
           "pageId": "binary-search-new-m4-t1-p4",
           "title": "Worked Example 2",
           "sectionType": "WORKED_EXAMPLE",
-          "content": "Sorted half",
+          "content": "### Worked Example: Sorted Half Invariant\n\nIn a rotated sorted array without duplicates, for any midpoint `mid`:\n1. At least one of the two halves `[low..mid]` or `[mid..high]` is guaranteed to be strictly sorted.\n2. If `arr[low] <= arr[mid]`, left half is sorted.\n3. Otherwise, right half is sorted.\n4. Check if target lies inside the range of the sorted half. If yes, search that half; otherwise search the other half.",
           "teachingGoal": "Trace a second variation and compare its boundary rule.",
           "codeCard": {
             "language": "java",
@@ -13249,7 +13297,7 @@
           "pageId": "binary-search-new-m10-t2-p3",
           "title": "Worked Example 1",
           "sectionType": "WORKED_EXAMPLE",
-          "content": "Rotated",
+          "content": "### Worked Example: Search in Rotated Array II (With Duplicates)\n\nWhen duplicates exist (e.g. `[1, 0, 1, 1, 1]`):\n1. If `arr[low] == arr[mid] == arr[high]`, we cannot determine which half is sorted.\n2. Safely shrink search space: `low++` and `high--`.\n3. In worst-case (all elements identical), complexity degrades to O(N); otherwise runs in O(log N).",
           "teachingGoal": "Trace the first example of Medium Interview Ladder.",
           "codeCard": {
             "language": "java",
@@ -13260,7 +13308,7 @@
           "pageId": "binary-search-new-m10-t2-p4",
           "title": "Worked Example 2",
           "sectionType": "WORKED_EXAMPLE",
-          "content": "Answer space",
+          "content": "### Worked Example: Find Minimum in Rotated Sorted Array\n\nGiven `[3, 4, 5, 1, 2]`:\n1. `l = 0, r = 4`. Compare `arr[mid]` with `arr[r]`.\n2. Mid = 2 (`arr[2] = 5 > 2`). Minimum must be to the right of mid: `l = mid + 1 = 3`.\n3. Mid = 3 (`arr[3] = 1 < 2`). Minimum is at mid or left: `r = mid = 3`.\n4. `l == r == 3`. Minimum element is `1` at index `3`.",
           "teachingGoal": "Trace a second variation and compare its boundary rule.",
           "codeCard": {
             "language": "java",

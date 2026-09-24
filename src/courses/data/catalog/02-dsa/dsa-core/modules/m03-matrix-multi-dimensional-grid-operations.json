@@ -70,6 +70,18 @@
           "codeCard": {
             "language": "cpp",
             "code": "#include <iostream>\n#include <vector>\nusing namespace std;\n\nint main() {\n    int n = 5;\n    vector<long long> dp(n + 1, 0);\n    dp[0] = 1;\n    for (int i = 1; i <= n; ++i) dp[i] = dp[i - 1] + i;\n    cout << dp[n] << '\\n';\n    return 0;\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-MGCRNKM2",
+            "question": "In a 2D grid path-counting problem moving only Right and Down, what is the standard DP recurrence for cell (i, j)?",
+            "options": [
+              "DP[i][j] = DP[i-1][j] + DP[i][j-1]",
+              "DP[i][j] = DP[i-1][j] * DP[i][j-1]",
+              "DP[i][j] = max(DP[i-1][j-1], DP[i][j])",
+              "DP[i][j] = DP[i-1][j+1] + DP[i+1][j-1]"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Since any path reaching (i, j) must enter from either the cell directly above (i-1, j) or the cell directly to the left (i, j-1), by the Rule of Sum DP[i][j] = DP[i-1][j] + DP[i][j-1]."
           }
         },
         {
@@ -1483,7 +1495,7 @@
           "pageId": "binary-search-new-m4-t2-p1",
           "title": "Why This Topic Matters",
           "sectionType": "CONCEPT",
-          "content": "Locate the pivot where sorted order wraps.",
+          "content": "### Finding Rotation Pivot in Sorted Matrix\n\nIn a rotated grid or 2D matrix sequence, the rotation pivot represents the inflection point where order drops from maximum to minimum.\nComparing midpoint elements against right boundary elements allows binary search to zero in on the pivot index in O(log(R * C)) time.",
           "teachingGoal": "Explain why Rotation Pivot / Minimum is useful."
         },
         {
@@ -1498,7 +1510,7 @@
           "pageId": "binary-search-new-m4-t2-p3",
           "title": "Worked Example 1",
           "sectionType": "WORKED_EXAMPLE",
-          "content": "Pivot",
+          "content": "### Worked Example: Pivot Point Detection\n\nIn rotated sorted array `[6, 7, 8, 1, 2, 3, 4, 5]`:\n1. `l = 0, r = 7`. Mid = 3 (`arr[3] = 1`).\n2. Notice `arr[mid] < arr[mid-1]` (`1 < 8`). The inflection point is immediately found at index 3.\n3. The pivot divides the array into two independently ascending subarrays.",
           "teachingGoal": "Trace the first example of Rotation Pivot / Minimum.",
           "codeCard": {
             "language": "java",
@@ -1509,7 +1521,7 @@
           "pageId": "binary-search-new-m4-t2-p4",
           "title": "Worked Example 2",
           "sectionType": "WORKED_EXAMPLE",
-          "content": "Minimum",
+          "content": "### Worked Example: Minimum Element in Grid Traversal\n\nWhen searching across flattened row-major matrix coordinates:\n1. Map 1D index `k` to 2D row/col: `row = k / cols`, `col = k % cols`.\n2. This enables logarithmic binary search on 2D matrices without extra memory allocation.",
           "teachingGoal": "Trace a second variation and compare its boundary rule.",
           "codeCard": {
             "language": "java",
@@ -1685,7 +1697,7 @@
           "pageId": "binary-search-new-m5-t1-p3",
           "title": "Worked Example 1",
           "sectionType": "WORKED_EXAMPLE",
-          "content": "Mapping",
+          "content": "### Worked Example: Flattened Matrix Search (LeetCode 74)\n\nGiven M x N matrix where each row is sorted and `row[i][0] > row[i-1][last]`:\n1. Treat the entire matrix as a 1D virtual sorted array of size `M * N`.\n2. `low = 0, high = M * N - 1`.\n3. For `mid`, cell value is `matrix[mid / N][mid % N]`.\n4. Runs in pure O(log(M * N)) time with O(1) space.",
           "teachingGoal": "Trace the first example of Row-Major Matrix Search.",
           "codeCard": {
             "language": "java",
@@ -1696,7 +1708,7 @@
           "pageId": "binary-search-new-m5-t1-p4",
           "title": "Worked Example 2",
           "sectionType": "WORKED_EXAMPLE",
-          "content": "Search",
+          "content": "### Worked Example: Row-Col Coordinate Mapping\n\nVirtual index conversion formulas:\n- `row = index / num_columns`\n- `col = index % num_columns`\nThis allows direct O(1) index projection from 1D binary search pointers onto 2D matrix grids.",
           "teachingGoal": "Trace a second variation and compare its boundary rule.",
           "codeCard": {
             "language": "java",
@@ -1872,7 +1884,7 @@
           "pageId": "binary-search-new-m5-t3-p3",
           "title": "Worked Example 1",
           "sectionType": "WORKED_EXAMPLE",
-          "content": "Count",
+          "content": "### Worked Example: K-th Smallest Element in Sorted Matrix\n\nGiven an $N \\times N$ matrix where each row and column is sorted in ascending order:\n1. Search space for the value is `[matrix[0][0], matrix[N-1][N-1]]`.\n2. Binary search on value `mid`.\n3. Count elements $\\le mid$ in $O(N)$ time by starting at the bottom-left or top-right corner.\n4. If `count >= K`, record `mid` as candidate and search smaller values (`high = mid - 1`).\n5. Otherwise search larger values (`low = mid + 1`).\n\nRuns in $O(N \\log(\\text{range}))$ time with $O(1)$ extra space.",
           "teachingGoal": "Trace the first example of Count <= X in a Matrix.",
           "codeCard": {
             "language": "java",
@@ -1883,7 +1895,7 @@
           "pageId": "binary-search-new-m5-t3-p4",
           "title": "Worked Example 2",
           "sectionType": "WORKED_EXAMPLE",
-          "content": "Count",
+          "content": "### Worked Example: Saddleback Search Counting Invariant\n\nTo count elements $\\le X$ in an $N \\times M$ row and column sorted matrix:\n1. Initialize `r = 0, c = M - 1` (top-right).\n2. If `matrix[r][c] <= X`: all elements in row `r` up to column `c` are $\\le X$. Add `c + 1` to count and move down (`r++`).\n3. If `matrix[r][c] > X`: move left (`c--`).\n4. Terminates in at most $N + M$ steps, giving optimal linear time counting.",
           "teachingGoal": "Trace a second variation and compare its boundary rule.",
           "codeCard": {
             "language": "java",
