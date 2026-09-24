@@ -507,7 +507,10 @@ export const hydrateProgressFromFirestore = (firestoreData, course) => {
         solvedProblems: topicSolved,
         checkpoints: {
           quickCheck: isCompleted || passedCpSet.has(`cp-${t.topicId}`),
-          practiceSolved: isCompleted || (practiceList.length > 0 && topicSolved.length >= practiceList.length),
+          practiceSolved: isCompleted || (practiceList.length > 0 && practiceList.every((q, idx) => {
+            const rawId = typeof q === 'string' ? q : (q.problemId || q.questionId || q.id || `P_${idx + 1}`);
+            return topicSolved.includes(rawId) || topicSolved.includes(`${rawId}_v${idx + 1}`);
+          })),
           videoWatched: isCompleted || completedVideoSet.has(t.topicId),
           readingCompleted: isCompleted || completedReadingSet.has(t.topicId),
           exampleRun: isCompleted || completedExampleSet.has(t.topicId),
@@ -1104,29 +1107,26 @@ export const getTopicActivityStatus = (topic, topicProgress) => {
       });
     } else if (req === 'practice') {
       const practiceList = topic.practiceProblems || topic.practiceQuestions || topic.codingQuestions || [];
-      const allPracticeListSolved = practiceList.length > 0 && practiceList.every(q => {
-        const ids = [q.id, q.problemId, q.questionId, (typeof q === 'string' ? q : null)].filter(Boolean);
-        return ids.some(id => solved.includes(id));
-      });
-      const done = isTopicMarkedCompleted || Boolean(
-        cp.practiceSolved ||
-        allPracticeListSolved ||
-        (practiceList.length > 0 ? solved.length >= practiceList.length : false)
-      );
-      if (done) completedCount++;
+      const solvedSet = new Set(solved);
+      const seenIds = new Set();
 
       let countSolved = 0;
       if (practiceList.length > 0) {
-        if (done) {
-          countSolved = practiceList.length;
-        } else {
-          practiceList.forEach(q => {
-            const ids = [q.id, q.problemId, q.questionId, (typeof q === 'string' ? q : null)].filter(Boolean);
-            if (ids.some(id => solved.includes(id))) countSolved++;
-          });
-          countSolved = Math.max(countSolved, Math.min(solved.length, practiceList.length));
-        }
+        practiceList.forEach((q, idx) => {
+          const rawId = typeof q === 'string' ? q : (q.problemId || q.questionId || q.id || `P_${idx + 1}`);
+          const uniqueId = seenIds.has(rawId) ? `${rawId}_v${idx + 1}` : rawId;
+          seenIds.add(rawId);
+
+          const isSolved = solvedSet.has(uniqueId) || (uniqueId === rawId && (solvedSet.has(rawId) || (typeof q === 'object' && (solvedSet.has(q.problemId) || solvedSet.has(q.id)))));
+          if (isSolved) {
+            countSolved++;
+          }
+        });
       }
+
+      const allSolved = practiceList.length > 0 && countSolved >= practiceList.length;
+      const done = isTopicMarkedCompleted || Boolean(allSolved);
+      if (done) completedCount++;
 
       items.push({
         key: 'practice',
@@ -1179,17 +1179,25 @@ export const recordTopicPracticeSolved = async (uid, course, moduleId, topicId, 
   const topicObj = findTopicInCourse(course, topicId)?.topic;
   const practiceList = topicObj?.practiceProblems || topicObj?.practiceQuestions || topicObj?.codingQuestions || [];
 
-  const allProblemsSolved = practiceList.length > 0
-    ? practiceList.every(q => {
-        const ids = [q.id, q.problemId, q.questionId, (typeof q === 'string' ? q : null)].filter(Boolean);
-        return ids.some(id => topicProg.solvedProblems.includes(id));
-      }) || (topicProg.solvedProblems.length >= practiceList.length)
-    : true;
+  const solvedSet = new Set(topicProg.solvedProblems);
+  const seenIds = new Set();
+  let solvedCount = 0;
+  if (practiceList.length > 0) {
+    practiceList.forEach((q, idx) => {
+      const rawId = typeof q === 'string' ? q : (q.problemId || q.questionId || q.id || `P_${idx + 1}`);
+      const uniqueId = seenIds.has(rawId) ? `${rawId}_v${idx + 1}` : rawId;
+      seenIds.add(rawId);
+
+      const isSolved = solvedSet.has(uniqueId) || (uniqueId === rawId && (solvedSet.has(rawId) || (typeof q === 'object' && (solvedSet.has(q.problemId) || solvedSet.has(q.id)))));
+      if (isSolved) {
+        solvedCount++;
+      }
+    });
+  }
+  const allProblemsSolved = practiceList.length > 0 ? solvedCount >= practiceList.length : true;
 
   if (!topicProg.checkpoints) topicProg.checkpoints = {};
-  if (allProblemsSolved) {
-    topicProg.checkpoints.practiceSolved = true;
-  }
+  topicProg.checkpoints.practiceSolved = allProblemsSolved;
 
   const primaryId = incomingIds[0] || 'p';
   awardCourseMilestone(uid, progress, course, 'practice', `${topicId}_${primaryId}`, COURSE_GAMIFICATION_SPEC.TOPIC_PRACTICE_XP, COURSE_GAMIFICATION_SPEC.TOPIC_PRACTICE_CREDITS);

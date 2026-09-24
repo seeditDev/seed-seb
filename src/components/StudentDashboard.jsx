@@ -73,8 +73,10 @@ import {
   FaListOl,
   FaLayerGroup,
   FaBoxOpen,
-  FaBatteryFull
+  FaBatteryFull,
+  FaBriefcase
 } from "react-icons/fa";
+import Placements from './Placements';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { isQuestionBankProblem } from '../services/codingProgressService';
 import SeedCreditCoin from './SeedCreditCoin';
@@ -6562,6 +6564,13 @@ const StudentDashboard = () => {
                 {!collapsed && <span>Contests</span>}
               </button>
               <button
+                className={`sidebar-nav-pill ${activeTab === "placements" ? "active" : ""}`}
+                onClick={() => setActiveTab("placements")}
+              >
+                <FaBriefcase />
+                {!collapsed && <span>Placements & Tests</span>}
+              </button>
+              <button
                 className={`sidebar-nav-pill ${activeTab === "practice" ? "active" : ""}`}
                 onClick={() => {
                   setPracticeInitialTab('bank');
@@ -6902,6 +6911,9 @@ const StudentDashboard = () => {
             ) :
             activeTab === "assessments" ? renderAssessments() :
              activeTab === "contests" ? renderContests() :
+              activeTab === "placements" ? (
+                <Placements user={user} />
+              ) :
               activeTab === "practice" ? (
                 <PracticeHome 
                   initialTab={practiceInitialTab} 

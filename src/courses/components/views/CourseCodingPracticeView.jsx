@@ -107,19 +107,35 @@ const CourseCodingPracticeView = ({
 
   // Normalize raw questions from topic schema
   const rawProblems = topic?.practiceProblems || topic?.practiceQuestions || topic?.codingQuestions || [];
+  // Normalize raw questions from topic schema with guaranteed unique IDs per question
   const normalizedList = useMemo(() => {
     if (!rawProblems || rawProblems.length === 0) {
-      return [{ id: 'Q1001', problemId: 'Q1001', title: 'Problem 1' }];
+      return [{ id: 'Q1001', problemId: 'Q1001', rawProblemId: 'Q1001', questionIndex: 0, title: 'Problem 1' }];
     }
+    const seenIds = new Set();
     return rawProblems.map((p, idx) => {
+      const rawId = typeof p === 'string' ? p : (p.problemId || p.questionId || p.id || `P_${idx + 1}`);
+      const isDuplicate = seenIds.has(rawId);
+      seenIds.add(rawId);
+      const uniqueId = isDuplicate ? `${rawId}_v${idx + 1}` : rawId;
+      const title = (typeof p === 'object' && p?.title) ? p.title : `Problem ${idx + 1}`;
+
       if (typeof p === 'string') {
-        return { id: p, problemId: p, title: `Problem ${p}` };
+        return { 
+          id: uniqueId, 
+          problemId: uniqueId, 
+          rawProblemId: rawId,
+          questionIndex: idx, 
+          title: `Problem ${p}` 
+        };
       }
       return {
         ...p,
-        id: p.problemId || p.questionId || p.id || `P_${idx + 1}`,
-        problemId: p.problemId || p.questionId || p.id || `P_${idx + 1}`,
-        title: p.title || `Problem ${idx + 1}`,
+        id: uniqueId,
+        problemId: uniqueId,
+        rawProblemId: rawId,
+        questionIndex: idx,
+        title,
         difficulty: p.difficulty || 'Medium',
         description: p.description || p.problemStatement || '',
         problemStatement: p.problemStatement || p.description || '',
@@ -166,16 +182,20 @@ const CourseCodingPracticeView = ({
 
   const isQuestionSolved = useCallback((q, idx) => {
     if (!q) return false;
-    const candidateIds = [
-      q.id,
-      q.problemId,
-      q.questionId,
-      (activeQIndex === idx && loadedQuestion?.id),
-      (activeQIndex === idx && loadedQuestion?.problemId),
-      `P_${idx + 1}`
-    ].filter(Boolean);
-    return candidateIds.some(id => localSolvedIds.has(id));
-  }, [localSolvedIds, activeQIndex, loadedQuestion]);
+    const uniqueId = q.id || q.problemId;
+    if (uniqueId && localSolvedIds.has(uniqueId)) return true;
+
+    // Only allow rawProblemId match if this question was not a duplicate in this topic
+    if (q.rawProblemId && q.id === q.rawProblemId && localSolvedIds.has(q.rawProblemId)) {
+      return true;
+    }
+
+    // Position fallback (P_1, P_2...)
+    const posId = `P_${idx + 1}`;
+    if (localSolvedIds.has(posId)) return true;
+
+    return false;
+  }, [localSolvedIds]);
 
   const solvedIds = localSolvedIds;
 
@@ -267,7 +287,8 @@ const CourseCodingPracticeView = ({
       }
 
       try {
-        const qbData = await fetchQuestion(qId);
+        const lookupId = activeQMeta?.rawProblemId || activeQMeta?.problemId || activeQMeta?.id || qId;
+        const qbData = await fetchQuestion(lookupId);
         if (!isMounted) return;
 
         if (qbData) {
@@ -509,39 +530,29 @@ const CourseCodingPracticeView = ({
       setSubmissionResult(subResult);
 
       if (isAllPassed) {
-        const candidateIds = [
-          loadedQuestion?.id,
-          loadedQuestion?.problemId,
-          activeQMeta?.id,
-          activeQMeta?.problemId,
-          activeQMeta?.questionId,
-          `P_${activeQIndex + 1}`
-        ].filter(Boolean);
+        const solvedId = activeQMeta?.id || activeQMeta?.problemId || `P_${activeQIndex + 1}`;
+        const canonicalSeedId = activeQMeta?.rawProblemId || activeQMeta?.problemId || loadedQuestion?.id;
 
-        // 1. Immediately update local UI state so pills turn green with zero lag
+        // 1. Immediately update local UI state with this specific solved question ID
         setLocalSolvedIds(prev => {
           const next = new Set(prev);
-          candidateIds.forEach(id => next.add(id));
+          next.add(solvedId);
           return next;
         });
 
-        const primaryId = loadedQuestion?.problemId || loadedQuestion?.id || activeQMeta?.problemId || activeQMeta?.id || `P_${activeQIndex + 1}`;
-
-        // 2. Notify parent with primary ID and all alias IDs
-        onProblemSolved?.(primaryId, candidateIds);
+        // 2. Notify parent with the exact unique ID for this question
+        onProblemSolved?.(solvedId, [solvedId]);
 
         // 3. One-way sync to global Question Bank & Practice Bank
-        const seedId = candidateIds.find(id => String(id).startsWith('Q')) || activeQMeta?.seedQuestionId || loadedQuestion?.seedQuestionId || primaryId;
-        syncPracticeProblemToQuestionBank(user?.uid, seedId, selectedLang, 100);
-        if (seedId && seedId !== primaryId) {
-          syncPracticeProblemToQuestionBank(user?.uid, primaryId, selectedLang, 100);
+        if (canonicalSeedId && String(canonicalSeedId).startsWith('Q')) {
+          syncPracticeProblemToQuestionBank(user?.uid, canonicalSeedId, selectedLang, 100);
         }
 
         // 3b. One-way sync to personal GitHub repository
         if (githubConfig.isConnected && githubConfig.autoSync) {
           syncSolvedProblemToGitHub(user?.uid, {
-            questionId: primaryId,
-            title: loadedQuestion?.title || activeQMeta?.title || primaryId,
+            questionId: solvedId,
+            title: loadedQuestion?.title || activeQMeta?.title || solvedId,
             difficulty: loadedQuestion?.difficulty || activeQMeta?.difficulty || 'Medium',
             category: topic?.name || topic?.title || 'Course Coding Practice',
             language: selectedLang,

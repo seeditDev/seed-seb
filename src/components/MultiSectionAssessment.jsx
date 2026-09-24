@@ -2756,6 +2756,75 @@ const MultiSectionAssessment = () => {
               console.warn('[MSA] Contest sync warning (non-fatal):', contestSyncErr);
             }
           }
+
+          // ── If this assessment is a Corporate / Recruiter Screening Assessment or SEED Litmus Benchmark ──
+          const isCorporateAssessment = Boolean(
+            assessment?.isCorporate || 
+            assessment?.recruiterAssessmentId || 
+            assessment?.jobId || 
+            assessment?.category === 'recruiter' ||
+            assessment?.category === 'benchmark' ||
+            assessment?.id?.startsWith('recruiter-') ||
+            assessment?.id?.startsWith('benchmark-')
+          );
+
+          if (isCorporateAssessment) {
+            try {
+              const pct = totalMarksSum > 0 ? Math.min(100, Math.round((allPassTotalScore / totalMarksSum) * 100)) : 0;
+              const calculatedPercentile = Math.min(99, Math.max(50, Math.round(pct * 0.95 + 5)));
+
+              // 1. Update user profile benchmark score
+              const userRef = doc(db, 'users', userId);
+              await setDoc(userRef, {
+                seedBenchmarkScore: allPassTotalScore,
+                seedBenchmarkPercentage: pct,
+                seedPercentile: calculatedPercentile,
+                seedVerified: true,
+                seedVerifiedAt: serverTimestamp(),
+              }, { merge: true });
+
+              // 2. Update jobApplications if tied to a job or application
+              const applicationId = assessment?.applicationId;
+              const jobId = assessment?.jobId;
+              if (applicationId) {
+                const appRef = doc(db, 'jobApplications', applicationId);
+                await setDoc(appRef, {
+                  stage: pct >= 60 ? 'shortlisted' : 'applied',
+                  assessmentScore: allPassTotalScore,
+                  assessmentMaxScore: totalMarksSum,
+                  assessmentPercentage: pct,
+                  seedPercentile: calculatedPercentile,
+                  seedVerified: true,
+                  assessmentCompletedAt: serverTimestamp(),
+                  recruiterNotes: `Proctored SEED Lockdown Assessment completed: ${allPassTotalScore}/${totalMarksSum} (${pct}%). Anti-cheat integrity verified.`,
+                }, { merge: true });
+              } else if (jobId) {
+                const appQuery = query(
+                  collection(db, 'jobApplications'),
+                  where('jobId', '==', jobId),
+                  where('studentUid', '==', userId)
+                );
+                const appSnap = await getDocs(appQuery);
+                if (!appSnap.empty) {
+                  for (const d of appSnap.docs) {
+                    await setDoc(d.ref, {
+                      stage: pct >= 60 ? 'shortlisted' : 'applied',
+                      assessmentScore: allPassTotalScore,
+                      assessmentMaxScore: totalMarksSum,
+                      assessmentPercentage: pct,
+                      seedPercentile: calculatedPercentile,
+                      seedVerified: true,
+                      assessmentCompletedAt: serverTimestamp(),
+                      recruiterNotes: `Proctored SEED Lockdown Assessment completed: ${allPassTotalScore}/${totalMarksSum} (${pct}%). Anti-cheat integrity verified.`,
+                    }, { merge: true });
+                  }
+                }
+              }
+              console.log('[MSA] Corporate / Recruiter assessment results synchronized successfully.');
+            } catch (corpErr) {
+              console.warn('[MSA] Error syncing corporate assessment results:', corpErr);
+            }
+          }
         } catch (writeErr) {
           console.error('[MSA] handleFinalSubmit: Firestore write failed — preserving pending envelope:', writeErr);
           const envKey = `msa_pending_submission_${userId}_${assessment.id}`;

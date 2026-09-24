@@ -23,6 +23,7 @@ const TextPageViewer = ({
   const steps = useMemo(() => {
     if (topic?.pages && Array.isArray(topic.pages) && topic.pages.length > 0) {
       const items = [];
+      const seenCpIds = new Set();
       topic.pages.forEach((p, pIdx) => {
         // Step A: The Content Page (reading text only, no checkpoint below)
         items.push({
@@ -40,10 +41,16 @@ const TextPageViewer = ({
 
         // Step B: The Checkpoint Page (dedicated full-page checkpoint)
         if (p.checkpoint) {
+          const rawCpId = p.checkpoint.checkpointId || p.checkpoint.id || `CP_${p.pageId || pIdx + 1}`;
+          const isDup = seenCpIds.has(rawCpId);
+          seenCpIds.add(rawCpId);
+          const cpId = isDup ? `${rawCpId}_p${pIdx + 1}` : rawCpId;
+
           items.push({
             type: 'CHECKPOINT',
-            stepId: `cp_${p.checkpoint.checkpointId || p.pageId || pIdx + 1}`,
-            checkpointId: p.checkpoint.checkpointId || `CP_${p.pageId || pIdx + 1}`,
+            stepId: `cp_${cpId}`,
+            checkpointId: cpId,
+            rawCheckpointId: rawCpId,
             pageIndex: pIdx,
             title: p.checkpoint.title || `Knowledge Check`,
             subtitle: `Checkpoint for: ${p.title || `Page ${pIdx + 1}`}`,
@@ -142,7 +149,7 @@ const TextPageViewer = ({
   const checkpoint = currentStep.checkpoint;
   const cpId = currentStep.checkpointId || checkpoint?.checkpointId;
   const isCheckpointPassed = isCheckpointStep 
-    ? (cpId ? passedCheckpoints.includes(cpId) : true)
+    ? Boolean(cpId && passedCheckpoints.includes(cpId))
     : true;
 
   const hasExamples = Boolean(
@@ -187,8 +194,8 @@ const TextPageViewer = ({
       selectedLetter === correctLetter ||
       selectedText === correctText;
 
-    if (isCorrect) {
-      const updated = [...passedCheckpoints, cpId];
+    if (isCorrect && cpId) {
+      const updated = Array.from(new Set([...passedCheckpoints, cpId]));
       setPassedCheckpoints(updated);
       setFeedback({ 
         isCorrect: true, 
@@ -273,7 +280,7 @@ const TextPageViewer = ({
             {steps.map((s, idx) => {
               const isCurrent = idx === currentStepIdx;
               const isPassed = s.type === 'CHECKPOINT' 
-                ? passedCheckpoints.includes(s.checkpointId)
+                ? Boolean(s.checkpointId && passedCheckpoints.includes(s.checkpointId))
                 : idx <= currentStepIdx;
 
               const isClickable = idx <= currentStepIdx || (s.type === 'CONTENT' && idx === currentStepIdx + 1 && !isCheckpointStep);
