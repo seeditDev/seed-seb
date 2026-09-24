@@ -10,15 +10,15 @@ import {
 } from 'firebase/firestore';
 
 /**
- * Flagship SEED National Benchmark Assessment (eLitmus / AMCAT Model)
+ * Flagship SEED Qualifier Benchmarking Assessment (SEED QBeA)
  * Standardized hiring benchmark recognized across 50+ corporate recruiting partners.
  */
 export const SEED_BENCHMARK_ASSESSMENT = {
   id: 'benchmark-seed-litmus-national-2026',
   slug: 'benchmark-seed-litmus-national-2026',
-  name: 'SEED National Hiring Benchmark Assessment (Litmus-Grade)',
-  title: 'SEED National Hiring Benchmark Assessment',
-  description: 'National standard benchmark exam evaluating Quantitative Aptitude, Core CS Fundamentals, and Hands-on Coding. Your score establishes your SEED Verified Percentile badge on the Recruiter Job Board.',
+  name: 'SEED Qualifier Benchmarking Assessment (SEED QBeA)',
+  title: 'SEED Qualifier Benchmarking Assessment (SEED QBeA)',
+  description: 'Comprehensive qualifier benchmarking examination evaluating Quantitative Aptitude, Core CS Fundamentals, and Hands-on Algorithmic Coding. Your score establishes your verified SEED QBeA Percentile badge for corporate job applications.',
   category: 'benchmark',
   isCorporate: true,
   difficulty: 'Hard',
@@ -33,7 +33,7 @@ export const SEED_BENCHMARK_ASSESSMENT = {
     maxViolations: 3,
   },
   companyName: 'SEED National Talent Pool (All Corporate Partners)',
-  badge: 'Litmus Benchmark',
+  badge: 'SEED QBeA Verified',
   sections: [
     {
       id: 'sec-quant-logic',
@@ -210,7 +210,7 @@ export const SEED_BENCHMARK_ASSESSMENT = {
 
 /**
  * Fetch all available corporate assessments for a candidate:
- * 1. SEED National Benchmark Exam (Litmus-Grade)
+ * 1. SEED Qualifier Benchmarking Assessment (SEED QBeA)
  * 2. Real company screening assessments assigned to this student in Firestore
  */
 export async function getCorporateAssessmentsForStudent(studentUid) {

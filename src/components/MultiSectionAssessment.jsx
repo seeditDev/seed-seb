@@ -2773,12 +2773,15 @@ const MultiSectionAssessment = () => {
               const pct = totalMarksSum > 0 ? Math.min(100, Math.round((allPassTotalScore / totalMarksSum) * 100)) : 0;
               const calculatedPercentile = Math.min(99, Math.max(50, Math.round(pct * 0.95 + 5)));
 
-              // 1. Update user profile benchmark score
+              // 1. Update user profile benchmark score with SEED QBeA results
               const userRef = doc(db, 'users', userId);
               await setDoc(userRef, {
                 seedBenchmarkScore: allPassTotalScore,
                 seedBenchmarkPercentage: pct,
                 seedPercentile: calculatedPercentile,
+                seedQbeaScore: allPassTotalScore,
+                seedQbeaPercentage: pct,
+                seedQbeaPercentile: calculatedPercentile,
                 seedVerified: true,
                 seedVerifiedAt: serverTimestamp(),
               }, { merge: true });

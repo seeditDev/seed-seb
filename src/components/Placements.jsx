@@ -86,24 +86,24 @@ const Placements = ({ user }) => {
           </div>
           <h2>Corporate Placements & Proctored Assessments</h2>
           <p>
-            Take standardized national hiring benchmarks (Litmus-Grade) and company-specific screening tests in a tamper-proof, webcam-proctored lockdown environment.
+            Take standardized qualifier benchmarking assessments (SEED QBeA) and company-specific screening tests in a tamper-proof, webcam-proctored lockdown environment.
           </p>
         </div>
 
         <div className="hero-right-card">
-          <div className="benchmark-stat-label">Your SEED Benchmark Status</div>
+          <div className="benchmark-stat-label">Your SEED QBeA Benchmark Status</div>
           {userPercentile ? (
             <div className="benchmark-verified-box">
               <div className="benchmark-score-num">{userPercentile}th</div>
               <div className="benchmark-score-desc">
-                <strong>National Percentile Verified</strong>
+                <strong>SEED QBeA Percentile Verified</strong>
                 <span>Recognized across 50+ recruiting partners</span>
               </div>
             </div>
           ) : (
             <div className="benchmark-unverified-box">
-              <span className="unverified-tag">Benchmark Not Yet Taken</span>
-              <p>Attempt the National Benchmark test below to earn your verified badge and attract recruiter shortlists.</p>
+              <span className="unverified-tag">SEED QBeA Not Yet Taken</span>
+              <p>Attempt the SEED Qualifier Benchmarking Assessment (SEED QBeA) below to earn your verified badge and attract recruiter shortlists.</p>
             </div>
           )}
         </div>
@@ -137,7 +137,7 @@ const Placements = ({ user }) => {
           {/* Flagship Benchmark Featured Card */}
           <div className="litmus-benchmark-card">
             <div className="benchmark-card-header">
-              <div className="benchmark-tag">⭐ FLAGSHIP NATIONAL BENCHMARK</div>
+              <div className="benchmark-tag">⭐ FLAGSHIP BENCHMARK (SEED QBeA)</div>
               <div className="benchmark-proctor-pill">🔒 Full SEB Lockdown & Webcam Proctoring Enforced</div>
             </div>
 
@@ -171,9 +171,9 @@ const Placements = ({ user }) => {
                   className="btn-launch-benchmark"
                   onClick={() => handleLaunchAssessment(SEED_BENCHMARK_ASSESSMENT)}
                 >
-                  🚀 Launch National Benchmark in SEB
+                  🚀 Launch SEED QBeA in SEB
                 </button>
-                <span className="launch-note">Calculates your National Percentile badge instantly upon submission.</span>
+                <span className="launch-note">Calculates your verified SEED QBeA Percentile badge instantly upon submission.</span>
               </div>
             </div>
           </div>
@@ -286,7 +286,7 @@ const Placements = ({ user }) => {
                     <th>Target Role & Company</th>
                     <th>Applied On</th>
                     <th>Current ATS Stage</th>
-                    <th>SEED Benchmark Score</th>
+                    <th>SEED QBeA Score</th>
                     <th>Recruiter Evaluation Remarks</th>
                   </tr>
                 </thead>
