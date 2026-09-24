@@ -39,55 +39,7 @@ const Placements = ({ user }) => {
           jobsList.push({ id: d.id, ...d.data() });
         });
         if (mounted) {
-          if (jobsList.length > 0) {
-            setJobs(jobsList);
-          } else {
-            // Default mock corporate jobs
-            setJobs([
-              {
-                id: 'job-seed-01',
-                title: 'Software Development Engineer (Backend - Java)',
-                companyName: 'Razorpay',
-                location: 'Bengaluru, Karnataka',
-                workMode: 'Hybrid',
-                ctcMin: 14,
-                ctcMax: 20,
-                requiredSkills: ['Java', 'Spring Boot', 'Microservices', 'PostgreSQL'],
-                eligibilityGate: {
-                  requiredCourseIds: ['01-programming/java', '02-dsa/dsa-core'],
-                },
-                applicantCount: 28,
-              },
-              {
-                id: 'job-seed-02',
-                title: 'Frontend Engineer (React.js / Next.js)',
-                companyName: 'Swiggy',
-                location: 'Remote / Bengaluru',
-                workMode: 'Remote',
-                ctcMin: 12,
-                ctcMax: 18,
-                requiredSkills: ['React', 'JavaScript', 'TypeScript', 'TailwindCSS'],
-                eligibilityGate: {
-                  requiredCourseIds: ['01-programming/javascript', '03-web-development/react-mastery'],
-                },
-                applicantCount: 42,
-              },
-              {
-                id: 'job-seed-03',
-                title: 'Data Analyst & SQL Systems Specialist',
-                companyName: 'CRED',
-                location: 'Bengaluru, Karnataka',
-                workMode: 'On-site',
-                ctcMin: 10,
-                ctcMax: 15,
-                requiredSkills: ['SQL', 'PostgreSQL', 'Python'],
-                eligibilityGate: {
-                  requiredCourseIds: ['04-databases/sql-mastery'],
-                },
-                applicantCount: 19,
-              },
-            ]);
-          }
+          setJobs(jobsList);
         }
 
         // 3. Load Student Applications
@@ -99,21 +51,7 @@ const Placements = ({ user }) => {
             appList.push({ id: d.id, ...d.data() });
           });
           if (mounted) {
-            if (appList.length > 0) {
-              setApplications(appList);
-            } else {
-              setApplications([
-                {
-                  id: 'app-seed-01',
-                  jobTitle: 'Software Development Engineer (Backend - Java)',
-                  companyName: 'Razorpay',
-                  stage: 'shortlisted',
-                  appliedAt: new Date(Date.now() - 3 * 86400000).toLocaleDateString(),
-                  recruiterNotes: 'Candidate screened via Java & Spring Boot round. Technical interview scheduled.',
-                  seedPercentile: 94,
-                },
-              ]);
-            }
+            setApplications(appList);
           }
         }
       } catch (err) {
@@ -246,119 +184,141 @@ const Placements = ({ user }) => {
             <p>Rounds assigned by corporate recruiters for active job applications.</p>
           </div>
 
-          <div className="corporate-tests-grid">
-            {corporateTests
-              .filter((t) => t.category === 'recruiter')
-              .map((test) => (
-                <div key={test.id} className="corporate-test-card">
-                  <div className="test-card-top">
-                    <div className="company-logo-placeholder">
-                      {test.companyName?.slice(0, 2)?.toUpperCase() || 'CO'}
+          {corporateTests.filter((t) => t.category === 'recruiter').length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.06)', color: '#94a3b8', fontSize: '13px' }}>
+              No custom company screening tests assigned at this moment. Complete the National Benchmark above to earn your verified score.
+            </div>
+          ) : (
+            <div className="corporate-tests-grid">
+              {corporateTests
+                .filter((t) => t.category === 'recruiter')
+                .map((test) => (
+                  <div key={test.id} className="corporate-test-card">
+                    <div className="test-card-top">
+                      <div className="company-logo-placeholder">
+                        {test.companyName?.slice(0, 2)?.toUpperCase() || 'CO'}
+                      </div>
+                      <div>
+                        <div className="test-company-name">{test.companyName}</div>
+                        <h4 className="test-title">{test.title}</h4>
+                      </div>
                     </div>
-                    <div>
-                      <div className="test-company-name">{test.companyName}</div>
-                      <h4 className="test-title">{test.title}</h4>
+
+                    <p className="test-desc">{test.description}</p>
+
+                    <div className="test-metrics-row">
+                      <span>⏱️ {test.duration} Mins</span>
+                      <span>🎯 {test.maxScore} Marks</span>
+                      <span>🔒 Webcam Proctored</span>
+                    </div>
+
+                    <div className="test-card-footer">
+                      <button
+                        className="btn-launch-corporate"
+                        onClick={() => handleLaunchAssessment(test)}
+                      >
+                        Start Screening Test
+                      </button>
                     </div>
                   </div>
-
-                  <p className="test-desc">{test.description}</p>
-
-                  <div className="test-metrics-row">
-                    <span>⏱️ {test.duration} Mins</span>
-                    <span>🎯 {test.maxScore} Marks</span>
-                    <span>🔒 Webcam Proctored</span>
-                  </div>
-
-                  <div className="test-card-footer">
-                    <button
-                      className="btn-launch-corporate"
-                      onClick={() => handleLaunchAssessment(test)}
-                    >
-                      Start Screening Test
-                    </button>
-                  </div>
-                </div>
-              ))}
-          </div>
+                ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* TAB 2: VERIFIED CAMPUS JOB BOARD */}
       {activeTab === 'jobs' && (
         <div className="tab-pane-content">
-          <div className="job-board-grid">
-            {jobs.map((j) => (
-              <div key={j.id} className="job-card-seb" onClick={() => setSelectedJob(j)}>
-                <div className="job-seb-header">
-                  <div>
-                    <h4 className="job-role">{j.title}</h4>
-                    <span className="job-comp">{j.companyName} • 📍 {j.location}</span>
+          {jobs.length === 0 ? (
+            <div style={{ padding: '3.5rem 2rem', textAlign: 'center', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#94a3b8' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>💼</div>
+              <h4 style={{ color: '#fff', margin: '0 0 6px 0', fontSize: '16px' }}>No Campus Job Postings Available</h4>
+              <p style={{ margin: 0, fontSize: '13px' }}>There are currently no active corporate job openings. New verified employer roles will appear here.</p>
+            </div>
+          ) : (
+            <div className="job-board-grid">
+              {jobs.map((j) => (
+                <div key={j.id} className="job-card-seb" onClick={() => setSelectedJob(j)}>
+                  <div className="job-seb-header">
+                    <div>
+                      <h4 className="job-role">{j.title}</h4>
+                      <span className="job-comp">{j.companyName} • 📍 {j.location}</span>
+                    </div>
+                    <span className="job-ctc">₹{j.ctcMin} - ₹{j.ctcMax} LPA</span>
                   </div>
-                  <span className="job-ctc">₹{j.ctcMin} - ₹{j.ctcMax} LPA</span>
-                </div>
 
-                <div className="job-skills-chips">
-                  {j.requiredSkills?.map((s) => (
-                    <span key={s} className="skill-chip">{s}</span>
-                  ))}
-                </div>
+                  <div className="job-skills-chips">
+                    {j.requiredSkills?.map((s) => (
+                      <span key={s} className="skill-chip">{s}</span>
+                    ))}
+                  </div>
 
-                <div className="job-eligibility-note">
-                  🎓 Prerequisite Gate: {(j.eligibilityGate?.requiredCourseIds?.length || 0)} SEED Courses Required
-                </div>
+                  <div className="job-eligibility-note">
+                    🎓 Prerequisite Gate: {(j.eligibilityGate?.requiredCourseIds?.length || 0)} SEED Courses Required
+                  </div>
 
-                <div className="job-seb-footer">
-                  <span className="applicant-badge">👥 {j.applicantCount || 12} Applicants</span>
-                  <button className="btn-view-job">View & Apply</button>
+                  <div className="job-seb-footer">
+                    <span className="applicant-badge">👥 {j.applicantCount || 0} Applicants</span>
+                    <button className="btn-view-job">View & Apply</button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* TAB 3: APPLICATION PIPELINE & ATS */}
       {activeTab === 'applications' && (
         <div className="tab-pane-content">
-          <div className="applications-table-wrapper">
-            <table className="seb-applications-table">
-              <thead>
-                <tr>
-                  <th>Target Role & Company</th>
-                  <th>Applied On</th>
-                  <th>Current ATS Stage</th>
-                  <th>SEED Benchmark Score</th>
-                  <th>Recruiter Evaluation Remarks</th>
-                </tr>
-              </thead>
-              <tbody>
-                {applications.map((app) => (
-                  <tr key={app.id}>
-                    <td>
-                      <strong>{app.jobTitle}</strong>
-                      <div className="cell-sub">{app.companyName}</div>
-                    </td>
-                    <td>{app.appliedAt}</td>
-                    <td>
-                      <span className={`stage-tag ${app.stage}`}>
-                        {app.stage?.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="percentile-text">
-                        {app.seedPercentile ? `Top ${app.seedPercentile}th Percentile` : 'Evaluated in SEB'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="remarks-text">
-                        {app.recruiterNotes || 'Assessment passed. Profile under technical review.'}
-                      </div>
-                    </td>
+          {applications.length === 0 ? (
+            <div style={{ padding: '3.5rem 2rem', textAlign: 'center', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#94a3b8' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📊</div>
+              <h4 style={{ color: '#fff', margin: '0 0 6px 0', fontSize: '16px' }}>No Job Applications Submitted Yet</h4>
+              <p style={{ margin: 0, fontSize: '13px' }}>Explore verified jobs or take the SEED National Benchmark to unlock corporate interview shortlists.</p>
+            </div>
+          ) : (
+            <div className="applications-table-wrapper">
+              <table className="seb-applications-table">
+                <thead>
+                  <tr>
+                    <th>Target Role & Company</th>
+                    <th>Applied On</th>
+                    <th>Current ATS Stage</th>
+                    <th>SEED Benchmark Score</th>
+                    <th>Recruiter Evaluation Remarks</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {applications.map((app) => (
+                    <tr key={app.id}>
+                      <td>
+                        <strong>{app.jobTitle}</strong>
+                        <div className="cell-sub">{app.companyName}</div>
+                      </td>
+                      <td>{app.appliedAt}</td>
+                      <td>
+                        <span className={`stage-tag ${app.stage}`}>
+                          {app.stage?.toUpperCase()}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="percentile-text">
+                          {app.seedPercentile ? `Top ${app.seedPercentile}th Percentile` : 'Evaluated in SEB'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="remarks-text">
+                          {app.recruiterNotes || 'Assessment passed. Profile under technical review.'}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

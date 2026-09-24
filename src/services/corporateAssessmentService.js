@@ -209,211 +209,16 @@ export const SEED_BENCHMARK_ASSESSMENT = {
 };
 
 /**
- * Company-Specific Corporate Screening Assessments
- */
-export const CORPORATE_SCREENING_ASSESSMENTS = [
-  {
-    id: 'recruiter-razorpay-backend-sde-round1',
-    slug: 'recruiter-razorpay-backend-sde-round1',
-    name: 'Razorpay — Backend SDE Screening Round 1',
-    title: 'Razorpay Backend SDE Screening',
-    description: 'Mandatory round 1 proctored technical evaluation testing Java concurrency, database indexing, and REST microservices logic.',
-    category: 'recruiter',
-    isCorporate: true,
-    companyId: 'comp-seed-razorpay',
-    companyName: 'Razorpay',
-    jobId: 'job-seed-01',
-    jobTitle: 'Software Development Engineer (Backend - Java)',
-    difficulty: 'Medium',
-    duration: 60,
-    maxScore: 100,
-    badge: 'Interview Gateway',
-    proctoring: {
-      enabled: true,
-      webcam: true,
-      fullScreen: true,
-      tabLock: true,
-      maxViolations: 2,
-    },
-    sections: [
-      {
-        id: 'sec-java-theory',
-        title: 'Java Concurrency & Spring Boot Internals',
-        type: 'mcq',
-        duration: 25,
-        maxScore: 40,
-        questions: [
-          {
-            id: 'rz-1',
-            question: 'What is the primary difference between `ReentrantLock` and the `synchronized` keyword in Java?',
-            options: [
-              'ReentrantLock allows timed lock attempts and interruptible locking; synchronized does not.',
-              'synchronized is faster under all heavy contention workloads.',
-              'ReentrantLock does not support reentrancy.',
-              'synchronized supports fair queuing by default.'
-            ],
-            correctIndex: 0,
-            correctAnswer: 'ReentrantLock allows timed lock attempts and interruptible locking; synchronized does not.',
-            marks: 10,
-            topic: 'Java Concurrency'
-          },
-          {
-            id: 'rz-2',
-            question: 'In Spring Boot, which annotation is used to execute a database transaction with rollback upon checked exceptions?',
-            options: ['@Transactional(rollbackFor = Exception.class)', '@Transactional', '@RollbackSafe', '@TransactionBoundary'],
-            correctIndex: 0,
-            correctAnswer: '@Transactional(rollbackFor = Exception.class)',
-            marks: 10,
-            topic: 'Spring Boot Architecture'
-          },
-          {
-            id: 'rz-3',
-            question: 'Which garbage collector in Java 17+ is designed for ultra-low latency pauses under 1 millisecond?',
-            options: ['ZGC (Z Garbage Collector)', 'Serial GC', 'Parallel GC', 'CMS (Concurrent Mark Sweep)'],
-            correctIndex: 0,
-            correctAnswer: 'ZGC (Z Garbage Collector)',
-            marks: 10,
-            topic: 'JVM Performance'
-          },
-          {
-            id: 'rz-4',
-            question: 'What happens when two transactions update the same PostgreSQL row concurrently under READ COMMITTED isolation?',
-            options: [
-              'The second transaction waits for the first to commit or abort before re-evaluating the row.',
-              'Both transactions proceed simultaneously with last-write-wins.',
-              'PostgreSQL immediately throws a deadlock exception.',
-              'The first transaction is aborted automatically.'
-            ],
-            correctIndex: 0,
-            correctAnswer: 'The second transaction waits for the first to commit or abort before re-evaluating the row.',
-            marks: 10,
-            topic: 'PostgreSQL Locking'
-          }
-        ]
-      },
-      {
-        id: 'sec-java-coding',
-        title: 'Transaction Ledger & Idempotency Engine',
-        type: 'coding',
-        duration: 35,
-        maxScore: 60,
-        problems: [
-          {
-            id: 'prob-idempotent-ledger',
-            title: 'Payment Idempotency Key Processor',
-            difficulty: 'Medium',
-            marks: 60,
-            description: 'Implement a thread-safe idempotency checker that records transaction requests. If a request with the same idempotencyKey is received within 60 seconds, return the cached result. Otherwise process the payment and cache the outcome.',
-            starterCode: {
-              java: 'import java.util.concurrent.*;\n\nclass IdempotencyEngine {\n    private final ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<>();\n\n    public String processPayment(String idempotencyKey, double amount) {\n        // Return cached paymentId if key already processed\n        return cache.computeIfAbsent(idempotencyKey, k -> "PAY_" + System.currentTimeMillis() + "_" + (int)amount);\n    }\n}',
-              python: 'class IdempotencyEngine:\n    def __init__(self):\n        self.cache = {}\n\n    def process_payment(self, idempotency_key, amount):\n        if idempotency_key in self.cache:\n            return self.cache[idempotency_key]\n        res = f"PAY_{idempotency_key}_{int(amount)}"\n        self.cache[idempotency_key] = res\n        return res'
-            },
-            testCases: [
-              { input: '"KEY_101", 500', expectedOutput: 'PAY_KEY_101_500' }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'recruiter-swiggy-frontend-react-round1',
-    slug: 'recruiter-swiggy-frontend-react-round1',
-    name: 'Swiggy — Frontend (React / Next.js) Coding Challenge',
-    title: 'Swiggy Frontend Engineer Screening',
-    description: 'Proctored challenge on React rendering optimization, custom hooks, and virtualized list architecture.',
-    category: 'recruiter',
-    isCorporate: true,
-    companyId: 'comp-seed-swiggy',
-    companyName: 'Swiggy',
-    jobId: 'job-seed-02',
-    jobTitle: 'Frontend Engineer (React.js / Next.js)',
-    difficulty: 'Medium',
-    duration: 60,
-    maxScore: 100,
-    badge: 'Interview Gateway',
-    proctoring: {
-      enabled: true,
-      webcam: true,
-      fullScreen: true,
-      tabLock: true,
-      maxViolations: 2,
-    },
-    sections: [
-      {
-        id: 'sec-react-architecture',
-        title: 'React 19 & State Optimization',
-        type: 'mcq',
-        duration: 25,
-        maxScore: 40,
-        questions: [
-          {
-            id: 'sw-1',
-            question: 'What is the purpose of React 19 `useOptimistic` hook?',
-            options: [
-              'To show immediate optimistic UI feedback while an async server action is pending.',
-              'To optimize bundling with tree-shaking.',
-              'To cache fetch requests across route transitions.',
-              'To replace Redux Toolkit globally.'
-            ],
-            correctIndex: 0,
-            correctAnswer: 'To show immediate optimistic UI feedback while an async server action is pending.',
-            marks: 10,
-            topic: 'React 19 Features'
-          },
-          {
-            id: 'sw-2',
-            question: 'Why should inline object references in `useMemo` dependencies be avoided?',
-            options: [
-              'They create new object references on every render, causing unwanted recalculations.',
-              'They trigger React strict mode hydration crashes.',
-              'They increase the memory footprint of V8 Garbage Collector.',
-              'They are not permitted by ECMAScript strict mode.'
-            ],
-            correctIndex: 0,
-            correctAnswer: 'They create new object references on every render, causing unwanted recalculations.',
-            marks: 10,
-            topic: 'React Rendering Optimization'
-          }
-        ]
-      },
-      {
-        id: 'sec-js-coding',
-        title: 'Debounce & Event Batching Implementation',
-        type: 'coding',
-        duration: 35,
-        maxScore: 60,
-        problems: [
-          {
-            id: 'prob-debounce',
-            title: 'Custom Debounce with Cancellation',
-            difficulty: 'Medium',
-            marks: 60,
-            description: 'Implement a `debounce` function that takes a callback and delay in milliseconds. The returned debounced function must also provide a `.cancel()` method to clear pending executions.',
-            starterCode: {
-              javascript: 'function debounce(fn, delay) {\n  let timer = null;\n  const debounced = function(...args) {\n    if (timer) clearTimeout(timer);\n    timer = setTimeout(() => fn.apply(this, args), delay);\n  };\n  debounced.cancel = function() {\n    if (timer) clearTimeout(timer);\n  };\n  return debounced;\n}'
-            },
-            testCases: [
-              { input: 'fn, 100', expectedOutput: 'Function with cancel' }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-];
-
-/**
  * Fetch all available corporate assessments for a candidate:
  * 1. SEED National Benchmark Exam (Litmus-Grade)
- * 2. Any company screening assessments assigned to this student
+ * 2. Real company screening assessments assigned to this student in Firestore
  */
 export async function getCorporateAssessmentsForStudent(studentUid) {
-  const list = [SEED_BENCHMARK_ASSESSMENT, ...CORPORATE_SCREENING_ASSESSMENTS];
+  const list = [SEED_BENCHMARK_ASSESSMENT];
 
   try {
     if (studentUid) {
-      // Check for custom assigned assessments from Firestore jobApplications
+      // Check for real assigned assessments from Firestore jobApplications
       const appsQuery = query(
         collection(db, 'jobApplications'),
         where('studentUid', '==', studentUid)
@@ -422,16 +227,36 @@ export async function getCorporateAssessmentsForStudent(studentUid) {
       if (!snap.empty) {
         snap.forEach((d) => {
           const data = d.data();
-          // If this application has a custom assessment link or stage is shortlisted
-          if (data.stage === 'shortlisted' && data.companyName) {
-            // Check if already in list
-            const existing = list.find((a) => a.jobId === data.jobId);
-            if (existing) {
-              existing.applicationId = d.id;
-              existing.candidateStatus = data.stage;
-              existing.assessmentScore = data.assessmentScore;
-              existing.assessmentCompletedAt = data.assessmentCompletedAt;
-            }
+          if (data.stage === 'shortlisted' && (data.assessmentTitle || data.assignedAssessment)) {
+            list.push({
+              id: data.assessmentId || `assessment-${d.id}`,
+              slug: data.assessmentSlug || `recruiter-${d.id}`,
+              name: data.assessmentTitle || `${data.companyName} Screening Round`,
+              title: data.assessmentTitle || `${data.companyName} Screening Round`,
+              description: data.assessmentDescription || `Proctored technical screening assigned by ${data.companyName}.`,
+              category: 'recruiter',
+              isCorporate: true,
+              companyId: data.companyId,
+              companyName: data.companyName,
+              jobId: data.jobId,
+              jobTitle: data.jobTitle,
+              difficulty: data.difficulty || 'Medium',
+              duration: data.duration || 60,
+              maxScore: data.maxScore || 100,
+              badge: 'Interview Gateway',
+              proctoring: {
+                enabled: true,
+                webcam: true,
+                fullScreen: true,
+                tabLock: true,
+                maxViolations: 2,
+              },
+              sections: data.sections || [],
+              applicationId: d.id,
+              candidateStatus: data.stage,
+              assessmentScore: data.assessmentScore,
+              assessmentCompletedAt: data.assessmentCompletedAt,
+            });
           }
         });
       }
