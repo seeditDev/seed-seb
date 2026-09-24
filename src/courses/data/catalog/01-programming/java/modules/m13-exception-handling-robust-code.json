@@ -21,46 +21,46 @@
             "text": "Understanding Basics of Try-Catch in Java in Try-Catch is vital for architectural correctness and optimal performance."
           },
           "codeCard": {
+            "title": "Graceful Exception Handling with Try-Catch",
             "language": "java",
-            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+            "code": "public class TryCatchBasics {\n    public static void main(String[] args) {\n        int numerator = 50;\n        int denominator = 0;\n        \n        try {\n            System.out.println(\"Attempting division: \" + numerator + \" / \" + denominator);\n            int result = numerator / denominator; // Throws ArithmeticException\n            System.out.println(\"Result: \" + result); // SKIPPED!\n        } catch (ArithmeticException e) {\n            System.err.println(\"Caught exception: Cannot divide by zero!\");\n            System.err.println(\"Exception message: \" + e.getMessage());\n        }\n        \n        System.out.println(\"Program continues execution normally after catch block.\");\n    }\n}"
           },
           "checkpoint": {
-            "checkpointId": "cp-JAVATC01",
-            "question": "In Try-Catch, what is the key consideration regarding Basics of Try-Catch in Java?",
+            "question": "What happens to lines of code inside a 'try' block that appear AFTER the statement that throws an exception?",
             "options": [
-              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Java for Project building",
-              "Relies on unconstrained global mutable memory buffers across thread boundaries",
-              "Bypasses syntax validation and type checking at compile/runtime",
-              "Forces unbounded recursion without an explicit termination condition"
+              "They are completely skipped; execution transfers immediately to the matching catch block",
+              "They execute after the catch block completes",
+              "They execute with default zero values",
+              "They cause a compilation error"
             ],
             "correctAnswer": 0,
-            "explanation": "In Learn Java for Project building, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+            "explanation": "When an exception occurs inside a try block, the JVM immediately stops normal execution at that exact line and jumps to the first compatible catch block, skipping all subsequent statements in the try block."
           }
         },
         {
           "pageId": "p-JAVATC02",
           "title": "Try-Catch Visualizer",
-          "content": "359aa0647e37003373e9028177f0fcff",
+          "content": "### Try-Catch Control Flow Visualizer\n\nUnderstanding how control flows during an exception is crucial for reasoning about program state and cleanup.\n\n```\n  [ Normal Execution ]\n          │\n          ▼\n    ┌───────────┐\n    │ try {     │\n    │   Line 1  │ ──► Success\n    │   Line 2  │ ──► EXCEPTION THROWN! (e.g. Division by Zero)\n    │   Line 3  │ ──► [ SKIPPED ]\n    │ }         │\n    └─────┬─────┘\n          │ (Immediate transfer)\n          ▼\n    ┌───────────────────────────┐\n    │ catch (ArithmeticException)│\n    │   Recovery / Log error    │ ──► Handles error gracefully\n    │ }                         │\n    └─────────────┬─────────────┘\n                  │\n                  ▼\n  [ Continues Normal Execution ]\n```\n\n#### Step-by-Step Flow:\n1. **Entering Try Block:** Statements execute sequentially in the current thread.\n2. **Exception Triggered:** When an exceptional condition occurs (e.g. `10 / 0`), the JVM creates an `ArithmeticException` object and throws it.\n3. **Aborting Try Execution:** The remainder of the `try` block is immediately aborted.\n4. **Catch Matching:** The JVM matches the thrown exception against the `catch (ExceptionType e)` clause. If compatible, control enters the catch block.\n5. **Recovery & Continuity:** After the catch block finishes, execution resumes seamlessly with the statements following the try-catch block. The application does **NOT** crash.",
           "callout": {
             "type": "KEY_CONCEPT",
             "title": "Engineering Principle",
             "text": "Understanding Try-Catch Visualizer in Try-Catch is vital for architectural correctness and optimal performance."
           },
           "codeCard": {
+            "title": "Try-Catch Control Flow Tracing",
             "language": "java",
-            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+            "code": "public class ControlFlowVisualizer {\n    public static void main(String[] args) {\n        System.out.println(\"Step 1: Before try block\");\n        \n        try {\n            System.out.println(\"Step 2: Inside try - before risky operation\");\n            int[] numbers = {1, 2, 3};\n            int val = numbers[10]; // Throws ArrayIndexOutOfBoundsException!\n            System.out.println(\"Step 3: This line NEVER executes!\");\n        } catch (ArrayIndexOutOfBoundsException e) {\n            System.out.println(\"Step 4: Inside catch block - Handled: \" + e.getClass().getSimpleName());\n        }\n        \n        System.out.println(\"Step 5: After try-catch block - program continues safely.\");\n    }\n}"
           },
           "checkpoint": {
-            "checkpointId": "cp-JAVATC02",
-            "question": "In Try-Catch, what is the key consideration regarding Try-Catch Visualizer?",
+            "question": "In the control flow visualizer above, why is 'Step 3: This line NEVER executes!' skipped?",
             "options": [
-              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Java for Project building",
-              "Relies on unconstrained global mutable memory buffers across thread boundaries",
-              "Bypasses syntax validation and type checking at compile/runtime",
-              "Forces unbounded recursion without an explicit termination condition"
+              "Because the exception at numbers[10] immediately transfers execution to the catch handler",
+              "Because the JVM compiler commented out Step 3",
+              "Because Step 3 contains a syntax error",
+              "Because the thread was terminated"
             ],
             "correctAnswer": 0,
-            "explanation": "In Learn Java for Project building, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+            "explanation": "An uncaught exception at index 10 immediately halts execution in the try block and jumps directly to the matching catch block, bypassing Step 3 completely."
           }
         },
         {
@@ -73,46 +73,46 @@
             "text": "Understanding Handling Multiple Exceptions in Try-Catch is vital for architectural correctness and optimal performance."
           },
           "codeCard": {
+            "title": "Handling Multiple Exception Types",
             "language": "java",
-            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+            "code": "import java.util.Scanner;\n\npublic class MultipleCatchDemo {\n    public static void main(String[] args) {\n        String input = \"abc\";\n        \n        try {\n            int num = Integer.parseInt(input); // Can throw NumberFormatException\n            int result = 100 / num;           // Can throw ArithmeticException\n            System.out.println(\"Result: \" + result);\n        } catch (NumberFormatException e) {\n            System.err.println(\"Input error: '\" + input + \"' is not a valid integer.\");\n        } catch (ArithmeticException e) {\n            System.err.println(\"Math error: Cannot divide 100 by zero.\");\n        }\n    }\n}"
           },
           "checkpoint": {
-            "checkpointId": "cp-JAVATC05",
-            "question": "In Try-Catch, what is the key consideration regarding Handling Multiple Exceptions?",
+            "question": "Why should a program handle different exception types (like NumberFormatException and ArithmeticException) in separate catch blocks?",
             "options": [
-              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Java for Project building",
-              "Relies on unconstrained global mutable memory buffers across thread boundaries",
-              "Bypasses syntax validation and type checking at compile/runtime",
-              "Forces unbounded recursion without an explicit termination condition"
+              "To provide targeted, context-appropriate recovery actions and user-friendly error messages tailored to each specific failure mode",
+              "Because Java only allows one statement inside any single catch block",
+              "Because the JVM crashes if a catch block handles more than one error",
+              "To make the code run faster by parallelizing the catches"
             ],
             "correctAnswer": 0,
-            "explanation": "In Learn Java for Project building, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+            "explanation": "Distinct failure modes require distinct responses. An invalid number format requires asking the user for re-entry, whereas a division by zero might require falling back to a default value or alerting a calculation error."
           }
         },
         {
           "pageId": "p-JAVATC06",
           "title": "Multiple Exceptions Visualizer",
-          "content": "ff66fe9598f3e7bb8090eb3334f3731e",
+          "content": "### Multiple Catch Clauses Evaluation Order\n\nWhen a `try` block is followed by multiple `catch` clauses, Java evaluates them strictly from **top to bottom**.\n\n```\n   try {\n       // Risky operation\n   }\n   catch (NumberFormatException e) { ──► Checked 1st: Matches? Enter block!\n       // Handle parsing error\n   }\n   catch (ArithmeticException e)   { ──► Checked 2nd: Matches? Enter block!\n       // Handle math error\n   }\n   catch (Exception e)             { ──► Checked 3rd: General fallback\n       // Catches any remaining exception\n   }\n```\n\n#### Critical Ordering Rule: Specific to General\nIn Java, exception classes form an inheritance hierarchy:\n`Throwable` -> `Exception` -> `RuntimeException` -> `ArithmeticException`\n\n- **Subclass exceptions MUST appear BEFORE superclass exceptions!**\n- If you place `catch (Exception e)` first, it will catch **every** exception, making subsequent blocks like `catch (ArithmeticException e)` completely unreachable!\n- The Java compiler actively detects this and raises an error: `exception has already been caught`.\n\n#### Java 7 Multi-Catch Syntax:\nIf different exceptions share identical recovery logic, you can combine them using the vertical bar (`|`) multi-catch syntax:\n```java\ntry {\n    // Risky I/O and parsing\n} catch (IOException | NumberFormatException e) {\n    logger.error(\"Processing failed: \" + e.getMessage());\n}\n```\n*(Note: In a multi-catch clause, the exception parameter `e` is implicitly `final`.)*",
           "callout": {
             "type": "KEY_CONCEPT",
             "title": "Engineering Principle",
             "text": "Understanding Multiple Exceptions Visualizer in Try-Catch is vital for architectural correctness and optimal performance."
           },
           "codeCard": {
+            "title": "Multi-Catch and Hierarchy Ordering",
             "language": "java",
-            "code": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n public static void main(String[] args) {\n // Write your Java code here\n }\n}"
+            "code": "public class MultiCatchVisualizer {\n    public static void process(String data) {\n        try {\n            int val = Integer.parseInt(data);\n            int res = 50 / val;\n            System.out.println(\"Processed: \" + res);\n        } catch (NumberFormatException | ArithmeticException e) {\n            // Java 7+ multi-catch syntax: parameter 'e' is implicitly final\n            System.err.println(\"Specific calculation error: \" + e.getMessage());\n        } catch (Exception e) {\n            // General catch-all fallback must come LAST\n            System.err.println(\"Unexpected general error: \" + e.getMessage());\n        }\n    }\n\n    public static void main(String[] args) {\n        process(\"0\");   // Caught by ArithmeticException\n        process(\"xyz\"); // Caught by NumberFormatException\n    }\n}"
           },
           "checkpoint": {
-            "checkpointId": "cp-JAVATC06",
-            "question": "In Try-Catch, what is the key consideration regarding Multiple Exceptions Visualizer?",
+            "question": "What happens if a developer places catch (Exception e) BEFORE catch (ArithmeticException e)?",
             "options": [
-              "Ensures correct data encapsulation, invariant safety, and expected execution in Learn Java for Project building",
-              "Relies on unconstrained global mutable memory buffers across thread boundaries",
-              "Bypasses syntax validation and type checking at compile/runtime",
-              "Forces unbounded recursion without an explicit termination condition"
+              "A compilation error occurs because catch (ArithmeticException e) is unreachable code",
+              "ArithmeticException is handled by both catch blocks",
+              "ArithmeticException bypasses Exception and executes anyway",
+              "The code compiles and runs normally"
             ],
             "correctAnswer": 0,
-            "explanation": "In Learn Java for Project building, maintaining clean abstractions and invariants prevents side effects and runtime regressions."
+            "explanation": "Because ArithmeticException is a subclass of Exception, placing catch (Exception e) first intercepts all exceptions, rendering subsequent catch (ArithmeticException e) unreachable. The compiler flags this as an error."
           }
         }
       ],
@@ -325,16 +325,15 @@
             "code": "public class Main { public static void main(String[] a){try{int x=Integer.parseInt(\"x\");System.out.println(x);}catch(NumberFormatException e){System.out.println(\"number\");}catch(Exception e){System.out.println(\"other\");}}}"
           },
           "checkpoint": {
-            "checkpointId": "cp-OPJA163",
-            "question": "Which design choice is consistent with Multiple Catch Clauses?",
+            "question": "When an exception occurs in a try block with multiple catch clauses, how does the JVM decide which catch block to execute?",
             "options": [
-              "Use the feature for the responsibility it is intended to model, and preserve valid object invariants.",
-              "Expose every field as a public global variable.",
-              "Replace every method with static state.",
-              "Avoid all compiler diagnostics."
+              "It tests the catch clauses sequentially from top to bottom and executes the first catch clause whose exception parameter matches or is a superclass of the thrown exception",
+              "It executes all catch clauses simultaneously",
+              "It executes the catch clause with the shortest name",
+              "It prompts the user to select a catch clause"
             ],
             "correctAnswer": 0,
-            "explanation": "The correct choice applies the Java/OOP rule associated with Multiple Catch Clauses without introducing unrelated state or unsafe behavior."
+            "explanation": "The JVM evaluates catch blocks in the order they are written. It selects the first block where the thrown exception can be assigned to the catch parameter type, executes it, and exits the try-catch structure."
           }
         },
         {
@@ -347,8 +346,20 @@
             "text": "Multiple Choice Question explains a Java design rule used in Multiple catch clauses."
           },
           "codeCard": {
+            "title": "Multiple Catch Clauses Evaluation",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    public static void main(String[] args) {\n        try {\n            int a = 10 / 0;\n        } catch (NullPointerException e) {\n            System.out.println(\"Caught NullPointerException\");\n        } catch (ArithmeticException e) {\n            System.out.println(\"Caught ArithmeticException\");\n        } catch (Exception e) {\n            System.out.println(\"Caught generic Exception\");\n        }\n    }\n}"
+          },
+          "checkpoint": {
+            "question": "Given: try { int a = 10 / 0; } catch (NullPointerException e) { ... } catch (ArithmeticException e) { ... } catch (Exception e) { ... } Which catch block executes?",
+            "options": [
+              "catch (ArithmeticException e)",
+              "catch (NullPointerException e)",
+              "catch (Exception e)",
+              "None; the program crashes"
+            ],
+            "correctAnswer": 0,
+            "explanation": "10 / 0 throws an ArithmeticException. The JVM checks NullPointerException (no match), then ArithmeticException (exact match!). It executes the ArithmeticException block and skips catch (Exception e)."
           }
         },
         {
@@ -361,8 +372,20 @@
             "text": "Multiple Choice Question explains a Java design rule used in Multiple catch clauses."
           },
           "codeCard": {
+            "title": "Multi-Catch Finality Rule",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "import java.io.*;\nimport java.sql.*;\n\npublic class Main {\n    static void test() throws IOException, SQLException {}\n\n    public static void main(String[] args) {\n        try {\n            test();\n        } catch (IOException | SQLException e) {\n            // Parameter 'e' is implicitly final in multi-catch\n            System.out.println(\"Caught: \" + e.getClass().getSimpleName());\n        }\n    }\n}"
+          },
+          "checkpoint": {
+            "question": "In the Java 7 multi-catch feature: catch (IOException | SQLException e), why is reassigning 'e = new IOException()' prohibited?",
+            "options": [
+              "Because the catch parameter 'e' in a multi-catch clause is implicitly final",
+              "Because exceptions cannot be instantiated inside catch blocks",
+              "Because SQLException is an abstract class",
+              "Because reassigning variables requires the static keyword"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The Java Language Specification mandates that the exception parameter in a multi-catch clause (Type1 | Type2 e) is implicitly final and cannot be reassigned."
           }
         },
         {
@@ -370,77 +393,198 @@
           "title": "Step-by-step learning path",
           "sectionType": "STEP_BY_STEP",
           "content": "Follow this exact sequence for **Multiple catch clauses**: prerequisite check → concept build → mental model → worked example → dry run → guided implementation → independent practice → mastery gate. Do not skip to the final practice set until the guided implementation is understood.",
-          "teachingGoal": "Learner can complete step-by-step learning path for Multiple catch clauses."
+          "teachingGoal": "Learner can complete step-by-step learning path for Multiple catch clauses.",
+          "checkpoint": {
+            "question": "Why is swallowing exceptions with an empty catch block (catch (Exception e) {}) considered a dangerous anti-pattern?",
+            "options": [
+              "It silently hides errors, making bugs invisible, leaving systems in corrupt states, and eliminating stack traces needed for diagnostics",
+              "It causes the JVM garbage collector to shut down",
+              "It makes the bytecode 10 times larger",
+              "It is rejected by the javac compiler"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Empty catch blocks ('swallowing exceptions') hide severe failures, making troubleshooting nearly impossible and leaving the application in an unpredictable, broken state."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-2-step1",
           "title": "1. Prerequisite check",
           "sectionType": "STEP_BY_STEP",
           "content": "Before starting **Multiple catch clauses**, recall the Java syntax and object/model concepts required for it. Write down what you already know, then identify one question you cannot yet answer confidently. The purpose of this step is to expose a missing prerequisite before new material is introduced.",
-          "teachingGoal": "Learner can complete 1. prerequisite check for Multiple catch clauses."
+          "teachingGoal": "Learner can complete 1. prerequisite check for Multiple catch clauses.",
+          "checkpoint": {
+            "question": "What is the top-level ancestor class for all exception and error objects that can be thrown in Java?",
+            "options": [
+              "java.lang.Throwable",
+              "java.lang.Exception",
+              "java.lang.Error",
+              "java.lang.RuntimeException"
+            ],
+            "correctAnswer": 0,
+            "explanation": "java.lang.Throwable is the superclass of all errors and exceptions in the Java language. Only instances of Throwable (or its subclasses) can be thrown with the 'throw' keyword or caught in 'catch'."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-2-step2",
           "title": "2. Build the concept",
           "sectionType": "STEP_BY_STEP",
           "content": "Multiple catch clauses let one try block respond differently to different exception types. Catch more specific exceptions before broader ones because Java rejects unreachable catch blocks. Start with the rule, then connect the rule to one small Java example. Avoid memorizing a code template before you can explain why each important line is present.",
-          "teachingGoal": "Learner can complete 2. build the concept for Multiple catch clauses."
+          "teachingGoal": "Learner can complete 2. build the concept for Multiple catch clauses.",
+          "checkpoint": {
+            "question": "What is the difference between java.lang.Error and java.lang.Exception?",
+            "options": [
+              "Errors represent serious, unrecoverable system conditions (like OutOfMemoryError) that applications should not try to catch; Exceptions represent conditions that reasonable applications should handle",
+              "Errors are checked, while Exceptions are unchecked",
+              "Errors only occur during compilation, while Exceptions occur at runtime",
+              "There is no difference"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Error indicates catastrophic system failures (e.g. StackOverflowError, OutOfMemoryError) from which an application cannot recover. Exception represents operational conditions that can be caught and handled."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-2-step3",
           "title": "3. Build a mental model",
           "sectionType": "STEP_BY_STEP",
           "content": "Imagine the runtime state while **Multiple catch clauses** executes. Identify the important actors, ownership, values, references, control flow, or exception paths. Explain the relationship in plain language before touching a full program.",
-          "teachingGoal": "Learner can complete 3. build a mental model for Multiple catch clauses."
+          "teachingGoal": "Learner can complete 3. build a mental model for Multiple catch clauses.",
+          "checkpoint": {
+            "question": "What information does an Exception object encapsulate when it is thrown?",
+            "options": [
+              "A message describing the error, an optional cause (chained exception), and the complete execution stack trace identifying the exact file, method, and line numbers",
+              "The entire source code of the project",
+              "The user's login password",
+              "A dump of the CPU register cache"
+            ],
+            "correctAnswer": 0,
+            "explanation": "An Exception object captures a diagnostic snapshot of the call stack at the moment it was instantiated, along with an explanatory message and any underlying cause."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-2-step4",
           "title": "4. Worked example",
           "sectionType": "STEP_BY_STEP",
           "content": "Take one small example for **Multiple catch clauses** and solve it in visible steps: state the input, apply the first rule, update the state, and predict the output or effect. Then compare your reasoning with the executable example in this topic.",
-          "teachingGoal": "Learner can complete 4. worked example for Multiple catch clauses."
+          "teachingGoal": "Learner can complete 4. worked example for Multiple catch clauses.",
+          "checkpoint": {
+            "question": "What does e.printStackTrace() do when called inside a catch block?",
+            "options": [
+              "It prints the exception class name, description message, and the sequence of method calls that led to the exception to standard error (System.err)",
+              "It sends the error to a physical printer",
+              "It prints only the line number",
+              "It deletes the exception from memory"
+            ],
+            "correctAnswer": 0,
+            "explanation": "printStackTrace() outputs the complete call stack trace to the standard error stream, showing every method call and line number involved from the origin to the catch site."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-2-step5",
           "title": "5. Dry run before execution",
           "sectionType": "STEP_BY_STEP",
           "content": "Trace the program line by line using a state table. Record changed variables, object fields, references, collections, thread state, or exception flow. The goal is to make the execution predictable rather than mysterious.",
-          "teachingGoal": "Learner can complete 5. dry run before execution for Multiple catch clauses."
+          "teachingGoal": "Learner can complete 5. dry run before execution for Multiple catch clauses.",
+          "checkpoint": {
+            "question": "Can a try block have multiple catch blocks that catch different subclasses of RuntimeException without a general catch (Exception e)?",
+            "options": [
+              "Yes, you can catch only the specific exceptions you anticipate (e.g. NullPointerException, IllegalArgumentException) and allow others to propagate",
+              "No, every try block must end with catch (Exception e)",
+              "No, RuntimeExceptions cannot be caught",
+              "Yes, but only if an empty finally block is provided"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Catching only specific exceptions is recommended practice. You should only catch exceptions you know how to handle, allowing unexpected exceptions to propagate to higher-level handlers."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-2-step6",
           "title": "6. Guided implementation",
           "sectionType": "STEP_BY_STEP",
           "content": "Implement a minimal version of **Multiple catch clauses** using the starter structure supplied in the practice problem. First fill in the missing concept, then run the smallest sample, then expand to a second case. Do not optimize before the behavior is correct.",
-          "teachingGoal": "Learner can complete 6. guided implementation for Multiple catch clauses."
+          "teachingGoal": "Learner can complete 6. guided implementation for Multiple catch clauses.",
+          "checkpoint": {
+            "question": "In a multi-catch clause: catch (FileNotFoundException | IOException e), what compilation error occurs?",
+            "options": [
+              "A compile error occurs because FileNotFoundException is a subclass of IOException, making its inclusion redundant in the alternative list",
+              "Multi-catch cannot be used with I/O classes",
+              "The parameter 'e' must be declared as static",
+              "Both exceptions must be thrown in the same method"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In multi-catch (A | B e), alternatives cannot have a subclass-superclass relationship with each other; doing so causes a compiler error for redundancy."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-2-step7",
           "title": "7. Independent practice",
           "sectionType": "STEP_BY_STEP",
           "content": "Solve the **Multiple catch clauses** practice problems in increasing difficulty. For every failure, classify it as syntax, concept, state-tracing, edge-case, or design error before changing the code.",
-          "teachingGoal": "Learner can complete 7. independent practice for Multiple catch clauses."
+          "teachingGoal": "Learner can complete 7. independent practice for Multiple catch clauses.",
+          "checkpoint": {
+            "question": "What is exception chaining in Java (e.g. throw new ServiceException(\"Failed to process\", e);)?",
+            "options": [
+              "Wrapping a low-level exception inside a higher-level business exception while preserving the original cause for diagnostic traceability",
+              "Catching exceptions in an infinite recursive loop",
+              "Throwing multiple exceptions simultaneously using commas",
+              "Running exceptions in separate threads"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Exception chaining allows an abstraction layer to translate a low-level exception (like SQLException) into a domain exception (like DataAccessException) while keeping the original exception as the 'cause'."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-2-step8",
           "title": "8. Mastery gate",
           "sectionType": "STEP_BY_STEP",
           "content": "You have mastered **Multiple catch clauses** when you can: (1) explain the rule without notes, (2) dry-run a new example, (3) implement a small variation, (4) explain one common failure, and (5) choose when the concept should and should not be used.",
-          "teachingGoal": "Learner can complete 8. mastery gate for Multiple catch clauses."
+          "teachingGoal": "Learner can complete 8. mastery gate for Multiple catch clauses.",
+          "checkpoint": {
+            "question": "Why should you avoid catching java.lang.Throwable or java.lang.Error in general application code?",
+            "options": [
+              "It intercepts fatal JVM errors (like OutOfMemoryError, ThreadDeath) that the application cannot recover from, preventing the JVM from shutting down cleanly",
+              "Because Throwable is an interface and cannot be caught",
+              "Because it causes an immediate compiler error",
+              "Because Throwable only exists in Java 1.0"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Catching Throwable or Error catches serious JVM internal failures (like OutOfMemoryError) that signal unstable heap state. Applications should only catch Exception."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-2-step9",
           "title": "9. Debugging and misconception clinic",
           "sectionType": "DEBUGGING",
           "content": "Use the following diagnostic routine:\n\n- **Mistake:** Memorizing Multiple catch clauses syntax without understanding its runtime behavior. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Skipping prerequisite concepts and guessing from compiler errors alone. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Testing only the sample input. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Changing several parts of the program before identifying the failing concept. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.",
-          "teachingGoal": "Diagnose common errors while learning Multiple catch clauses."
+          "teachingGoal": "Diagnose common errors while learning Multiple catch clauses.",
+          "checkpoint": {
+            "question": "What is the problem with catching a broad Exception and logging 'Error occurred' without logging e.getMessage() or the stack trace?",
+            "options": [
+              "Critical diagnostic information is lost, making it impossible to determine the cause, type, or exact line of the failure in production",
+              "The program enters an infinite loop",
+              "The log file is deleted",
+              "The JVM crashes"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Generic error messages without exception details strip out root causes, line numbers, and error types, turning production troubleshooting into pure guesswork."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-2-step10",
           "title": "10. Mastery review and interview transfer",
           "sectionType": "REVIEW",
           "content": "Finish **Multiple catch clauses** by answering these without notes:\n\n1. What problem does this concept solve?\n2. What is the smallest correct example?\n3. What invariant or rule must remain true?\n4. What edge case commonly breaks naive solutions?\n5. What is one interview question you could answer from this topic?\n\nThen solve one unseen variation before marking the topic complete.",
-          "teachingGoal": "Transfer Multiple catch clauses from guided learning to independent problem solving."
+          "teachingGoal": "Transfer Multiple catch clauses from guided learning to independent problem solving.",
+          "checkpoint": {
+            "question": "In an interview, how would you design an exception handling strategy for a 3-tier enterprise architecture?",
+            "options": [
+              "Catch low-level technical exceptions in data/service layers, wrap them in meaningful domain exceptions with causal chaining, and handle presentation/logging at controller boundaries",
+              "Catch and suppress all exceptions in every method with empty catch blocks",
+              "Never catch exceptions and let the application crash on every error",
+              "Use System.exit(1) inside every catch block"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Best practice is to translate technical exceptions into semantic domain exceptions at layer boundaries, maintaining exception causes, and centralizing global logging and user-facing error formatting."
+          }
         }
       ],
       "codeExamples": [
@@ -452,18 +596,14 @@
           "code": "public class Main { public static void main(String[] a){try{int x=Integer.parseInt(\"x\");System.out.println(x);}catch(NumberFormatException e){System.out.println(\"number\");}catch(Exception e){System.out.println(\"other\");}}}"
         },
         {
-          "exampleId": "ex-OPJA166-java",
+          "title": "Multiple Catch Clauses Example",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    public static void main(String[] args) {\n        try {\n            int a = 10 / 0;\n        } catch (NullPointerException e) {\n            System.out.println(\"Caught NullPointerException\");\n        } catch (ArithmeticException e) {\n            System.out.println(\"Caught ArithmeticException\");\n        } catch (Exception e) {\n            System.out.println(\"Caught generic Exception\");\n        }\n    }\n}"
         },
         {
-          "exampleId": "ex-OPJA167-java",
+          "title": "Multi-Catch Finality Rule",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "import java.io.*;\nimport java.sql.*;\n\npublic class Main {\n    static void test() throws IOException, SQLException {}\n\n    public static void main(String[] args) {\n        try {\n            test();\n        } catch (IOException | SQLException e) {\n            // Parameter 'e' is implicitly final in multi-catch\n            System.out.println(\"Caught: \" + e.getClass().getSimpleName());\n        }\n    }\n}"
         }
       ],
       "practiceProblems": [
@@ -786,16 +926,15 @@
             "code": "public class Main { public static void main(String[] a){try{try{throw new Exception();}catch(Exception e){System.out.println(\"inner\");}}catch(Exception e){System.out.println(\"outer\");}}}"
           },
           "checkpoint": {
-            "checkpointId": "cp-OPJA169",
-            "question": "In Nested try statements, which statement best describes Nested Try Statements?",
+            "question": "What is a nested try block in Java, and why is it used?",
             "options": [
-              "It applies the Java mechanism needed for Nested Try Statements while keeping the class design and runtime behavior explicit.",
-              "It requires global mutable state shared by unrelated classes.",
-              "It disables compile-time type checking to simplify execution.",
-              "It depends on unbounded recursion for every object operation."
+              "A try block placed inside the body of another try or catch block, used when an inner operation requires localized error handling while an outer block handles broader failures",
+              "A loop that repeats a try block multiple times",
+              "A try block that executes on a different computer",
+              "A try block that can only catch checked exceptions"
             ],
             "correctAnswer": 0,
-            "explanation": "The correct choice applies the Java/OOP rule associated with Nested Try Statements without introducing unrelated state or unsafe behavior."
+            "explanation": "Nested try statements allow fine-grained exception management: if an inner try block cannot handle a specific exception, the exception propagates outward to be caught by enclosing outer try blocks."
           }
         },
         {
@@ -808,8 +947,20 @@
             "text": "Multiple Choice Question explains a Java design rule used in Nested try statements."
           },
           "codeCard": {
+            "title": "Nested Try Block Stack Unwinding",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    public static void main(String[] args) {\n        try {\n            try {\n                int[] arr = new int[2];\n                arr[5] = 10;\n            } catch (ArithmeticException e) {\n                System.out.println(\"Inner catch block\");\n            }\n        } catch (ArrayIndexOutOfBoundsException e) {\n            System.out.println(\"Outer catch handled exception\");\n        }\n    }\n}"
+          },
+          "checkpoint": {
+            "question": "If an exception is thrown inside an inner try block and its matching inner catch block does NOT match the exception, what happens?",
+            "options": [
+              "The exception propagates out to the enclosing outer try block's catch clauses for resolution",
+              "The exception is silently discarded",
+              "The program immediately terminates without running finally blocks",
+              "The inner catch block is forced to execute anyway"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Exception propagation unwinds outward: if an inner try block has no matching catch handler, control transfers to the surrounding outer try-catch structure, running any inner finally blocks along the way."
           }
         },
         {
@@ -822,8 +973,20 @@
             "text": "Multiple Choice Question explains a Java design rule used in Nested try statements."
           },
           "codeCard": {
+            "title": "Rethrowing Exception from Inner Catch",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    public static void main(String[] args) {\n        try {\n            try {\n                throw new IllegalArgumentException(\"Inner argument problem\");\n            } catch (IllegalArgumentException e) {\n                System.out.println(\"Inner caught, re-throwing new error...\");\n                throw new RuntimeException(\"Wrapped exception\", e);\n            }\n        } catch (RuntimeException e) {\n            System.out.println(\"Outer caught: \" + e.getMessage());\n        }\n    }\n}"
+          },
+          "checkpoint": {
+            "question": "Can an inner catch block throw a new exception that gets caught by the outer catch block?",
+            "options": [
+              "Yes, any exception thrown inside an inner catch or finally block propagates outward and can be caught by the outer try-catch block",
+              "No, catch blocks cannot throw exceptions",
+              "No, outer catch blocks only catch exceptions thrown from the outer try block directly",
+              "Yes, but only if the exception is an Error"
+            ],
+            "correctAnswer": 0,
+            "explanation": "An exception thrown within an inner catch block leaves the inner structure and is treated as an exception occurring within the outer try block, allowing the outer catch to handle it."
           }
         },
         {
@@ -831,77 +994,198 @@
           "title": "Step-by-step learning path",
           "sectionType": "STEP_BY_STEP",
           "content": "Follow this exact sequence for **Nested try statements**: prerequisite check → concept build → mental model → worked example → dry run → guided implementation → independent practice → mastery gate. Do not skip to the final practice set until the guided implementation is understood.",
-          "teachingGoal": "Learner can complete step-by-step learning path for Nested try statements."
+          "teachingGoal": "Learner can complete step-by-step learning path for Nested try statements.",
+          "checkpoint": {
+            "question": "Why should developers use nested try blocks judiciously rather than nesting them deeply?",
+            "options": [
+              "Deeply nested try blocks hurt code readability, increase cognitive complexity, and are often better refactored into distinct helper methods",
+              "Because the JVM limits nesting to a maximum of two levels",
+              "Because nested try blocks disable garbage collection",
+              "Because nested try blocks double execution time"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Excessive nesting makes code hard to read and reason about. Extracting inner risky operations into separate, well-named methods with their own try-catch or throws clauses is much cleaner."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-3-step1",
           "title": "1. Prerequisite check",
           "sectionType": "STEP_BY_STEP",
           "content": "Before starting **Nested try statements**, recall the Java syntax and object/model concepts required for it. Write down what you already know, then identify one question you cannot yet answer confidently. The purpose of this step is to expose a missing prerequisite before new material is introduced.",
-          "teachingGoal": "Learner can complete 1. prerequisite check for Nested try statements."
+          "teachingGoal": "Learner can complete 1. prerequisite check for Nested try statements.",
+          "checkpoint": {
+            "question": "When an inner try block has a 'finally' block, when does that inner finally block execute if an uncaught exception propagates to the outer try?",
+            "options": [
+              "The inner finally block executes BEFORE the exception propagates to the outer catch block",
+              "The inner finally block executes after the outer catch block finishes",
+              "The inner finally block does not execute at all",
+              "The inner finally block executes when the program exits"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Finally blocks are guaranteed to execute before control leaves their scope. Even if an exception propagates outward, the inner finally block runs before the outer catch handler receives the exception."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-3-step2",
           "title": "2. Build the concept",
           "sectionType": "STEP_BY_STEP",
           "content": "Nested try blocks allow a smaller risky operation to have local handling while an outer block handles broader failures. Use nesting only when it clarifies ownership of recovery. Start with the rule, then connect the rule to one small Java example. Avoid memorizing a code template before you can explain why each important line is present.",
-          "teachingGoal": "Learner can complete 2. build the concept for Nested try statements."
+          "teachingGoal": "Learner can complete 2. build the concept for Nested try statements.",
+          "checkpoint": {
+            "question": "In what common scenario are nested try blocks frequently encountered in legacy Java code?",
+            "options": [
+              "Handling resource cleanup (like closing a FileOutputStream or Database Connection) inside a finally block, which itself can throw an IOException or SQLException",
+              "Writing simple arithmetic calculations",
+              "Creating String objects",
+              "Declaring package statements"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Before Java 7's try-with-resources, closing a resource in a finally block required a nested try-catch block because close() itself could throw an IOException."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-3-step3",
           "title": "3. Build a mental model",
           "sectionType": "STEP_BY_STEP",
           "content": "Imagine the runtime state while **Nested try statements** executes. Identify the important actors, ownership, values, references, control flow, or exception paths. Explain the relationship in plain language before touching a full program.",
-          "teachingGoal": "Learner can complete 3. build a mental model for Nested try statements."
+          "teachingGoal": "Learner can complete 3. build a mental model for Nested try statements.",
+          "checkpoint": {
+            "question": "How does the JVM call stack unwind during nested exception handling?",
+            "options": [
+              "It searches the innermost handler first; if unmatched, it executes any intermediate finally blocks and bubbles up to the next enclosing try-catch scope",
+              "It jumps straight to the main() method",
+              "It executes handlers in reverse alphabetical order",
+              "It terminates the thread immediately"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Stack unwinding proceeds from innermost to outermost: inner scopes get first opportunity to catch; unmatched exceptions trigger local finally blocks and bubble up to enclosing scopes."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-3-step4",
           "title": "4. Worked example",
           "sectionType": "STEP_BY_STEP",
           "content": "Take one small example for **Nested try statements** and solve it in visible steps: state the input, apply the first rule, update the state, and predict the output or effect. Then compare your reasoning with the executable example in this topic.",
-          "teachingGoal": "Learner can complete 4. worked example for Nested try statements."
+          "teachingGoal": "Learner can complete 4. worked example for Nested try statements.",
+          "checkpoint": {
+            "question": "Given: outer try { inner try { int x = 5/0; } catch (ArrayIndexOutOfBoundsException e) {} } catch (ArithmeticException e) { System.out.print(\"Outer\"); } What is printed?",
+            "options": [
+              "\"Outer\"",
+              "Nothing",
+              "ArithmeticException crash",
+              "Compilation error"
+            ],
+            "correctAnswer": 0,
+            "explanation": "5/0 throws ArithmeticException. The inner catch only handles ArrayIndexOutOfBoundsException, so the exception bubbles to the outer try, matching catch (ArithmeticException e) and printing 'Outer'."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-3-step5",
           "title": "5. Dry run before execution",
           "sectionType": "STEP_BY_STEP",
           "content": "Trace the program line by line using a state table. Record changed variables, object fields, references, collections, thread state, or exception flow. The goal is to make the execution predictable rather than mysterious.",
-          "teachingGoal": "Learner can complete 5. dry run before execution for Nested try statements."
+          "teachingGoal": "Learner can complete 5. dry run before execution for Nested try statements.",
+          "checkpoint": {
+            "question": "If both an inner try block and an outer try block catch the exact same exception type (e.g. ArithmeticException), which one executes?",
+            "options": [
+              "Only the inner catch block executes; the exception is considered handled and does not propagate to the outer catch",
+              "Both inner and outer catch blocks execute",
+              "Only the outer catch block executes",
+              "A compilation error occurs"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Once an inner catch block handles an exception, the exception is resolved. Unless the inner catch explicitly re-throws it, the outer catch never sees it."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-3-step6",
           "title": "6. Guided implementation",
           "sectionType": "STEP_BY_STEP",
           "content": "Implement a minimal version of **Nested try statements** using the starter structure supplied in the practice problem. First fill in the missing concept, then run the smallest sample, then expand to a second case. Do not optimize before the behavior is correct.",
-          "teachingGoal": "Learner can complete 6. guided implementation for Nested try statements."
+          "teachingGoal": "Learner can complete 6. guided implementation for Nested try statements.",
+          "checkpoint": {
+            "question": "How does a catch block re-throw an exception to allow outer handlers to perform secondary logging or rollback?",
+            "options": [
+              "By using the 'throw' keyword inside the catch block: catch (Exception e) { log(e); throw e; }",
+              "By calling e.rethrow()",
+              "By returning the exception from the method",
+              "By declaring the catch block as public"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Re-throwing an exception using 'throw e;' allows a local catch block to perform intermediate actions (like rollback or logging) while still propagating the failure up the call stack."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-3-step7",
           "title": "7. Independent practice",
           "sectionType": "STEP_BY_STEP",
           "content": "Solve the **Nested try statements** practice problems in increasing difficulty. For every failure, classify it as syntax, concept, state-tracing, edge-case, or design error before changing the code.",
-          "teachingGoal": "Learner can complete 7. independent practice for Nested try statements."
+          "teachingGoal": "Learner can complete 7. independent practice for Nested try statements.",
+          "checkpoint": {
+            "question": "What modern Java 7 feature replaced the need for messy nested try-catch blocks in resource closing?",
+            "options": [
+              "The try-with-resources statement (which automatically closes AutoCloseable resources)",
+              "Lambdas",
+              "The var keyword",
+              "Records"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Java 7 introduced try-with-resources, which automatically closes any resource implementing java.lang.AutoCloseable, eliminating ugly nested try-catch-finally cleanup boilerplate."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-3-step8",
           "title": "8. Mastery gate",
           "sectionType": "STEP_BY_STEP",
           "content": "You have mastered **Nested try statements** when you can: (1) explain the rule without notes, (2) dry-run a new example, (3) implement a small variation, (4) explain one common failure, and (5) choose when the concept should and should not be used.",
-          "teachingGoal": "Learner can complete 8. mastery gate for Nested try statements."
+          "teachingGoal": "Learner can complete 8. mastery gate for Nested try statements.",
+          "checkpoint": {
+            "question": "What happens if an exception is thrown in a try block, and ANOTHER exception is thrown inside the finally block?",
+            "options": [
+              "The exception thrown in the finally block suppresses or replaces the original exception from the try block unless suppressed exceptions are preserved",
+              "Both exceptions are merged into a single string",
+              "The JVM ignores the finally exception",
+              "The compiler flags an error"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In traditional try-finally, an exception thrown from the finally block masks (discards) the original exception. Java 7 try-with-resources preserves masked exceptions as 'suppressed exceptions' (e.getSuppressed())."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-3-step9",
           "title": "9. Debugging and misconception clinic",
           "sectionType": "DEBUGGING",
           "content": "Use the following diagnostic routine:\n\n- **Mistake:** Memorizing Nested try statements syntax without understanding its runtime behavior. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Skipping prerequisite concepts and guessing from compiler errors alone. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Testing only the sample input. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Changing several parts of the program before identifying the failing concept. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.",
-          "teachingGoal": "Diagnose common errors while learning Nested try statements."
+          "teachingGoal": "Diagnose common errors while learning Nested try statements.",
+          "checkpoint": {
+            "question": "What is a dangerous side effect of putting a 'return' statement inside a finally block?",
+            "options": [
+              "It overrides and discards any unhandled exception thrown in the try block, silently swallowing errors and returning a value as if nothing failed!",
+              "It causes an immediate compiler error",
+              "It restarts the method from line 1",
+              "It causes a stack overflow"
+            ],
+            "correctAnswer": 0,
+            "explanation": "NEVER put a return statement in a finally block! A return in finally executes even during an active unhandled exception, abruptly terminating the exception propagation and swallowing the error."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-3-step10",
           "title": "10. Mastery review and interview transfer",
           "sectionType": "REVIEW",
           "content": "Finish **Nested try statements** by answering these without notes:\n\n1. What problem does this concept solve?\n2. What is the smallest correct example?\n3. What invariant or rule must remain true?\n4. What edge case commonly breaks naive solutions?\n5. What is one interview question you could answer from this topic?\n\nThen solve one unseen variation before marking the topic complete.",
-          "teachingGoal": "Transfer Nested try statements from guided learning to independent problem solving."
+          "teachingGoal": "Transfer Nested try statements from guided learning to independent problem solving.",
+          "checkpoint": {
+            "question": "In an interview, explain how nested try statements enable multi-stage atomic workflows (e.g. database transaction rollback).",
+            "options": [
+              "An inner try executes a discrete step (e.g. billing charge); if it fails, its catch block can trigger a local compensating action or rethrow to the outer try to initiate an overall rollback",
+              "Nested try statements allow SQL queries to bypass database locks",
+              "They allow multiple threads to access a single connection simultaneously",
+              "They make database transactions execute 10 times faster"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Multi-stage workflows use nested scopes to compartmentalize failures: localized errors can attempt retries, and unrecoverable failures bubble up to trigger broader transaction rollbacks."
+          }
         }
       ],
       "codeExamples": [
@@ -913,18 +1197,14 @@
           "code": "public class Main { public static void main(String[] a){try{try{throw new Exception();}catch(Exception e){System.out.println(\"inner\");}}catch(Exception e){System.out.println(\"outer\");}}}"
         },
         {
-          "exampleId": "ex-OPJA172-java",
+          "title": "Nested Try Block Example",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    public static void main(String[] args) {\n        try {\n            try {\n                int[] arr = new int[2];\n                arr[5] = 10;\n            } catch (ArithmeticException e) {\n                System.out.println(\"Inner catch block\");\n            }\n        } catch (ArrayIndexOutOfBoundsException e) {\n            System.out.println(\"Outer catch handled exception\");\n        }\n    }\n}"
         },
         {
-          "exampleId": "ex-OPJA173-java",
+          "title": "Rethrowing Exception Example",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    public static void main(String[] args) {\n        try {\n            try {\n                throw new IllegalArgumentException(\"Inner argument problem\");\n            } catch (IllegalArgumentException e) {\n                System.out.println(\"Inner caught, re-throwing new error...\");\n                throw new RuntimeException(\"Wrapped exception\", e);\n            }\n        } catch (RuntimeException e) {\n            System.out.println(\"Outer caught: \" + e.getMessage());\n        }\n    }\n}"
         }
       ],
       "practiceProblems": [
@@ -1239,77 +1519,198 @@
           "title": "Step-by-step learning path",
           "sectionType": "STEP_BY_STEP",
           "content": "Follow this exact sequence for **Custom Exceptions and API Design**: prerequisite check → concept build → mental model → worked example → dry run → guided implementation → independent practice → mastery gate. Do not skip to the final practice set until the guided implementation is understood.",
-          "teachingGoal": "Learner can complete step-by-step learning path for Custom Exceptions and API Design."
+          "teachingGoal": "Learner can complete step-by-step learning path for Custom Exceptions and API Design.",
+          "checkpoint": {
+            "question": "What is the primary motivation for creating custom domain-specific exceptions in a Java application?",
+            "options": [
+              "To express meaningful business failure scenarios (e.g. InsufficientFundsException) with domain context rather than relying on generic exceptions",
+              "To force the JVM to reboot when an error occurs",
+              "To bypass the need for try-catch blocks entirely",
+              "Because standard Java exceptions cannot be thrown by user code"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Custom exceptions provide clear domain semantics (e.g. UserNotFoundException, InvalidOrderStateException), allowing calling code to handle specific business failures cleanly."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-1-step1",
           "title": "1. Prerequisite check",
           "sectionType": "STEP_BY_STEP",
           "content": "Before starting **Custom Exceptions and API Design**, recall the Java syntax and object/model concepts required for it. Write down what you already know, then identify one question you cannot yet answer confidently. The purpose of this step is to expose a missing prerequisite before new material is introduced.",
-          "teachingGoal": "Learner can complete 1. prerequisite check for Custom Exceptions and API Design."
+          "teachingGoal": "Learner can complete 1. prerequisite check for Custom Exceptions and API Design.",
+          "checkpoint": {
+            "question": "How do you define a custom CHECKED exception versus a custom UNCHECKED exception in Java?",
+            "options": [
+              "Extend java.lang.Exception for checked; extend java.lang.RuntimeException for unchecked",
+              "Extend java.lang.Throwable for checked; extend java.lang.Error for unchecked",
+              "Use the checked keyword in the class definition",
+              "Checked exceptions cannot be custom-defined"
+            ],
+            "correctAnswer": 0,
+            "explanation": "To create a checked exception (which must be declared in 'throws' or caught), extend Exception. To create an unchecked exception (which does not require mandatory declaration), extend RuntimeException."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-1-step2",
           "title": "2. Build the concept",
           "sectionType": "STEP_BY_STEP",
           "content": "Custom Exceptions and API Design should be learned through a progression from terminology and mental model to tracing, implementation, and independent application. Start with the rule, then connect the rule to one small Java example. Avoid memorizing a code template before you can explain why each important line is present.",
-          "teachingGoal": "Learner can complete 2. build the concept for Custom Exceptions and API Design."
+          "teachingGoal": "Learner can complete 2. build the concept for Custom Exceptions and API Design.",
+          "checkpoint": {
+            "question": "When should an API designer prefer an unchecked (RuntimeException) exception over a checked exception?",
+            "options": [
+              "When the error represents a programming bug or precondition violation (e.g. invalid arguments) that the caller cannot realistically recover from programmatically",
+              "When writing code that interacts with databases",
+              "Whenever the method returns a boolean",
+              "Unchecked exceptions should never be used"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Modern Java practice reserves checked exceptions for recoverable business conditions that callers can anticipate, while unchecked exceptions (like IllegalArgumentException) represent unrecoverable programmer errors."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-1-step3",
           "title": "3. Build a mental model",
           "sectionType": "STEP_BY_STEP",
           "content": "Imagine the runtime state while **Custom Exceptions and API Design** executes. Identify the important actors, ownership, values, references, control flow, or exception paths. Explain the relationship in plain language before touching a full program.",
-          "teachingGoal": "Learner can complete 3. build a mental model for Custom Exceptions and API Design."
+          "teachingGoal": "Learner can complete 3. build a mental model for Custom Exceptions and API Design.",
+          "checkpoint": {
+            "question": "What standard constructor overloads should every professional custom exception class provide?",
+            "options": [
+              "No-arg constructor, message string constructor, message + cause constructor, and cause-only constructor (delegating to super)",
+              "Only a private constructor with no arguments",
+              "A constructor that takes a database connection",
+              "A constructor that returns an integer status code"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Standard Java convention mandates providing four constructors matching Exception's constructors: () , (String msg), (String msg, Throwable cause), and (Throwable cause) to support messages and exception chaining."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-1-step4",
           "title": "4. Worked example",
           "sectionType": "STEP_BY_STEP",
           "content": "Take one small example for **Custom Exceptions and API Design** and solve it in visible steps: state the input, apply the first rule, update the state, and predict the output or effect. Then compare your reasoning with the executable example in this topic.",
-          "teachingGoal": "Learner can complete 4. worked example for Custom Exceptions and API Design."
+          "teachingGoal": "Learner can complete 4. worked example for Custom Exceptions and API Design.",
+          "checkpoint": {
+            "question": "In class BankAccount { void withdraw(double amt) throws InsufficientFundsException { if (amt > balance) throw new InsufficientFundsException(\"Shortage: \" + (amt - balance)); } } Why must withdraw() declare 'throws InsufficientFundsException'?",
+            "options": [
+              "Because InsufficientFundsException extends Exception (checked exception), so the compiler enforces that it must be caught or declared in the method signature",
+              "Because the method has a return type of void",
+              "Because throw and throws must always be used on the same line",
+              "Because double values cannot be subtracted inside methods"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Checked exceptions are checked at compile time. Any method that can throw a checked exception must declare it using the 'throws' clause in its method signature unless it catches it internally."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-1-step5",
           "title": "5. Dry run before execution",
           "sectionType": "STEP_BY_STEP",
           "content": "Trace the program line by line using a state table. Record changed variables, object fields, references, collections, thread state, or exception flow. The goal is to make the execution predictable rather than mysterious.",
-          "teachingGoal": "Learner can complete 5. dry run before execution for Custom Exceptions and API Design."
+          "teachingGoal": "Learner can complete 5. dry run before execution for Custom Exceptions and API Design.",
+          "checkpoint": {
+            "question": "What does the 'throw' keyword do versus the 'throws' keyword in Java?",
+            "options": [
+              "'throw' is an executable statement used inside a method body to instantiate and trigger an exception; 'throws' is a method signature clause declaring exceptions that might escape",
+              "'throw' is for checked exceptions; 'throws' is for unchecked exceptions",
+              "'throws' creates an object; 'throw' destroys it",
+              "They are interchangeable synonyms"
+            ],
+            "correctAnswer": 0,
+            "explanation": "'throw' is an action verb executing inside a method (e.g. throw new Exception()). 'throws' is a passive contract clause on a method header (e.g. void read() throws IOException)."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-1-step6",
           "title": "6. Guided implementation",
           "sectionType": "STEP_BY_STEP",
           "content": "Implement a minimal version of **Custom Exceptions and API Design** using the starter structure supplied in the practice problem. First fill in the missing concept, then run the smallest sample, then expand to a second case. Do not optimize before the behavior is correct.",
-          "teachingGoal": "Learner can complete 6. guided implementation for Custom Exceptions and API Design."
+          "teachingGoal": "Learner can complete 6. guided implementation for Custom Exceptions and API Design.",
+          "checkpoint": {
+            "question": "How can a custom exception carry extra domain data for programmatic error inspection?",
+            "options": [
+              "By adding custom final fields, a constructor initializing them, and public getter methods (e.g. getErrorCode(), getRequestedAmount())",
+              "By printing extra strings to standard output",
+              "By creating a static global array",
+              "By extending String instead of Exception"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Custom exceptions are standard Java classes. You can add fields (like errorCode, accountId, timestamp) and getters so catching code can inspect error details programmatically."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-1-step7",
           "title": "7. Independent practice",
           "sectionType": "STEP_BY_STEP",
           "content": "Solve the **Custom Exceptions and API Design** practice problems in increasing difficulty. For every failure, classify it as syntax, concept, state-tracing, edge-case, or design error before changing the code.",
-          "teachingGoal": "Learner can complete 7. independent practice for Custom Exceptions and API Design."
+          "teachingGoal": "Learner can complete 7. independent practice for Custom Exceptions and API Design.",
+          "checkpoint": {
+            "question": "What is Exception Translation (Exception Wrapping)?",
+            "options": [
+              "Catching a low-level technical exception (e.g. SQLException) in a DAO layer and re-throwing a higher-level domain exception (e.g. DataAccessException) to preserve layer abstraction",
+              "Translating exception messages into different foreign languages",
+              "Converting runtime exceptions into compile-time syntax errors",
+              "Changing the font of stack traces in the terminal"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Exception translation catches implementation-specific exceptions and wraps them in semantic domain exceptions, decoupling client code from underlying database or network technologies."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-1-step8",
           "title": "8. Mastery gate",
           "sectionType": "STEP_BY_STEP",
           "content": "You have mastered **Custom Exceptions and API Design** when you can: (1) explain the rule without notes, (2) dry-run a new example, (3) implement a small variation, (4) explain one common failure, and (5) choose when the concept should and should not be used.",
-          "teachingGoal": "Learner can complete 8. mastery gate for Custom Exceptions and API Design."
+          "teachingGoal": "Learner can complete 8. mastery gate for Custom Exceptions and API Design.",
+          "checkpoint": {
+            "question": "Why does Effective Java advise against using exceptions for normal program control flow (e.g. using try-catch to detect the end of an array)?",
+            "options": [
+              "Exceptions are designed for exceptional conditions; creating stack traces has substantial performance overhead and obscures code intent",
+              "Because the JVM limits exceptions to 10 per application",
+              "Because catching exceptions causes memory leaks in CPU cache",
+              "Because loops cannot contain try-catch blocks"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Instantiating an exception fills in the execution stack trace, which is computationally expensive. Using exceptions for loop termination or normal control flow is slow and confusing."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-1-step9",
           "title": "9. Debugging and misconception clinic",
           "sectionType": "DEBUGGING",
           "content": "Use the following diagnostic routine:\n\n- **Mistake:** Memorizing Custom Exceptions and API Design syntax without understanding its runtime behavior. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Skipping prerequisite concepts and guessing from compiler errors alone. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Testing only the sample input. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Changing several parts of the program before identifying the failing concept. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.",
-          "teachingGoal": "Diagnose common errors while learning Custom Exceptions and API Design."
+          "teachingGoal": "Diagnose common errors while learning Custom Exceptions and API Design.",
+          "checkpoint": {
+            "question": "What mistake occurs when a developer creates a custom exception: class MyException extends Exception { MyException(String m) { /* empty body */ } }?",
+            "options": [
+              "It fails to call super(m), so the message string is discarded and e.getMessage() returns null!",
+              "The class cannot be compiled",
+              "The class causes an immediate crash when loaded",
+              "It makes the exception unchecked"
+            ],
+            "correctAnswer": 0,
+            "explanation": "If you don't call super(m) in the custom constructor, the superclass Exception(String) constructor is not called. The message is never registered, and getMessage() returns null."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-1-step10",
           "title": "10. Mastery review and interview transfer",
           "sectionType": "REVIEW",
           "content": "Finish **Custom Exceptions and API Design** by answering these without notes:\n\n1. What problem does this concept solve?\n2. What is the smallest correct example?\n3. What invariant or rule must remain true?\n4. What edge case commonly breaks naive solutions?\n5. What is one interview question you could answer from this topic?\n\nThen solve one unseen variation before marking the topic complete.",
-          "teachingGoal": "Transfer Custom Exceptions and API Design from guided learning to independent problem solving."
+          "teachingGoal": "Transfer Custom Exceptions and API Design from guided learning to independent problem solving.",
+          "checkpoint": {
+            "question": "In an API design interview, what is the best practice regarding checked vs unchecked exceptions in modern frameworks (like Spring)?",
+            "options": [
+              "Prefer unchecked exceptions for general APIs to avoid forcing callers into boilerplate catch-and-wrap code, while providing rich domain-specific hierarchies",
+              "Make every exception checked so callers must write at least 5 catch blocks per method",
+              "Never create custom exceptions and use RuntimeException with string messages",
+              "Replace all exceptions with boolean error flags"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Modern frameworks overwhelmingly favor unchecked domain exceptions (e.g. Spring's DataAccessException hierarchy) to avoid cluttering business code with throws clauses while preserving rich type information."
+          }
         }
       ],
       "codeExamples": [
@@ -1524,77 +1925,198 @@
           "title": "Step-by-step learning path",
           "sectionType": "STEP_BY_STEP",
           "content": "Follow this exact sequence for **Try-with-resources and Resource Safety**: prerequisite check → concept build → mental model → worked example → dry run → guided implementation → independent practice → mastery gate. Do not skip to the final practice set until the guided implementation is understood.",
-          "teachingGoal": "Learner can complete step-by-step learning path for Try-with-resources and Resource Safety."
+          "teachingGoal": "Learner can complete step-by-step learning path for Try-with-resources and Resource Safety.",
+          "checkpoint": {
+            "question": "What is the primary problem solved by Java 7's Try-With-Resources statement?",
+            "options": [
+              "Eliminating resource leaks (like open files, sockets, and database connections) by guaranteeing that resources are automatically closed upon block exit",
+              "Compiling Java code into native machine assembly",
+              "Allocating memory on the GPU",
+              "Making database queries execute in constant O(1) time"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Try-with-resources guarantees that opened resources are cleanly closed when execution leaves the try scope (normally or via exception), preventing operating system resource exhaustion."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-2-step1",
           "title": "1. Prerequisite check",
           "sectionType": "STEP_BY_STEP",
           "content": "Before starting **Try-with-resources and Resource Safety**, recall the Java syntax and object/model concepts required for it. Write down what you already know, then identify one question you cannot yet answer confidently. The purpose of this step is to expose a missing prerequisite before new material is introduced.",
-          "teachingGoal": "Learner can complete 1. prerequisite check for Try-with-resources and Resource Safety."
+          "teachingGoal": "Learner can complete 1. prerequisite check for Try-with-resources and Resource Safety.",
+          "checkpoint": {
+            "question": "What interface must an object implement to be eligible for use in a try-with-resources statement?",
+            "options": [
+              "java.lang.AutoCloseable (or java.io.Closeable)",
+              "java.lang.Runnable",
+              "java.io.Serializable",
+              "java.lang.Cloneable"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Try-with-resources requires the declared resource to implement java.lang.AutoCloseable (which defines void close() throws Exception). Closeable is a subinterface of AutoCloseable."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-2-step2",
           "title": "2. Build the concept",
           "sectionType": "STEP_BY_STEP",
           "content": "Try-with-resources and Resource Safety should be learned through a progression from terminology and mental model to tracing, implementation, and independent application. Start with the rule, then connect the rule to one small Java example. Avoid memorizing a code template before you can explain why each important line is present.",
-          "teachingGoal": "Learner can complete 2. build the concept for Try-with-resources and Resource Safety."
+          "teachingGoal": "Learner can complete 2. build the concept for Try-with-resources and Resource Safety.",
+          "checkpoint": {
+            "question": "What is the syntax for managing multiple resources inside a try-with-resources header?",
+            "options": [
+              "try (ResourceType r1 = new ResourceType(); ResourceType r2 = new ResourceType()) { ... } separated by semicolons",
+              "try [ResourceType r1, ResourceType r2] { ... }",
+              "try with (r1 && r2) { ... }",
+              "try (r1 + r2) { ... }"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Multiple resources are declared inside parentheses after the 'try' keyword, separated by semicolons: try (Reader r = ...; Writer w = ...) { ... }."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-2-step3",
           "title": "3. Build a mental model",
           "sectionType": "STEP_BY_STEP",
           "content": "Imagine the runtime state while **Try-with-resources and Resource Safety** executes. Identify the important actors, ownership, values, references, control flow, or exception paths. Explain the relationship in plain language before touching a full program.",
-          "teachingGoal": "Learner can complete 3. build a mental model for Try-with-resources and Resource Safety."
+          "teachingGoal": "Learner can complete 3. build a mental model for Try-with-resources and Resource Safety.",
+          "checkpoint": {
+            "question": "In what order are resources closed when multiple resources are managed in a try-with-resources statement?",
+            "options": [
+              "In REVERSE order of their declaration (the resource declared last is closed first)",
+              "In the exact order of their declaration",
+              "Simultaneously in parallel threads",
+              "Randomly depending on garbage collection"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Resources are closed in reverse order of initialization (LIFO - Last-In-First-Out). This ensures that dependent wrapper streams (like BufferedReader) close before underlying streams (like FileReader)."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-2-step4",
           "title": "4. Worked example",
           "sectionType": "STEP_BY_STEP",
           "content": "Take one small example for **Try-with-resources and Resource Safety** and solve it in visible steps: state the input, apply the first rule, update the state, and predict the output or effect. Then compare your reasoning with the executable example in this topic.",
-          "teachingGoal": "Learner can complete 4. worked example for Try-with-resources and Resource Safety."
+          "teachingGoal": "Learner can complete 4. worked example for Try-with-resources and Resource Safety.",
+          "checkpoint": {
+            "question": "Given: try (Scanner scanner = new Scanner(new File(\"data.txt\"))) { ... } When does scanner.close() execute?",
+            "options": [
+              "Automatically upon exiting the try block, whether the block finishes normally or terminates abruptly due to an exception",
+              "Only if an exception is thrown",
+              "Only if no exception is thrown",
+              "Only when the JVM process terminates"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The compiler generates bytecode that calls close() unconditionally when execution leaves the try block, guaranteeing cleanup regardless of success or failure."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-2-step5",
           "title": "5. Dry run before execution",
           "sectionType": "STEP_BY_STEP",
           "content": "Trace the program line by line using a state table. Record changed variables, object fields, references, collections, thread state, or exception flow. The goal is to make the execution predictable rather than mysterious.",
-          "teachingGoal": "Learner can complete 5. dry run before execution for Try-with-resources and Resource Safety."
+          "teachingGoal": "Learner can complete 5. dry run before execution for Try-with-resources and Resource Safety.",
+          "checkpoint": {
+            "question": "What happens if a resource declaration in try-with-resources throws an exception during initialization?",
+            "options": [
+              "Any previously successfully initialized resources in the header are closed in reverse order, and the initialization exception propagates",
+              "The program enters an infinite deadlock",
+              "The JVM ignores the initialization error",
+              "Uninitialized resources are forced to close"
+            ],
+            "correctAnswer": 0,
+            "explanation": "If opening resource B fails after resource A was successfully opened, Java immediately closes resource A before propagating the exception from resource B."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-2-step6",
           "title": "6. Guided implementation",
           "sectionType": "STEP_BY_STEP",
           "content": "Implement a minimal version of **Try-with-resources and Resource Safety** using the starter structure supplied in the practice problem. First fill in the missing concept, then run the smallest sample, then expand to a second case. Do not optimize before the behavior is correct.",
-          "teachingGoal": "Learner can complete 6. guided implementation for Try-with-resources and Resource Safety."
+          "teachingGoal": "Learner can complete 6. guided implementation for Try-with-resources and Resource Safety.",
+          "checkpoint": {
+            "question": "What are 'Suppressed Exceptions' in Java 7+ try-with-resources?",
+            "options": [
+              "If both the try block and the automatic close() call throw exceptions, the close() exception is attached as a 'suppressed exception' to the primary exception rather than masking it",
+              "Exceptions that are deleted from the stack trace",
+              "Exceptions thrown by the garbage collector",
+              "Exceptions that are converted into warnings"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Before Java 7, an exception in finally would mask and discard the original try exception. Try-with-resources preserves the original exception and attaches close() exceptions via addSuppressed(), accessible via e.getSuppressed()."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-2-step7",
           "title": "7. Independent practice",
           "sectionType": "STEP_BY_STEP",
           "content": "Solve the **Try-with-resources and Resource Safety** practice problems in increasing difficulty. For every failure, classify it as syntax, concept, state-tracing, edge-case, or design error before changing the code.",
-          "teachingGoal": "Learner can complete 7. independent practice for Try-with-resources and Resource Safety."
+          "teachingGoal": "Learner can complete 7. independent practice for Try-with-resources and Resource Safety.",
+          "checkpoint": {
+            "question": "How do you implement java.lang.AutoCloseable on a custom DatabaseTransaction class?",
+            "options": [
+              "Implement the close() method: public void close() throws Exception { ... }",
+              "Implement public void finalize() { }",
+              "Declare the class as final",
+              "Override the toString() method"
+            ],
+            "correctAnswer": 0,
+            "explanation": "To make any custom class work with try-with-resources, simply declare 'implements AutoCloseable' and implement the 'public void close()' method."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-2-step8",
           "title": "8. Mastery gate",
           "sectionType": "STEP_BY_STEP",
           "content": "You have mastered **Try-with-resources and Resource Safety** when you can: (1) explain the rule without notes, (2) dry-run a new example, (3) implement a small variation, (4) explain one common failure, and (5) choose when the concept should and should not be used.",
-          "teachingGoal": "Learner can complete 8. mastery gate for Try-with-resources and Resource Safety."
+          "teachingGoal": "Learner can complete 8. mastery gate for Try-with-resources and Resource Safety.",
+          "checkpoint": {
+            "question": "In Java 9+, can an existing effectively final resource variable declared OUTSIDE the try block be referenced in the try-with-resources header?",
+            "options": [
+              "Yes, Java 9 allows: Reader reader = new FileReader(...); try (reader) { ... } as long as the variable is final or effectively final",
+              "No, resources must always be newly instantiated inside the parentheses",
+              "Yes, but only for static resources",
+              "No, Java 9 removed try-with-resources"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Java 9 introduced an enhancement allowing existing final or effectively final AutoCloseable variables to be passed directly into the try header without re-declaring a local variable."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-2-step9",
           "title": "9. Debugging and misconception clinic",
           "sectionType": "DEBUGGING",
           "content": "Use the following diagnostic routine:\n\n- **Mistake:** Memorizing Try-with-resources and Resource Safety syntax without understanding its runtime behavior. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Skipping prerequisite concepts and guessing from compiler errors alone. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Testing only the sample input. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Changing several parts of the program before identifying the failing concept. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.",
-          "teachingGoal": "Diagnose common errors while learning Try-with-resources and Resource Safety."
+          "teachingGoal": "Diagnose common errors while learning Try-with-resources and Resource Safety.",
+          "checkpoint": {
+            "question": "Why is manual resource closing in a 'finally' block (pre-Java 7 style) considered hazardous?",
+            "options": [
+              "Because close() can itself throw an exception, preventing subsequent cleanup lines from running, or masking the original business exception if not wrapped in nested try-catch blocks",
+              "Because finally blocks do not execute on Windows",
+              "Because manual close() deletes the object from the heap prematurely",
+              "Because finally blocks run on a different thread"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Manual finally cleanup requires error-prone null checks and nested try-catches. If stream1.close() throws an exception, stream2.close() on the next line is never called, leaking stream2."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m6-2-step10",
           "title": "10. Mastery review and interview transfer",
           "sectionType": "REVIEW",
           "content": "Finish **Try-with-resources and Resource Safety** by answering these without notes:\n\n1. What problem does this concept solve?\n2. What is the smallest correct example?\n3. What invariant or rule must remain true?\n4. What edge case commonly breaks naive solutions?\n5. What is one interview question you could answer from this topic?\n\nThen solve one unseen variation before marking the topic complete.",
-          "teachingGoal": "Transfer Try-with-resources and Resource Safety from guided learning to independent problem solving."
+          "teachingGoal": "Transfer Try-with-resources and Resource Safety from guided learning to independent problem solving.",
+          "checkpoint": {
+            "question": "In an interview, contrast the execution order of: (1) try block, (2) auto-closing of resources, (3) catch block, and (4) finally block in a try-with-resources statement.",
+            "options": [
+              "(1) try block runs -> (2) resources auto-close -> (3) catch block runs -> (4) finally block runs",
+              "(1) try block runs -> (2) catch runs -> (3) resources auto-close -> (4) finally runs",
+              "(1) resources auto-close -> (2) try block runs -> (3) finally runs",
+              "Order is nondeterministic"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In try-with-resources, resources are closed BEFORE any explicit catch or finally blocks execute. This ensures that any exception thrown during close() is available to be caught by the catch block!"
+          }
         }
       ],
       "codeExamples": [
@@ -1776,7 +2298,18 @@
             "code": "public class Main {\n    public static void main(String[] args) {\n        try {\n            int[] a = {1};\n            System.out.println(a[2]);\n        } catch (ArrayIndexOutOfBoundsException e) {\n            System.out.println(\"Bad index\");\n        } catch (Exception e) {\n            System.out.println(\"Other error\");\n        }\n    }\n}"
           },
           "sectionType": "CHECKPOINT",
-          "teachingGoal": "Trace and explain the Try and Catch in Java behavior shown in this checkpoint."
+          "teachingGoal": "Trace and explain the Try and Catch in Java behavior shown in this checkpoint.",
+          "checkpoint": {
+            "question": "In class Main { public static void main(String[] args) { try { String s = null; System.out.println(s.length()); } catch (NullPointerException e) { System.out.println(\"NPE\"); } } } What is printed?",
+            "options": [
+              "\"NPE\"",
+              "null",
+              "0 (as integer length)",
+              "Program crash"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Calling s.length() on null throws NullPointerException, which is caught by catch (NullPointerException e) and prints 'NPE'."
+          }
         },
         {
           "pageId": "p-ERR4C",
@@ -1792,7 +2325,18 @@
             "code": "public class Main {\n    public static void main(String[] args) {\n        try {\n            int x = 10 / 0;\n            System.out.println(x);\n        } catch (ArithmeticException e) {\n            System.out.println(\"Math error\");\n        } catch (Exception e) {\n            System.out.println(\"Other error\");\n        }\n    }\n}"
           },
           "sectionType": "CHECKPOINT",
-          "teachingGoal": "Trace and explain the Try and Catch in Java behavior shown in this checkpoint."
+          "teachingGoal": "Trace and explain the Try and Catch in Java behavior shown in this checkpoint.",
+          "checkpoint": {
+            "question": "What is the result of executing code where an exception is thrown inside a method that does NOT catch it?",
+            "options": [
+              "The method call stack unwinds: the method aborts and the exception propagates back to the calling method looking for a catch block",
+              "The method automatically restarts from the beginning",
+              "The exception is converted into an integer 0",
+              "The computer shuts down"
+            ],
+            "correctAnswer": 0,
+            "explanation": "If an exception is unhandled within a method, the method exits immediately, its stack frame is popped, and the exception bubbles up to the caller on the call stack."
+          }
         },
         {
           "pageId": "advance-java-m4-t2-v3-p1",
@@ -1800,7 +2344,18 @@
           "sectionType": "CONCEPT",
           "content": "try/catch lets a program handle a known failure path without crashing the entire execution flow. finally expresses a guaranteed follow-up action.",
           "teachingGoal": "Explain why Try and Catch in Java matters in real Java programs and identify when the concept is appropriate.",
-          "suggestedVisual": "try -> exception -> matching catch -> finally flow."
+          "suggestedVisual": "try -> exception -> matching catch -> finally flow.",
+          "checkpoint": {
+            "question": "Why is structured exception handling superior to returning error code numbers (like -1 or false)?",
+            "options": [
+              "Exceptions cannot be accidentally ignored, decouple error-handling paths from normal business logic, and capture rich stack trace context",
+              "Exceptions execute in 0 CPU cycles",
+              "Return codes are not supported in Java",
+              "Exceptions automatically repair corrupted memory"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Error return codes are easily overlooked by callers and mix error logic with return values. Exceptions enforce that errors must either be handled or propagated, preventing silent failures."
+          }
         },
         {
           "pageId": "advance-java-m4-t2-v3-p2",
@@ -1808,7 +2363,18 @@
           "sectionType": "CONCEPT",
           "content": "- **try:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **catch:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **finally:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **ArithmeticException:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **NumberFormatException:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **Propagation:** define it, identify when to use it, and connect it to a concrete Java rule or API.",
           "teachingGoal": "Define the core vocabulary of Try and Catch in Java and connect each term to a concrete Java example.",
-          "suggestedVisual": "Concept map for Try and Catch in Java."
+          "suggestedVisual": "Concept map for Try and Catch in Java.",
+          "checkpoint": {
+            "question": "What are the five core keywords associated with Java's exception handling mechanism?",
+            "options": [
+              "try, catch, finally, throw, and throws",
+              "if, else, switch, case, and default",
+              "public, private, protected, static, and final",
+              "class, interface, enum, record, and extends"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Java's exception handling model is built entirely around five keywords: try (guarded block), catch (handler), finally (cleanup), throw (trigger exception), and throws (signature declaration)."
+          }
         },
         {
           "pageId": "advance-java-m4-t2-v3-p3",
@@ -1845,7 +2411,18 @@
               ],
               "output": "valid catch structure"
             }
-          ]
+          ],
+          "checkpoint": {
+            "question": "What is guaranteed about a 'finally' block in Java?",
+            "options": [
+              "It always executes regardless of whether an exception was thrown, caught, or completely unhandled (unless System.exit() or JVM crash occurs)",
+              "It only executes when an exception is thrown",
+              "It only executes if the try block completes successfully without errors",
+              "It executes only on multi-threaded servers"
+            ],
+            "correctAnswer": 0,
+            "explanation": "A finally block always executes after the try (and catch, if any) block finishes, ensuring cleanup logic (closing files, releasing locks) runs under all conditions."
+          }
         },
         {
           "pageId": "advance-java-m4-t2-v3-p4",
@@ -1853,7 +2430,18 @@
           "sectionType": "DRY_RUN",
           "content": "A strong Java learner can explain how state changes line by line. Trace the variable, object field, collection content, or exception path before executing the program.",
           "teachingGoal": "Dry-run Try and Catch in Java by tracking program state line by line.",
-          "suggestedVisual": "Step-by-step state trace for Try and Catch in Java."
+          "suggestedVisual": "Step-by-step state trace for Try and Catch in Java.",
+          "checkpoint": {
+            "question": "What happens if System.exit(0) is executed inside a try block?",
+            "options": [
+              "The JVM halts immediately; subsequent catch and finally blocks do NOT execute",
+              "The finally block executes before the JVM exits",
+              "The catch block executes with a SecurityException",
+              "The system enters sleep mode"
+            ],
+            "correctAnswer": 0,
+            "explanation": "System.exit(status) forcefully terminates the running Java Virtual Machine process. The call stack is not unwound, so finally blocks are bypassed."
+          }
         },
         {
           "pageId": "advance-java-m4-t2-v3-p5",
@@ -1861,14 +2449,36 @@
           "sectionType": "DEBUGGING",
           "content": "- **Mistake:** Using broad catches too early\n  **Fix:** state the rule, isolate the smallest failing input, and rerun the corrected case.\n- **Mistake:** Putting unrelated code in one try\n  **Fix:** state the rule, isolate the smallest failing input, and rerun the corrected case.\n- **Mistake:** Ordering a general catch before a specific catch\n  **Fix:** state the rule, isolate the smallest failing input, and rerun the corrected case.",
           "teachingGoal": "Diagnose common mistakes in Try and Catch in Java and fix them using the underlying Java rule.",
-          "suggestedVisual": "Expected vs actual state comparison."
+          "suggestedVisual": "Expected vs actual state comparison.",
+          "checkpoint": {
+            "question": "What is the problem with catching a generic Exception too early in a low-level helper method?",
+            "options": [
+              "It prevents higher-level layers from knowing that a failure occurred and applying domain-appropriate recovery, fallback, or retry strategies",
+              "It causes the compiler to flag an error",
+              "It deletes the return value",
+              "It makes the method static"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Catching exceptions too early robs calling layers of the ability to make intelligent recovery decisions (e.g. retrying a network call or prompting the user)."
+          }
         },
         {
           "pageId": "advance-java-m4-t2-v3-p6",
           "title": "Topic mastery review",
           "sectionType": "REVIEW",
           "content": "Before leaving **Try and Catch in Java**, explain the concept without looking at code, solve a small variation, and identify one edge case.\n\n**Mastery checklist**\n- [ ] Write try/catch/finally.\n- [ ] Handle multiple specific exceptions.\n- [ ] Understand propagation and catch ordering.",
-          "teachingGoal": "Use the mastery review to explain, implement, test, and debug Try and Catch in Java."
+          "teachingGoal": "Use the mastery review to explain, implement, test, and debug Try and Catch in Java.",
+          "checkpoint": {
+            "question": "What is the difference between Checked and Unchecked exceptions at compile time?",
+            "options": [
+              "Checked exceptions (subclasses of Exception except RuntimeException) are checked by javac and MUST be caught or declared; Unchecked exceptions (RuntimeException and Error) are not checked at compile time",
+              "Checked exceptions run faster than unchecked exceptions",
+              "Unchecked exceptions can only be thrown by the JVM, never by user code",
+              "Checked exceptions are obsolete in Java 21"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The Java compiler verifies checked exceptions during compilation, forcing developers to provide a catch block or throws clause. Unchecked exceptions bypass this check."
+          }
         }
       ],
       "codeExamples": [
@@ -2309,7 +2919,18 @@
             "code": "class InvalidScoreException extends Exception {\n    InvalidScoreException(String message) { super(message); }\n}\npublic class Main {\n    public static void main(String[] args) {\n        try { throw new InvalidScoreException(\"Invalid score\"); }\n        catch (InvalidScoreException e) { System.out.println(e.getMessage()); }\n    }\n}"
           },
           "sectionType": "CHECKPOINT",
-          "teachingGoal": "Trace and explain the Creating custom exceptions behavior shown in this checkpoint."
+          "teachingGoal": "Trace and explain the Creating custom exceptions behavior shown in this checkpoint.",
+          "checkpoint": {
+            "question": "To create a custom unchecked exception that callers are NOT forced to declare in a throws clause, which class should you extend?",
+            "options": [
+              "java.lang.RuntimeException",
+              "java.lang.Exception",
+              "java.lang.Throwable",
+              "java.lang.Error"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Extending RuntimeException creates an unchecked exception, which does not require mandatory try-catch blocks or 'throws' declarations."
+          }
         },
         {
           "pageId": "p-ERR6C",
@@ -2325,7 +2946,18 @@
             "code": "class NegativeValueException extends Exception {\n    NegativeValueException(String message) { super(message); }\n}\npublic class Main {\n    public static void main(String[] args) {\n        try { throw new NegativeValueException(\"Negative value\"); }\n        catch (NegativeValueException e) { System.out.println(e.getMessage()); }\n    }\n}"
           },
           "sectionType": "CHECKPOINT",
-          "teachingGoal": "Trace and explain the Creating custom exceptions behavior shown in this checkpoint."
+          "teachingGoal": "Trace and explain the Creating custom exceptions behavior shown in this checkpoint.",
+          "checkpoint": {
+            "question": "Given: public class InvalidAgeException extends Exception { public InvalidAgeException(String msg) { super(msg); } } How is this exception thrown in code?",
+            "options": [
+              "throw new InvalidAgeException(\"Age cannot be negative\");",
+              "throws InvalidAgeException(\"Age cannot be negative\");",
+              "new InvalidAgeException(\"Age cannot be negative\").throw();",
+              "catch (InvalidAgeException(\"Age cannot be negative\"))"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Exceptions are instantiated with 'new' and thrown using the 'throw' keyword: throw new InvalidAgeException(\"message\");."
+          }
         },
         {
           "pageId": "p-ERR6D",
@@ -2341,7 +2973,18 @@
             "code": "class ValidationException extends Exception {\n    ValidationException(String message) { super(message); }\n}\npublic class Main {\n    public static void main(String[] args) {\n        try { throw new ValidationException(\"Validation failed\"); }\n        catch (ValidationException e) { System.out.println(e.getMessage()); }\n    }\n}"
           },
           "sectionType": "CHECKPOINT",
-          "teachingGoal": "Trace and explain the Creating custom exceptions behavior shown in this checkpoint."
+          "teachingGoal": "Trace and explain the Creating custom exceptions behavior shown in this checkpoint.",
+          "checkpoint": {
+            "question": "If a method throws a checked custom exception, what must be added to the method signature?",
+            "options": [
+              "The 'throws' keyword followed by the exception class name (e.g. void register() throws InvalidAgeException)",
+              "The 'throw' keyword inside the parameter list",
+              "A private access modifier",
+              "The @Override annotation"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Checked exceptions escaping a method must be declared in the method header using 'throws ExceptionName' to inform callers of potential checked failure modes."
+          }
         },
         {
           "pageId": "advance-java-m4-t3-v3-p1",
@@ -2349,7 +2992,18 @@
           "sectionType": "CONCEPT",
           "content": "A custom exception gives a domain rule a meaningful name. This is useful when an invalid state is expected to be rejected by a business or application rule.",
           "teachingGoal": "Explain why Creating custom exceptions matters in real Java programs and identify when the concept is appropriate.",
-          "suggestedVisual": "Validation boundary -> throw -> caller catch."
+          "suggestedVisual": "Validation boundary -> throw -> caller catch.",
+          "checkpoint": {
+            "question": "Why is throwing a custom PaymentFailedException superior to throwing a generic IllegalArgumentException in financial software?",
+            "options": [
+              "It gives the error clear domain semantics and allows payment-specific catch handlers without accidentally catching unrelated argument errors",
+              "It encrypts the customer's credit card details",
+              "It prevents the JVM from consuming CPU cycles",
+              "It automatically refunds the customer's account"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Domain-specific exception types allow calling code to catch and handle specific business failures (e.g. PaymentFailedException) without mistakenly intercepting general programming errors."
+          }
         },
         {
           "pageId": "advance-java-m4-t3-v3-p2",
@@ -2357,7 +3011,18 @@
           "sectionType": "CONCEPT",
           "content": "- **extends Exception:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **throw:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **throws:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **getMessage:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **Validation rule:** define it, identify when to use it, and connect it to a concrete Java rule or API.",
           "teachingGoal": "Define the core vocabulary of Creating custom exceptions and connect each term to a concrete Java example.",
-          "suggestedVisual": "Concept map for Creating custom exceptions."
+          "suggestedVisual": "Concept map for Creating custom exceptions.",
+          "checkpoint": {
+            "question": "What is the role of the 'cause' parameter in: public CustomException(String message, Throwable cause)?",
+            "options": [
+              "It preserves the underlying lower-level exception (e.g. a SQLException) so the full diagnostic history is retained in the stack trace",
+              "It causes the exception to execute repeatedly",
+              "It cancels the exception before it is thrown",
+              "It formats the error message in uppercase"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Passing 'cause' enables exception chaining. When printStackTrace() is called, both the high-level custom exception and the underlying root cause exception are displayed."
+          }
         },
         {
           "pageId": "advance-java-m4-t3-v3-p3",
@@ -2394,7 +3059,18 @@
               ],
               "output": "Error: Insufficient funds"
             }
-          ]
+          ],
+          "checkpoint": {
+            "question": "In an e-commerce system, class OutOfStockException extends Exception { int productId; int requestedQty; } What is the advantage of these custom fields?",
+            "options": [
+              "They provide structured, programmatic access to the exact item ID and quantity that failed, enabling the UI to suggest alternatives or restock alerts",
+              "They reduce the size of the class file",
+              "They allow the exception to be stored in an array",
+              "They make the exception run on the server"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Custom exception fields allow catching code to inspect machine-readable error details (such as productId) rather than parsing text strings."
+          }
         },
         {
           "pageId": "advance-java-m4-t3-v3-p4",
@@ -2402,7 +3078,18 @@
           "sectionType": "DRY_RUN",
           "content": "A strong Java learner can explain how state changes line by line. Trace the variable, object field, collection content, or exception path before executing the program.",
           "teachingGoal": "Dry-run Creating custom exceptions by tracking program state line by line.",
-          "suggestedVisual": "Step-by-step state trace for Creating custom exceptions."
+          "suggestedVisual": "Step-by-step state trace for Creating custom exceptions.",
+          "checkpoint": {
+            "question": "When a method invokes validateAge(15) which executes 'throw new UnderageException()', what happens to the remaining code in that method?",
+            "options": [
+              "It is aborted immediately; the call stack unwinds until an enclosing catch block matching UnderageException is found",
+              "It executes after the exception is handled",
+              "It is executed on a background thread",
+              "The method returns null"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Throwing an exception aborts the method instantly, discarding local variables on the stack frame until a matching catch block or thread death is reached."
+          }
         },
         {
           "pageId": "advance-java-m4-t3-v3-p5",
@@ -2410,14 +3097,36 @@
           "sectionType": "DEBUGGING",
           "content": "- **Mistake:** Forgetting throws for a checked exception\n  **Fix:** state the rule, isolate the smallest failing input, and rerun the corrected case.\n- **Mistake:** Using a vague message\n  **Fix:** state the rule, isolate the smallest failing input, and rerun the corrected case.\n- **Mistake:** Throwing after state has already been mutated\n  **Fix:** state the rule, isolate the smallest failing input, and rerun the corrected case.",
           "teachingGoal": "Diagnose common mistakes in Creating custom exceptions and fix them using the underlying Java rule.",
-          "suggestedVisual": "Expected vs actual state comparison."
+          "suggestedVisual": "Expected vs actual state comparison.",
+          "checkpoint": {
+            "question": "What is the common mistake of extending java.lang.Throwable directly when creating custom exceptions?",
+            "options": [
+              "It bypasses standard Exception handling conventions and can accidentally treat custom errors like fatal JVM Errors",
+              "It causes a compilation error",
+              "Throwable classes cannot have constructors",
+              "It makes all methods abstract"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Applications should never extend Throwable directly. Extend Exception for checked exceptions or RuntimeException for unchecked exceptions."
+          }
         },
         {
           "pageId": "advance-java-m4-t3-v3-p6",
           "title": "Topic mastery review",
           "sectionType": "REVIEW",
           "content": "Before leaving **Creating custom exceptions**, explain the concept without looking at code, solve a small variation, and identify one edge case.\n\n**Mastery checklist**\n- [ ] Create checked custom exceptions.\n- [ ] Use throw and throws.\n- [ ] Design clear validation messages.",
-          "teachingGoal": "Use the mastery review to explain, implement, test, and debug Creating custom exceptions."
+          "teachingGoal": "Use the mastery review to explain, implement, test, and debug Creating custom exceptions.",
+          "checkpoint": {
+            "question": "What is the complete checklist for designing a robust custom exception class in Java?",
+            "options": [
+              "Choose appropriate base class (Exception vs RuntimeException), provide standard constructor overloads delegating to super, add domain-specific diagnostic fields if needed, and make it serializable",
+              "Make all methods static and private",
+              "Implement the Runnable interface and override run()",
+              "Ensure the class has no constructors"
+            ],
+            "correctAnswer": 0,
+            "explanation": "A professional custom exception extends Exception or RuntimeException, provides message/cause constructors, optionally encapsulates domain metadata, and adheres to Java naming conventions."
+          }
         }
       ],
       "codeExamples": [

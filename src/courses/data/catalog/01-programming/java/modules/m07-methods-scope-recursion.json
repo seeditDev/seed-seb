@@ -14,7 +14,7 @@
         {
           "pageId": "p-OPJA215",
           "title": "Generic Programming",
-          "content": "Generics let a class or method work with a family of reference types while preserving compile-time type safety.\n\nFor example, `Box<String>` stores strings, while `Box<Integer>` stores integers. The compiler checks that the declared type is used consistently.",
+          "content": "**Generics** (introduced in Java 5) allow classes, interfaces, and methods to operate on objects of various types while providing **compile-time type safety**.\n\n### Why Generics Were Introduced\n\nPrior to Java 5, collections handled elements as raw `Object` references. This caused two major software engineering problems:\n\n1. **Explicit Casting Required:** You had to manually cast every object retrieved from a collection.\n2. **Runtime Failures:** Accidental insertion of an incompatible type went undetected until runtime, throwing a fatal `ClassCastException`.\n\n```java\n// Pre-Java 5 (Without Generics) - UNSAFE\nList rawList = new ArrayList();\nrawList.add(\"Hello\");\nrawList.add(100); // Compiles cleanly, but dangerous!\n\nfor (Object obj : rawList) {\n    String str = (String) obj; // Throws ClassCastException when reaching 100!\n}\n\n// Java 5+ (With Generics) - TYPE-SAFE\nList<String> safeList = new ArrayList<>();\nsafeList.add(\"Hello\");\n// safeList.add(100); // COMPILE ERROR: The compiler rejects this immediately!\n\nfor (String str : safeList) {\n    System.out.println(str); // No manual casting required!\n}\n```\n\n### Key Benefits of Generics\n\n- **Stronger Compile-Time Checks:** Type mismatches are caught when you compile rather than when your application runs in production.\n- **Elimination of Casts:** Code is cleaner and less error-prone because the compiler knows the exact type.\n- **Algorithm Reusability:** You can write a single algorithm (such as sorting or binary search) that works across any reference type.",
           "callout": {
             "type": "KEY_CONCEPT",
             "title": "Key Concept",
@@ -25,22 +25,21 @@
             "code": "class Box<T>{T value;Box(T v){value=v;}T get(){return value;}} public class Main { public static void main(String[] a){Box<String> b=new Box<>(\"Java\");System.out.println(b.get());}}"
           },
           "checkpoint": {
-            "checkpointId": "cp-OPJA215",
-            "question": "What should you verify when applying Generic Programming in Java?",
+            "question": "What is the primary advantage of using Java Generics over raw Object collections?",
             "options": [
-              "The declaration, visibility, and runtime behavior must match the rules of Generic Programming.",
-              "All members must be public.",
-              "Every class must inherit from two concrete classes.",
-              "Exceptions should always be ignored."
+              "Type errors are detected at compile-time, eliminating explicit casting and ClassCastException risks",
+              "Generics allow primitive types to be stored without any memory allocation",
+              "Generics automatically execute loop iterations concurrently on multiple threads",
+              "Generics allow classes to inherit from multiple concrete parent classes"
             ],
             "correctAnswer": 0,
-            "explanation": "The correct choice applies the Java/OOP rule associated with Generic Programming without introducing unrelated state or unsafe behavior."
+            "explanation": "Java Generics provide compile-time type safety. The compiler verifies type consistency at build time, preventing runtime ClassCastException and removing the need for manual type casting."
           }
         },
         {
           "pageId": "p-OPJA217",
           "title": "Generic Methods",
-          "content": "A generic method declares its type parameter before the return type, such as `<T> T first(T a, T b)`.\n\nType inference often lets the caller omit the type argument, while the compiler still checks the operations permitted for the type parameter.",
+          "content": "A **generic method** is a method that introduces its own type parameter. The type parameter is scoped exclusively to that method and can be used in its return type, parameter list, and method body.\n\n### Syntax Anatomy of a Generic Method\n\n```java\npublic static <T> void printArray(T[] elements) {\n    for (T element : elements) {\n        System.out.print(element + \" \");\n    }\n    System.out.println();\n}\n```\n\n1. **Type Parameter Section (`<T>`):** Must appear **before the return type** of the method.\n2. **Return Type:** Can be `void`, a primitive, or use the type parameter `T` (e.g., `<T> T getFirst(T[] arr)`).\n3. **Parameters:** Uses `T` to enforce consistent types across arguments.\n\n---\n\n### Type Inference in Generic Method Calls\n\nWhen invoking a generic method, you usually do not need to specify the type argument explicitly; the Java compiler infers it from the argument types passed to the method:\n\n```java\npublic class GenericMethodDemo {\n    public static <T> void display(T data) {\n        System.out.println(\"Type: \" + data.getClass().getSimpleName() + \" | Value: \" + data);\n    }\n\n    public static void main(String[] args) {\n        // Compiler infers T as String\n        display(\"Java Generics\");\n\n        // Compiler infers T as Integer (via autoboxing)\n        display(42);\n\n        // Compiler infers T as Double\n        display(3.14);\n\n        // Explicit type argument syntax (rarely needed):\n        GenericMethodDemo.<Boolean>display(true);\n    }\n}\n```\n\n**Console Output:**\n```default\nType: String | Value: Java Generics\nType: Integer | Value: 42\nType: Double | Value: 3.14\nType: Boolean | Value: true\n```",
           "callout": {
             "type": "KEY_CONCEPT",
             "title": "Key Concept",
@@ -49,12 +48,23 @@
           "codeCard": {
             "language": "java",
             "code": "public class Main { static <T> void show(T x){System.out.println(x);} public static void main(String[] a){show(\"Java\");}}"
+          },
+          "checkpoint": {
+            "question": "Where must the generic type parameter (such as <T>) be placed in a generic method declaration?",
+            "options": [
+              "Directly before the method's return type",
+              "Inside the method's parameter list after the arguments",
+              "Immediately after the class name only",
+              "At the end of the method body inside curly braces"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Java generic methods, the type parameter declaration (e.g. <T> or <K, V>) must precede the method's return type, for example: public static <T> T getFirst(T[] array)."
           }
         },
         {
           "pageId": "p-OPJA216",
           "title": "How to use Generic Methods",
-          "content": "Generic methods are useful when the same operation should work for many types without duplicated implementations.\n\nWhen the method needs specific capabilities, a bounded type parameter such as `<T extends Number>` can constrain the accepted types while retaining genericity.",
+          "content": "Generic methods shine when you need utility operations that work identically across diverse types without duplicating code or sacrificing type safety.\n\n### Example 1: Generic Element Swapping\n\n```java\npublic class ArrayUtilities {\n    // Generic method to swap two elements in any reference array\n    public static <T> void swap(T[] array, int i, int j) {\n        if (i < 0 || i >= array.length || j < 0 || j >= array.length) {\n            throw new IndexOutOfBoundsException(\"Invalid indices for array of length \" + array.length);\n        }\n        T temp = array[i];\n        array[i] = array[j];\n        array[j] = temp;\n    }\n\n    public static void main(String[] args) {\n        String[] words = {\"world\", \"hello\"};\n        swap(words, 0, 1);\n        System.out.println(String.join(\" \", words)); // Prints: hello world\n\n        Integer[] numbers = {10, 20, 30};\n        swap(numbers, 0, 2);\n        System.out.println(numbers[0] + \", \" + numbers[2]); // Prints: 30, 10\n    }\n}\n```\n\n---\n\n### Bounded Type Parameters: `<T extends Comparable<T>>`\n\nBy default, an unbounded type parameter `<T>` can only invoke methods available on `java.lang.Object` (like `equals()`, `hashCode()`, `toString()`).\n\nTo perform comparisons or arithmetic, you constrain `T` with a **bound**:\n\n```java\n// T must implement Comparable<T>\npublic static <T extends Comparable<T>> T findMax(T a, T b) {\n    return a.compareTo(b) > 0 ? a : b;\n}\n```\n\nNow, `findMax(\"apple\", \"zebra\")` and `findMax(25, 12)` compile safely because both `String` and `Integer` implement `Comparable`.",
           "callout": {
             "type": "KEY_CONCEPT",
             "title": "Key Concept",
@@ -63,12 +73,23 @@
           "codeCard": {
             "language": "java",
             "code": "public class Main { static <T> T first(T a,T b){return a;} public static void main(String[] a){System.out.println(first(\"A\",\"B\"));}}"
+          },
+          "checkpoint": {
+            "question": "What capability does the bounded type parameter <T extends Comparable<T>> grant to method logic?",
+            "options": [
+              "It allows elements of type T to be compared using compareTo() with compile-time type safety",
+              "It forces T to be converted into a primitive double value",
+              "It guarantees that all instances of T are stored in thread-safe memory",
+              "It allows T to be instantiated with the new keyword"
+            ],
+            "correctAnswer": 0,
+            "explanation": "By bounding T with Comparable<T>, the compiler guarantees that any argument passed to the method implements compareTo(), enabling comparison algorithms like sorting or finding maximums."
           }
         },
         {
           "pageId": "p-OPJA221",
-          "title": "Multiple Choice Question",
-          "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
+          "title": "Generic Methods and Primitive Types",
+          "content": "### Generic Methods and Primitive Types\n\nA fundamental rule of Java Generics is: **Type arguments must be reference types (objects), never primitive types.**\n\n```java\npublic class PrimitiveGenericTrap {\n    public static <T> void inspect(T element) {\n        System.out.println(\"Element: \" + element);\n    }\n\n    public static <T> void inspectArray(T[] array) {\n        System.out.println(\"Length: \" + array.length);\n    }\n\n    public static void main(String[] args) {\n        int singleInt = 10;\n        inspect(singleInt); // Valid! Autoboxed into Integer\n\n        int[] primitiveArray = {1, 2, 3};\n        // inspectArray(primitiveArray); // COMPILE ERROR: int[] is not an array of objects!\n\n        Integer[] objectArray = {1, 2, 3};\n        inspectArray(objectArray); // Valid! Integer[] is an Object array\n    }\n}\n```\n\n### Why Primitive Arrays Fail with `<T[]> void`\n\n- An `int[]` is an `Object`, but it is **not** an array of `Object` references (`Object[]`).\n- In `inspect(singleInt)`, Java autoboxes the primitive `int` into an `Integer` object, satisfying `<T>`.\n- However, autoboxing **does not convert `int[]` to `Integer[]`**. Therefore, you cannot pass `int[]` where `T[]` is expected.",
           "callout": {
             "type": "KEY_CONCEPT",
             "title": "Key Concept",
@@ -77,12 +98,23 @@
           "codeCard": {
             "language": "java",
             "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          },
+          "checkpoint": {
+            "question": "Why does calling a generic method with signature <T> void process(T[] arr) fail when passed an int[] array?",
+            "options": [
+              "Because an int[] is a primitive array and cannot be autoboxed to an object array (Integer[])",
+              "Because Java methods cannot accept arrays as parameters",
+              "Because generic methods can only accept String arguments",
+              "Because int is too large for the JVM type system"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Generics require reference types. While an individual int autoboxes to Integer, Java does not autobox primitive arrays (int[]) into reference arrays (Integer[])."
           }
         },
         {
           "pageId": "p-OPJA223",
-          "title": "Multiple Choice Question",
-          "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
+          "title": "Multiple Bounds in Generic Type Parameters",
+          "content": "### Multiple Bounds in Java Generics\n\nJava allows a type parameter to have **multiple bounds** using the `&` operator:\n\n```java\n<T extends ClassBound & Interface1 & Interface2>\n```\n\n### Strict Syntax Rules for Multiple Bounds\n\n1. **Only One Class Bound Allowed:** Because Java supports single inheritance of classes, a type parameter can extend at most **one class**.\n2. **Class Must Be First:** If one of the bounds is a class, it **must be listed first** in the bound specification. Listing an interface before a class causes a compile-time error.\n3. **Multiple Interfaces Allowed:** You can specify as many interface bounds as needed using additional `&` delimiters.\n\n```java\n// VALID: Class first, then interface\npublic class Processor<T extends Number & Comparable<T>> {\n    private T value;\n\n    public Processor(T value) {\n        this.value = value;\n    }\n\n    public boolean isPositive() {\n        return value.doubleValue() > 0; // Number method\n    }\n}\n\n// INVALID: Compile error! Class cannot follow an interface\n// class Invalid<T extends Comparable<T> & Number> { }\n```",
           "callout": {
             "type": "KEY_CONCEPT",
             "title": "Key Concept",
@@ -91,12 +123,23 @@
           "codeCard": {
             "language": "java",
             "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          },
+          "checkpoint": {
+            "question": "Which of the following represents a legally formatted multiple bound declaration for type parameter T?",
+            "options": [
+              "<T extends Number & Comparable<T>>",
+              "<T extends Comparable<T> & Number>",
+              "<T extends Number, Comparable<T>>",
+              "<T implements Number & Comparable<T>>"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Java multiple bounds, the class bound (Number) must appear first, followed by interface bounds separated by '&'. Using comma ',' or 'implements' keyword is invalid."
           }
         },
         {
           "pageId": "p-OPJA225",
-          "title": "Multiple Choice Question",
-          "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
+          "title": "Type Erasure and Runtime Mechanics",
+          "content": "### How Java Implements Generics: Type Erasure\n\nJava generics were designed with **backward compatibility** in mind. To ensure generic code could run seamlessly on older JVMs without changing bytecode execution, Java uses **Type Erasure**.\n\n### What Type Erasure Does\n\nDuring compilation, the Java compiler (`javac`):\n1. **Replaces type parameters:**\n   - Unbounded type parameters (`<T>`) are replaced with `java.lang.Object`.\n   - Bounded type parameters (`<T extends Number>`) are replaced with their first bound (`Number`).\n2. **Inserts type casts:** Automatically inserts bytecode casts where necessary to maintain type safety.\n3. **Generates bridge methods:** Inserts synthetic bridge methods to preserve polymorphism in extended generic classes.\n4. **Erases type metadata:** At runtime, generic type arguments (like `<String>` or `<Integer>`) **do not exist**. A `List<String>` and a `List<Integer>` share the exact same runtime class: `ArrayList.class`.\n\n```java\n// Source Code\npublic class Node<T> {\n    private T data;\n    public T getData() { return data; }\n}\n\n// Bytecode after Type Erasure\npublic class Node {\n    private Object data;\n    public Object getData() { return data; }\n}\n```",
           "callout": {
             "type": "KEY_CONCEPT",
             "title": "Key Concept",
@@ -105,84 +148,216 @@
           "codeCard": {
             "language": "java",
             "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          },
+          "checkpoint": {
+            "question": "What happens to unbounded type parameters (such as <T>) during Java compilation due to Type Erasure?",
+            "options": [
+              "They are erased and replaced with java.lang.Object in the generated bytecode",
+              "They are converted into separate physical classes for each distinct type used",
+              "They are stored in the JVM Metaspace for dynamic runtime verification",
+              "They cause the compiler to generate native C++ templates"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Through Type Erasure, javac replaces all unbounded type parameters with java.lang.Object (or their first bound) and inserts necessary type casts, maintaining complete compatibility with legacy JVMs."
           }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-overview",
           "title": "Step-by-step learning path",
           "sectionType": "STEP_BY_STEP",
-          "content": "Follow this exact sequence for **Generic programming: classes, methods**: prerequisite check → concept build → mental model → worked example → dry run → guided implementation → independent practice → mastery gate. Do not skip to the final practice set until the guided implementation is understood.",
-          "teachingGoal": "Learner can complete step-by-step learning path for Generic programming: classes, methods."
+          "content": "### Step-by-Step Learning Path: Generics in Object-Oriented Design\n\nGeneric programming in Java is not just a syntax convenience; it is an architectural discipline for writing robust, reusable software components.\n\nFollow this systematic progression to master generic classes and methods:\n\n```mermaid\ngraph TD\n    A[1. Prerequisite Check: Types & References] --> B[2. Build Concept: Generic Classes]\n    B --> C[3. Mental Model: Compile-Time vs Runtime]\n    C --> D[4. Worked Example: Generic Container]\n    D --> E[5. Dry Run: Type Verification Trace]\n    E --> F[6. Guided Implementation: Generic Stack]\n    F --> G[7. Independent Practice: Custom Sorting]\n    G --> H[8. Mastery Gate: Bounded Wildcards]\n```\n\n#### Key Milestones:\n1. **Compile-time vs Runtime:** Understand why type checks occur before execution.\n2. **Generic Classes:** Build classes parameterized with one or more types (`<K, V>`).\n3. **Type Erasure:** Grasp why you cannot instantiate `new T()` or create generic arrays.\n4. **Wildcards:** Master covariance and contravariance using PECS (`? extends` vs `? super`).",
+          "teachingGoal": "Learner can complete step-by-step learning path for Generic programming: classes, methods.",
+          "checkpoint": {
+            "question": "At which phase of execution does the Java system verify generic type constraints?",
+            "options": [
+              "Strictly at compile-time by javac before bytecode is produced",
+              "During garbage collection sweeps in the JVM",
+              "At class-loading time by the operating system kernel",
+              "During JIT runtime compilation inside native machine code"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Generics are a compile-time feature in Java. The compiler validates type constraints and erases the type parameters; the JVM at runtime does not perform generic type checks."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-step1",
           "title": "1. Prerequisite check",
           "sectionType": "STEP_BY_STEP",
-          "content": "Before starting **Generic programming: classes, methods**, recall the Java syntax and object/model concepts required for it. Write down what you already know, then identify one question you cannot yet answer confidently. The purpose of this step is to expose a missing prerequisite before new material is introduced.",
-          "teachingGoal": "Learner can complete 1. prerequisite check for Generic programming: classes, methods."
+          "content": "### 1. Prerequisite Check: Types and References\n\nBefore diving into generic programming, ensure you have a rock-solid understanding of Java's type hierarchy.\n\n### Reference Types vs Primitive Types\n\n| Attribute | Primitive Types (`int`, `double`, `char`) | Reference Types (`Integer`, `String`, `Object`) |\n| :--- | :--- | :--- |\n| **Storage Location** | Directly on Call Stack or inside Object | Stored as a pointer/reference to Heap memory |\n| **Inheritance** | Do not inherit from anything | All reference types inherit from `java.lang.Object` |\n| **Nullable** | Cannot be `null` | Can be `null` |\n| **Generics Support** | **Cannot be used as generic type arguments** | **Fully supported as generic type arguments** |\n\n### Wrapper Classes & Autoboxing\nJava provides wrapper classes for each primitive:\n- `int` $\\rightarrow$ `Integer`\n- `double` $\\rightarrow$ `Double`\n- `boolean` $\\rightarrow$ `Boolean`\n- `char` $\\rightarrow$ `Character`\n\nBecause generics require reference types inheriting from `Object`, collections store wrapper objects: `List<Integer>`, not `List<int>`.",
+          "teachingGoal": "Learner can complete 1. prerequisite check for Generic programming: classes, methods.",
+          "checkpoint": {
+            "question": "Why is the declaration 'ArrayList<int> list = new ArrayList<>();' illegal in Java?",
+            "options": [
+              "Because Java generic type arguments must be reference types, not primitive types",
+              "Because ArrayList only supports String objects",
+              "Because int variables cannot be stored in computer memory",
+              "Because the 'int' keyword was deprecated in Java 5"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Java generics require reference types that extend java.lang.Object. Primitive types like int must use their wrapper class (e.g. ArrayList<Integer>)."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-step2",
           "title": "2. Build the concept",
           "sectionType": "STEP_BY_STEP",
-          "content": "Generics move type errors from runtime to compile time and reduce casting. A generic type parameter describes a family of related types without giving up type safety. Start with the rule, then connect the rule to one small Java example. Avoid memorizing a code template before you can explain why each important line is present.",
-          "teachingGoal": "Learner can complete 2. build the concept for Generic programming: classes, methods."
+          "content": "### 2. Build the Concept: Generic Classes\n\nA **generic class** is defined with a type parameter section enclosed in angle brackets (`<T>`) immediately following the class name.\n\n### Building a Generic `Box<T>` Container\n\n```java\npublic class Box<T> {\n    // T stands for \"Type\"\n    private T content;\n\n    public void set(T content) {\n        this.content = content;\n    }\n\n    public T get() {\n        return content;\n    }\n\n    public boolean isEmpty() {\n        return content == null;\n    }\n}\n```\n\n### Instantiating with Specific Types\n\n```java\npublic class BoxTest {\n    public static void main(String[] args) {\n        // Box dedicated exclusively to Strings\n        Box<String> stringBox = new Box<>();\n        stringBox.set(\"Confidential Report\");\n        String text = stringBox.get(); // No cast required!\n\n        // Box dedicated exclusively to Integers\n        Box<Integer> intBox = new Box<>();\n        intBox.set(2025);\n        int year = intBox.get(); // Automatic unboxing!\n\n        // The Diamond Operator (<>):\n        // In Java 7+, you can omit the type argument on the right side.\n    }\n}\n```\n\n### Standard Type Parameter Naming Conventions\n- **`T`**: Type (general purpose)\n- **`E`**: Element (extensively used in Collections framework)\n- **`K`**: Key (used in Maps)\n- **`V`**: Value (used in Maps)\n- **`N`**: Number",
+          "teachingGoal": "Learner can complete 2. build the concept for Generic programming: classes, methods.",
+          "checkpoint": {
+            "question": "What does the diamond operator '<>' in 'Box<String> box = new Box<>()' accomplish?",
+            "options": [
+              "It allows the compiler to infer the constructor's type argument from the variable declaration",
+              "It converts the class into a singleton instance",
+              "It encrypts the object's fields in memory",
+              "It bypasses the constructor call completely"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The diamond operator (<>), introduced in Java 7, enables type inference for generic instance creation, eliminating redundant type arguments on the right-hand side."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-step3",
           "title": "3. Build a mental model",
           "sectionType": "STEP_BY_STEP",
-          "content": "Imagine the runtime state while **Generic programming: classes, methods** executes. Identify the important actors, ownership, values, references, control flow, or exception paths. Explain the relationship in plain language before touching a full program.",
-          "teachingGoal": "Learner can complete 3. build a mental model for Generic programming: classes, methods."
+          "content": "### 3. Build a Mental Model: Method Parameters vs Type Parameters\n\nTo master generics, visualize the dual layers of parameterization in Java:\n\n```default\n+-------------------------------------------------------------------+\n|                        COMPILE-TIME LAYER                         |\n|  Type Parameters (<T>): Act as placeholders for DATA TYPES        |\n|  Example: Box<String> binds T = String at compile time            |\n+-------------------------------------------------------------------+\n                                  |\n                                  v javac (Type checking + Erasure)\n+-------------------------------------------------------------------+\n|                         RUNTIME LAYER                             |\n|  Method Arguments (x): Act as placeholders for RUNTIME VALUES     |\n|  Example: box.set(\"Hello\") passes the String value \"Hello\"        |\n+-------------------------------------------------------------------+\n```\n\n### Analogy: Blueprints vs Construction Materials\n- A non-generic class is like a mold that can only cast bronze statues.\n- A generic class `Mold<Material>` is a universal template. When ordering it, you specify the material: `Mold<Gold>` or `Mold<Clay>`.\n- The compiler acts as the inspector: if someone tries to pour water into `Mold<Gold>`, the compiler halts production before any pouring happens.",
+          "teachingGoal": "Learner can complete 3. build a mental model for Generic programming: classes, methods.",
+          "checkpoint": {
+            "question": "How do generic type parameters differ fundamentally from standard method parameters?",
+            "options": [
+              "Type parameters accept data types at compile time; method parameters accept values at runtime",
+              "Type parameters can only be used with numbers, while method parameters only accept text",
+              "Type parameters exist only inside the JVM Heap, while method parameters reside in CPU registers",
+              "There is no difference; they are completely interchangeable"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Type parameters provide type abstraction checked by the compiler during build time, whereas standard parameters accept runtime object or primitive values when methods are invoked."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-step4",
           "title": "4. Worked example",
           "sectionType": "STEP_BY_STEP",
-          "content": "Take one small example for **Generic programming: classes, methods** and solve it in visible steps: state the input, apply the first rule, update the state, and predict the output or effect. Then compare your reasoning with the executable example in this topic.",
-          "teachingGoal": "Learner can complete 4. worked example for Generic programming: classes, methods."
+          "content": "### 4. Worked Example: Generic Key-Value Pair\n\nReal-world applications frequently require associating pairs of data (e.g., student IDs to names, coordinate axes, cache keys to values).\n\n```java\npublic class Pair<K, V> {\n    private final K key;\n    private final V value;\n\n    public Pair(K key, V value) {\n        this.key = key;\n        this.value = value;\n    }\n\n    public K getKey() {\n        return key;\n    }\n\n    public V getValue() {\n        return value;\n    }\n\n    @Override\n    public String toString() {\n        return \"(\" + key + \" => \" + value + \")\";\n    }\n\n    public static void main(String[] args) {\n        Pair<String, Integer> studentRank = new Pair<>(\"Alice\", 1);\n        Pair<Integer, String> httpResponse = new Pair<>(200, \"OK\");\n\n        System.out.println(\"Student: \" + studentRank.getKey() + \", Rank: \" + studentRank.getValue());\n        System.out.println(\"HTTP Status: \" + httpResponse);\n    }\n}\n```\n\n**Output:**\n```default\nStudent: Alice, Rank: 1\nHTTP Status: (200 => OK)\n```\n\nNotice how `Pair<K, V>` seamlessly handles completely different combinations of types without requiring separate `StringIntPair` or `IntStringPair` classes!",
+          "teachingGoal": "Learner can complete 4. worked example for Generic programming: classes, methods.",
+          "checkpoint": {
+            "question": "Given Pair<K, V> with constructor Pair(K key, V value), what types are returned by p.getKey() and p.getValue() for 'Pair<String, Double> p = new Pair<>(\"Pi\", 3.14);'?",
+            "options": [
+              "getKey() returns String, getValue() returns Double",
+              "getKey() returns Object, getValue() returns Object",
+              "getKey() returns Double, getValue() returns String",
+              "getKey() returns void, getValue() returns double"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Because p is declared as Pair<String, Double>, K is bound to String and V is bound to Double. The getter methods return String and Double respectively without manual casting."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-step5",
           "title": "5. Dry run before execution",
           "sectionType": "STEP_BY_STEP",
-          "content": "Trace the program line by line using a state table. Record changed variables, object fields, references, collections, thread state, or exception flow. The goal is to make the execution predictable rather than mysterious.",
-          "teachingGoal": "Learner can complete 5. dry run before execution for Generic programming: classes, methods."
+          "content": "### 5. Dry Run Before Execution: Tracing Compile-Time Safety\n\nLet's trace how the Java compiler evaluates type constraints step-by-step:\n\n```java\n1: Box<String> box = new Box<>();\n2: box.set(\"OpenAI\");\n3: // Line 4 intentionally introduced:\n4: box.set(999);\n5: String result = box.get();\n```\n\n### Compiler State Table\n\n| Line | Operation | Type Parameter `T` | Target Type | Action / Compiler Result |\n| :--- | :--- | :--- | :--- | :--- |\n| **Line 1** | Instantiate `Box<String>` | `String` | `Box<String>` | Approved. `T` bound to `String` for this variable. |\n| **Line 2** | `box.set(\"OpenAI\")` | `String` | `String` | Approved. Argument `\"OpenAI\"` matches `T = String`. |\n| **Line 4** | `box.set(999)` | `String` | `Integer` | **REJECTED!** Compiler error: `incompatible types: int cannot be converted to String`. |\n| **Line 5** | `box.get()` | `String` | `String` | Approved. Returns `String`, perfectly matches variable `result`. |\n\nBecause the compiler rejects Line 4, **no bytecode is produced**. The bug is terminated at compile-time before any user runs the software.",
+          "teachingGoal": "Learner can complete 5. dry run before execution for Generic programming: classes, methods.",
+          "checkpoint": {
+            "question": "What specific compile error occurs if you pass an integer literal (999) to box.set() when box is declared as Box<String>?",
+            "options": [
+              "incompatible types: int cannot be converted to java.lang.String",
+              "NullPointerException at line 4",
+              "ClassCastException: class java.lang.Integer cannot be cast to java.lang.String",
+              "ArrayIndexOutOfBoundsException"
+            ],
+            "correctAnswer": 0,
+            "explanation": "javac detects the type mismatch at compile time and emits 'incompatible types: int cannot be converted to String'. ClassCastException only occurs at runtime when invalid downcasting is attempted."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-step6",
           "title": "6. Guided implementation",
           "sectionType": "STEP_BY_STEP",
-          "content": "Implement a minimal version of **Generic programming: classes, methods** using the starter structure supplied in the practice problem. First fill in the missing concept, then run the smallest sample, then expand to a second case. Do not optimize before the behavior is correct.",
-          "teachingGoal": "Learner can complete 6. guided implementation for Generic programming: classes, methods."
+          "content": "### 6. Guided Implementation: Building a Generic Stack\n\nA classic data structure interview problem is implementing a generic LIFO (Last-In-First-Out) Stack.\n\n```java\nimport java.util.EmptyStackException;\n\npublic class GenericStack<E> {\n    private Object[] elements;\n    private int size = 0;\n    private static final int DEFAULT_CAPACITY = 10;\n\n    public GenericStack() {\n        elements = new Object[DEFAULT_CAPACITY];\n    }\n\n    public void push(E item) {\n        if (size == elements.length) {\n            resize();\n        }\n        elements[size++] = item;\n    }\n\n    @SuppressWarnings(\"unchecked\")\n    public E pop() {\n        if (isEmpty()) {\n            throw new EmptyStackException();\n        }\n        E item = (E) elements[--size];\n        elements[size] = null; // Prevent memory leak!\n        return item;\n    }\n\n    public boolean isEmpty() {\n        return size == 0;\n    }\n\n    private void resize() {\n        Object[] newElements = new Object[elements.length * 2];\n        System.arraycopy(elements, 0, newElements, 0, elements.length);\n        elements = newElements;\n    }\n}\n```\n\n> [!IMPORTANT]\n> **Why `new Object[]` instead of `new E[]`?**\n> In Java, writing `new E[capacity]` causes a compile error: *\"cannot create a generic array of E\"*. Because of type erasure, the JVM does not know what type `E` is at runtime, and Java arrays must know their exact component type at runtime. The standard approach is backing the collection with an `Object[]` array and casting on retrieval.",
+          "teachingGoal": "Learner can complete 6. guided implementation for Generic programming: classes, methods.",
+          "checkpoint": {
+            "question": "Why cannot a generic class directly instantiate an array using 'new E[capacity]'?",
+            "options": [
+              "Because Type Erasure strips generic type information at runtime, and Java arrays require their component type at creation",
+              "Because Java arrays cannot hold more than 10 elements",
+              "Because the 'new' keyword is illegal inside generic classes",
+              "Because generics are only compatible with LinkedLists"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Java arrays are reifiable (they enforce their component type at runtime), whereas generics are erased at runtime. Therefore, the compiler prohibits new E[size] to avoid type safety violations."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-step7",
           "title": "7. Independent practice",
           "sectionType": "STEP_BY_STEP",
-          "content": "Solve the **Generic programming: classes, methods** practice problems in increasing difficulty. For every failure, classify it as syntax, concept, state-tracing, edge-case, or design error before changing the code.",
-          "teachingGoal": "Learner can complete 7. independent practice for Generic programming: classes, methods."
+          "content": "### 7. Independent Practice: Generic Maximum Finder\n\nImplement a generic method that accepts three arguments of any type that supports natural ordering, and returns the greatest of the three:\n\n```java\npublic class MaxFinder {\n    // Generic method bounded by Comparable<T>\n    public static <T extends Comparable<T>> T max(T x, T y, T z) {\n        T maxVal = x; // Assume x is initially the largest\n\n        if (y.compareTo(maxVal) > 0) {\n            maxVal = y;\n        }\n\n        if (z.compareTo(maxVal) > 0) {\n            maxVal = z;\n        }\n\n        return maxVal;\n    }\n\n    public static void main(String[] args) {\n        System.out.println(\"Max of (3, 7, 5): \" + max(3, 7, 5));\n        System.out.println(\"Max of (6.6, 8.8, 7.7): \" + max(6.6, 8.8, 7.7));\n        System.out.println(\"Max of ('pear', 'apple', 'orange'): \" + max(\"pear\", \"apple\", \"orange\"));\n    }\n}\n```\n\n**Output:**\n```default\nMax of (3, 7, 5): 7\nMax of (6.6, 8.8, 7.7): 8.8\nMax of ('pear', 'apple', 'orange'): pear\n```\n\nNotice that for `String`, `compareTo()` performs lexicographical (alphabetical) comparison. `\"pear\"` is greater than `\"apple\"` and `\"orange\"` because `'p'` comes after `'a'` and `'o'`.",
+          "teachingGoal": "Learner can complete 7. independent practice for Generic programming: classes, methods.",
+          "checkpoint": {
+            "question": "What is returned by max(\"pear\", \"apple\", \"orange\") using the method above?",
+            "options": [
+              "\"pear\"",
+              "\"apple\"",
+              "\"orange\"",
+              "Compilation Error"
+            ],
+            "correctAnswer": 0,
+            "explanation": "String implements Comparable<String>. In alphabetical ordering, \"pear\" comes after both \"apple\" and \"orange\", so \"pear\".compareTo(...) > 0 yields \"pear\" as the maximum."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-step8",
           "title": "8. Mastery gate",
           "sectionType": "STEP_BY_STEP",
-          "content": "You have mastered **Generic programming: classes, methods** when you can: (1) explain the rule without notes, (2) dry-run a new example, (3) implement a small variation, (4) explain one common failure, and (5) choose when the concept should and should not be used.",
-          "teachingGoal": "Learner can complete 8. mastery gate for Generic programming: classes, methods."
+          "content": "### 8. Mastery Gate: Invariance and Wildcards\n\nOne of the most confusing concepts for Java developers is **Invariance**.\n\n### Is `List<Integer>` a Subtype of `List<Number>`?\n\nIn standard Java OOP:\n- `Integer` is a subtype of `Number`.\n- Therefore, you can assign: `Number n = Integer.valueOf(10);`.\n\nHowever, in Generics:\n- **`List<Integer>` is NOT a subtype of `List<Number>`!**\n- Generics are **invariant**.\n\n```java\nList<Integer> intList = new ArrayList<>();\n// List<Number> numList = intList; // COMPILE ERROR!\n```\n\n### Why Does Java Forbid This?\nIf the assignment above were allowed, you could write:\n```java\nnumList.add(3.14); // Valid for List<Number> because Double is a Number!\nInteger val = intList.get(0); // CRASH! intList now contains a Double!\n```\nTo prevent this state corruption, Java treats `List<Integer>` and `List<Number>` as completely unrelated types.\n\n### The Solution: Wildcards (`?`)\nTo write methods that accept collections of any subtype of `Number`, use **upper-bounded wildcards**:\n```java\npublic static double sumOfList(List<? extends Number> list) {\n    double sum = 0.0;\n    for (Number n : list) {\n        sum += n.doubleValue();\n    }\n    return sum;\n}\n```",
+          "teachingGoal": "Learner can complete 8. mastery gate for Generic programming: classes, methods.",
+          "checkpoint": {
+            "question": "Why does Java disallow assigning a List<Integer> to a variable of type List<Number>?",
+            "options": [
+              "Because generics are invariant; allowing it would compromise type safety if a Double were added through the List<Number> reference",
+              "Because Integer does not inherit from Number in Java",
+              "Because List is a final class and cannot be referenced",
+              "Because Java cannot perform operations on lists with different names"
+            ],
+            "correctAnswer": 0,
+            "explanation": "If List<Integer> could be assigned to List<Number>, someone could insert a Double or Long into the list, corrupting the Integer list and causing runtime ClassCastExceptions."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-step9",
           "title": "9. Debugging and misconception clinic",
           "sectionType": "DEBUGGING",
-          "content": "Use the following diagnostic routine:\n\n- **Mistake:** Memorizing Generic programming: classes, methods syntax without understanding its runtime behavior. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Skipping prerequisite concepts and guessing from compiler errors alone. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Testing only the sample input. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Changing several parts of the program before identifying the failing concept. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.",
-          "teachingGoal": "Diagnose common errors while learning Generic programming: classes, methods."
+          "content": "### 9. Debugging and Misconception Clinic: Generics\n\nReview these critical anti-patterns and rules enforced by the compiler:\n\n#### Anti-Pattern 1: Static Fields with Class Type Parameters\n```java\npublic class Counter<T> {\n    // COMPILE ERROR: Cannot make a static reference to non-static type T\n    // private static T sharedCounter;\n}\n```\n**Reason:** A `static` field is shared across all instances of `Counter`. If one instance is `Counter<String>` and another is `Counter<Integer>`, what type would `sharedCounter` be? It cannot have a single static type.\n\n#### Anti-Pattern 2: Using `instanceof` with Parameterized Types\n```java\n// COMPILE ERROR: Cannot perform instanceof check against parameterized type\n// if (obj instanceof List<String>) { ... }\n\n// VALID: Use unbounded wildcard\nif (obj instanceof List<?>) { ... }\n```\n**Reason:** At runtime, type erasure removes `<String>`. The JVM only knows that `obj` is a `List`, not what elements it holds.\n\n#### Anti-Pattern 3: Overloading Methods with Same Erasure\n```java\npublic class Printer {\n    // COMPILE ERROR: Both methods have the same erasure print(List)\n    // public void print(List<String> list) {}\n    // public void print(List<Integer> list) {}\n}\n```",
+          "teachingGoal": "Diagnose common errors while learning Generic programming: classes, methods.",
+          "checkpoint": {
+            "question": "Why is declaring 'private static T counter;' illegal inside a generic class MyClass<T>?",
+            "options": [
+              "Because static members belong to the class and are shared across all instances, making a type parameter undefined in static context",
+              "Because static variables cannot be private",
+              "Because T can only be used as a return type",
+              "Because static variables must always be initialized to zero"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Static variables are shared across all instances of the class regardless of the type arguments used to instantiate them. Therefore, class type parameters cannot be used in a static context."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m4-2-step10",
           "title": "10. Mastery review and interview transfer",
           "sectionType": "REVIEW",
-          "content": "Finish **Generic programming: classes, methods** by answering these without notes:\n\n1. What problem does this concept solve?\n2. What is the smallest correct example?\n3. What invariant or rule must remain true?\n4. What edge case commonly breaks naive solutions?\n5. What is one interview question you could answer from this topic?\n\nThen solve one unseen variation before marking the topic complete.",
-          "teachingGoal": "Transfer Generic programming: classes, methods from guided learning to independent problem solving."
+          "content": "### 10. Mastery Review and Interview Transfer\n\n#### The Golden Rule of Wildcards: PECS\n**P**roducer **E**xtends, **C**onsumer **S**uper\n\n- **Producer Extends (`? extends T`):** If a parameterized collection produces data (you only **read** from it), use `? extends T`.\n- **Consumer Super (`? super T`):** If a parameterized collection consumes data (you only **write** into it), use `? super T`.\n\n```java\n// Classic standard library example from java.util.Collections:\npublic static <T> void copy(List<? super T> dest, List<? extends T> src) {\n    for (int i = 0; i < src.size(); i++) {\n        dest.set(i, src.get(i)); // Read from src, write into dest\n    }\n}\n```\n\n#### Final Generics Checklist\n- [x] Generics provide compile-time safety and eliminate type casts.\n- [x] Type parameters must be reference types; primitives use wrapper classes.\n- [x] Type Erasure replaces type parameters with their bounds at compilation.\n- [x] `List<Integer>` is not a subtype of `List<Number>` (invariance).\n- [x] Use PECS to design flexible API method parameters.",
+          "teachingGoal": "Transfer Generic programming: classes, methods from guided learning to independent problem solving.",
+          "checkpoint": {
+            "question": "According to Joshua Bloch's PECS guideline, when should you use '? extends T' versus '? super T'?",
+            "options": [
+              "Use '? extends T' when reading elements from a collection (Producer); use '? super T' when writing elements into it (Consumer)",
+              "Use '? extends T' for writing elements; use '? super T' for reading elements",
+              "Use '? extends T' for primitive types; use '? super T' for reference types",
+              "Both are completely identical and interchangeable"
+            ],
+            "correctAnswer": 0,
+            "explanation": "PECS stands for Producer Extends, Consumer Super. If you are retrieving (producing) values from a collection, use ? extends T. If you are inserting (consuming) values into a collection, use ? super T."
+          }
         }
       ],
       "codeExamples": [
@@ -697,23 +872,45 @@
           "pageId": "advance-java-m2-t2-v3-p1",
           "title": "Why this concept matters",
           "sectionType": "CONCEPT",
-          "content": "Methods separate responsibilities and make logic reusable and testable. They also create a clean boundary between inputs, computation, and outputs.",
+          "content": "A **method** is a self-contained block of code designed to perform a specific task. Methods are the primary building blocks of procedural abstraction and object-oriented design in Java.\n\n### Why Methods Matter\n- **Reusability (DRY - Don't Repeat Yourself):** Write once, invoke many times.\n- **Maintainability:** Isolate changes to a single location.\n- **Readability & Modularity:** Break complex problems into smaller, understandable units.\n\n### Anatomy of a Method Declaration\n\n```java\npublic static int calculateSum(int a, int b) {\n    int sum = a + b;\n    return sum;\n}\n```\n\n1. **Access Modifier (`public`):** Defines the visibility/accessibility of the method.\n2. **Modifier (`static`):** Indicates the method belongs to the class itself, not an instance.\n3. **Return Type (`int`):** The data type of the value the method returns. If no value is returned, use `void`.\n4. **Method Name (`calculateSum`):** Follows camelCase naming convention.\n5. **Parameter List (`(int a, int b)`):** Comma-separated list of input parameters.\n6. **Method Body (`{ ... }`):** Enclosed in braces; contains executable statements.\n\n---\n\n### Static vs Instance Methods\n\n- **Static Method:** Called using the class name: `Math.sqrt(25);`. Cannot access instance variables (`this`) directly.\n- **Instance Method:** Requires an object to be instantiated first: `String str = \"hello\"; str.toUpperCase();`.",
           "teachingGoal": "Explain why Methods in Java matters in real Java programs and identify when the concept is appropriate.",
-          "suggestedVisual": "Call stack showing main -> method -> return."
+          "suggestedVisual": "Call stack showing main -> method -> return.",
+          "checkpoint": {
+            "question": "Which component of a Java method specifies the type of value returned to the caller?",
+            "options": [
+              "Return Type",
+              "Access Modifier",
+              "Parameter List",
+              "Method Identifier"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The return type precedes the method name and defines what data type (primitive, object reference, or void) the method yields when executed."
+          }
         },
         {
           "pageId": "advance-java-m2-t2-v3-p2",
           "title": "Core ideas and vocabulary",
           "sectionType": "CONCEPT",
-          "content": "- **Method signature:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **Parameter:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **Argument:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **Return type:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **Overloading:** define it, identify when to use it, and connect it to a concrete Java rule or API.\n- **static:** define it, identify when to use it, and connect it to a concrete Java rule or API.",
+          "content": "### Method Signatures and Overloading\n\nTo write robust Java code, you must understand how the compiler identifies methods.\n\n### 1. What is a Method Signature?\nIn Java, a **Method Signature** consists strictly of:\n$$\\text{Method Signature} = \\text{Method Name} + \\text{Parameter Types (in exact order)}$$\n\n> [!IMPORTANT]\n> The **return type**, **access modifiers** (`public`, `private`), and **parameter names** are **NOT** part of the method signature!\n\n```java\npublic int compute(int x, double y) { ... }\n// Signature: compute(int, double)\n```\n\n---\n\n### 2. Method Overloading\n**Method Overloading** allows multiple methods in the same class to share the same name, provided they have **different method signatures**.\n\n#### Valid Overloading:\n1. **Different number of parameters:**\n   ```java\n   int add(int a, int b) { return a + b; }\n   int add(int a, int b, int c) { return a + b + c; }\n   ```\n2. **Different parameter data types:**\n   ```java\n   double add(double a, double b) { return a + b; }\n   ```\n3. **Different sequence of parameter types:**\n   ```java\n   void log(String tag, int code) { }\n   void log(int code, String tag) { }\n   ```\n\n#### Invalid Overloading (Compile Error!):\n```java\nint multiply(int a, int b) { return a * b; }\n// COMPILE ERROR: Method multiply(int, int) is already defined!\n// double multiply(int a, int b) { return (double) a * b; }\n```\nChanging only the return type does **not** overload a method!",
           "teachingGoal": "Define the core vocabulary of Methods in Java and connect each term to a concrete Java example.",
-          "suggestedVisual": "Concept map for Methods in Java."
+          "suggestedVisual": "Concept map for Methods in Java.",
+          "checkpoint": {
+            "question": "Which elements constitute a method signature according to the Java Language Specification?",
+            "options": [
+              "The method name and the types of its parameters in order",
+              "The return type, method name, and access modifier",
+              "The method name and the names of the parameter variables",
+              "The method name, parameter list, and throws exception clause"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Java, a method signature consists exclusively of the method name and its parameter type list. Return type and access modifiers are not part of the signature."
+          }
         },
         {
           "pageId": "advance-java-m2-t2-v3-p3",
           "title": "Worked examples",
           "sectionType": "WORKED_EXAMPLES",
-          "content": "Use the examples below as a bridge from the rule to implementation. For each example, predict the output before revealing it.",
+          "content": "### Worked Examples: Java is Strictly Pass-by-Value\n\nA universal rule of the Java Virtual Machine is: **Java is ALWAYS pass-by-value. There is no pass-by-reference in Java.**\n\n### 1. Passing Primitive Types\n\nWhen passing a primitive (`int`, `double`, `boolean`), a **copy of the actual value** is passed to the method. Modifying the parameter inside the method has zero effect on the caller:\n\n```java\npublic class PrimitivePassByValue {\n    public static void modify(int x) {\n        x = x + 100;\n        System.out.println(\"Inside modify: x = \" + x); // 110\n    }\n\n    public static void main(String[] args) {\n        int x = 10;\n        modify(x);\n        System.out.println(\"Inside main: x = \" + x);   // Still 10!\n    }\n}\n```\n\n---\n\n### 2. Passing Object References\n\nWhen passing an object, Java passes a **copy of the reference (memory address)** by value!\n\n- You **CAN** modify the object's internal fields through the reference.\n- You **CANNOT** reassign the caller's reference variable to point to a new object.\n\n```java\nclass Person {\n    String name;\n    Person(String name) { this.name = name; }\n}\n\npublic class ObjectPassByValue {\n    public static void changeName(Person p) {\n        p.name = \"Bob\"; // Modifies the object in heap memory!\n    }\n\n    public static void reassign(Person p) {\n        p = new Person(\"Charlie\"); // Only reassigns local parameter copy!\n    }\n\n    public static void main(String[] args) {\n        Person person = new Person(\"Alice\");\n\n        changeName(person);\n        System.out.println(\"After changeName: \" + person.name); // Prints: Bob\n\n        reassign(person);\n        System.out.println(\"After reassign: \" + person.name);   // Still Bob!\n    }\n}\n```",
           "teachingGoal": "Use worked examples to predict program behavior for Methods in Java before execution.",
           "workedExamples": [
             {
@@ -742,30 +939,74 @@
               ],
               "output": "shared state"
             }
-          ]
+          ],
+          "checkpoint": {
+            "question": "What is printed in main when calling: int val = 5; increment(val); System.out.println(val); where increment(int x) executes x = x + 1;?",
+            "options": [
+              "The integer value 5",
+              "The integer value 6",
+              "The integer value 0",
+              "Compilation error"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Because Java is strictly pass-by-value, increment receives a copy of val. Reassigning x inside the method does not change the original variable val in main."
+          }
         },
         {
           "pageId": "advance-java-m2-t2-v3-p4",
           "title": "Dry run: track the state",
           "sectionType": "DRY_RUN",
-          "content": "A strong Java learner can explain how state changes line by line. Trace the variable, object field, collection content, or exception path before executing the program.",
+          "content": "### Dry Run: Tracking State in Recursion\n\n**Recursion** is a programming technique where a method calls itself to solve a smaller instance of the same problem.\n\n### The Two Non-Negotiable Rules of Recursion\n1. **Base Case:** A stopping condition that returns a value directly without making further recursive calls.\n2. **Recursive Step:** An invocation of the method with arguments moving closer to the base case.\n\n---\n\n### Worked Example: Factorial Computation\n\n$$n! = n \\times (n - 1)! \\quad \\text{with} \\quad 0! = 1$$\n\n```java\npublic class Factorial {\n    public static int factorial(int n) {\n        // Base case\n        if (n <= 1) {\n            return 1;\n        }\n        // Recursive step\n        return n * factorial(n - 1);\n    }\n\n    public static void main(String[] args) {\n        System.out.println(\"3! = \" + factorial(3)); // Output: 6\n    }\n}\n```\n\n### JVM Call Stack Trace for `factorial(3)`\n\n```default\n1. Call factorial(3)  --> pushes Stack Frame [n=3] -> waits for factorial(2)\n2. Call factorial(2)  --> pushes Stack Frame [n=2] -> waits for factorial(1)\n3. Call factorial(1)  --> pushes Stack Frame [n=1] -> Base Case hit! Returns 1\n   Stack Frame [n=1] popped: returns 1\n4. Frame [n=2] resumes: computes 2 * 1 = 2 -> returns 2\n   Stack Frame [n=2] popped: returns 2\n5. Frame [n=3] resumes: computes 3 * 2 = 6 -> returns 6\n   Stack Frame [n=3] popped: returns 6\nResult: 6\n```\n\n> [!CAUTION]\n> If a recursive method lacks a base case, or if the recursive step does not converge toward the base case, the JVM exhausts its thread stack memory and throws a **`StackOverflowError`**.",
           "teachingGoal": "Dry-run Methods in Java by tracking program state line by line.",
-          "suggestedVisual": "Step-by-step state trace for Methods in Java."
+          "suggestedVisual": "Step-by-step state trace for Methods in Java.",
+          "checkpoint": {
+            "question": "What fatal JVM error occurs if a recursive method omits a base case and executes infinitely?",
+            "options": [
+              "java.lang.StackOverflowError",
+              "java.lang.OutOfMemoryError: Java heap space",
+              "java.lang.NullPointerException",
+              "java.lang.ArithmeticException"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Each recursive call pushes a new stack frame onto the JVM call stack. Without a terminating base case, stack frames accumulate until the stack depth limit is exceeded, triggering StackOverflowError."
+          }
         },
         {
           "pageId": "advance-java-m2-t2-v3-p5",
           "title": "Common mistakes and debugging",
           "sectionType": "DEBUGGING",
-          "content": "- **Mistake:** Overloading by return type alone\n  **Fix:** state the rule, isolate the smallest failing input, and rerun the corrected case.\n- **Mistake:** Returning a value from a void method\n  **Fix:** state the rule, isolate the smallest failing input, and rerun the corrected case.\n- **Mistake:** Mixing input parsing into every reusable method\n  **Fix:** state the rule, isolate the smallest failing input, and rerun the corrected case.",
+          "content": "### Common Mistakes and Debugging in Java Methods\n\nAvoid these top 5 pitfalls when declaring and calling methods in Java:\n\n#### Mistake 1: Attempting to Overload by Return Type Alone\n```java\npublic class Calculator {\n    public int calculate(int x) { return x * 2; }\n    // COMPILE ERROR: calculate(int) is already defined in Calculator\n    // public double calculate(int x) { return x * 2.0; }\n}\n```\n**Fix:** The compiler selects methods based on argument types at the call site. With `calc.calculate(5)`, it cannot determine which return type you intended.\n\n#### Mistake 2: Missing Return Statement in Conditional Branches\n```java\npublic int sign(int x) {\n    if (x > 0) return 1;\n    else if (x < 0) return -1;\n    // COMPILE ERROR: missing return statement!\n    // What if x == 0?\n}\n```\n**Fix:** Ensure every execution path terminates in a `return` statement or throws an exception.\n\n#### Mistake 3: Calling Non-Static Methods from `static main`\n```java\npublic class App {\n    public void printMessage() { System.out.println(\"Hello\"); }\n\n    public static void main(String[] args) {\n        // COMPILE ERROR: non-static method printMessage() cannot be referenced from a static context\n        // printMessage();\n\n        // FIX: Create an instance first\n        new App().printMessage();\n    }\n}\n```",
           "teachingGoal": "Diagnose common mistakes in Methods in Java and fix them using the underlying Java rule.",
-          "suggestedVisual": "Expected vs actual state comparison."
+          "suggestedVisual": "Expected vs actual state comparison.",
+          "checkpoint": {
+            "question": "Why does the Java compiler reject having both 'int compute(int x)' and 'double compute(int x)' in the same class?",
+            "options": [
+              "Because they share identical method signatures (compute(int)), making call-site resolution ambiguous",
+              "Because Java methods cannot return double values",
+              "Because compute is a reserved keyword in Java",
+              "Because only static methods can be overloaded"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Method signatures consist only of the method name and parameter types. Since both methods have the signature compute(int), the compiler cannot distinguish which method to execute when compute(10) is called."
+          }
         },
         {
           "pageId": "advance-java-m2-t2-v3-p6",
           "title": "Topic mastery review",
           "sectionType": "REVIEW",
-          "content": "Before leaving **Methods in Java**, explain the concept without looking at code, solve a small variation, and identify one edge case.\n\n**Mastery checklist**\n- [ ] Write methods with parameters and return values.\n- [ ] Call methods correctly.\n- [ ] Explain overloading and pass-by-value.",
-          "teachingGoal": "Use the mastery review to explain, implement, test, and debug Methods in Java."
+          "content": "### Topic Mastery Review: Methods and Recursion\n\n#### Key Takeaways Checklist\n- [x] **Method Anatomy:** Access modifier, optional `static`, return type, identifier, parameter list, exception clauses, and body.\n- [x] **Signature:** Name + ordered parameter types only.\n- [x] **Overloading:** Same name, different parameter lists. Return type alone is insufficient.\n- [x] **Pass-by-Value:** Primitives pass copies of values. Object references pass copies of addresses.\n- [x] **Static vs Instance:** Static belongs to the class; instance belongs to individual objects.\n- [x] **Recursion:** Must have a valid base case and progress toward convergence to avoid `StackOverflowError`.\n\n#### Method Design Best Practices\n1. **Single Responsibility Principle (SRP):** Each method should do one thing well.\n2. **Descriptive Names:** Use strong verbs (`calculateTotal`, `validateInput`, `findUserById`).\n3. **Keep Methods Short:** Strive for methods that fit within a single screen view (15-30 lines).\n4. **Validate Arguments Early:** Check for `null` or invalid bounds at the beginning of the method.",
+          "teachingGoal": "Use the mastery review to explain, implement, test, and debug Methods in Java.",
+          "checkpoint": {
+            "question": "What is the primary trade-off when choosing recursion over iteration (loops) in Java?",
+            "options": [
+              "Recursion provides clean, elegant expressions for divide-and-conquer/tree problems, but incurs call stack overhead and risks StackOverflowError",
+              "Recursion runs 100 times faster than loops on all CPUs",
+              "Recursion is only permitted in functional interfaces",
+              "Recursion requires zero computer memory"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Recursion often simplifies tree traversals and divide-and-conquer algorithms, but each recursive call allocates a stack frame, creating memory overhead and potential StackOverflowError for deep calls."
+          }
         }
       ],
       "codeExamples": [
@@ -1275,7 +1516,7 @@
           "pageId": "advance-java-m6-t1-v4-p1",
           "title": "Concept and mental model",
           "sectionType": "CONCEPT",
-          "content": "### Generic Classes and Methods\n\nGeneric Classes and Methods becomes useful when Java code needs to express a stable rule rather than a one-off syntax trick. Start with the mental model: identify the values or states involved, the operation Java performs, and the contract the surrounding code expects.\n\n**Learning focus**\n- **type parameter** — understand the rule and when it belongs in a production design.\n- **generic class** — understand the rule and when it belongs in a production design.\n- **generic method** — understand the rule and when it belongs in a production design.\n- **diamond operator** — understand the rule and when it belongs in a production design.\n- **type inference** — understand the rule and when it belongs in a production design.\n\n**Rule before API:** before choosing a class or method, state what must be true before the operation, what it produces, and what can fail. This keeps advanced Java from becoming API memorization.",
+          "content": "### Generic Classes and Methods in Production Architecture\n\nIn enterprise Java applications, generic classes and methods are fundamental to building reusable infrastructure such as:\n- **Data Repositories:** `CrudRepository<T, ID>`\n- **Cache Managers:** `Cache<K, V>`\n- **API Response Wrappers:** `ApiResponse<T>`\n\n### Building an Enterprise `ApiResponse<T>` Wrapper\n\n```java\npublic class ApiResponse<T> {\n    private final boolean success;\n    private final String message;\n    private final T data;\n\n    public ApiResponse(boolean success, String message, T data) {\n        this.success = success;\n        this.message = message;\n        this.data = data;\n    }\n\n    public static <T> ApiResponse<T> success(T data) {\n        return new ApiResponse<>(true, \"Operation successful\", data);\n    }\n\n    public static <T> ApiResponse<T> error(String message) {\n        return new ApiResponse<>(false, message, null);\n    }\n\n    public boolean isSuccess() { return success; }\n    public String message() { return message; }\n    public T getData() { return data; }\n}\n```\n\n### Client Usage\n```java\nApiResponse<User> userRes = ApiResponse.success(new User(\"ashok\"));\nApiResponse<List<Order>> ordersRes = ApiResponse.success(orderList);\n```\nBoth endpoints share the exact same JSON envelope format while guaranteeing compile-time type safety for the `data` payload!",
           "teachingGoal": "Explain the mental model behind Generic Classes and Methods and state when the feature should be used.",
           "suggestedVisual": "Visual model showing inputs -> Java abstraction -> resulting state -> observable output.",
           "codeCard": {
@@ -1283,24 +1524,22 @@
             "code": "class Box<T>{private T value; Box(T v){value=v;} T get(){return value;}} public class Main{public static void main(String[]a){Box<Integer> b=new Box<>(42);System.out.println(b.get());}}"
           },
           "checkpoint": {
-            "checkpointId": "cp-advance-java-m6-t1-1",
-            "question": "Which idea is central to Generic Classes and Methods?",
+            "question": "What architectural benefit does the generic ApiResponse<T> pattern provide?",
             "options": [
-              "type parameter",
-              "generic class",
-              "generic method",
-              "diamond operator",
-              "unrelated syntax"
+              "It enforces a consistent envelope contract while preserving strong compile-time typing for diverse payload types",
+              "It automatically compresses network traffic by 50%",
+              "It eliminates the need for database indexes",
+              "It converts Java objects into SQL queries automatically"
             ],
             "correctAnswer": 0,
-            "explanation": "The first core concept directly captures the main abstraction taught in this topic."
+            "explanation": "Generic wrapper classes provide a uniform response structure (status, message, payload) across an entire API while preserving the exact type of the encapsulated data without casting."
           }
         },
         {
           "pageId": "advance-java-m6-t1-v4-p2",
           "title": "API anatomy and design rules",
           "sectionType": "API_ANATOMY",
-          "content": "### API anatomy\n\nA production learner should know not just *what* an API call does, but what contract surrounds it. For **Generic Classes and Methods**, pay attention to:\n\n1. **Inputs and types:** what values are accepted?\n2. **State:** what data is owned or shared?\n3. **Failure modes:** which errors are compile-time, runtime, or domain failures?\n4. **Lifetime:** what must be closed, awaited, copied, or released?\n5. **Observability:** how can you prove the operation produced the correct result?\n\n**Design rule:** prefer the narrowest abstraction that expresses the contract. Expose stable interfaces and value objects at boundaries; keep mutable implementation details private.",
+          "content": "### API Anatomy: Bounded Wildcards in Enterprise APIs\n\nWhen designing library APIs or shared services, methods that accept generic collections must be flexible enough to accommodate subtypes and supertypes.\n\n### The PECS Rule in Practice\n\n```java\npublic class CollectionUtils {\n    // Producer: We only read Numbers from 'source' -> Use <? extends Number>\n    public static double sum(List<? extends Number> source) {\n        double total = 0.0;\n        for (Number num : source) {\n            total += num.doubleValue();\n        }\n        return total;\n    }\n\n    // Consumer: We only write Integers into 'destination' -> Use <? super Integer>\n    public static void addNumbers(List<? super Integer> destination) {\n        for (int i = 1; i <= 5; i++) {\n            destination.add(i); // Valid! destination accepts Integer\n        }\n    }\n}\n```\n\n### Why This Flexibility Matters:\n- `sum(List<Integer>)`, `sum(List<Double>)`, and `sum(List<Float>)` can all be passed to `sum()` because `Integer`, `Double`, and `Float` extend `Number`.\n- `addNumbers(List<Integer>)`, `addNumbers(List<Number>)`, and `addNumbers(List<Object>)` can all be passed to `addNumbers()` because `Integer`, `Number`, and `Object` are supertypes of `Integer`.",
           "teachingGoal": "Analyze the API contract, state ownership, failure modes, and lifecycle concerns for Generic Classes and Methods.",
           "suggestedVisual": "Annotated API card highlighting inputs, outputs, ownership, lifecycle, and failure paths.",
           "codeCard": {
@@ -1308,23 +1547,22 @@
             "code": "import java.util.*; public class Main{static <T> void swap(List<T>x,int i,int j){T t=x.get(i);x.set(i,x.get(j));x.set(j,t);} public static void main(String[]a){List<String>x=new ArrayList<>(List.of(\"A\",\"B\"));swap(x,0,1);System.out.println(x);}}"
           },
           "checkpoint": {
-            "checkpointId": "cp-advance-java-m6-t1-2",
-            "question": "What should be considered before calling a Generic Classes and Methods API?",
+            "question": "In the method 'void addNumbers(List<? super Integer> destination)', why is '? super Integer' required to accept a List<Number>?",
             "options": [
-              "Only method name",
-              "Inputs, state, failures and lifecycle",
-              "Only runtime speed",
-              "Only indentation"
+              "Because Number is a supertype of Integer, allowing destination to safely consume and store Integer instances",
+              "Because Number inherits from Integer",
+              "Because super enables multithreaded writing",
+              "Because Java requires super for all return types"
             ],
-            "correctAnswer": 1,
-            "explanation": "Advanced Java design is about the surrounding contract, not just syntax."
+            "correctAnswer": 0,
+            "explanation": "The wildcard ? super Integer allows the caller to pass a list of Integer, Number, or Object. Any of these lists can safely receive (consume) an Integer value without type errors."
           }
         },
         {
           "pageId": "advance-java-m6-t1-v4-p3",
           "title": "Worked examples",
           "sectionType": "WORKED_EXAMPLES",
-          "content": "Predict each result before executing the code. Then compare your trace with the runtime output. The goal is to connect the Java rule to observable program behavior.",
+          "content": "### Worked Examples: Generic In-Memory Data Store\n\nLet's build a functional, generic in-memory repository supporting CRUD operations:\n\n```java\nimport java.util.*;\nimport java.util.function.Predicate;\n\npublic class InMemoryRepository<T, ID> {\n    private final Map<ID, T> storage = new HashMap<>();\n\n    public void save(ID id, T entity) {\n        if (id == null || entity == null) {\n            throw new IllegalArgumentException(\"ID and entity must not be null\");\n        }\n        storage.put(id, entity);\n    }\n\n    public Optional<T> findById(ID id) {\n        return Optional.ofNullable(storage.get(id));\n    }\n\n    public List<T> findAll(Predicate<T> filter) {\n        List<T> matches = new ArrayList<>();\n        for (T item : storage.values()) {\n            if (filter.test(item)) {\n                matches.add(item);\n            }\n        }\n        return matches;\n    }\n\n    public long count() {\n        return storage.size();\n    }\n}\n```\n\n### Testing the Repository\n```java\nInMemoryRepository<String, Long> userRepo = new InMemoryRepository<>();\nuserRepo.save(1L, \"Alice\");\nuserRepo.save(2L, \"Bob\");\n\nOptional<String> user = userRepo.findById(1L);\nuser.ifPresent(System.out::println); // Prints: Alice\n```",
           "teachingGoal": "Predict and explain three worked examples of Generic Classes and Methods before running them.",
           "workedExamples": [
             {
@@ -1354,34 +1592,55 @@
               ],
               "output": "seed"
             }
-          ]
+          ],
+          "checkpoint": {
+            "question": "What does returning Optional<T> from findById(ID id) communicate to API consumers?",
+            "options": [
+              "That the requested entity may or may not be present, forcing explicit null-safe handling",
+              "That the entity is guaranteed to be non-null in all cases",
+              "That the method executes asynchronously on a background thread",
+              "That the return value is automatically encrypted"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Optional<T> explicitly communicates the potential absence of a value, preventing unexpected NullPointerExceptions by requiring consumers to check or handle missing data."
+          }
         },
         {
           "pageId": "advance-java-m6-t1-v4-p4",
           "title": "Debugging and failure analysis",
           "sectionType": "DEBUGGING",
-          "content": "### Debugging Generic Classes and Methods\n\nWhen a program fails, classify the failure before changing code:\n\n**Compile-time:** the type or API contract is invalid.\n\n**Runtime:** the program reaches an operation whose preconditions are violated.\n\n**Logic:** the program runs but produces an incorrect state or output.\n\n**Concurrency / lifecycle:** the code is valid in isolation but fails because timing, ownership, cleanup, or shared state was handled incorrectly.\n\n- **Using raw types:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n- **Adding casts to hide a weak generic design:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n- **Using Object where a type parameter is sufficient:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n- **Assuming generics work with primitives:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n\n**Debugging loop:** reproduce -> isolate -> state the rule -> fix one cause -> rerun the smallest failing case.",
+          "content": "### Debugging and Failure Analysis: Generic Type Erasure & Bridge Methods\n\nWhen troubleshooting advanced generic code, understanding **Bridge Methods** and **Heap Pollution** is essential.\n\n### 1. Bridge Methods\nConsider extending a generic class and overriding a method:\n\n```java\npublic class Node<T> {\n    public void setData(T data) { ... }\n}\n\npublic class MyStringNode extends Node<String> {\n    @Override\n    public void setData(String data) { ... }\n}\n```\n\nAfter type erasure, `Node.setData` has parameter type `Object`.\nTo preserve polymorphism (so that calling `((Node) myStringNode).setData(obj)` invokes the overridden method), the compiler synthesizes a hidden **Bridge Method**:\n\n```java\n// Synthetic compiler-generated bridge method in MyStringNode:\npublic void setData(Object data) {\n    setData((String) data); // Casts and delegates to typed method!\n}\n```\n\n---\n\n### 2. Heap Pollution\nHeap pollution occurs when a variable of a parameterized type refers to an object that is not of that parameterized type, typically caused by raw type casting:\n\n```java\nList<String> strings = new ArrayList<>();\nList raw = strings; // Raw type warning!\nraw.add(12345);     // Heap pollution: Integer added to List<String>\n\n// Later in code:\nString s = strings.get(0); // ClassCastException: Integer cannot be cast to String!\n```\n\n> [!WARNING]\n> Never mix raw types with parameterized types. Always address compiler warnings about unchecked operations.",
           "teachingGoal": "Diagnose common failures in Generic Classes and Methods using the underlying Java rule instead of trial-and-error changes.",
-          "suggestedVisual": "Expected-vs-actual state timeline with the first point of divergence."
+          "suggestedVisual": "Expected-vs-actual state timeline with the first point of divergence.",
+          "checkpoint": {
+            "question": "Why does the Java compiler generate synthetic 'bridge methods' in subclasses of generic types?",
+            "options": [
+              "To preserve method overriding and polymorphic dispatch after type erasure",
+              "To connect the JVM to network socket bridges",
+              "To convert Java bytecode into C++ libraries",
+              "To bridge the heap memory with physical CPU registers"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Because type erasure converts type parameters to Object, subclasses overriding methods with concrete types would have differing signatures. The compiler adds bridge methods to maintain polymorphic method dispatch."
+          }
         },
         {
           "pageId": "advance-java-m6-t1-v4-p5",
           "title": "Mastery and interview review",
           "sectionType": "REVIEW",
-          "content": "### Mastery review\n\nBefore moving on, you should be able to explain **Generic Classes and Methods** without looking at code, implement the smallest correct version, identify one edge case, and justify one API-design choice.\n\n**Mastery checklist**\n- [ ] Create reusable classes with type parameters.\n- [ ] Write generic methods without unsafe casts.\n- [ ] Choose type parameters that reflect the API contract.\n\n**Interview connection:** explain the feature in 30 seconds, give one runnable example, and name one failure mode or design trade-off.\n\n**Transfer challenge:** change one requirement in the examples and predict what part of the implementation must change.",
+          "content": "### Mastery and Interview Review: Generics Checklist\n\n#### High-Yield Interview Questions\n\n1. **Why were generics implemented via type erasure rather than reification?**\n   *Answer:* Backward compatibility. Reification would have required changes to the JVM bytecode specification, breaking binary compatibility with millions of existing pre-Java 5 libraries and applications.\n\n2. **What is the difference between `List`, `List<Object>`, and `List<?>`?**\n   - `List` (Raw type): Unsafe, bypasses compiler checks, legacy compatibility only.\n   - `List<Object>`: A list of objects. Invariant; cannot accept a `List<String>`.\n   - `List<?>` (Unbounded wildcard): A list of some unknown type. Accepts any list (`List<String>`, `List<Integer>`), but you cannot add elements into it (except `null`).\n\n3. **Can you catch a generic exception (e.g., `catch (T ex)`)?**\n   *Answer:* No. You cannot create, catch, or throw objects of parameterized types because exception handling is handled at runtime by the JVM, where type arguments are erased.",
           "teachingGoal": "Explain, implement, test, and defend a Generic Classes and Methods solution under a changed requirement.",
           "suggestedVisual": "Four-step mastery ladder: Explain -> Predict -> Implement -> Defend",
           "checkpoint": {
-            "checkpointId": "cp-advance-java-m6-t1-3",
-            "question": "Which mastery behavior best shows understanding of Generic Classes and Methods?",
+            "question": "What is the key difference between 'List<Object>' and 'List<?>'?",
             "options": [
-              "Memorize one code snippet",
-              "Explain the rule, predict behavior, implement, and handle an edge case",
-              "Skip testing because the code compiles",
-              "Always choose the most complex API"
+              "List<?> accepts a list of any type (e.g., List<String>), while List<Object> only accepts exactly List<Object>",
+              "List<Object> accepts any list, while List<?> only accepts String lists",
+              "List<?> can have elements added to it, while List<Object> is read-only",
+              "They are completely identical in both syntax and runtime semantics"
             ],
-            "correctAnswer": 1,
-            "explanation": "Mastery requires transfer of the rule into implementation and debugging."
+            "correctAnswer": 0,
+            "explanation": "Because generics are invariant, List<Object> only accepts List<Object>. List<?> is an unbounded wildcard that can reference a list of any type (List<String>, List<Integer>, etc.)."
           }
         }
       ],

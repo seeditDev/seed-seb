@@ -26,15 +26,15 @@
           },
           "checkpoint": {
             "checkpointId": "cp-OPJA153",
-            "question": "Which design choice is consistent with Exception handling in Java?",
+            "question": "What is the primary design purpose of Java's exception handling mechanism?",
             "options": [
-              "Use the feature for the responsibility it is intended to model, and preserve valid object invariants.",
-              "Expose every field as a public global variable.",
-              "Replace every method with static state.",
-              "Avoid all compiler diagnostics."
+              "To separate error-handling code from regular business logic, ensuring graceful degradation and preventing abrupt thread termination",
+              "To improve CPU cache locality and speed up arithmetic calculations",
+              "To replace traditional conditional if-else statements for normal program flow control",
+              "To automatically repair memory corruption and restart deadlocked threads"
             ],
             "correctAnswer": 0,
-            "explanation": "The correct choice applies the Java/OOP rule associated with Exception handling in Java without introducing unrelated state or unsafe behavior."
+            "explanation": "Exception handling separates error-detection from error-handling logic, allowing programs to catch abnormal runtime events, maintain valid application state, and prevent abrupt crashes."
           }
         },
         {
@@ -49,6 +49,18 @@
           "codeCard": {
             "language": "java",
             "code": "public class Main { static void check(int x)throws Exception{if(x<0)throw new Exception();} public static void main(String[] a){try{check(1);System.out.println(\"ok\");}catch(Exception e){System.out.println(\"bad\");}}}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA154",
+            "question": "What is the key syntactic difference between the 'throw' and 'throws' keywords in Java?",
+            "options": [
+              "'throw' is an executable statement used to explicitly instantiate and raise an exception; 'throws' is part of a method signature declaring exceptions the method may propagate",
+              "'throw' declares checked exceptions in class headers; 'throws' catches runtime errors in catch blocks",
+              "'throw' is used exclusively for Errors; 'throws' is used exclusively for Exceptions",
+              "'throw' rethrows caught exceptions inside finally blocks; 'throws' suppresses unhandled exceptions"
+            ],
+            "correctAnswer": 0,
+            "explanation": "'throw' explicitly raises an exception object at a specific line of code, while 'throws' is a clause in a method declaration warning callers that the method may propagate specified checked exceptions."
           }
         },
         {
@@ -63,6 +75,18 @@
           "codeCard": {
             "language": "java",
             "code": "public class Main { public static void main(String[] a){try{int x=1/0;System.out.println(x);}catch(ArithmeticException e){System.out.println(\"exception\");}}}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA155",
+            "question": "In the java.lang.Throwable hierarchy, how does java.lang.Error fundamentally differ from java.lang.Exception?",
+            "options": [
+              "Errors represent catastrophic system conditions (like OutOfMemoryError or StackOverflowError) that applications should generally not attempt to catch or recover from",
+              "Errors are checked at compile time and require mandatory try-catch blocks; Exceptions are always unchecked",
+              "Errors can only be thrown by user code; Exceptions are generated exclusively by the JVM bytecode interpreter",
+              "Errors inherit from RuntimeException; Exceptions inherit directly from Object"
+            ],
+            "correctAnswer": 0,
+            "explanation": "java.lang.Error denotes serious, unrecoverable JVM conditions (such as memory exhaustion or linkage failures). Applications should not catch Errors because normal recovery is generally impossible."
           }
         },
         {
@@ -77,11 +101,23 @@
           "codeCard": {
             "language": "java",
             "code": "public class Main { static void checked() throws Exception { } public static void main(String[] a){try{checked();System.out.println(\"checked\");}catch(Exception e){System.out.println(\"error\");}}}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA128",
+            "question": "Which of the following classes defines an unchecked exception in Java?",
+            "options": [
+              "java.lang.NullPointerException, because it directly subclasses java.lang.RuntimeException",
+              "java.io.IOException, because it represents an input/output hardware failure",
+              "java.sql.SQLException, because it indicates a database connectivity interruption",
+              "java.lang.ClassNotFoundException, because it signals a dynamic class loading failure"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Subclasses of RuntimeException (and Error) are unchecked by the compiler. All other subclasses of Throwable are checked and must be either caught or declared in a 'throws' clause."
           }
         },
         {
           "pageId": "p-OPJA160",
-          "title": "Multiple Choice Question",
+          "title": "Finally Block Execution Guarantee",
           "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
           "callout": {
             "type": "KEY_CONCEPT",
@@ -89,13 +125,26 @@
             "text": "Multiple Choice Question explains a Java design rule used in Exception handling basics."
           },
           "codeCard": {
+            "title": "Finally Block Execution Guarantee",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    static int compute() {\n        try {\n            System.out.println(\"In try block\");\n            return 10;\n        } finally {\n            System.out.println(\"Finally block always executes\");\n        }\n    }\n\n    public static void main(String[] args) {\n        System.out.println(\"Result: \" + compute());\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA160",
+            "question": "Under what specific condition will a 'finally' block in Java FAIL to execute after entering its corresponding 'try' block?",
+            "options": [
+              "When System.exit() is invoked or the host JVM process experiences a fatal crash/power loss",
+              "When a return statement is encountered inside the try block",
+              "When an unhandled RuntimeException is thrown inside the catch block",
+              "When the try block finishes executing normally without throwing any exception"
+            ],
+            "correctAnswer": 0,
+            "explanation": "A finally block always executes after try/catch, even if return statements or uncaught exceptions occur. The only exceptions are when the JVM terminates abnormally, such as via System.exit(0) or a fatal OS signal."
           }
         },
         {
           "pageId": "p-OPJA161",
-          "title": "Multiple Choice Question",
+          "title": "Custom Checked Exception Definition",
           "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
           "callout": {
             "type": "KEY_CONCEPT",
@@ -103,8 +152,21 @@
             "text": "Multiple Choice Question explains a Java design rule used in Exception handling basics."
           },
           "codeCard": {
+            "title": "Custom Checked Exception",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "class InsufficientFundsException extends Exception {\n    private final double amount;\n    public InsufficientFundsException(double amount) {\n        super(\"Short by: $\" + amount);\n        this.amount = amount;\n    }\n    public double getAmount() { return amount; }\n}\n\npublic class Main {\n    static void withdraw(double bal, double req) throws InsufficientFundsException {\n        if (req > bal) throw new InsufficientFundsException(req - bal);\n    }\n    public static void main(String[] args) {\n        try { withdraw(100.0, 150.0); }\n        catch (InsufficientFundsException e) { System.out.println(e.getMessage()); }\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA161",
+            "question": "When creating a custom domain exception that the compiler must enforce callers to handle, which superclass should your custom class extend?",
+            "options": [
+              "java.lang.Exception (without extending java.lang.RuntimeException)",
+              "java.lang.RuntimeException directly",
+              "java.lang.Error directly",
+              "java.lang.Throwable directly"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Extending java.lang.Exception (while avoiding RuntimeException) creates a custom checked exception that callers must either explicitly catch or declare in their method signature with 'throws'."
           }
         },
         {
@@ -112,77 +174,209 @@
           "title": "Step-by-step learning path",
           "sectionType": "STEP_BY_STEP",
           "content": "Follow this exact sequence for **Exception handling basics**: prerequisite check → concept build → mental model → worked example → dry run → guided implementation → independent practice → mastery gate. Do not skip to the final practice set until the guided implementation is understood.",
-          "teachingGoal": "Learner can complete step-by-step learning path for Exception handling basics."
+          "teachingGoal": "Learner can complete step-by-step learning path for Exception handling basics.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p7",
+            "question": "When an exception is thrown in Java, what mechanism does the JVM runtime use to locate an appropriate catch handler?",
+            "options": [
+              "Call stack unwinding: inspecting the current method frame and popping stack frames sequentially until a matching catch block is found",
+              "Heap memory scanning: traversing all allocated objects until an exception listener is discovered",
+              "Thread pool reallocation: dispatching the exception to a background daemon thread",
+              "Garbage collection triggering: sweeping unreachable local variables before terminating the process"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The JVM unwinds the call stack: it checks the current method's try-catch blocks, and if no match is found, pops the stack frame to examine the calling method, repeating until a match is found or the main thread terminates."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-1-step1",
           "title": "1. Prerequisite check",
           "sectionType": "STEP_BY_STEP",
           "content": "Before starting **Exception handling basics**, recall the Java syntax and object/model concepts required for it. Write down what you already know, then identify one question you cannot yet answer confidently. The purpose of this step is to expose a missing prerequisite before new material is introduced.",
-          "teachingGoal": "Learner can complete 1. prerequisite check for Exception handling basics."
+          "teachingGoal": "Learner can complete 1. prerequisite check for Exception handling basics.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p8",
+            "question": "Which compiler diagnostic occurs if a method calls a method declaring 'throws IOException' without enclosing it in a try-catch or declaring 'throws IOException'?",
+            "options": [
+              "Compile-time error: 'unreported exception java.io.IOException; must be caught or declared to be thrown'",
+              "Runtime warning logged to System.err with automatic execution continuation",
+              "The method is automatically converted to an asynchronous Future task",
+              "Compile-time error: 'incompatible types: cannot convert IOException to void'"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Java's checked exception mechanism enforces at compile time that any checked exception thrown must be caught or declared in the calling method's 'throws' clause."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-1-step2",
           "title": "2. Build the concept",
           "sectionType": "STEP_BY_STEP",
           "content": "Exceptions separate normal program flow from abnormal conditions. The core sequence is detect/throw -> propagate -> catch/handle or declare. Handle an exception where the program has enough context to recover or translate it meaningfully. Start with the rule, then connect the rule to one small Java example. Avoid memorizing a code template before you can explain why each important line is present.",
-          "teachingGoal": "Learner can complete 2. build the concept for Exception handling basics."
+          "teachingGoal": "Learner can complete 2. build the concept for Exception handling basics.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p9",
+            "question": "Why does the Java compiler reject a try-catch structure where 'catch (Exception e)' is placed BEFORE 'catch (IOException e)'?",
+            "options": [
+              "Because IOException is a subclass of Exception, making the IOException block unreachable code",
+              "Because Exception does not support inheritance polymorphism in catch statements",
+              "Because catch blocks must strictly be arranged in alphabetical order by class name",
+              "Because multiple catch blocks are disallowed unless configured with the multi-catch pipe operator"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Catch blocks are evaluated from top to bottom. If a superclass catch block precedes a subclass catch block, the subclass block is dead/unreachable code, causing a compile-time error."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-1-step3",
           "title": "3. Build a mental model",
           "sectionType": "STEP_BY_STEP",
           "content": "Imagine the runtime state while **Exception handling basics** executes. Identify the important actors, ownership, values, references, control flow, or exception paths. Explain the relationship in plain language before touching a full program.",
-          "teachingGoal": "Learner can complete 3. build a mental model for Exception handling basics."
+          "teachingGoal": "Learner can complete 3. build a mental model for Exception handling basics.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p10",
+            "question": "What happens to local variables allocated on the stack frame of a method when an exception propagates past that method?",
+            "options": [
+              "The stack frame is popped and all local variables in that frame are immediately discarded and freed from the stack",
+              "The local variables are automatically saved to the JVM Metaspace for post-mortem debugging",
+              "The local variables are copied into the Throwable object's cause field",
+              "The variables remain active in memory until the next garbage collection cycle sweeps the call stack"
+            ],
+            "correctAnswer": 0,
+            "explanation": "During stack unwinding, each stack frame exited without catching the exception is discarded, immediately freeing its local variables and operand stack."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-1-step4",
           "title": "4. Worked example",
           "sectionType": "STEP_BY_STEP",
           "content": "Take one small example for **Exception handling basics** and solve it in visible steps: state the input, apply the first rule, update the state, and predict the output or effect. Then compare your reasoning with the executable example in this topic.",
-          "teachingGoal": "Learner can complete 4. worked example for Exception handling basics."
+          "teachingGoal": "Learner can complete 4. worked example for Exception handling basics.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p11",
+            "question": "In Java 7+ multi-catch syntax 'catch (IOException | SQLException e)', what implicit modifier applies to the exception parameter 'e'?",
+            "options": [
+              "It is implicitly 'final', meaning you cannot reassign 'e' inside the catch block",
+              "It is implicitly 'volatile', making it accessible across concurrent threads",
+              "It is implicitly 'transient', preventing it from being serialized across network streams",
+              "It is implicitly 'static', retaining its value across subsequent invocations"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In a multi-catch block 'catch (A | B e)', the catch parameter 'e' is implicitly final. Reassigning 'e = new Exception();' produces a compile-time error."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-1-step5",
           "title": "5. Dry run before execution",
           "sectionType": "STEP_BY_STEP",
           "content": "Trace the program line by line using a state table. Record changed variables, object fields, references, collections, thread state, or exception flow. The goal is to make the execution predictable rather than mysterious.",
-          "teachingGoal": "Learner can complete 5. dry run before execution for Exception handling basics."
+          "teachingGoal": "Learner can complete 5. dry run before execution for Exception handling basics.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p12",
+            "question": "Consider: try { return 1; } catch (Exception e) { return 2; } finally { return 3; } What value does the method return?",
+            "options": [
+              "The integer value 3, because a return in a finally block overrides any previous return value from try or catch",
+              "The integer value 1, because the try block succeeded and its return value was already finalized",
+              "The integer value 2, because the finally block triggers an implicit exception handler",
+              "A compile-time error: 'duplicate return statement inside finally'"
+            ],
+            "correctAnswer": 0,
+            "explanation": "A return statement in a finally block takes precedence over return statements in try or catch blocks, discarding any pending return value or in-flight unhandled exception (an anti-pattern to avoid in production)."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-1-step6",
           "title": "6. Guided implementation",
           "sectionType": "STEP_BY_STEP",
           "content": "Implement a minimal version of **Exception handling basics** using the starter structure supplied in the practice problem. First fill in the missing concept, then run the smallest sample, then expand to a second case. Do not optimize before the behavior is correct.",
-          "teachingGoal": "Learner can complete 6. guided implementation for Exception handling basics."
+          "teachingGoal": "Learner can complete 6. guided implementation for Exception handling basics.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p13",
+            "question": "When creating a custom exception to represent business logic validation errors in a REST API, why is extending RuntimeException often preferred over Exception?",
+            "options": [
+              "It avoids cluttering method signatures across intermediate service and repository layers with boilerplate 'throws' declarations",
+              "It guarantees that transactions will never be rolled back in Spring or Java EE frameworks",
+              "It allows the JVM to allocate the exception instance in Metaspace instead of heap memory",
+              "It eliminates the generation of stack traces, boosting throughput by a factor of 100"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Unchecked exceptions (subclassing RuntimeException) eliminate excessive 'throws' boilerplate in intermediate architectural layers, allowing centralized error controllers (e.g., @ControllerAdvice) to handle them cleanly."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-1-step7",
           "title": "7. Independent practice",
           "sectionType": "STEP_BY_STEP",
           "content": "Solve the **Exception handling basics** practice problems in increasing difficulty. For every failure, classify it as syntax, concept, state-tracing, edge-case, or design error before changing the code.",
-          "teachingGoal": "Learner can complete 7. independent practice for Exception handling basics."
+          "teachingGoal": "Learner can complete 7. independent practice for Exception handling basics.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p14",
+            "question": "What is the purpose of 'exception chaining' using 'throw new ServiceException(\"Failed\", e)' where 'e' is an underlying SQLException?",
+            "options": [
+              "To preserve the original root-cause stack trace while exposing a clean, high-level abstraction to callers",
+              "To combine both exceptions into a single bitmask for faster bitwise processing",
+              "To execute the catch block twice: once for the service exception and once for the SQL exception",
+              "To allow the garbage collector to immediately release the database connection object"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Exception chaining wraps low-level technical exceptions (e.g. SQLException) into meaningful domain exceptions (e.g. ServiceException) while retaining the original cause (`getCause()`) for debugging."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-1-step8",
           "title": "8. Mastery gate",
           "sectionType": "STEP_BY_STEP",
           "content": "You have mastered **Exception handling basics** when you can: (1) explain the rule without notes, (2) dry-run a new example, (3) implement a small variation, (4) explain one common failure, and (5) choose when the concept should and should not be used.",
-          "teachingGoal": "Learner can complete 8. mastery gate for Exception handling basics."
+          "teachingGoal": "Learner can complete 8. mastery gate for Exception handling basics.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p15",
+            "question": "In a try-with-resources statement, what happens if both the try block AND the auto-close operation throw an exception?",
+            "options": [
+              "The try block exception is thrown to the caller, while the close() exception is attached as a 'suppressed exception' accessible via getSuppressed()",
+              "The close() exception overwrites the try block exception, completely discarding the original error",
+              "A fatal JVM crash occurs because two exceptions cannot be in flight simultaneously",
+              "The program deadlocks waiting for the garbage collector to close the unhandled stream"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Java preserves the primary exception thrown by the try block, while any exceptions thrown during resource closure are captured as suppressed exceptions, retrievable via `e.getSuppressed()`."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-1-step9",
           "title": "9. Debugging and misconception clinic",
           "sectionType": "DEBUGGING",
           "content": "Use the following diagnostic routine:\n\n- **Mistake:** Memorizing Exception handling basics syntax without understanding its runtime behavior. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Skipping prerequisite concepts and guessing from compiler errors alone. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Testing only the sample input. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Changing several parts of the program before identifying the failing concept. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.",
-          "teachingGoal": "Diagnose common errors while learning Exception handling basics."
+          "teachingGoal": "Diagnose common errors while learning Exception handling basics.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p16",
+            "question": "Why is catching java.lang.Throwable considered a dangerous anti-pattern in production code?",
+            "options": [
+              "It catches JVM system Errors like OutOfMemoryError and ThreadDeath, preventing proper JVM shutdown and leaving memory corrupted",
+              "It causes the JVM compiler to disable JIT compilation for the surrounding class",
+              "It converts all checked exceptions into unchecked exceptions without notifying callers",
+              "It prevents finalizer methods from being called on garbage-collected objects"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Catching Throwable traps fatal Errors (such as OutOfMemoryError, InternalError, StackOverflowError) that should be allowed to crash or terminate the process rather than leaving the system in a corrupted state."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-1-step10",
           "title": "10. Mastery review and interview transfer",
           "sectionType": "REVIEW",
           "content": "Finish **Exception handling basics** by answering these without notes:\n\n1. What problem does this concept solve?\n2. What is the smallest correct example?\n3. What invariant or rule must remain true?\n4. What edge case commonly breaks naive solutions?\n5. What is one interview question you could answer from this topic?\n\nThen solve one unseen variation before marking the topic complete.",
-          "teachingGoal": "Transfer Exception handling basics from guided learning to independent problem solving."
+          "teachingGoal": "Transfer Exception handling basics from guided learning to independent problem solving.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t1-p17",
+            "question": "What is 'exception translation' in clean architectural design?",
+            "options": [
+              "Catching a low-level subsystem exception and re-throwing a higher-level domain-specific exception appropriate to the calling abstraction",
+              "Translating exception messages to different localized human languages at compile time",
+              "Converting synchronous exceptions into asynchronous HTTP error responses",
+              "Serializing exception stack traces into JSON strings for network transmission"
+            ],
+            "correctAnswer": 0,
+            "explanation": "As documented in Effective Java, exception translation means higher layers catch low-level exceptions (e.g., NoSuchElementException or SQLException) and rethrow an exception that can be explained in terms of the higher-level abstraction."
+          }
         }
       ],
       "codeExamples": [
@@ -215,18 +409,14 @@
           "code": "public class Main { static void checked() throws Exception { } public static void main(String[] a){try{checked();System.out.println(\"checked\");}catch(Exception e){System.out.println(\"error\");}}}"
         },
         {
-          "exampleId": "ex-OPJA160-java",
+          "title": "Finally Block Execution Guarantee",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    static int compute() {\n        try {\n            System.out.println(\"In try block\");\n            return 10;\n        } finally {\n            System.out.println(\"Finally block always executes\");\n        }\n    }\n\n    public static void main(String[] args) {\n        System.out.println(\"Result: \" + compute());\n    }\n}"
         },
         {
-          "exampleId": "ex-OPJA161-java",
+          "title": "Custom Checked Exception",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "class InsufficientFundsException extends Exception {\n    private final double amount;\n    public InsufficientFundsException(double amount) {\n        super(\"Short by: $\" + amount);\n        this.amount = amount;\n    }\n    public double getAmount() { return amount; }\n}\n\npublic class Main {\n    static void withdraw(double bal, double req) throws InsufficientFundsException {\n        if (req > bal) throw new InsufficientFundsException(req - bal);\n    }\n    public static void main(String[] args) {\n        try { withdraw(100.0, 150.0); }\n        catch (InsufficientFundsException e) { System.out.println(e.getMessage()); }\n    }\n}"
         }
       ],
       "practiceProblems": [
@@ -708,15 +898,15 @@
           },
           "checkpoint": {
             "checkpointId": "cp-OPJA175",
-            "question": "In Multithreaded programming, which statement best describes Processes and Threads?",
+            "question": "What is the fundamental architectural difference between an operating system Process and a Java Thread?",
             "options": [
-              "It applies the Java mechanism needed for Processes and Threads while keeping the class design and runtime behavior explicit.",
-              "It requires global mutable state shared by unrelated classes.",
-              "It disables compile-time type checking to simplify execution.",
-              "It depends on unbounded recursion for every object operation."
+              "A process has its own isolated virtual memory address space, whereas threads within the same process share heap memory and static variables",
+              "Processes can run concurrently on multicore CPUs, whereas threads are restricted to single-core execution",
+              "Threads have separate heap memory spaces, whereas processes share object references directly",
+              "Processes are managed exclusively by the JVM, whereas threads are managed exclusively by the hardware BIOS"
             ],
             "correctAnswer": 0,
-            "explanation": "The correct choice applies the Java/OOP rule associated with Processes and Threads without introducing unrelated state or unsafe behavior."
+            "explanation": "Processes possess isolated address spaces and OS resources. Threads are lightweight units of execution within a process that share the process's heap memory, file descriptors, and static data, while maintaining private call stacks."
           }
         },
         {
@@ -731,6 +921,18 @@
           "codeCard": {
             "language": "java",
             "code": "public class Main { public static void main(String[] a)throws Exception{Thread t=new Thread(()->System.out.println(\"work\"));t.start();t.join();}}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA176",
+            "question": "What happens if you directly invoke the 'run()' method on a Thread object instead of calling 'start()'?",
+            "options": [
+              "The run() method executes synchronously on the current calling thread without spawning a new OS thread",
+              "The JVM throws an IllegalThreadStateException immediately",
+              "A new thread is spawned in the BACKGROUND state and runs asynchronously",
+              "The thread enters the WAITING state until start() is subsequently called"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Calling `start()` instructs the JVM and OS to allocate a new thread call stack and invoke `run()` asynchronously. Calling `run()` directly is just a regular synchronous method call executing on the current thread."
           }
         },
         {
@@ -745,11 +947,23 @@
           "codeCard": {
             "language": "java",
             "code": "public class Main { public static void main(String[] a)throws Exception{Thread.sleep(1);System.out.println(\"awake\");}}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA98",
+            "question": "When a thread holding an intrinsic monitor lock calls 'Thread.sleep(1000)', what happens to the lock?",
+            "options": [
+              "The thread keeps holding the monitor lock throughout the sleep duration; it does NOT release the lock",
+              "The monitor lock is automatically released and re-acquired upon waking",
+              "The lock is downgraded to a shared reader lock until sleep expires",
+              "An IllegalMonitorStateException is thrown unless the thread is a daemon thread"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Unlike `Object.wait()`, `Thread.sleep()` pauses execution without relinquishing any locks or monitors currently held by the sleeping thread."
           }
         },
         {
           "pageId": "p-OPJA180",
-          "title": "Multiple Choice Question",
+          "title": "Thread join() Method",
           "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
           "callout": {
             "type": "KEY_CONCEPT",
@@ -757,13 +971,26 @@
             "text": "Multiple Choice Question explains a Java design rule used in Multithreaded programming."
           },
           "codeCard": {
+            "title": "Thread.join() Synchronization",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    public static void main(String[] args) throws InterruptedException {\n        Thread worker = new Thread(() -> {\n            try { Thread.sleep(200); } catch (InterruptedException e) {}\n            System.out.println(\"Worker completed task\");\n        });\n        worker.start();\n        System.out.println(\"Waiting for worker...\");\n        worker.join(); // Blocks calling thread until worker finishes\n        System.out.println(\"All tasks finished\");\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA180",
+            "question": "What is the primary effect of calling 'workerThread.join()' from the main thread?",
+            "options": [
+              "The main thread pauses execution and transitions to WAITING until workerThread terminates",
+              "workerThread is immediately merged into the main thread's call stack",
+              "Both threads execute in parallel until their CPU quantum expires",
+              "workerThread is interrupted and forces immediate garbage collection"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`join()` allows one thread to wait for the completion of another. The caller enters the WAITING (or TIMED_WAITING) state until the target thread terminates."
           }
         },
         {
           "pageId": "p-OPJA181",
-          "title": "Multiple Choice Question",
+          "title": "Daemon Threads Behavior",
           "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
           "callout": {
             "type": "KEY_CONCEPT",
@@ -771,13 +998,26 @@
             "text": "Multiple Choice Question explains a Java design rule used in Multithreaded programming."
           },
           "codeCard": {
+            "title": "Daemon Threads in Java",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    public static void main(String[] args) {\n        Thread daemon = new Thread(() -> {\n            while (true) {\n                System.out.println(\"Daemon heartbeating...\");\n                try { Thread.sleep(100); } catch (InterruptedException e) { break; }\n            }\n        });\n        daemon.setDaemon(true); // Must be called before start()\n        daemon.start();\n        System.out.println(\"Main thread exiting\");\n        // JVM exits immediately when all user (non-daemon) threads finish\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA181",
+            "question": "What rule governs the lifecycle of Java Daemon threads?",
+            "options": [
+              "The JVM automatically halts execution and exits when all remaining active threads are daemon threads",
+              "Daemon threads cannot be stopped even if the JVM process terminates",
+              "Daemon threads possess higher scheduling priority than normal user threads",
+              "A thread can be toggled between daemon and user status at any time, even after start() has been invoked"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Daemon threads provide background support (like garbage collection). When all user (non-daemon) threads terminate, the JVM shuts down abruptly, terminating all running daemon threads without executing finally blocks."
           }
         },
         {
           "pageId": "p-OPJA182",
-          "title": "Multiple Choice Question",
+          "title": "Thread Lifecycle States",
           "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
           "callout": {
             "type": "KEY_CONCEPT",
@@ -785,8 +1025,21 @@
             "text": "Multiple Choice Question explains a Java design rule used in Multithreaded programming."
           },
           "codeCard": {
+            "title": "Thread Lifecycle States",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    public static void main(String[] args) throws InterruptedException {\n        Thread t = new Thread(() -> {\n            try { Thread.sleep(100); } catch (InterruptedException e) {}\n        });\n        System.out.println(\"State 1: \" + t.getState()); // NEW\n        t.start();\n        System.out.println(\"State 2: \" + t.getState()); // RUNNABLE\n        Thread.sleep(50);\n        System.out.println(\"State 3: \" + t.getState()); // TIMED_WAITING\n        t.join();\n        System.out.println(\"State 4: \" + t.getState()); // TERMINATED\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA182",
+            "question": "Which enum value in java.lang.Thread.State represents a thread that is waiting to acquire an intrinsic monitor lock to enter a synchronized block?",
+            "options": [
+              "BLOCKED",
+              "WAITING",
+              "TIMED_WAITING",
+              "TERMINATED"
+            ],
+            "correctAnswer": 0,
+            "explanation": "A thread enters `BLOCKED` state when waiting for an intrinsic monitor lock to enter or reenter a synchronized block/method. In contrast, `WAITING` is entered by calling `wait()`, `join()`, or `LockSupport.park()`."
           }
         },
         {
@@ -794,77 +1047,209 @@
           "title": "Step-by-step learning path",
           "sectionType": "STEP_BY_STEP",
           "content": "Follow this exact sequence for **Multithreaded programming**: prerequisite check → concept build → mental model → worked example → dry run → guided implementation → independent practice → mastery gate. Do not skip to the final practice set until the guided implementation is understood.",
-          "teachingGoal": "Learner can complete step-by-step learning path for Multithreaded programming."
+          "teachingGoal": "Learner can complete step-by-step learning path for Multithreaded programming.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p7",
+            "question": "Why is implementing the 'Runnable' interface widely preferred over extending the 'Thread' class in Java?",
+            "options": [
+              "Java does not support multiple class inheritance; implementing Runnable keeps the class free to extend other classes and decouples task logic from thread management",
+              "Extending Thread causes all methods in the subclass to become synchronized automatically",
+              "Implementing Runnable allows tasks to bypass the JVM thread scheduler and run at kernel level",
+              "Extending Thread is deprecated since Java 5 and causes compile-time warnings"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Implementing `Runnable` adheres to clean object-oriented design by separating the task to be run from the thread runner, and preserves the single inheritance slot for other domain classes."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-4-step1",
           "title": "1. Prerequisite check",
           "sectionType": "STEP_BY_STEP",
           "content": "Before starting **Multithreaded programming**, recall the Java syntax and object/model concepts required for it. Write down what you already know, then identify one question you cannot yet answer confidently. The purpose of this step is to expose a missing prerequisite before new material is introduced.",
-          "teachingGoal": "Learner can complete 1. prerequisite check for Multithreaded programming."
+          "teachingGoal": "Learner can complete 1. prerequisite check for Multithreaded programming.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p8",
+            "question": "What exception is thrown if you attempt to call 't.start()' on a thread object that has already completed execution?",
+            "options": [
+              "java.lang.IllegalThreadStateException",
+              "java.lang.NullPointerException",
+              "java.lang.ConcurrentModificationException",
+              "java.lang.UnsupportedOperationException"
+            ],
+            "correctAnswer": 0,
+            "explanation": "A thread can only be started once in its lifecycle. Calling `start()` on a thread that is already running or has terminated throws `IllegalThreadStateException`."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-4-step2",
           "title": "2. Build the concept",
           "sectionType": "STEP_BY_STEP",
           "content": "A thread is an independent execution path. Shared mutable state makes concurrency difficult, so design tasks around clear ownership, immutable data, or controlled synchronization. Start with the rule, then connect the rule to one small Java example. Avoid memorizing a code template before you can explain why each important line is present.",
-          "teachingGoal": "Learner can complete 2. build the concept for Multithreaded programming."
+          "teachingGoal": "Learner can complete 2. build the concept for Multithreaded programming.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p9",
+            "question": "What is thread non-determinism in multithreaded Java applications?",
+            "options": [
+              "The exact execution order and CPU time-slice interleaving of concurrent threads cannot be predicted, because scheduling is governed by the OS scheduler",
+              "The compiler randomly generates different bytecode instructions for each thread invocation",
+              "Variables declared in threads produce unpredictable numeric values even with static initializers",
+              "Threads fail to execute unless their priority is set to Thread.MAX_PRIORITY"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Thread scheduling depends on the underlying OS kernel scheduler, CPU load, and core availability. Programs cannot assume any specific interleaving sequence without explicit synchronization."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-4-step3",
           "title": "3. Build a mental model",
           "sectionType": "STEP_BY_STEP",
           "content": "Imagine the runtime state while **Multithreaded programming** executes. Identify the important actors, ownership, values, references, control flow, or exception paths. Explain the relationship in plain language before touching a full program.",
-          "teachingGoal": "Learner can complete 3. build a mental model for Multithreaded programming."
+          "teachingGoal": "Learner can complete 3. build a mental model for Multithreaded programming.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p10",
+            "question": "In the Java Memory Model, which memory area is allocated privately per thread rather than shared across threads?",
+            "options": [
+              "The thread call stack (local variables, frame pointers, and operand stacks)",
+              "The garbage-collected object heap",
+              "The Metaspace storing class metadata and bytecode",
+              "The static field pool"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Each thread has its own private runtime stack containing stack frames for active method calls. The heap (all objects) and Metaspace are shared across all threads."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-4-step4",
           "title": "4. Worked example",
           "sectionType": "STEP_BY_STEP",
           "content": "Take one small example for **Multithreaded programming** and solve it in visible steps: state the input, apply the first rule, update the state, and predict the output or effect. Then compare your reasoning with the executable example in this topic.",
-          "teachingGoal": "Learner can complete 4. worked example for Multithreaded programming."
+          "teachingGoal": "Learner can complete 4. worked example for Multithreaded programming.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p11",
+            "question": "When aggregating results calculated by two concurrent worker threads, what sequence guarantees the main thread does not read stale data?",
+            "options": [
+              "Start both worker threads first, then call join() on both worker threads before aggregating results",
+              "Start the first worker, call join() immediately, then start the second worker",
+              "Start both workers and execute Thread.sleep(50) before reading their fields",
+              "Call run() on both worker threads inside a synchronized block"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Starting both workers concurrently allows true parallel execution. Calling `join()` on each worker ensures both finish and establishes a happens-before memory visibility guarantee before the main thread accesses their results."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-4-step5",
           "title": "5. Dry run before execution",
           "sectionType": "STEP_BY_STEP",
           "content": "Trace the program line by line using a state table. Record changed variables, object fields, references, collections, thread state, or exception flow. The goal is to make the execution predictable rather than mysterious.",
-          "teachingGoal": "Learner can complete 5. dry run before execution for Multithreaded programming."
+          "teachingGoal": "Learner can complete 5. dry run before execution for Multithreaded programming.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p12",
+            "question": "Why does running 10 threads that each increment an unsynchronized 'int count = 0' variable 1,000 times frequently result in a final count LESS than 10,000?",
+            "options": [
+              "Because 'count++' is not atomic: it involves three distinct operations (read, modify, write), causing lost updates when threads interleave",
+              "Because the JVM automatically truncates integer values that exceed thread stack limits",
+              "Because the garbage collector sweeps uncommitted memory updates every 500 iterations",
+              "Because thread priority inversion causes integer operations to skip increments"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The `count++` operation translates to `getfield`, `iadd`, and `putfield`. Interleaving threads read the same stale value, write back the same incremented value, and silently overwrite each other's increments."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-4-step6",
           "title": "6. Guided implementation",
           "sectionType": "STEP_BY_STEP",
           "content": "Implement a minimal version of **Multithreaded programming** using the starter structure supplied in the practice problem. First fill in the missing concept, then run the smallest sample, then expand to a second case. Do not optimize before the behavior is correct.",
-          "teachingGoal": "Learner can complete 6. guided implementation for Multithreaded programming."
+          "teachingGoal": "Learner can complete 6. guided implementation for Multithreaded programming.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p13",
+            "question": "Using Java 8 lambdas, how can a new thread be defined and started in a single idiomatic line of code?",
+            "options": [
+              "new Thread(() -> System.out.println(\"Running\")).start();",
+              "new Runnable(() -> System.out.println(\"Running\")).start();",
+              "Thread.start(() -> System.out.println(\"Running\"));",
+              "Thread.create(new Runnable() { void execute() {} }).launch();"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Since `Runnable` is a functional interface with a single abstract method `run()`, a lambda `() -> ...` can be passed directly to `new Thread(r).start()`."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-4-step7",
           "title": "7. Independent practice",
           "sectionType": "STEP_BY_STEP",
           "content": "Solve the **Multithreaded programming** practice problems in increasing difficulty. For every failure, classify it as syntax, concept, state-tracing, edge-case, or design error before changing the code.",
-          "teachingGoal": "Learner can complete 7. independent practice for Multithreaded programming."
+          "teachingGoal": "Learner can complete 7. independent practice for Multithreaded programming.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p14",
+            "question": "If an uncaught RuntimeException is thrown inside a thread's run() method, how can an application capture and log it without crashing silently?",
+            "options": [
+              "By configuring an UncaughtExceptionHandler via Thread.setDefaultUncaughtExceptionHandler() or thread.setUncaughtExceptionHandler()",
+              "By placing a try-catch block in the main() method around thread.start()",
+              "By wrapping the Thread class in an AutoCloseable resource block",
+              "By setting the thread priority to Thread.MAX_PRIORITY"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Because thread call stacks are independent, an exception in a worker thread cannot be caught by try-catch around `start()`. Java provides `Thread.UncaughtExceptionHandler` to log or handle uncaught thread failures."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-4-step8",
           "title": "8. Mastery gate",
           "sectionType": "STEP_BY_STEP",
           "content": "You have mastered **Multithreaded programming** when you can: (1) explain the rule without notes, (2) dry-run a new example, (3) implement a small variation, (4) explain one common failure, and (5) choose when the concept should and should not be used.",
-          "teachingGoal": "Learner can complete 8. mastery gate for Multithreaded programming."
+          "teachingGoal": "Learner can complete 8. mastery gate for Multithreaded programming.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p15",
+            "question": "At what point in a thread's lifecycle MUST 'setDaemon(true)' be invoked?",
+            "options": [
+              "Before invoking start(); calling it on an already started thread throws IllegalThreadStateException",
+              "Immediately after calling start() while the thread is in the NEW state",
+              "Inside the thread's run() method as the first statement",
+              "At any time before the thread reaches the TERMINATED state"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`setDaemon(boolean)` must be called before the thread is started. If called while the thread is alive, it immediately throws `IllegalThreadStateException`."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-4-step9",
           "title": "9. Debugging and misconception clinic",
           "sectionType": "DEBUGGING",
           "content": "Use the following diagnostic routine:\n\n- **Mistake:** Memorizing Multithreaded programming syntax without understanding its runtime behavior. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Skipping prerequisite concepts and guessing from compiler errors alone. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Testing only the sample input. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Changing several parts of the program before identifying the failing concept. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.",
-          "teachingGoal": "Diagnose common errors while learning Multithreaded programming."
+          "teachingGoal": "Diagnose common errors while learning Multithreaded programming.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p16",
+            "question": "A developer writes: 'Thread t = new Thread(task); t.start(); t.start();' What happens at runtime?",
+            "options": [
+              "The second call to t.start() throws java.lang.IllegalThreadStateException",
+              "The thread restarts from the beginning of run() as a new OS thread",
+              "The second start() call is silently ignored and the thread continues executing",
+              "The thread spawns a child worker thread with identical task parameters"
+            ],
+            "correctAnswer": 0,
+            "explanation": "A thread cannot be restarted once started. The second invocation of `start()` detects an invalid thread state (`threadStatus != 0`) and throws `IllegalThreadStateException`."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-4-step10",
           "title": "10. Mastery review and interview transfer",
           "sectionType": "REVIEW",
           "content": "Finish **Multithreaded programming** by answering these without notes:\n\n1. What problem does this concept solve?\n2. What is the smallest correct example?\n3. What invariant or rule must remain true?\n4. What edge case commonly breaks naive solutions?\n5. What is one interview question you could answer from this topic?\n\nThen solve one unseen variation before marking the topic complete.",
-          "teachingGoal": "Transfer Multithreaded programming from guided learning to independent problem solving."
+          "teachingGoal": "Transfer Multithreaded programming from guided learning to independent problem solving.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t2-p17",
+            "question": "Why do enterprise Java applications avoid creating unbounded 'new Thread()' instances directly in request-handling code?",
+            "options": [
+              "Thread creation consumes significant OS memory (e.g., 1MB stack per thread) and CPU overhead; thread pools reuse a bounded set of worker threads",
+              "Raw Thread objects cannot execute database SQL queries",
+              "The JVM limits the maximum number of raw Thread objects to exactly 64 per application",
+              "Raw Threads cannot access spring beans or dependency-injected services"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Each OS thread requires significant native memory (stack size) and scheduling context-switch overhead. Creating raw threads per request can quickly exhaust OS resources (OutOfMemoryError: unable to create new native thread), necessitating thread pools."
+          }
         }
       ],
       "codeExamples": [
@@ -890,25 +1275,19 @@
           "code": "public class Main { public static void main(String[] a)throws Exception{Thread.sleep(1);System.out.println(\"awake\");}}"
         },
         {
-          "exampleId": "ex-OPJA180-java",
+          "title": "Thread.join() Synchronization",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    public static void main(String[] args) throws InterruptedException {\n        Thread worker = new Thread(() -> {\n            try { Thread.sleep(200); } catch (InterruptedException e) {}\n            System.out.println(\"Worker completed task\");\n        });\n        worker.start();\n        System.out.println(\"Waiting for worker...\");\n        worker.join(); // Blocks calling thread until worker finishes\n        System.out.println(\"All tasks finished\");\n    }\n}"
         },
         {
-          "exampleId": "ex-OPJA181-java",
+          "title": "Daemon Threads in Java",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    public static void main(String[] args) {\n        Thread daemon = new Thread(() -> {\n            while (true) {\n                System.out.println(\"Daemon heartbeating...\");\n                try { Thread.sleep(100); } catch (InterruptedException e) { break; }\n            }\n        });\n        daemon.setDaemon(true); // Must be called before start()\n        daemon.start();\n        System.out.println(\"Main thread exiting\");\n        // JVM exits immediately when all user (non-daemon) threads finish\n    }\n}"
         },
         {
-          "exampleId": "ex-OPJA182-java",
+          "title": "Thread Lifecycle States",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    public static void main(String[] args) throws InterruptedException {\n        Thread t = new Thread(() -> {\n            try { Thread.sleep(100); } catch (InterruptedException e) {}\n        });\n        System.out.println(\"State 1: \" + t.getState()); // NEW\n        t.start();\n        System.out.println(\"State 2: \" + t.getState()); // RUNNABLE\n        Thread.sleep(50);\n        System.out.println(\"State 3: \" + t.getState()); // TIMED_WAITING\n        t.join();\n        System.out.println(\"State 4: \" + t.getState()); // TERMINATED\n    }\n}"
         }
       ],
       "practiceProblems": [
@@ -1235,15 +1614,15 @@
           },
           "checkpoint": {
             "checkpointId": "cp-OPJA195",
-            "question": "Which design choice is consistent with How to interrupt threads in Java?",
+            "question": "When 'thread.interrupt()' is invoked on a thread that is currently blocked in 'Thread.sleep()', what is the immediate behavior?",
             "options": [
-              "Use the feature for the responsibility it is intended to model, and preserve valid object invariants.",
-              "Expose every field as a public global variable.",
-              "Replace every method with static state.",
-              "Avoid all compiler diagnostics."
+              "The sleeping thread wakes up immediately, its interrupted status flag is cleared to false, and it throws an InterruptedException",
+              "The thread terminates immediately without executing any catch or finally blocks",
+              "The thread's interrupted status flag remains set to true indefinitely and sleep continues",
+              "The operating system forcefully terminates the thread's native OS handle"
             ],
             "correctAnswer": 0,
-            "explanation": "The correct choice applies the Java/OOP rule associated with How to interrupt threads in Java without introducing unrelated state or unsafe behavior."
+            "explanation": "Blocking methods like `sleep()`, `wait()`, and `join()` respond to interruption by clearing the interrupted status and throwing `InterruptedException`, allowing the thread to catch the exception and perform clean termination."
           }
         },
         {
@@ -1258,6 +1637,18 @@
           "codeCard": {
             "language": "java",
             "code": "public class Main { public static void main(String[] a)throws Exception{Thread t=new Thread(()->{while(!Thread.currentThread().isInterrupted())Thread.yield();});t.start();t.interrupt();t.join();System.out.println(\"stopped\");}}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA196",
+            "question": "What is the recommended modern Java pattern for stopping a long-running background worker loop?",
+            "options": [
+              "Polled cooperative cancellation: periodically evaluating '!Thread.currentThread().isInterrupted()' in the loop condition and exiting cleanly",
+              "Calling Thread.stop() to abort thread execution at the current bytecode instruction",
+              "Calling Thread.destroy() to unmap the thread's call stack from native memory",
+              "Setting the thread object reference to null to let the Garbage Collector stop it"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Cooperative cancellation requires threads to periodically check their interrupted status (`isInterrupted()`) and finish their work or clean up resources before exiting gracefully."
           }
         },
         {
@@ -1272,11 +1663,23 @@
           "codeCard": {
             "language": "java",
             "code": "public class Main { public static void main(String[] a)throws Exception{Thread t=new Thread(()->{while(!Thread.currentThread().isInterrupted())Thread.yield();});t.start();t.interrupt();t.join();System.out.println(\"finished\");}}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA197",
+            "question": "Why will invoking 't.interrupt()' fail to stop a thread running a tight CPU-bound calculation (such as 'while (true) { sum++; }')?",
+            "options": [
+              "Because interrupt() only sets a boolean flag; if the target thread does not actively poll 'isInterrupted()' or call blocking methods, it never pauses",
+              "Because CPU-bound math operations automatically disable OS thread interrupts",
+              "Because interrupt() only works on threads whose priority is Thread.MIN_PRIORITY",
+              "Because the JIT compiler removes interrupt checks during loop unrolling"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`interrupt()` is cooperative: it merely sets the thread's internal interrupt flag. If code never checks `Thread.currentThread().isInterrupted()` and never calls blocking methods, the loop will run indefinitely."
           }
         },
         {
           "pageId": "p-OPJA198",
-          "title": "Multiple Choice Question",
+          "title": "Thread.yield() Scheduling Hint",
           "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
           "callout": {
             "type": "KEY_CONCEPT",
@@ -1284,13 +1687,26 @@
             "text": "Multiple Choice Question explains a Java design rule used in Yield method and Interupting a thread."
           },
           "codeCard": {
+            "title": "Thread.yield() Scheduling Hint",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    public static void main(String[] args) {\n        Runnable task = () -> {\n            for (int i = 0; i < 3; i++) {\n                System.out.println(Thread.currentThread().getName() + \" yielding...\");\n                Thread.yield(); // Hint to OS scheduler that current thread is willing to yield CPU\n            }\n        };\n        new Thread(task, \"Worker-1\").start();\n        new Thread(task, \"Worker-2\").start();\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA198",
+            "question": "What does the Java Language Specification guarantee regarding the behavior of 'Thread.yield()'?",
+            "options": [
+              "It is merely a non-binding hint to the OS thread scheduler that the current thread is willing to yield its current CPU time-slice; there is no guarantee it will be honored",
+              "It strictly guarantees that all other threads of lower priority will execute before this thread resumes",
+              "It causes the current thread to enter the BLOCKED state for exactly one millisecond",
+              "It automatically releases all synchronized monitor locks held by the current thread"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`Thread.yield()` provides a heuristic hint to the scheduler. The scheduler is free to ignore it entirely, and it provides no guarantees regarding which thread runs next or how long the yield lasts."
           }
         },
         {
           "pageId": "p-OPJA199",
-          "title": "Multiple Choice Question",
+          "title": "Thread Interruption Flag Testing",
           "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
           "callout": {
             "type": "KEY_CONCEPT",
@@ -1298,8 +1714,21 @@
             "text": "Multiple Choice Question explains a Java design rule used in Yield method and Interupting a thread."
           },
           "codeCard": {
+            "title": "Thread Interruption Flag Testing",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    public static void main(String[] args) {\n        Thread t = new Thread(() -> {\n            System.out.println(\"Thread running, testing flag...\");\n            // Thread.interrupted() returns status AND clears it\n            // t.isInterrupted() returns status WITHOUT clearing it\n            while (!Thread.currentThread().isInterrupted()) {\n                // Cooperative work loop\n            }\n            System.out.println(\"Interrupted flag detected, exiting cleanly.\");\n        });\n        t.start();\n        t.interrupt();\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA199",
+            "question": "What is the crucial behavioral difference between 'Thread.interrupted()' and 'threadInstance.isInterrupted()'?",
+            "options": [
+              "'Thread.interrupted()' is a static method that returns the current thread's interrupt status AND clears the flag to false; 'isInterrupted()' is an instance method that only queries the flag without clearing it",
+              "'Thread.interrupted()' only checks daemon threads; 'isInterrupted()' checks user threads",
+              "'Thread.interrupted()' throws InterruptedException; 'isInterrupted()' returns a boolean",
+              "'Thread.interrupted()' is non-blocking; 'isInterrupted()' blocks until another interrupt arrives"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Static `Thread.interrupted()` tests the interrupted status of the current thread and resets it to false. Instance `isInterrupted()` simply queries the target thread's interrupt status without altering the flag."
           }
         },
         {
@@ -1307,77 +1736,209 @@
           "title": "Step-by-step learning path",
           "sectionType": "STEP_BY_STEP",
           "content": "Follow this exact sequence for **Yield method and Interupting a thread**: prerequisite check → concept build → mental model → worked example → dry run → guided implementation → independent practice → mastery gate. Do not skip to the final practice set until the guided implementation is understood.",
-          "teachingGoal": "Learner can complete step-by-step learning path for Yield method and Interupting a thread."
+          "teachingGoal": "Learner can complete step-by-step learning path for Yield method and Interupting a thread.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p6",
+            "question": "Why does Java rely on cooperative thread interruption rather than preemptive thread abortion?",
+            "options": [
+              "Preemptive termination could kill a thread while it holds locks or is mid-way through updating shared data structures, leaving memory corrupted and invariants broken",
+              "Preemptive termination is not supported by underlying x86 hardware architectures",
+              "Cooperative interruption requires less RAM than preemptive scheduling",
+              "Because the Java virtual machine cannot track active threads once they leave main()"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Forceful abortion (like deprecated `Thread.stop()`) releases locks while objects are in inconsistent intermediate states. Cooperative cancellation guarantees threads clean up and exit only at safe points."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-5-step1",
           "title": "1. Prerequisite check",
           "sectionType": "STEP_BY_STEP",
           "content": "Before starting **Yield method and Interupting a thread**, recall the Java syntax and object/model concepts required for it. Write down what you already know, then identify one question you cannot yet answer confidently. The purpose of this step is to expose a missing prerequisite before new material is introduced.",
-          "teachingGoal": "Learner can complete 1. prerequisite check for Yield method and Interupting a thread."
+          "teachingGoal": "Learner can complete 1. prerequisite check for Yield method and Interupting a thread.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p7",
+            "question": "Why was 'Thread.stop()' deprecated in Java and strongly discouraged for thread termination?",
+            "options": [
+              "It causes the thread to unlock all monitors that it has locked, potentially leaving shared objects in an inconsistent, corrupt state",
+              "It causes immediate segmentation faults in the host operating system kernel",
+              "It prevents garbage collection from ever running for the remainder of the process",
+              "It turns the calling thread into a permanent daemon thread"
+            ],
+            "correctAnswer": 0,
+            "explanation": "When `Thread.stop()` is called, the target thread immediately throws `ThreadDeath` and unceremoniously unlocks all monitors it held, allowing other threads to observe damaged data structures."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-5-step2",
           "title": "2. Build the concept",
           "sectionType": "STEP_BY_STEP",
           "content": "yield() is only a scheduling hint and should not be used for correctness. interrupt() is a cooperative cancellation signal; well-behaved code checks the interrupted status or handles InterruptedException promptly. Start with the rule, then connect the rule to one small Java example. Avoid memorizing a code template before you can explain why each important line is present.",
-          "teachingGoal": "Learner can complete 2. build the concept for Yield method and Interupting a thread."
+          "teachingGoal": "Learner can complete 2. build the concept for Yield method and Interupting a thread.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p8",
+            "question": "When a thread is blocked in an I/O operation on an 'InterruptibleChannel' (NIO.2) and receives an interrupt, what occurs?",
+            "options": [
+              "The channel is closed, the thread's interrupt status is set, and a ClosedByInterruptException is thrown",
+              "The thread ignores the interrupt and continues waiting for bytes indefinitely",
+              "The JVM terminates the entire I/O subsystem",
+              "The pending bytes are zero-filled and returned immediately"
+            ],
+            "correctAnswer": 0,
+            "explanation": "NIO channels implementing `InterruptibleChannel` are responsive to thread interrupts: when interrupted, the channel is closed and `ClosedByInterruptException` is thrown to the blocked thread."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-5-step3",
           "title": "3. Build a mental model",
           "sectionType": "STEP_BY_STEP",
           "content": "Imagine the runtime state while **Yield method and Interupting a thread** executes. Identify the important actors, ownership, values, references, control flow, or exception paths. Explain the relationship in plain language before touching a full program.",
-          "teachingGoal": "Learner can complete 3. build a mental model for Yield method and Interupting a thread."
+          "teachingGoal": "Learner can complete 3. build a mental model for Yield method and Interupting a thread.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p9",
+            "question": "Imagine a worker thread as an assembly line worker. How does thread interruption model communication with this worker?",
+            "options": [
+              "It sets a 'stop requested' signal flag on the worker's station; the worker checks the flag at safe intervals and finishes current work before clocking out",
+              "It cuts power to the factory machinery mid-operation without warning",
+              "It moves the worker to another assembly line without their knowledge",
+              "It forces the worker to repeat every task performed since startup"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Interruption is a request for cancellation. The target thread retains full autonomy over when and how it checks the flag, allowing it to complete atomic actions and close resources cleanly."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-5-step4",
           "title": "4. Worked example",
           "sectionType": "STEP_BY_STEP",
           "content": "Take one small example for **Yield method and Interupting a thread** and solve it in visible steps: state the input, apply the first rule, update the state, and predict the output or effect. Then compare your reasoning with the executable example in this topic.",
-          "teachingGoal": "Learner can complete 4. worked example for Yield method and Interupting a thread."
+          "teachingGoal": "Learner can complete 4. worked example for Yield method and Interupting a thread.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p10",
+            "question": "When catching an InterruptedException in a Runnable task that cannot immediately propagate it, what is the best practice?",
+            "options": [
+              "Restore the interrupted status by calling 'Thread.currentThread().interrupt()' so callers higher up the stack know an interrupt occurred",
+              "Swallow the exception with an empty catch block so execution proceeds without errors",
+              "Wrap the InterruptedException in a NullPointerException",
+              "Call System.exit(1) immediately to kill the JVM"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Because catching `InterruptedException` clears the interrupt status, if you cannot re-throw it, you MUST re-interrupt the thread via `Thread.currentThread().interrupt()` to preserve the cancellation signal."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-5-step5",
           "title": "5. Dry run before execution",
           "sectionType": "STEP_BY_STEP",
           "content": "Trace the program line by line using a state table. Record changed variables, object fields, references, collections, thread state, or exception flow. The goal is to make the execution predictable rather than mysterious.",
-          "teachingGoal": "Learner can complete 5. dry run before execution for Yield method and Interupting a thread."
+          "teachingGoal": "Learner can complete 5. dry run before execution for Yield method and Interupting a thread.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p11",
+            "question": "Trace this code: Thread t = Thread.currentThread(); t.interrupt(); boolean b1 = Thread.interrupted(); boolean b2 = t.isInterrupted(); What are b1 and b2?",
+            "options": [
+              "b1 is true, b2 is false (because Thread.interrupted() returns true and clears the flag, so subsequent isInterrupted() sees false)",
+              "b1 is true, b2 is true (because neither method clears the flag)",
+              "b1 is false, b2 is true (because static interrupted() checks the main thread only)",
+              "b1 is false, b2 is false (because interrupt() is asynchronous and hasn't registered yet)"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`t.interrupt()` sets the flag to true. Calling static `Thread.interrupted()` returns true and resets the flag to false. Thus the subsequent call `t.isInterrupted()` returns false."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-5-step6",
           "title": "6. Guided implementation",
           "sectionType": "STEP_BY_STEP",
           "content": "Implement a minimal version of **Yield method and Interupting a thread** using the starter structure supplied in the practice problem. First fill in the missing concept, then run the smallest sample, then expand to a second case. Do not optimize before the behavior is correct.",
-          "teachingGoal": "Learner can complete 6. guided implementation for Yield method and Interupting a thread."
+          "teachingGoal": "Learner can complete 6. guided implementation for Yield method and Interupting a thread.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p12",
+            "question": "How can a custom 'volatile boolean running = true' flag be combined with thread interrupts for robust loop termination?",
+            "options": [
+              "By checking 'while (running && !Thread.currentThread().isInterrupted())', allowing either the flag OR an interrupt to trigger clean loop termination",
+              "By synchronizing the volatile variable on the Thread class",
+              "By passing the volatile boolean as a parameter to Thread.yield()",
+              "By replacing the while loop with a recursive try-catch method call"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Combining a custom cancellation flag with the thread's interrupt status allows both external application controllers and thread pool management systems to cancel the task cleanly."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-5-step7",
           "title": "7. Independent practice",
           "sectionType": "STEP_BY_STEP",
           "content": "Solve the **Yield method and Interupting a thread** practice problems in increasing difficulty. For every failure, classify it as syntax, concept, state-tracing, edge-case, or design error before changing the code.",
-          "teachingGoal": "Learner can complete 7. independent practice for Yield method and Interupting a thread."
+          "teachingGoal": "Learner can complete 7. independent practice for Yield method and Interupting a thread.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p13",
+            "question": "Why will 'Thread.sleep()' immediately throw InterruptedException if the thread's interrupt flag is ALREADY set before entering sleep?",
+            "options": [
+              "Because sleep() checks the interrupted status upon entry; if true, it clears the flag and throws InterruptedException without sleeping at all",
+              "Because sleep() only executes when the thread has Thread.MAX_PRIORITY",
+              "Because sleeping on an interrupted thread causes a hardware interrupt trap",
+              "Because the compiler inserts a throw statement before every sleep invocation"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Methods like `sleep()`, `wait()`, and `join()` test the interrupt flag on entry. If the flag is already set, they don't even begin waiting—they immediately clear the flag and throw `InterruptedException`."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-5-step8",
           "title": "8. Mastery gate",
           "sectionType": "STEP_BY_STEP",
           "content": "You have mastered **Yield method and Interupting a thread** when you can: (1) explain the rule without notes, (2) dry-run a new example, (3) implement a small variation, (4) explain one common failure, and (5) choose when the concept should and should not be used.",
-          "teachingGoal": "Learner can complete 8. mastery gate for Yield method and Interupting a thread."
+          "teachingGoal": "Learner can complete 8. mastery gate for Yield method and Interupting a thread.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p14",
+            "question": "If a worker thread ignores both `isInterrupted()` and `InterruptedException`, how can a controlling thread terminate it?",
+            "options": [
+              "It cannot be forcefully terminated by Java code safely; the controlling thread can only abandon it or terminate the entire JVM process",
+              "By calling thread.yield() repeatedly until the worker starves",
+              "By lowering the worker thread's priority to Thread.MIN_PRIORITY",
+              "By invoking System.gc() to collect the running thread object"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Since deprecated unsafe methods (`stop()`, `destroy()`) are unusable, if a thread uncooperatively refuses to check its interrupt flag or handle interrupts, the host Java code cannot safely kill it."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-5-step9",
           "title": "9. Debugging and misconception clinic",
           "sectionType": "DEBUGGING",
           "content": "Use the following diagnostic routine:\n\n- **Mistake:** Memorizing Yield method and Interupting a thread syntax without understanding its runtime behavior. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Skipping prerequisite concepts and guessing from compiler errors alone. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Testing only the sample input. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Changing several parts of the program before identifying the failing concept. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.",
-          "teachingGoal": "Diagnose common errors while learning Yield method and Interupting a thread."
+          "teachingGoal": "Diagnose common errors while learning Yield method and Interupting a thread.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p15",
+            "question": "What is the common bug known as 'swallowing the interrupt'?",
+            "options": [
+              "Catching InterruptedException and neither re-throwing it nor restoring the thread's interrupt status with Thread.currentThread().interrupt()",
+              "Throwing an InterruptedException from inside a finally block",
+              "Calling Thread.yield() inside a catch block",
+              "Assigning an InterruptedException to a static field"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Swallowing an interrupt occurs when code catches `InterruptedException` and does nothing. Since catching clears the flag, upstream callers and thread pool frameworks never know cancellation was requested."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-5-step10",
           "title": "10. Mastery review and interview transfer",
           "sectionType": "REVIEW",
           "content": "Finish **Yield method and Interupting a thread** by answering these without notes:\n\n1. What problem does this concept solve?\n2. What is the smallest correct example?\n3. What invariant or rule must remain true?\n4. What edge case commonly breaks naive solutions?\n5. What is one interview question you could answer from this topic?\n\nThen solve one unseen variation before marking the topic complete.",
-          "teachingGoal": "Transfer Yield method and Interupting a thread from guided learning to independent problem solving."
+          "teachingGoal": "Transfer Yield method and Interupting a thread from guided learning to independent problem solving.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t3-p16",
+            "question": "How do thread pools (such as ExecutorService) utilize interrupts during 'shutdownNow()'?",
+            "options": [
+              "They call interrupt() on all active worker threads to wake them from blocking states and prompt tasks to exit cooperatively",
+              "They invoke OS kernel signals (SIGKILL) to terminate thread processes",
+              "They deallocate the heap memory occupied by the executor",
+              "They block the calling thread until all submitted tasks finish naturally"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`shutdownNow()` attempts to stop all actively executing tasks by calling `Thread.interrupt()` on each worker thread and draining the unstarted task queue."
+          }
         }
       ],
       "codeExamples": [
@@ -1403,18 +1964,14 @@
           "code": "public class Main { public static void main(String[] a)throws Exception{Thread t=new Thread(()->{while(!Thread.currentThread().isInterrupted())Thread.yield();});t.start();t.interrupt();t.join();System.out.println(\"finished\");}}"
         },
         {
-          "exampleId": "ex-OPJA198-java",
+          "title": "Thread.yield() Scheduling Hint",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    public static void main(String[] args) {\n        Runnable task = () -> {\n            for (int i = 0; i < 3; i++) {\n                System.out.println(Thread.currentThread().getName() + \" yielding...\");\n                Thread.yield(); // Hint to OS scheduler that current thread is willing to yield CPU\n            }\n        };\n        new Thread(task, \"Worker-1\").start();\n        new Thread(task, \"Worker-2\").start();\n    }\n}"
         },
         {
-          "exampleId": "ex-OPJA199-java",
+          "title": "Thread Interruption Flag Testing",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    public static void main(String[] args) {\n        Thread t = new Thread(() -> {\n            System.out.println(\"Thread running, testing flag...\");\n            // Thread.interrupted() returns status AND clears it\n            // t.isInterrupted() returns status WITHOUT clearing it\n            while (!Thread.currentThread().isInterrupted()) {\n                // Cooperative work loop\n            }\n            System.out.println(\"Interrupted flag detected, exiting cleanly.\");\n        });\n        t.start();\n        t.interrupt();\n    }\n}"
         }
       ],
       "practiceProblems": [
@@ -1742,20 +2299,20 @@
           },
           "checkpoint": {
             "checkpointId": "cp-OPJA184",
-            "question": "What should you verify when applying Thread Synchronisation in Java?",
+            "question": "What is an 'intrinsic lock' (or monitor lock) in Java synchronization?",
             "options": [
-              "The declaration, visibility, and runtime behavior must match the rules of Thread Synchronisation.",
-              "All members must be public.",
-              "Every class must inherit from two concrete classes.",
-              "Exceptions should always be ignored."
+              "Every Java object has an internal lock entity built into its object header; entering a synchronized block acquires that object's monitor lock",
+              "A hardware register allocated dynamically by the CPU during arithmetic operations",
+              "A security certificate verified by the Java Virtual Machine upon classloading",
+              "A file-system mutex locked by the operating system kernel"
             ],
             "correctAnswer": 0,
-            "explanation": "The correct choice applies the Java/OOP rule associated with Thread Synchronisation without introducing unrelated state or unsafe behavior."
+            "explanation": "Every object in Java is associated with an intrinsic lock (monitor). When a thread enters a `synchronized` method or block, it acquires that object's lock, ensuring mutual exclusion until exit."
           }
         },
         {
           "pageId": "p-OPJA190",
-          "title": "Multiple Choice Question",
+          "title": "Synchronized Block with Explicit Lock Object",
           "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
           "callout": {
             "type": "KEY_CONCEPT",
@@ -1763,13 +2320,26 @@
             "text": "Multiple Choice Question explains a Java design rule used in Priorities / synchronisation."
           },
           "codeCard": {
+            "title": "Synchronized Block with Explicit Lock Object",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    private final Object lock = new Object();\n    private int counter = 0;\n\n    public void increment() {\n        synchronized (lock) { // Intrinsic monitor lock on dedicated private object\n            counter++;\n        }\n    }\n\n    public int getCounter() {\n        synchronized (lock) {\n            return counter;\n        }\n    }\n\n    public static void main(String[] args) {\n        Main m = new Main();\n        m.increment();\n        System.out.println(\"Counter: \" + m.getCounter());\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA190",
+            "question": "Why is locking on a 'private final Object lock = new Object()' considered safer than synchronizing on 'this' or public methods?",
+            "options": [
+              "External classes cannot maliciously or accidentally acquire the private lock object and cause unexpected contention or deadlocks",
+              "Private lock objects are stored in CPU L1 cache rather than heap memory",
+              "Locking on a private object avoids executing the method's bytecode instructions",
+              "Synchronizing on 'this' is forbidden in modern Java versions"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Synchronizing on `this` exposes your lock to external callers who can synchronize on your instance. Using a `private final Object lock` encapsulates synchronization details safely inside the class."
           }
         },
         {
           "pageId": "p-OPJA191",
-          "title": "Multiple Choice Question",
+          "title": "Class Monitor vs Instance Monitor Locking",
           "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
           "callout": {
             "type": "KEY_CONCEPT",
@@ -1777,13 +2347,26 @@
             "text": "Multiple Choice Question explains a Java design rule used in Priorities / synchronisation."
           },
           "codeCard": {
+            "title": "Class Monitor vs Instance Monitor Locking",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    private static int globalCount = 0;\n    private int instanceCount = 0;\n\n    // Locks on Main.class Class object monitor\n    public static synchronized void incGlobal() {\n        globalCount++;\n    }\n\n    // Locks on 'this' instance monitor\n    public synchronized void incInstance() {\n        instanceCount++;\n    }\n\n    public static void main(String[] args) {\n        Main.incGlobal();\n        new Main().incInstance();\n        System.out.println(\"Global: \" + globalCount);\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA191",
+            "question": "If Thread 1 executes a 'static synchronized' method and Thread 2 executes a non-static 'synchronized' method on the same class instance, can they run concurrently?",
+            "options": [
+              "Yes, because static synchronized methods lock on the Class object (e.g. MyClass.class) while non-static synchronized methods lock on the instance object ('this')",
+              "No, because the JVM allows only one synchronized method per class across all threads",
+              "No, because Thread 2 will be blocked until Thread 1 completely terminates",
+              "Yes, but only if both threads share the exact same thread priority"
+            ],
+            "correctAnswer": 0,
+            "explanation": "A static synchronized method acquires the intrinsic lock for the `Class` object (`MyClass.class`), whereas an instance synchronized method acquires the lock for `this`. Since they lock on two different objects, they do not block each other."
           }
         },
         {
           "pageId": "p-OPJA192",
-          "title": "Multiple Choice Question",
+          "title": "Thread Priorities and Scheduling",
           "content": "This page reinforces the surrounding topic with a focused concept check. Pay attention to what belongs to the class, what belongs to an object, and what the Java compiler requires.\n\nRead the example carefully before answering: the goal is to connect the syntax to the runtime behavior it produces.",
           "callout": {
             "type": "KEY_CONCEPT",
@@ -1791,8 +2374,21 @@
             "text": "Multiple Choice Question explains a Java design rule used in Priorities / synchronisation."
           },
           "codeCard": {
+            "title": "Thread Priorities and Scheduling",
             "language": "java",
-            "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+            "code": "public class Main {\n    public static void main(String[] args) {\n        Thread t1 = new Thread(() -> System.out.println(\"Low priority worker\"));\n        Thread t2 = new Thread(() -> System.out.println(\"High priority worker\"));\n\n        t1.setPriority(Thread.MIN_PRIORITY);  // Priority 1\n        t2.setPriority(Thread.MAX_PRIORITY);  // Priority 10\n\n        t1.start();\n        t2.start();\n        System.out.println(\"Norm priority: \" + Thread.NORM_PRIORITY); // Priority 5\n    }\n}"
+          },
+          "checkpoint": {
+            "checkpointId": "cp-OPJA192",
+            "question": "What are the integer bounds for Java thread priorities defined in java.lang.Thread?",
+            "options": [
+              "MIN_PRIORITY is 1, NORM_PRIORITY is 5, and MAX_PRIORITY is 10",
+              "MIN_PRIORITY is 0, NORM_PRIORITY is 50, and MAX_PRIORITY is 100",
+              "MIN_PRIORITY is -1, NORM_PRIORITY is 0, and MAX_PRIORITY is 1",
+              "MIN_PRIORITY is 1, NORM_PRIORITY is 16, and MAX_PRIORITY is 32"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In Java, thread priorities range from `Thread.MIN_PRIORITY` (1) to `Thread.MAX_PRIORITY` (10), with default `Thread.NORM_PRIORITY` being 5."
           }
         },
         {
@@ -1800,77 +2396,209 @@
           "title": "Step-by-step learning path",
           "sectionType": "STEP_BY_STEP",
           "content": "Follow this exact sequence for **Priorities / synchronisation**: prerequisite check → concept build → mental model → worked example → dry run → guided implementation → independent practice → mastery gate. Do not skip to the final practice set until the guided implementation is understood.",
-          "teachingGoal": "Learner can complete step-by-step learning path for Priorities / synchronisation."
+          "teachingGoal": "Learner can complete step-by-step learning path for Priorities / synchronisation.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p5",
+            "question": "Why should program correctness NEVER rely on Java thread priorities?",
+            "options": [
+              "Thread priorities are mapped to native OS priorities differently across operating systems, and some operating systems ignore Java thread priorities entirely",
+              "Priority values are randomized whenever garbage collection runs",
+              "Thread priorities only take effect when running under a 32-bit JVM",
+              "Setting thread priority always throws an UnsupportedOperationException on Linux"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Operating systems (Windows, Linux, macOS) implement different thread scheduling policies. Mapping Java priorities 1-10 to native OS levels is platform-dependent, making reliance on priorities non-portable and unreliable."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-6-step1",
           "title": "1. Prerequisite check",
           "sectionType": "STEP_BY_STEP",
           "content": "Before starting **Priorities / synchronisation**, recall the Java syntax and object/model concepts required for it. Write down what you already know, then identify one question you cannot yet answer confidently. The purpose of this step is to expose a missing prerequisite before new material is introduced.",
-          "teachingGoal": "Learner can complete 1. prerequisite check for Priorities / synchronisation."
+          "teachingGoal": "Learner can complete 1. prerequisite check for Priorities / synchronisation.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p6",
+            "question": "What property describes an operation that either executes completely without interference from other threads or does not execute at all?",
+            "options": [
+              "Atomicity",
+              "Polymorphism",
+              "Encapsulation",
+              "Serialization"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Atomicity ensures that an operation is indivisible—concurrent threads observe either the state before the operation begins or after it completes, but never an intermediate or partial state."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-6-step2",
           "title": "2. Build the concept",
           "sectionType": "STEP_BY_STEP",
           "content": "Thread priority is only a scheduling hint and should never be used to establish correctness. Synchronization provides mutual exclusion and establishes memory-visibility guarantees for protected state. Start with the rule, then connect the rule to one small Java example. Avoid memorizing a code template before you can explain why each important line is present.",
-          "teachingGoal": "Learner can complete 2. build the concept for Priorities / synchronisation."
+          "teachingGoal": "Learner can complete 2. build the concept for Priorities / synchronisation.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p7",
+            "question": "What happens to an intrinsic monitor lock held by a thread if an unhandled RuntimeException is thrown inside the synchronized block?",
+            "options": [
+              "The JVM automatically releases the monitor lock before propagating the exception up the call stack",
+              "The lock remains held permanently, deadlocking all subsequent threads attempting to acquire it",
+              "The lock is converted into a volatile write barrier",
+              "The JVM terminates the entire operating system process immediately"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Under the hood, Java implements synchronized blocks with `monitorenter` and `monitorexit` bytecode instructions, with an implicit exception table ensuring `monitorexit` executes even on abnormal termination."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-6-step3",
           "title": "3. Build a mental model",
           "sectionType": "STEP_BY_STEP",
           "content": "Imagine the runtime state while **Priorities / synchronisation** executes. Identify the important actors, ownership, values, references, control flow, or exception paths. Explain the relationship in plain language before touching a full program.",
-          "teachingGoal": "Learner can complete 3. build a mental model for Priorities / synchronisation."
+          "teachingGoal": "Learner can complete 3. build a mental model for Priorities / synchronisation.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p8",
+            "question": "What is 'reentrant synchronization' in Java?",
+            "options": [
+              "A thread that already holds a lock can acquire the same lock again without deadlocking itself",
+              "Multiple threads can acquire the exact same exclusive write lock at the same time",
+              "A thread can re-enter a terminated thread's call stack",
+              "Locks automatically transfer between child and parent threads upon creation"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Java intrinsic locks are reentrant: each lock maintains an acquisition count and an owning thread. If the owning thread requests the lock again, the acquisition count increments and execution continues without blocking."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-6-step4",
           "title": "4. Worked example",
           "sectionType": "STEP_BY_STEP",
           "content": "Take one small example for **Priorities / synchronisation** and solve it in visible steps: state the input, apply the first rule, update the state, and predict the output or effect. Then compare your reasoning with the executable example in this topic.",
-          "teachingGoal": "Learner can complete 4. worked example for Priorities / synchronisation."
+          "teachingGoal": "Learner can complete 4. worked example for Priorities / synchronisation.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p9",
+            "question": "Consider transferring money between two accounts A and B. How can a deadlock be prevented when locking both accounts?",
+            "options": [
+              "Acquire locks in a globally consistent order (for example, always locking the account with the smaller account ID first)",
+              "Always acquire locks in random order using ThreadLocalRandom",
+              "Synchronize on the transaction amount variable",
+              "Set the priority of the sending account thread to Thread.MAX_PRIORITY"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Deadlock occurs when Thread 1 locks A then waits for B, while Thread 2 locks B then waits for A. Enforcing a global lock acquisition ordering (e.g. sorting by unique ID) eliminates circular wait."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-6-step5",
           "title": "5. Dry run before execution",
           "sectionType": "STEP_BY_STEP",
           "content": "Trace the program line by line using a state table. Record changed variables, object fields, references, collections, thread state, or exception flow. The goal is to make the execution predictable rather than mysterious.",
-          "teachingGoal": "Learner can complete 5. dry run before execution for Priorities / synchronisation."
+          "teachingGoal": "Learner can complete 5. dry run before execution for Priorities / synchronisation.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p10",
+            "question": "What are the four necessary conditions that must hold simultaneously for a Deadlock to occur (Coffman conditions)?",
+            "options": [
+              "Mutual exclusion, Hold and wait, No preemption, and Circular wait",
+              "Starvation, Livelock, Race condition, and Memory leak",
+              "Atomicity, Consistency, Isolation, and Durability",
+              "Inheritance, Polymorphism, Abstraction, and Encapsulation"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The four Coffman conditions for deadlock are: Mutual Exclusion (non-shareable resources), Hold and Wait (holding a resource while waiting for another), No Preemption (resources cannot be forcibly taken), and Circular Wait."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-6-step6",
           "title": "6. Guided implementation",
           "sectionType": "STEP_BY_STEP",
           "content": "Implement a minimal version of **Priorities / synchronisation** using the starter structure supplied in the practice problem. First fill in the missing concept, then run the smallest sample, then expand to a second case. Do not optimize before the behavior is correct.",
-          "teachingGoal": "Learner can complete 6. guided implementation for Priorities / synchronisation."
+          "teachingGoal": "Learner can complete 6. guided implementation for Priorities / synchronisation.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p11",
+            "question": "Why does calling 'wait()' outside of a synchronized block throw 'java.lang.IllegalMonitorStateException'?",
+            "options": [
+              "Because wait() requires the calling thread to own the object's intrinsic monitor lock before releasing it and going to sleep",
+              "Because wait() can only be called from inside static methods",
+              "Because wait() requires the object to implement java.lang.Cloneable",
+              "Because the compiler requires wait() to be declared with the volatile keyword"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`wait()`, `notify()`, and `notifyAll()` manipulate the wait-set of an object's monitor. A thread must own that monitor (`synchronized (obj)`) to call these methods, or `IllegalMonitorStateException` is thrown."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-6-step7",
           "title": "7. Independent practice",
           "sectionType": "STEP_BY_STEP",
           "content": "Solve the **Priorities / synchronisation** practice problems in increasing difficulty. For every failure, classify it as syntax, concept, state-tracing, edge-case, or design error before changing the code.",
-          "teachingGoal": "Learner can complete 7. independent practice for Priorities / synchronisation."
+          "teachingGoal": "Learner can complete 7. independent practice for Priorities / synchronisation.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p12",
+            "question": "Why should 'wait()' always be called inside a 'while' loop rather than an 'if' statement?",
+            "options": [
+              "To guard against 'spurious wakeups' where a thread wakes without being notified, and to re-verify the condition if another thread consumed the resource",
+              "Because while loops run faster than if statements in bytecode",
+              "Because the compiler rejects if statements containing wait() calls",
+              "Because an if statement releases the lock permanently on exit"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Threads can wake up spuriously without any `notify()` call, or another thread might satisfy its condition and alter state before the newly awakened thread runs. Testing the condition in a `while` loop re-verifies the state."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-6-step8",
           "title": "8. Mastery gate",
           "sectionType": "STEP_BY_STEP",
           "content": "You have mastered **Priorities / synchronisation** when you can: (1) explain the rule without notes, (2) dry-run a new example, (3) implement a small variation, (4) explain one common failure, and (5) choose when the concept should and should not be used.",
-          "teachingGoal": "Learner can complete 8. mastery gate for Priorities / synchronisation."
+          "teachingGoal": "Learner can complete 8. mastery gate for Priorities / synchronisation.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p13",
+            "question": "What is the key difference between 'notify()' and 'notifyAll()'?",
+            "options": [
+              "'notify()' wakes up an arbitrary single thread waiting on the object's monitor; 'notifyAll()' wakes up all threads waiting on that monitor",
+              "'notify()' releases the monitor lock immediately; 'notifyAll()' retains the lock indefinitely",
+              "'notify()' wakes daemon threads only; 'notifyAll()' wakes user threads",
+              "'notify()' is non-blocking; 'notifyAll()' blocks until all threads acknowledge the wake signal"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`notify()` selects one arbitrary waiting thread from the object's wait-set. `notifyAll()` wakes all waiting threads, allowing them to compete for the lock and re-check their condition loops (preventing lost signals)."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-6-step9",
           "title": "9. Debugging and misconception clinic",
           "sectionType": "DEBUGGING",
           "content": "Use the following diagnostic routine:\n\n- **Mistake:** Memorizing Priorities / synchronisation syntax without understanding its runtime behavior. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Skipping prerequisite concepts and guessing from compiler errors alone. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Testing only the sample input. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Changing several parts of the program before identifying the failing concept. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.",
-          "teachingGoal": "Diagnose common errors while learning Priorities / synchronisation."
+          "teachingGoal": "Diagnose common errors while learning Priorities / synchronisation.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p14",
+            "question": "What is a 'Livelock' and how does it differ from a Deadlock?",
+            "options": [
+              "In a livelock, threads continuously change their state in response to each other without making any forward progress, whereas in a deadlock, threads are permanently blocked waiting for resources",
+              "Livelock occurs only in single-threaded applications; deadlock occurs in multi-threaded applications",
+              "Livelock is an operating system crash; deadlock is a garbage collection stall",
+              "In a livelock, all threads enter the TERMINATED state immediately"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Unlike deadlock where threads are completely stuck in BLOCKED/WAITING states, livelocked threads are actively running and consuming CPU, but repeatedly reacting to each other's state changes without accomplishing any real work."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m3-6-step10",
           "title": "10. Mastery review and interview transfer",
           "sectionType": "REVIEW",
           "content": "Finish **Priorities / synchronisation** by answering these without notes:\n\n1. What problem does this concept solve?\n2. What is the smallest correct example?\n3. What invariant or rule must remain true?\n4. What edge case commonly breaks naive solutions?\n5. What is one interview question you could answer from this topic?\n\nThen solve one unseen variation before marking the topic complete.",
-          "teachingGoal": "Transfer Priorities / synchronisation from guided learning to independent problem solving."
+          "teachingGoal": "Transfer Priorities / synchronisation from guided learning to independent problem solving.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t4-p15",
+            "question": "What is 'Thread Starvation' in concurrent systems?",
+            "options": [
+              "A situation where a runnable thread is perpetually denied access to CPU cycles or shared resources because greedy higher-priority threads dominate execution",
+              "A condition where threads consume all available heap memory",
+              "A bug where a thread attempts to read from an unallocated socket stream",
+              "An exception thrown when a thread pool queue becomes completely empty"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Thread starvation occurs when a thread is ready to run but cannot gain access to CPU scheduling or a required lock for an excessively long time due to unfair scheduling or greedy competitors."
+          }
         }
       ],
       "codeExamples": [
@@ -1882,25 +2610,19 @@
           "code": "class Counter { int x; synchronized void inc(){x++;} } public class Main { public static void main(String[] a)throws Exception{Counter c=new Counter();Thread t=new Thread(c::inc);t.start();t.join();System.out.println(c.x);}}"
         },
         {
-          "exampleId": "ex-OPJA190-java",
+          "title": "Synchronized Block with Explicit Lock Object",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    private final Object lock = new Object();\n    private int counter = 0;\n\n    public void increment() {\n        synchronized (lock) { // Intrinsic monitor lock on dedicated private object\n            counter++;\n        }\n    }\n\n    public int getCounter() {\n        synchronized (lock) {\n            return counter;\n        }\n    }\n\n    public static void main(String[] args) {\n        Main m = new Main();\n        m.increment();\n        System.out.println(\"Counter: \" + m.getCounter());\n    }\n}"
         },
         {
-          "exampleId": "ex-OPJA191-java",
+          "title": "Class Monitor vs Instance Monitor Locking",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    private static int globalCount = 0;\n    private int instanceCount = 0;\n\n    // Locks on Main.class Class object monitor\n    public static synchronized void incGlobal() {\n        globalCount++;\n    }\n\n    // Locks on 'this' instance monitor\n    public synchronized void incInstance() {\n        instanceCount++;\n    }\n\n    public static void main(String[] args) {\n        Main.incGlobal();\n        new Main().incInstance();\n        System.out.println(\"Global: \" + globalCount);\n    }\n}"
         },
         {
-          "exampleId": "ex-OPJA192-java",
+          "title": "Thread Priorities and Scheduling",
           "language": "java",
-          "label": "Java",
-          "title": "Multiple Choice Question (Java)",
-          "code": "class MathBox { static int square(int x){return x*x;} } public class Main { public static void main(String[] a){System.out.println(MathBox.square(6));}}"
+          "code": "public class Main {\n    public static void main(String[] args) {\n        Thread t1 = new Thread(() -> System.out.println(\"Low priority worker\"));\n        Thread t2 = new Thread(() -> System.out.println(\"High priority worker\"));\n\n        t1.setPriority(Thread.MIN_PRIORITY);  // Priority 1\n        t2.setPriority(Thread.MAX_PRIORITY);  // Priority 10\n\n        t1.start();\n        t2.start();\n        System.out.println(\"Norm priority: \" + Thread.NORM_PRIORITY); // Priority 5\n    }\n}"
         }
       ],
       "practiceProblems": [
@@ -2369,77 +3091,209 @@
           "title": "Step-by-step learning path",
           "sectionType": "STEP_BY_STEP",
           "content": "Follow this exact sequence for **Locks, Atomic Variables and Thread Safety**: prerequisite check → concept build → mental model → worked example → dry run → guided implementation → independent practice → mastery gate. Do not skip to the final practice set until the guided implementation is understood.",
-          "teachingGoal": "Learner can complete step-by-step learning path for Locks, Atomic Variables and Thread Safety."
+          "teachingGoal": "Learner can complete step-by-step learning path for Locks, Atomic Variables and Thread Safety.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p1",
+            "question": "What major capabilities do explicit Lock implementations (like ReentrantLock) provide that intrinsic 'synchronized' blocks lack?",
+            "options": [
+              "The ability to attempt non-blocking lock acquisition with tryLock(), interruptible lock acquisition, and timed lock acquisition",
+              "Automatic hardware overclocking during execution of critical sections",
+              "Exemption from the Java Memory Model visibility rules",
+              "Automatic conversion of all instance fields into CPU registers"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`ReentrantLock` provides advanced concurrency controls that `synchronized` cannot match: polling with `tryLock()`, timed acquisition timeouts, interruptible locking via `lockInterruptibly()`, and fair scheduling queues."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m8-2-step1",
           "title": "1. Prerequisite check",
           "sectionType": "STEP_BY_STEP",
           "content": "Before starting **Locks, Atomic Variables and Thread Safety**, recall the Java syntax and object/model concepts required for it. Write down what you already know, then identify one question you cannot yet answer confidently. The purpose of this step is to expose a missing prerequisite before new material is introduced.",
-          "teachingGoal": "Learner can complete 1. prerequisite check for Locks, Atomic Variables and Thread Safety."
+          "teachingGoal": "Learner can complete 1. prerequisite check for Locks, Atomic Variables and Thread Safety.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p2",
+            "question": "What three fundamental guarantees must a concurrent system coordinate to achieve complete thread safety?",
+            "options": [
+              "Atomicity (indivisible operations), Visibility (updates visible across CPU caches), and Ordering (preventing harmful compiler/CPU reordering)",
+              "Inheritance, Encapsulation, and Polymorphism",
+              "Compilation, Interpretation, and Classloading",
+              "Serialization, Marshaling, and Compression"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Thread safety requires controlling Atomicity (no partial execution), Visibility (changes flushed to main memory and seen by other cores), and Ordering (happens-before consistency against instruction reordering)."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m8-2-step2",
           "title": "2. Build the concept",
           "sectionType": "STEP_BY_STEP",
           "content": "Locks, Atomic Variables and Thread Safety should be learned through a progression from terminology and mental model to tracing, implementation, and independent application. Start with the rule, then connect the rule to one small Java example. Avoid memorizing a code template before you can explain why each important line is present.",
-          "teachingGoal": "Learner can complete 2. build the concept for Locks, Atomic Variables and Thread Safety."
+          "teachingGoal": "Learner can complete 2. build the concept for Locks, Atomic Variables and Thread Safety.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p3",
+            "question": "How does the scope of an explicit ReentrantLock differ structurally from an intrinsic 'synchronized' block?",
+            "options": [
+              "ReentrantLock lock and unlock calls do not need to be block-structured; a lock can be acquired in one method and released in another",
+              "ReentrantLock can only be acquired within static methods of java.lang.Object",
+              "ReentrantLock automatically unlocks itself after 100 milliseconds if no statements are executed",
+              "ReentrantLock must be declared as a local variable inside the thread's run method"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Intrinsic `synchronized` blocks are strictly lexical/block-structured: entering the block acquires the monitor and exiting releases it. Explicit `Lock` instances allow non-block-structured hand-over-hand locking across methods."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m8-2-step3",
           "title": "3. Build a mental model",
           "sectionType": "STEP_BY_STEP",
           "content": "Imagine the runtime state while **Locks, Atomic Variables and Thread Safety** executes. Identify the important actors, ownership, values, references, control flow, or exception paths. Explain the relationship in plain language before touching a full program.",
-          "teachingGoal": "Learner can complete 3. build a mental model for Locks, Atomic Variables and Thread Safety."
+          "teachingGoal": "Learner can complete 3. build a mental model for Locks, Atomic Variables and Thread Safety.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p4",
+            "question": "What low-level CPU instruction enables lock-free atomic operations in java.util.concurrent.atomic classes?",
+            "options": [
+              "Compare-And-Swap (CAS), an atomic machine instruction that updates a memory location only if it matches an expected old value",
+              "Interrupt Vector Table remapping",
+              "Instruction pipeline flushing via BIOS interrupts",
+              "Direct Memory Access (DMA) channel multiplexing"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Atomic classes rely on CPU-level Compare-And-Swap (CAS) instructions (e.g. `CMPXCHG` on x86). CAS compares memory contents with an expected value and modifies it only if they match, without thread suspension overhead."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m8-2-step4",
           "title": "4. Worked example",
           "sectionType": "STEP_BY_STEP",
           "content": "Take one small example for **Locks, Atomic Variables and Thread Safety** and solve it in visible steps: state the input, apply the first rule, update the state, and predict the output or effect. Then compare your reasoning with the executable example in this topic.",
-          "teachingGoal": "Learner can complete 4. worked example for Locks, Atomic Variables and Thread Safety."
+          "teachingGoal": "Learner can complete 4. worked example for Locks, Atomic Variables and Thread Safety.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p5",
+            "question": "Why should 'lock.lock()' be placed immediately BEFORE the 'try' block rather than INSIDE the try block?",
+            "options": [
+              "If lock() throws an exception or fails before acquisition, placing it inside try would cause the finally block to execute unlock() on an unacquired lock, throwing IllegalMonitorStateException",
+              "Because the compiler generates invalid bytecode if lock() is inside try",
+              "Because placing lock() inside try converts the lock into a fair lock automatically",
+              "Because the finally block will not execute if lock() is inside try"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Idiomatic usage is `lock.lock(); try { ... } finally { lock.unlock(); }`. If `lock()` is placed inside `try` and fails (or is interrupted), the `finally` block runs and calls `unlock()` on a lock the thread does not hold."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m8-2-step5",
           "title": "5. Dry run before execution",
           "sectionType": "STEP_BY_STEP",
           "content": "Trace the program line by line using a state table. Record changed variables, object fields, references, collections, thread state, or exception flow. The goal is to make the execution predictable rather than mysterious.",
-          "teachingGoal": "Learner can complete 5. dry run before execution for Locks, Atomic Variables and Thread Safety."
+          "teachingGoal": "Learner can complete 5. dry run before execution for Locks, Atomic Variables and Thread Safety.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p5_dryrun",
+            "question": "How does 'lock.tryLock(long timeout, TimeUnit unit)' facilitate deadlock prevention?",
+            "options": [
+              "If a thread cannot acquire the second lock within the timeout, tryLock returns false, allowing the thread to release held locks and back off",
+              "It terminates the thread holding the opposing lock immediately",
+              "It forces the operating system kernel to invert priority inversion",
+              "It elevates the thread's priority to Thread.MAX_PRIORITY until acquired"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`tryLock()` provides a timed exit route: if competing resources cannot be acquired in time, the thread can release its already-acquired locks, sleep briefly, and retry, breaking the circular wait condition."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m8-2-step6",
           "title": "6. Guided implementation",
           "sectionType": "STEP_BY_STEP",
           "content": "Implement a minimal version of **Locks, Atomic Variables and Thread Safety** using the starter structure supplied in the practice problem. First fill in the missing concept, then run the smallest sample, then expand to a second case. Do not optimize before the behavior is correct.",
-          "teachingGoal": "Learner can complete 6. guided implementation for Locks, Atomic Variables and Thread Safety."
+          "teachingGoal": "Learner can complete 6. guided implementation for Locks, Atomic Variables and Thread Safety.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p7",
+            "question": "How does 'AtomicInteger.incrementAndGet()' achieve thread-safe counting without using synchronized blocks?",
+            "options": [
+              "It uses an internal CAS loop that repeatedly reads the current value and attempts compareAndSet() until the atomic hardware instruction succeeds",
+              "It disables all other CPU cores temporarily during incrementation",
+              "It creates a new AtomicInteger instance on every increment call",
+              "It writes the value to an operating system swap file"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`AtomicInteger.incrementAndGet()` relies on `Unsafe.getAndAddInt()`: in an optimistic loop, it reads the current value, computes `current + 1`, and attempts CAS. If another thread interfered, CAS fails and it spins to retry."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m8-2-step7",
           "title": "7. Independent practice",
           "sectionType": "STEP_BY_STEP",
           "content": "Solve the **Locks, Atomic Variables and Thread Safety** practice problems in increasing difficulty. For every failure, classify it as syntax, concept, state-tracing, edge-case, or design error before changing the code.",
-          "teachingGoal": "Learner can complete 7. independent practice for Locks, Atomic Variables and Thread Safety."
+          "teachingGoal": "Learner can complete 7. independent practice for Locks, Atomic Variables and Thread Safety.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p8",
+            "question": "What is the 'ABA problem' in lock-free concurrent algorithms, and which Java class is designed to resolve it?",
+            "options": [
+              "A value changes from A to B and back to A, causing a CAS to succeed despite intermediate modifications; solved by AtomicStampedReference",
+              "A thread acquires lock A then lock B, causing lock-ordering deadlocks; solved by CyclicBarrier",
+              "An array index out of bounds error during parallel quicksort; solved by CopyOnWriteArrayList",
+              "A memory leak caused by circular class references; solved by WeakReference"
+            ],
+            "correctAnswer": 0,
+            "explanation": "The ABA problem occurs when a memory location is altered from A to B and back to A. A simple CAS succeeds because the value matches A. `AtomicStampedReference` attaches an integer version/stamp to detect intermediate updates."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m8-2-step8",
           "title": "8. Mastery gate",
           "sectionType": "STEP_BY_STEP",
           "content": "You have mastered **Locks, Atomic Variables and Thread Safety** when you can: (1) explain the rule without notes, (2) dry-run a new example, (3) implement a small variation, (4) explain one common failure, and (5) choose when the concept should and should not be used.",
-          "teachingGoal": "Learner can complete 8. mastery gate for Locks, Atomic Variables and Thread Safety."
+          "teachingGoal": "Learner can complete 8. mastery gate for Locks, Atomic Variables and Thread Safety.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p9",
+            "question": "Why is a non-fair ReentrantLock (the default) typically preferred over a fair ReentrantLock in high-throughput applications?",
+            "options": [
+              "Non-fair locks offer significantly higher throughput by allowing active running threads to cut ahead of queued threads, avoiding expensive thread suspensions and wake-up context switches",
+              "Fair locks do not support reentrant locking by the same thread",
+              "Non-fair locks consume half as much heap memory as fair locks",
+              "Fair locks can only be executed on single-socket motherboard architectures"
+            ],
+            "correctAnswer": 0,
+            "explanation": "In fair locks, incoming threads must always queue up behind waiting threads. Waking a sleeping thread incurs substantial OS context-switch latency. Non-fair locks allow newly arriving active threads to barge in, drastically increasing throughput."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m8-2-step9",
           "title": "9. Debugging and misconception clinic",
           "sectionType": "DEBUGGING",
           "content": "Use the following diagnostic routine:\n\n- **Mistake:** Memorizing Locks, Atomic Variables and Thread Safety syntax without understanding its runtime behavior. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Skipping prerequisite concepts and guessing from compiler errors alone. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Testing only the sample input. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.\n- **Mistake:** Changing several parts of the program before identifying the failing concept. \n  **Recovery:** return to the smallest example, state the governing rule, and rerun one change at a time.",
-          "teachingGoal": "Diagnose common errors while learning Locks, Atomic Variables and Thread Safety."
+          "teachingGoal": "Diagnose common errors while learning Locks, Atomic Variables and Thread Safety.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p10",
+            "question": "Why is the composite operation 'if (atomicVal.get() == 5) { atomicVal.set(10); }' NOT thread-safe, even though AtomicInteger is used?",
+            "options": [
+              "Between the get() and set() calls, another thread can interleave and change the value, creating a check-then-act race condition",
+              "AtomicInteger disables assignment operators at runtime",
+              "The set() method throws an exception if preceded by get()",
+              "Because atomicVal is not marked with the transient keyword"
+            ],
+            "correctAnswer": 0,
+            "explanation": "While individual operations `get()` and `set()` are each atomic, the combination of 'check-then-act' is not atomic as a whole. To perform conditional updates safely, `compareAndSet(5, 10)` must be used."
+          }
         },
         {
           "pageId": "college-oops-java-college-oops-java-m8-2-step10",
           "title": "10. Mastery review and interview transfer",
           "sectionType": "REVIEW",
           "content": "Finish **Locks, Atomic Variables and Thread Safety** by answering these without notes:\n\n1. What problem does this concept solve?\n2. What is the smallest correct example?\n3. What invariant or rule must remain true?\n4. What edge case commonly breaks naive solutions?\n5. What is one interview question you could answer from this topic?\n\nThen solve one unseen variation before marking the topic complete.",
-          "teachingGoal": "Transfer Locks, Atomic Variables and Thread Safety from guided learning to independent problem solving."
+          "teachingGoal": "Transfer Locks, Atomic Variables and Thread Safety from guided learning to independent problem solving.",
+          "checkpoint": {
+            "checkpointId": "cp-m17-t5-p11",
+            "question": "Why does java.util.concurrent.atomic.LongAdder outperform AtomicLong under extremely high multi-threaded contention?",
+            "options": [
+              "LongAdder maintains an array of internal cell variables striped across threads, reducing CPU cache-line contention and CAS retry storms",
+              "LongAdder uses 32-bit floats instead of 64-bit integers",
+              "LongAdder automatically delegates increments to GPU compute shaders",
+              "AtomicLong cannot run on multi-core processors"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Under high contention, threads updating an `AtomicLong` suffer heavy CAS retries and cache-coherence bus traffic. `LongAdder` dynamically stripes increments across multiple internal `Cell` objects and sums them on read."
+          }
         }
       ],
       "codeExamples": [
@@ -2657,17 +3511,16 @@
             "code": "public class Main{public static void main(String[]a)throws Exception{Thread t=new Thread(()->System.out.println(\"WORK\"));t.start();t.join();System.out.println(\"DONE\");}}"
           },
           "checkpoint": {
-            "checkpointId": "cp-advance-java-m9-t1-1",
-            "question": "Which idea is central to Threads, Runnable and Callable?",
+            "checkpointId": "cp-adv-m9-t1-p1",
+            "question": "What is the primary conceptual distinction between java.lang.Runnable and java.util.concurrent.Callable<V>?",
             "options": [
-              "Thread",
-              "Runnable",
-              "Callable",
-              "Future",
-              "unrelated syntax"
+              "Runnable defines 'void run()' which returns no value and cannot throw checked exceptions; Callable defines 'V call() throws Exception' which returns a generic result and can throw checked exceptions",
+              "Runnable runs asynchronously in background threads; Callable runs synchronously on the main thread only",
+              "Runnable can only be used with thread pools; Callable can only be used with raw Thread objects",
+              "Runnable is an abstract class; Callable is a final record"
             ],
             "correctAnswer": 0,
-            "explanation": "The first core concept directly captures the main abstraction taught in this topic."
+            "explanation": "`Runnable.run()` has a `void` return type and cannot throw checked exceptions. `Callable<V>.call()` returns an object of generic type `V` and is permitted to declare `throws Exception`."
           }
         },
         {
@@ -2682,16 +3535,16 @@
             "code": "import java.util.concurrent.*;public class Main{public static void main(String[]a)throws Exception{ExecutorService e=Executors.newSingleThreadExecutor();Future<Integer>f=e.submit(()->40+2);System.out.println(f.get());e.shutdown();}}"
           },
           "checkpoint": {
-            "checkpointId": "cp-advance-java-m9-t1-2",
-            "question": "What should be considered before calling a Threads, Runnable and Callable API?",
+            "checkpointId": "cp-adv-m9-t1-p2",
+            "question": "When submitting a Callable<V> to an ExecutorService via 'submit(callable)', what object is returned to manage the task?",
             "options": [
-              "Only method name",
-              "Inputs, state, failures and lifecycle",
-              "Only runtime speed",
-              "Only indentation"
+              "A Future<V> representing the pending result of the asynchronous computation",
+              "A ThreadGroup containing all allocated worker threads",
+              "A CountDownLatch initialized to the number of task arguments",
+              "The computed value of type V immediately"
             ],
-            "correctAnswer": 1,
-            "explanation": "Advanced Java design is about the surrounding contract, not just syntax."
+            "correctAnswer": 0,
+            "explanation": "`ExecutorService.submit(Callable<T>)` returns a `Future<T>` handle that allows the caller to check completion status, cancel the task, or block until the result is computed."
           }
         },
         {
@@ -2728,7 +3581,19 @@
               ],
               "output": "AB"
             }
-          ]
+          ],
+          "checkpoint": {
+            "checkpointId": "cp-adv-m9-t1-p3",
+            "question": "What happens if a calling thread invokes 'future.get(500, TimeUnit.MILLISECONDS)' and the background computation takes 1000 milliseconds to complete?",
+            "options": [
+              "The calling thread unblocks after 500 milliseconds and throws a java.util.concurrent.TimeoutException",
+              "The calling thread terminates the background worker thread immediately",
+              "The future returns null and marks the task as completed",
+              "The method blocks for the full 1000 milliseconds and ignores the timeout argument"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Timed `get()` waits at most the specified duration. If the result is not ready when time expires, it throws `TimeoutException`, leaving the background task still running unless explicitly cancelled."
+          }
         },
         {
           "pageId": "advance-java-m9-t1-v4-p4",
@@ -2736,7 +3601,19 @@
           "sectionType": "DEBUGGING",
           "content": "### Debugging Threads, Runnable and Callable\n\nWhen a program fails, classify the failure before changing code:\n\n**Compile-time:** the type or API contract is invalid.\n\n**Runtime:** the program reaches an operation whose preconditions are violated.\n\n**Logic:** the program runs but produces an incorrect state or output.\n\n**Concurrency / lifecycle:** the code is valid in isolation but fails because timing, ownership, cleanup, or shared state was handled incorrectly.\n\n- **Calling run instead of start:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n- **Ignoring InterruptedException:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n- **Sharing mutable state casually:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n- **Assuming thread execution order:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n\n**Debugging loop:** reproduce -> isolate -> state the rule -> fix one cause -> rerun the smallest failing case.",
           "teachingGoal": "Diagnose common failures in Threads, Runnable and Callable using the underlying Java rule instead of trial-and-error changes.",
-          "suggestedVisual": "Expected-vs-actual state timeline with the first point of divergence."
+          "suggestedVisual": "Expected-vs-actual state timeline with the first point of divergence.",
+          "checkpoint": {
+            "checkpointId": "cp-adv-m9-t1-p4",
+            "question": "If a Callable task throws a checked or unchecked exception during execution, what happens when caller calls 'future.get()'?",
+            "options": [
+              "future.get() throws an ExecutionException wrapping the original exception, which can be retrieved via getCause()",
+              "The exception is swallowed silently and future.get() returns null",
+              "The JVM process crashes immediately with a fatal core dump",
+              "future.get() returns a new instance of java.lang.Throwable without throwing"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Any exception thrown inside `call()` is captured by the Executor framework and rethrown to callers of `future.get()` wrapped inside an `ExecutionException`. You inspect `e.getCause()` for the root failure."
+          }
         },
         {
           "pageId": "advance-java-m9-t1-v4-p5",
@@ -2746,16 +3623,16 @@
           "teachingGoal": "Explain, implement, test, and defend a Threads, Runnable and Callable solution under a changed requirement.",
           "suggestedVisual": "Four-step mastery ladder: Explain -> Predict -> Implement -> Defend",
           "checkpoint": {
-            "checkpointId": "cp-advance-java-m9-t1-3",
-            "question": "Which mastery behavior best shows understanding of Threads, Runnable and Callable?",
+            "checkpointId": "cp-adv-m9-t1-p5",
+            "question": "What is the recommended sequence for gracefully shutting down an ExecutorService in production systems?",
             "options": [
-              "Memorize one code snippet",
-              "Explain the rule, predict behavior, implement, and handle an edge case",
-              "Skip testing because the code compiles",
-              "Always choose the most complex API"
+              "Call shutdown() to stop accepting new tasks, wait with awaitTermination(), and if tasks do not finish in time, call shutdownNow() to interrupt running workers",
+              "Call shutdownNow() immediately without waiting for in-flight tasks to finish",
+              "Set the executor reference to null and call System.gc()",
+              "Call Thread.stop() on each thread in the executor's internal thread pool"
             ],
-            "correctAnswer": 1,
-            "explanation": "Mastery requires transfer of the rule into implementation and debugging."
+            "correctAnswer": 0,
+            "explanation": "The Oracle standard shutdown pattern: invoke `shutdown()` (stops new tasks), wait with `awaitTermination()`, and if timeout elapses, call `shutdownNow()` (cancels remaining tasks via interrupts) followed by another `awaitTermination()`."
           }
         }
       ],
@@ -3100,17 +3977,16 @@
             "code": "import java.util.concurrent.atomic.*;public class Main{public static void main(String[]a)throws Exception{AtomicInteger x=new AtomicInteger();Thread a1=new Thread(()->x.incrementAndGet());Thread b=new Thread(()->x.incrementAndGet());a1.start();b.start();a1.join();b.join();System.out.println(x.get());}}"
           },
           "checkpoint": {
-            "checkpointId": "cp-advance-java-m9-t2-1",
-            "question": "Which idea is central to Synchronization, Locks and Atomic Variables?",
+            "checkpointId": "cp-adv-m9-t2-p1",
+            "question": "What is the distinction between a 'Data Race' and a 'Race Condition' in Java multithreading?",
             "options": [
-              "race condition",
-              "critical section",
-              "synchronized",
-              "ReentrantLock",
-              "unrelated syntax"
+              "A data race occurs when two threads access the same memory location concurrently without synchronization and at least one is a write; a race condition is a high-level flaw where timing/ordering causes incorrect program behavior",
+              "A data race only affects primitive types; a race condition only affects object references",
+              "Data races are caught at compile time; race conditions only happen in interpreted mode",
+              "Data races occur between processes; race conditions occur within threads"
             ],
             "correctAnswer": 0,
-            "explanation": "The first core concept directly captures the main abstraction taught in this topic."
+            "explanation": "A data race is a low-level memory model violation (concurrent unsynchronized write). A race condition is a semantic bug where correct program output depends on non-deterministic thread execution ordering."
           }
         },
         {
@@ -3125,16 +4001,16 @@
             "code": "public class Main{static class C{int x; synchronized void inc(){x++;}} public static void main(String[]a)throws Exception{C c=new C();Thread t1=new Thread(()->{for(int i=0;i<1000;i++)c.inc();});Thread t2=new Thread(()->{for(int i=0;i<1000;i++)c.inc();});t1.start();t2.start();t1.join();t2.join();System.out.println(c.x);}}"
           },
           "checkpoint": {
-            "checkpointId": "cp-advance-java-m9-t2-2",
-            "question": "What should be considered before calling a Synchronization, Locks and Atomic Variables API?",
+            "checkpointId": "cp-adv-m9-t2-p2",
+            "question": "What memory guarantees does the 'volatile' keyword provide in the Java Memory Model?",
             "options": [
-              "Only method name",
-              "Inputs, state, failures and lifecycle",
-              "Only runtime speed",
-              "Only indentation"
+              "Visibility guarantee (writes are immediately flushed to main memory and reads bypass stale CPU cache registers) and ordering (prevents instruction reordering across the volatile access)",
+              "Atomicity guarantee for compound operations such as count++ or check-then-act",
+              "Mutual exclusion locking identical to a synchronized block",
+              "Exemption of the variable from garbage collection"
             ],
-            "correctAnswer": 1,
-            "explanation": "Advanced Java design is about the surrounding contract, not just syntax."
+            "correctAnswer": 0,
+            "explanation": "`volatile` establishes visibility and prevents instruction reordering (happens-before relationship), but it does NOT provide atomicity. Operations like `i++` remain susceptible to race conditions under `volatile`."
           }
         },
         {
@@ -3171,7 +4047,19 @@
               ],
               "output": "LOCKED"
             }
-          ]
+          ],
+          "checkpoint": {
+            "checkpointId": "cp-adv-m9-t2-p3",
+            "question": "How does a java.util.concurrent.locks.ReentrantReadWriteLock improve concurrency over standard mutual exclusion locks?",
+            "options": [
+              "It allows multiple concurrent reader threads to access data simultaneously as long as no writer holds the lock, while giving exclusive access to writers",
+              "It compresses written data before committing to heap memory",
+              "It eliminates the need for calling unlock() in finally blocks",
+              "It executes write operations on a separate CPU core asynchronously"
+            ],
+            "correctAnswer": 0,
+            "explanation": "Read-write locks exploit read-heavy workloads: multiple threads can acquire `readLock()` simultaneously, vastly improving read scalability. When a thread requests `writeLock()`, it receives exclusive access."
+          }
         },
         {
           "pageId": "advance-java-m9-t2-v4-p4",
@@ -3179,7 +4067,19 @@
           "sectionType": "DEBUGGING",
           "content": "### Debugging Synchronization, Locks and Atomic Variables\n\nWhen a program fails, classify the failure before changing code:\n\n**Compile-time:** the type or API contract is invalid.\n\n**Runtime:** the program reaches an operation whose preconditions are violated.\n\n**Logic:** the program runs but produces an incorrect state or output.\n\n**Concurrency / lifecycle:** the code is valid in isolation but fails because timing, ownership, cleanup, or shared state was handled incorrectly.\n\n- **Locking only part of the invariant:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n- **Forgetting unlock in a finally block:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n- **Using atomic variables for multi-step invariants:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n- **Assuming volatile alone makes compound updates atomic:** apply the rule, isolate the smallest failing case, and verify the corrected behavior.\n\n**Debugging loop:** reproduce -> isolate -> state the rule -> fix one cause -> rerun the smallest failing case.",
           "teachingGoal": "Diagnose common failures in Synchronization, Locks and Atomic Variables using the underlying Java rule instead of trial-and-error changes.",
-          "suggestedVisual": "Expected-vs-actual state timeline with the first point of divergence."
+          "suggestedVisual": "Expected-vs-actual state timeline with the first point of divergence.",
+          "checkpoint": {
+            "checkpointId": "cp-adv-m9-t2-p4",
+            "question": "Which programmatic tool in Java SE allows runtime detection of deadlocked threads within the running JVM?",
+            "options": [
+              "java.lang.management.ThreadMXBean via findDeadlockedThreads() or findMonitorDeadlockedThreads()",
+              "System.getProperty(\"java.deadlock.status\")",
+              "Runtime.getRuntime().detectCircularWait()",
+              "Thread.currentThread().getDeadlockVector()"
+            ],
+            "correctAnswer": 0,
+            "explanation": "`ThreadMXBean` provides diagnostic methods `findDeadlockedThreads()` and `findMonitorDeadlockedThreads()` that return thread IDs of threads stuck waiting for object monitors or synchronizers."
+          }
         },
         {
           "pageId": "advance-java-m9-t2-v4-p5",
@@ -3189,16 +4089,16 @@
           "teachingGoal": "Explain, implement, test, and defend a Synchronization, Locks and Atomic Variables solution under a changed requirement.",
           "suggestedVisual": "Four-step mastery ladder: Explain -> Predict -> Implement -> Defend",
           "checkpoint": {
-            "checkpointId": "cp-advance-java-m9-t2-3",
-            "question": "Which mastery behavior best shows understanding of Synchronization, Locks and Atomic Variables?",
+            "checkpointId": "cp-adv-m9-t2-p5",
+            "question": "In the Double-Checked Locking singleton pattern in Java, why MUST the static instance field be declared 'volatile'?",
             "options": [
-              "Memorize one code snippet",
-              "Explain the rule, predict behavior, implement, and handle an edge case",
-              "Skip testing because the code compiles",
-              "Always choose the most complex API"
+              "To prevent instruction reordering: without volatile, the JVM may publish a reference to the uninitialized object memory before its constructor finishes running",
+              "Because the singleton class cannot be garbage-collected without volatile",
+              "To allow the singleton instance to be cloned across different classloaders",
+              "Because synchronized blocks cannot read static fields unless marked volatile"
             ],
-            "correctAnswer": 1,
-            "explanation": "Mastery requires transfer of the rule into implementation and debugging."
+            "correctAnswer": 0,
+            "explanation": "Object instantiation (`new Singleton()`) compiles to memory allocation, constructor invocation, and reference assignment. Without `volatile`, the CPU/compiler can reorder assignment before constructor completion, exposing a partially-initialized object to other threads."
           }
         }
       ],
