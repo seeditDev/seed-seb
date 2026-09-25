@@ -688,6 +688,27 @@ service cloud.firestore {
       allow delete: if isPortal() || isRecruiter() || isAdmin();
     }
 
+    match /corporateAssessments/{assessmentId} {
+      allow read: if true;
+      allow create, update: if isPortal() || isRecruiter() || isSignedIn();
+      allow delete: if isPortal() || isAdmin();
+    }
+
+    match /assessmentInvitations/{inviteId} {
+      allow read: if isPortal() || (isSignedIn() && (
+        resource.data.recruiterUid == request.auth.uid || 
+        resource.data.candidateUid == request.auth.uid ||
+        isRecruiter()
+      ));
+      allow create: if isPortal() || isRecruiter() || isSignedIn();
+      allow update: if isPortal() || (isSignedIn() && (
+        resource.data.recruiterUid == request.auth.uid || 
+        resource.data.candidateUid == request.auth.uid ||
+        isRecruiter()
+      ));
+      allow delete: if isAdmin();
+    }
+
     // Fallback: Default Deny All
     match /{document=**} {
       allow read, write: if false;
