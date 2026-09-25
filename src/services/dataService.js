@@ -727,7 +727,7 @@ class DataService {
                 authData = fresh;
             }
 
-            const { getAllowedTests, getGlobalTests, getCandidateDirectTests } = await import('../lib/firestore/courses');
+            const { getAllowedTests, getGlobalTests, getCandidateDirectTests, getRecruitmentTests } = await import('../lib/firestore/courses');
             const { tenantId, cohortId } = authData;
             const studentEmail = String(authData.email || auth?.currentUser?.email || '').trim().toLowerCase();
             const studentRoll = String(authData.rollNumber || '').trim().toUpperCase();
@@ -765,9 +765,28 @@ class DataService {
                 }
             }
 
+            // 3b. Fetch all active Recruitment Tests authored by corporate recruiters
+            let recruitmentTests = [];
+            if (typeof getRecruitmentTests === 'function') {
+                try {
+                    recruitmentTests = await getRecruitmentTests();
+                } catch (rErr) {
+                    console.warn('[DataService] getRecruitmentTests error:', rErr);
+                }
+            }
+
             // 4. Candidate targeting filter (Approach A: Email / Roll Number / Cohort restriction)
             const isStudentAuthorized = (t) => {
-                if (!t || !t.targeting) return true;
+                if (!t) return false;
+
+                // Corporate recruiter test targeting
+                if (t.isRecruitment || t.tag === 'Recruitment') {
+                    if (t.targeting?.isOpenToAll) {
+                        return true;
+                    }
+                }
+
+                if (!t.targeting) return true;
                 const { targetType, allowedEmails, allowedRollNumbers, allowedUserIds, tenantIds, years, departments } = t.targeting;
 
                 // Tenant/College restriction if specified
@@ -829,7 +848,7 @@ class DataService {
 
             // 5. Deduplicate and filter tests authorized for this candidate
             const testMap = new Map();
-            for (const t of [...cohortTests, ...globalTests, ...directTests]) {
+            for (const t of [...cohortTests, ...globalTests, ...directTests, ...recruitmentTests]) {
                 if (!testMap.has(t.id) && isStudentAuthorized(t)) {
                     testMap.set(t.id, t);
                 }

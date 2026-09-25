@@ -66,6 +66,7 @@ export interface MSASection {
 }
 
 export interface AssessmentTargeting {
+  isOpenToAll?: boolean;
   tenantIds?: string[];
   years?: string[];
   departments?: string[];
@@ -96,6 +97,10 @@ export interface TestDoc {
   passkey: string;
   isPremium: boolean;
   isGlobal?: boolean;
+  isRecruitment?: boolean;
+  companyName?: string;
+  recruitmentTag?: string;
+  tag?: string;
   accessTier?: "free" | "premium" | "paid_entry";
   entryFeeINR?: number;
   display_order: number;
@@ -175,6 +180,10 @@ function mapTest(
     passkey: String(d["passkey"] ?? ""),
     isPremium: Boolean(d["isPremium"] || d["accessTier"] === "premium"),
     isGlobal: Boolean(d["isGlobal"]),
+    tag: String(d["tag"] ?? ""),
+    isRecruitment: Boolean(d["isRecruitment"] || d["tag"] === "Recruitment"),
+    companyName: String(d["companyName"] ?? ""),
+    recruitmentTag: String(d["recruitmentTag"] ?? ""),
     accessTier: (d["accessTier"] as TestDoc["accessTier"]) ?? (d["isPremium"] ? "premium" : "free"),
     entryFeeINR: d["entryFeeINR"] != null ? Number(d["entryFeeINR"]) : 0,
     display_order: Number(d["display_order"] ?? 999),
@@ -431,6 +440,74 @@ export async function getCandidateDirectTests(email: string, rollNumber?: string
     return results.sort((a, b) => a.display_order - b.display_order);
   } catch (err) {
     console.warn("[courses.ts] getCandidateDirectTests query error:", err);
+    return [];
+  }
+}
+
+/**
+ * Fetch all active recruitment tests (isRecruitment == true or tag == 'Recruitment') across all courses.
+ * Enriches each test with company branding and recruitment tags.
+ */
+export async function getRecruitmentTests(): Promise<TestDoc[]> {
+  try {
+    const db = getDb();
+    let snap = await getDocs(
+      query(collectionGroup(db, "tests"), where("isRecruitment", "==", true))
+    ).catch(() => null);
+
+    if (!snap || snap.empty) {
+      snap = await getDocs(
+        query(collectionGroup(db, "tests"), where("tag", "==", "Recruitment"))
+      ).catch(() => null);
+    }
+
+    if (!snap || snap.empty) return [];
+
+    const results: TestDoc[] = [];
+    const courseTitles = new Map<string, string>();
+    const seriesTitles = new Map<string, string>();
+
+    for (const d of snap.docs) {
+      const pathParts = d.ref.path.split("/");
+      const courseId = pathParts[1] || "";
+      const seriesId = pathParts[3] || "";
+      const test = mapTest(d.id, courseId, seriesId, d.data() as Record<string, unknown>);
+      test.isRecruitment = true;
+      results.push(test);
+    }
+
+    await Promise.all(
+      results.map(async (t) => {
+        try {
+          if (t.courseId && !courseTitles.has(t.courseId)) {
+            const cSnap = await getDoc(doc(db, "courses", t.courseId));
+            if (cSnap.exists()) {
+              const cData = cSnap.data();
+              courseTitles.set(t.courseId, String(cData["title"] ?? t.courseId));
+              if (!t.companyName && cData["companyName"]) {
+                t.companyName = String(cData["companyName"]);
+              }
+            }
+          }
+          if (t.courseId && t.seriesId && !seriesTitles.has(`${t.courseId}::${t.seriesId}`)) {
+            const sSnap = await getDoc(doc(db, "courses", t.courseId, "series", t.seriesId));
+            if (sSnap.exists()) seriesTitles.set(`${t.courseId}::${t.seriesId}`, String(sSnap.data()["title"] ?? t.seriesId));
+          }
+          t.courseTitle = courseTitles.get(t.courseId) ?? "Recruitment Drive";
+          t.seriesTitle = seriesTitles.get(`${t.courseId}::${t.seriesId}`) ?? "Recruitment Round";
+          if (!t.recruitmentTag && t.companyName) {
+            t.recruitmentTag = `${t.companyName} • Recruitment`;
+          }
+        } catch {
+          t.courseTitle = "Recruitment Drive";
+          t.seriesTitle = "Recruitment Round";
+        }
+      })
+    );
+
+    return results.sort((a, b) => a.display_order - b.display_order);
+  } catch (err) {
+    console.warn("[courses.ts] getRecruitmentTests query fallback/error:", err);
     return [];
   }
 }

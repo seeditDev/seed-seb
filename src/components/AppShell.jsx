@@ -262,7 +262,6 @@ export default function AppShell({ children }) {
     const isDev =
       hostname === "localhost" ||
       hostname === "127.0.0.1" ||
-      hostname.endsWith(".lovable.app") ||
       hostname.endsWith(".vercel.app") ||
       hostname.endsWith(".pages.dev") ||
       hostname.includes("seedit.site") ||

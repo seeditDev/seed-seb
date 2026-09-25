@@ -2895,6 +2895,13 @@ const StudentDashboard = () => {
                         }}
                       >
                         <div>
+                          {series.assessments.some(a => a.isRecruitment || a.tag === 'Recruitment') && (
+                            <div style={{ marginBottom: '6px' }}>
+                              <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                🏢 Recruitment Series
+                              </span>
+                            </div>
+                          )}
                           <h3 className="ps-card-title">{series.title}</h3>
                           <p className="ps-card-desc" style={{ fontSize: '13px', marginTop: '6px', color: 'var(--text-muted)' }}>
                             {series.description}
@@ -3066,6 +3073,11 @@ const StudentDashboard = () => {
                                   {a.name}
                                 </h3>
                                 <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                  {(a.tag === 'Recruitment' || a.isRecruitment || a.companyName || a.recruitmentTag) && (
+                                    <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                      🏢 {a.companyName ? `${a.companyName} • Recruitment` : (a.recruitmentTag || 'Recruitment')}
+                                    </span>
+                                  )}
                                   {a.isGlobal && (
                                     <span style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', fontSize: '10px', padding: '2px 7px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                                       🌐 Global
