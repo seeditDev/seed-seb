@@ -451,28 +451,76 @@ export async function getCandidateDirectTests(email: string, rollNumber?: string
 export async function getRecruitmentTests(): Promise<TestDoc[]> {
   try {
     const db = getDb();
-    let snap = await getDocs(
-      query(collectionGroup(db, "tests"), where("isRecruitment", "==", true))
-    ).catch(() => null);
+    const docSnaps = new Map<string, any>();
 
-    if (!snap || snap.empty) {
-      snap = await getDocs(
-        query(collectionGroup(db, "tests"), where("tag", "==", "Recruitment"))
-      ).catch(() => null);
+    // Query 1: isRecruitment == true
+    try {
+      const snap = await getDocs(
+        query(collectionGroup(db, "tests"), where("isRecruitment", "==", true))
+      );
+      snap.docs.forEach((d) => docSnaps.set(d.id, d));
+    } catch (e1) {
+      console.warn("[courses.ts] getRecruitmentTests isRecruitment query:", e1);
     }
 
-    if (!snap || snap.empty) return [];
+    // Query 2: tag == "Recruitment"
+    try {
+      const snap = await getDocs(
+        query(collectionGroup(db, "tests"), where("tag", "==", "Recruitment"))
+      );
+      snap.docs.forEach((d) => docSnaps.set(d.id, d));
+    } catch (e2) {
+      console.warn("[courses.ts] getRecruitmentTests tag query:", e2);
+    }
+
+    // Query 3: direct traversal of recruiter courses (guaranteed fallback without requiring composite indexes)
+    try {
+      const coursesSnap = await getDocs(collection(db, "courses"));
+      const recruiterCourses = coursesSnap.docs.filter((cDoc) => {
+        const cData = cDoc.data() || {};
+        return (
+          cDoc.id.startsWith("recruiter_") ||
+          cData.isRecruitment === true ||
+          (Array.isArray(cData.assignedTenants) && cData.assignedTenants.includes("ALL"))
+        );
+      });
+
+      await Promise.all(
+        recruiterCourses.map(async (cDoc) => {
+          try {
+            const seriesSnap = await getDocs(collection(db, "courses", cDoc.id, "series"));
+            await Promise.all(
+              seriesSnap.docs.map(async (sDoc) => {
+                try {
+                  const testsSnap = await getDocs(
+                    collection(db, "courses", cDoc.id, "series", sDoc.id, "tests")
+                  );
+                  testsSnap.docs.forEach((tDoc) => {
+                    docSnaps.set(tDoc.id, tDoc);
+                  });
+                } catch (_) {}
+              })
+            );
+          } catch (_) {}
+        })
+      );
+    } catch (fallbackErr) {
+      console.warn("[courses.ts] recruiter courses direct traversal warning:", fallbackErr);
+    }
+
+    if (docSnaps.size === 0) return [];
 
     const results: TestDoc[] = [];
     const courseTitles = new Map<string, string>();
     const seriesTitles = new Map<string, string>();
 
-    for (const d of snap.docs) {
+    for (const d of docSnaps.values()) {
       const pathParts = d.ref.path.split("/");
       const courseId = pathParts[1] || "";
       const seriesId = pathParts[3] || "";
       const test = mapTest(d.id, courseId, seriesId, d.data() as Record<string, unknown>);
       test.isRecruitment = true;
+      if (!test.tag) test.tag = "Recruitment";
       results.push(test);
     }
 

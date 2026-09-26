@@ -778,42 +778,19 @@ class DataService {
             // 4. Candidate targeting filter (Approach A: Email / Roll Number / Cohort restriction)
             const isStudentAuthorized = (t) => {
                 if (!t) return false;
+                const targeting = t.targeting || {};
+                const {
+                    targetType,
+                    allowedEmails,
+                    allowedRollNumbers,
+                    allowedUserIds,
+                    tenantIds,
+                    years,
+                    departments,
+                    isOpenToAll
+                } = targeting;
 
-                // Corporate recruiter test targeting
-                if (t.isRecruitment || t.tag === 'Recruitment') {
-                    if (t.targeting?.isOpenToAll) {
-                        return true;
-                    }
-                }
-
-                if (!t.targeting) return true;
-                const { targetType, allowedEmails, allowedRollNumbers, allowedUserIds, tenantIds, years, departments } = t.targeting;
-
-                // Tenant/College restriction if specified
-                if (Array.isArray(tenantIds) && tenantIds.length > 0) {
-                    const sTenant = String(authData.tenantId || authData.College || authData.college || '').toLowerCase();
-                    if (!tenantIds.some(tid => String(tid || '').toLowerCase() === sTenant)) {
-                        return false;
-                    }
-                }
-
-                // Year restriction if specified
-                if (Array.isArray(years) && years.length > 0) {
-                    const sYear = String(authData.year || authData.Year || '').toLowerCase();
-                    if (!years.some(y => String(y || '').toLowerCase() === sYear)) {
-                        return false;
-                    }
-                }
-
-                // Department restriction if specified
-                if (Array.isArray(departments) && departments.length > 0) {
-                    const sDept = String(authData.department || authData.Department || '').toLowerCase();
-                    if (!departments.some(d => String(d || '').toLowerCase() === sDept)) {
-                        return false;
-                    }
-                }
-
-                // Candidate-specific targeting (Email / Roll / UID)
+                // 1. Candidate-specific targeting (Email / Roll / UID whitelist)
                 const isRestrictedToSpecific =
                     targetType === 'specific_students' ||
                     (Array.isArray(allowedEmails) && allowedEmails.length > 0) ||
@@ -839,6 +816,49 @@ class DataService {
                         allowedUserIds.some(u => String(u || '').trim() === studentUid);
 
                     if (!emailAllowed && !rollAllowed && !uidAllowed) {
+                        return false;
+                    }
+                    return true;
+                }
+
+                // 2. Open to All check:
+                // An assessment is open to all if isGlobal, isOpenToAll, or targetType is all
+                const isGloballyOpen = Boolean(t.isGlobal || isOpenToAll || targetType === 'all');
+                const tenantList = Array.isArray(tenantIds) ? tenantIds : [];
+                // "ALL" in tenantIds means the test is open to all tenants / institutions
+                const isAllTenants =
+                    tenantList.length === 0 ||
+                    tenantList.some(tid => String(tid || '').toUpperCase() === 'ALL');
+
+                if (isGloballyOpen && isAllTenants && (!Array.isArray(years) || years.length === 0) && (!Array.isArray(departments) || departments.length === 0)) {
+                    return true;
+                }
+
+                // 3. Tenant/College restriction if specified and not "ALL"
+                if (!isAllTenants) {
+                    const sTenant = String(authData.tenantId || authData.College || authData.college || '').toLowerCase();
+                    if (!sTenant || !tenantList.some(tid => String(tid || '').toLowerCase() === sTenant)) {
+                        return false;
+                    }
+                }
+
+                // 4. Year restriction if specified (supports 2024 to 2032, normalizing 2K26 <-> 2026)
+                if (Array.isArray(years) && years.length > 0) {
+                    const rawYear = String(authData.year || authData.Year || '').toLowerCase();
+                    const matchYear = rawYear.replace(/2k/i, '20').replace(/[^0-9]/g, '');
+                    const hasYearMatch = years.some(y => {
+                        const cleanY = String(y || '').toLowerCase().replace(/2k/i, '20').replace(/[^0-9]/g, '');
+                        return cleanY === matchYear || rawYear.includes(cleanY);
+                    });
+                    if (!hasYearMatch && rawYear) {
+                        return false;
+                    }
+                }
+
+                // 5. Department restriction if specified
+                if (Array.isArray(departments) && departments.length > 0) {
+                    const sDept = String(authData.department || authData.Department || '').trim().toLowerCase();
+                    if (sDept && !departments.some(d => String(d || '').trim().toLowerCase() === sDept)) {
                         return false;
                     }
                 }

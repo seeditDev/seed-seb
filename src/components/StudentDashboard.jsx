@@ -1842,10 +1842,19 @@ const StudentDashboard = () => {
             // ── display ──
             name: t.name,
             description: t.description || `Milestone assessment evaluation covering core concepts in ${t.name}.`,
-            seriesName: t.seriesTitle || t.courseTitle || 'Assessments',
-            seriesDescription: t.seriesDescription || `Comprehensive milestone evaluation and evaluation series for ${t.seriesTitle || t.courseTitle || 'programming tracks'}.`,
+            seriesName: (t.isRecruitment || t.tag === 'Recruitment')
+              ? (t.recruitmentTag || (t.companyName ? `${t.companyName} • Recruitment` : (t.seriesTitle || 'Corporate Recruitment')))
+              : (t.seriesTitle || t.courseTitle || 'Assessments'),
+            seriesDescription: t.description || t.seriesDescription || ((t.isRecruitment || t.tag === 'Recruitment')
+              ? `Official corporate assessment drive for ${t.companyName || 'Corporate Partner'}`
+              : `Comprehensive milestone evaluation and evaluation series for ${t.seriesTitle || t.courseTitle || 'programming tracks'}.`),
             courseTitle: t.courseTitle ?? '',
-            seriesKey: t.seriesId || t.courseId || 'general',
+            seriesKey: (t.courseId && t.seriesId)
+              ? `${t.courseId}::${t.seriesId}`
+              : ((t.isRecruitment || t.tag === 'Recruitment') ? `recruitment_${t.companyName || t.id}` : (t.seriesId || t.courseId || 'general')),
+            isRecruitment: Boolean(t.isRecruitment || t.tag === 'Recruitment'),
+            companyName: t.companyName || '',
+            tag: (t.isRecruitment || t.tag === 'Recruitment') ? 'Recruitment' : (t.tag || ''),
             difficulty: t.difficulty || 'Medium',
             // ── engine routing ──
             type: 'assessment',

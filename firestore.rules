@@ -140,8 +140,8 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════════════════
 
     match /tenants/{tenantId} {
-      allow get:    if isTenantMember(tenantId) || isPortal();
-      allow list:   if isPortal();
+      allow get:    if isSignedIn() || isTenantMember(tenantId) || isPortal();
+      allow list:   if isSignedIn() || isPortal();
       allow create, update, delete: if isAdmin();
 
       match /cohorts/{cohortId} {
@@ -579,9 +579,9 @@ service cloud.firestore {
     }
 
     match /counters/{counterId} {
-      // Atomic sequence counters (e.g., certificates counter starting from 1001)
-      allow read: if isSignedIn() || isPortal();
-      allow create, update: if isSignedIn() || isPortal();
+      // Atomic sequence counters (e.g., certificates counter starting from 1001, company IDs)
+      allow read: if true;
+      allow create, update: if true;
       allow delete: if isAdmin();
     }
 
