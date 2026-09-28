@@ -207,6 +207,10 @@ export function buildCodingSubmission({
   percentage,
   status,
   compilationCount,
+  runCount,
+  submitCount,
+  submissionCount,
+  attempted,
   attempts,
   testResults,
   timeSpentSeconds,
@@ -214,14 +218,25 @@ export function buildCodingSubmission({
   startedAt,
   submittedAt
 }) {
-  const finalCode = code ?? solution ?? '';
-  const passed = typeof testsPassed === 'number' ? testsPassed : 0;
+  const rCount = typeof runCount === 'number' ? runCount : (typeof compilationCount === 'number' ? compilationCount : (typeof attempts === 'number' ? attempts : 0));
+  const sCount = typeof submitCount === 'number' ? submitCount : (typeof submissionCount === 'number' ? submissionCount : 0);
+  const isZeroRunAndSubmit = (rCount === 0 && sCount === 0);
+  const isAttempted = attempted !== undefined ? Boolean(attempted) : !isZeroRunAndSubmit;
+
+  // If candidate neither clicked Run nor Submit, do not store boilerplate drive code; show Did Not Attempt
+  const finalCode = isAttempted ? (code ?? solution ?? '') : '';
+  const passed = isAttempted && typeof testsPassed === 'number' ? testsPassed : 0;
   const total = typeof totalTests === 'number' ? totalTests : 0;
   const secs = typeof timeSpentSeconds === 'number' ? timeSpentSeconds : 0;
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   const formatted = timeSpentFormatted || `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
   const qNum = typeof questionNumber === 'number' ? questionNumber : 1;
+
+  const derivedStatus = !isAttempted
+    ? 'Did Not Attempt'
+    : (status || (total > 0 ? (passed === total ? 'Accepted' : (passed > 0 ? 'Partial' : 'Wrong Answer')) : 'Wrong Answer'));
+
   return {
     questionId: questionId ?? '',
     questionNumber: qNum,
@@ -234,17 +249,20 @@ export function buildCodingSubmission({
     solution: finalCode,
     testsPassed: passed,
     totalTests: total,
-    score: typeof score === 'number' ? score : 0,
+    score: isAttempted && typeof score === 'number' ? score : 0,
     maxScore: typeof maxScore === 'number' ? maxScore : 0,
-    percentage: typeof percentage === 'number' ? percentage : (total > 0 ? Math.round((passed / total) * 100) : 0),
-    status: status || (total > 0 ? (passed === total ? 'Accepted' : (passed > 0 ? 'Partial' : 'Wrong Answer')) : 'Wrong Answer'),
-    compilationCount: typeof compilationCount === 'number' ? compilationCount : 0,
-    attempts: typeof attempts === 'number' ? attempts : (typeof compilationCount === 'number' ? compilationCount : 0),
+    percentage: isAttempted && typeof percentage === 'number' ? percentage : (isAttempted && total > 0 ? Math.round((passed / total) * 100) : 0),
+    status: derivedStatus,
+    attempted: isAttempted,
+    runCount: rCount,
+    submitCount: sCount,
+    compilationCount: rCount,
+    attempts: rCount,
     timeSpentSeconds: secs,
     timeSpentFormatted: formatted,
     startedAt: startedAt ?? '',
     submittedAt: submittedAt ?? new Date().toISOString(),
-    testResults: Array.isArray(testResults) ? testResults : []
+    testResults: isAttempted && Array.isArray(testResults) ? testResults : []
   };
 }
 

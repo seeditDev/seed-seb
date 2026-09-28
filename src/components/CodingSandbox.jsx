@@ -281,10 +281,22 @@ const CodingSandbox = () => {
                         await setDoc(doc(db, "codingChallenges", ch.id), ch);
                     }
                     setChallenges(DEFAULT_CHALLENGES.map(normalizeQuestion));
-                } else {
                     const fetchedList = [];
                     challengesSnap.forEach(doc => {
-                        fetchedList.push(normalizeQuestion({ id: doc.id, ...doc.data() }));
+                        const data = doc.data() || {};
+                        // Exclude recruiter-authored challenges from the student sandbox
+                        if (
+                            data.isRecruiterAuthored ||
+                            data.createdByRecruiter ||
+                            data.recruiterUsername ||
+                            data.companyId ||
+                            data.companyName ||
+                            (data.QBCategory && data.QBCategory !== 'custom' && data.QBCategory !== 'general') ||
+                            (data.qbCategory && data.qbCategory !== 'custom' && data.qbCategory !== 'general')
+                        ) {
+                            return;
+                        }
+                        fetchedList.push(normalizeQuestion({ id: doc.id, ...data }));
                     });
                     fetchedList.sort((a, b) => a.title.localeCompare(b.title));
                     setChallenges(fetchedList);

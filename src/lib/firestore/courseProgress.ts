@@ -62,8 +62,16 @@ export async function markTestComplete(params: {
   maxScore: number;
   totalTestsInSeries?: number;
 }): Promise<void> {
-  const { uid, courseId, seriesId, score, maxScore, totalTestsInSeries } = params;
-  const testId = params.testId ?? params.assessmentId ?? "";
+  const testId = (params.testId || params.assessmentId || "").trim();
+  if (!uid || !courseId || !seriesId || !testId || courseId === "__legacy__") {
+    console.warn("[courseProgress.ts] markTestComplete skipped: missing required identifiers", {
+      uid,
+      courseId,
+      seriesId,
+      testId,
+    });
+    return;
+  }
   try {
     const db = getDb();
     const ref = doc(db, "users", uid, "courseProgress", courseId);

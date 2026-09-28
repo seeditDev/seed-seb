@@ -152,8 +152,8 @@ class DataService {
                 }
             }
 
+            // 1. Isolated session document to prevent onSnapshot listeners from reading users/{uid} on progress updates
             try {
-                // Isolated session document to prevent onSnapshot listeners from reading users/{uid} on progress updates
                 await setDoc(doc(db, "userSessions", firebaseUser.uid), {
                     activeSessionId: sessionId,
                     lastLoginAt: serverTimestamp(),
@@ -163,7 +163,12 @@ class DataService {
                         loginTimeISO: new Date().toISOString()
                     }
                 }, { merge: true });
+            } catch (sErr) {
+                console.warn('[DataService] userSessions write notice (non-fatal):', sErr?.message || sErr);
+            }
 
+            // 2. User profile session record
+            try {
                 await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid), {
                     activeSessionId: sessionId,
                     lastLoginAt: serverTimestamp(),
@@ -173,8 +178,12 @@ class DataService {
                         loginTimeISO: new Date().toISOString()
                     }
                 }, { merge: true });
+            } catch (uErr) {
+                console.warn('[DataService] users profile session write notice:', uErr?.message || uErr);
+            }
 
-                // Record session in activityLogging subcollection
+            // 3. Record session in activityLogging subcollection
+            try {
                 await setDoc(doc(db, COLLECTIONS.USERS, firebaseUser.uid, 'activityLogging', sessionId), {
                     sessionId: sessionId,
                     loginAt: serverTimestamp(),
@@ -183,8 +192,8 @@ class DataService {
                     platform: typeof navigator !== 'undefined' ? navigator.platform : 'desktop',
                     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'SEED-SEB Desktop'
                 });
-            } catch (writeErr) {
-                console.warn('[DataService] Failed to record active session in Firestore:', writeErr);
+            } catch (aErr) {
+                console.warn('[DataService] activityLogging write notice:', aErr?.message || aErr);
             }
 
             const authData = buildAuthData(firebaseUser, profile, tenantDetails);
@@ -819,6 +828,27 @@ class DataService {
                         return false;
                     }
                     return true;
+                }
+
+                // 1b. Recruiter Restricted Course Scope Check
+                if (t.courseIsRestricted) {
+                    if (t.courseTargetScope === 'specific_tenant') {
+                        const sTenant = String(authData.tenantId || authData.College || authData.college || '').toLowerCase();
+                        const allowedTenants = (t.courseTargetTenants || []).map(x => String(x).toLowerCase());
+                        const isUniversal = allowedTenants.includes('all') || allowedTenants.length === 0;
+                        if (!isUniversal && (!sTenant || !allowedTenants.includes(sTenant))) {
+                            return false;
+                        }
+                    } else if (t.courseTargetScope === 'specific_users') {
+                        const targetUsers = (t.courseTargetUsers || []).map(x => String(x).trim().toLowerCase());
+                        const studentUid = String(effectiveUid || authData.uid || auth?.currentUser?.uid || '').trim().toLowerCase();
+                        const matchEmail = studentEmail && targetUsers.includes(studentEmail);
+                        const matchRoll = studentRoll && targetUsers.some(u => u.toUpperCase() === studentRoll);
+                        const matchUid = studentUid && targetUsers.includes(studentUid);
+                        if (!matchEmail && !matchRoll && !matchUid) {
+                            return false;
+                        }
+                    }
                 }
 
                 // 2. Open to All check:

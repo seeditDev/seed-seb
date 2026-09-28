@@ -498,6 +498,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         return readJSON("codingQuestionSubmitTimes", {}) || {};
     });
 
+    const [questionSubmitCounts, setQuestionSubmitCounts] = useState(() => {
+        return readJSON("codingQuestionSubmitCounts", {}) || {};
+    });
+
     const [questionStartTimes, setQuestionStartTimes] = useState(() => {
         // BUG FIXED (P1): a corrupt/truncated blob used to be swallowed here and
         // silently reset progress. readJSON validates and falls back explicitly.
@@ -521,6 +525,10 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         // synchronous localStorage writes were stalling the Monaco editor.
         throttledLocalStorageSet("codingQuestionSubmitTimes", JSON.stringify(questionSubmitTimes), 3000);
     }, [questionSubmitTimes]);
+
+    useEffect(() => {
+        throttledLocalStorageSet("codingQuestionSubmitCounts", JSON.stringify(questionSubmitCounts), 3000);
+    }, [questionSubmitCounts]);
 
     useEffect(() => {
         // Throttled: these fire on every keystroke-driven state update and
@@ -613,15 +621,18 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 } else {
                     // Unsubmitted question: no final evaluation needed. Recorded with 0 score instantly.
                     const hidden = getQuestionHiddenTestCases(q);
+                    const qRunCount = compilationCounts[qId] || 0;
+                    const qSubmitCount = questionSubmitCounts[qId] || 0;
+                    const hasAttempted = qRunCount > 0 || qSubmitCount > 0;
                     finalScores[qId] = {
                         score: 0,
                         percentage: 0,
                         passed: 0,
                         total: hidden.length,
                         submitted: false,
-                        status: 'Unattempted',
-                        code: code || "",
-                        solution: code || "",
+                        status: hasAttempted ? 'Wrong Answer' : 'Did Not Attempt',
+                        code: hasAttempted ? (code || "") : "",
+                        solution: hasAttempted ? (code || "") : "",
                         language: language,
                         testResults: []
                     };
@@ -662,6 +673,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     const qTimeSpent = questionTiming[qKey]?.timeSpentSeconds ?? (activeTimeSpentMap[qId] || 0);
                     const qTimeFormatted = questionTiming[qKey]?.timeSpentFormatted;
 
+                    const qRunCount = compilationCounts[qId] || 0;
+                    const qSubmitCount = questionSubmitCounts[qId] || 0;
+                    const isAttempted = qRunCount > 0 || qSubmitCount > 0;
+                    const finalCode = isAttempted ? userCode : "";
+                    const finalStatus = isAttempted ? status : "Did Not Attempt";
+
                     return buildCodingSubmission({
                         questionId: qId,
                         questionNumber: idx + 1,
@@ -670,19 +687,23 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                         title: q.name || q.title || `Question ${idx + 1}`,
                         difficulty: q.difficulty || 'Easy',
                         language: qLang,
-                        code: userCode,
-                        solution: userCode,
-                        status,
-                        testsPassed: passed,
+                        code: finalCode,
+                        solution: finalCode,
+                        status: finalStatus,
+                        testsPassed: isAttempted ? passed : 0,
                         totalTests: total,
-                        score: scoreObj.score || 0,
+                        score: isAttempted ? (scoreObj.score || 0) : 0,
                         maxScore: q.weight || DEFAULT_QUESTION_WEIGHT,
-                        percentage: scoreObj.percentage || 0,
-                        compilationCount: compilationCounts[qId] || 0,
-                        attempts: compilationCounts[qId] || 0,
+                        percentage: isAttempted ? (scoreObj.percentage || 0) : 0,
+                        runCount: qRunCount,
+                        submitCount: qSubmitCount,
+                        compilationCount: qRunCount,
+                        submissionCount: qSubmitCount,
+                        attempted: isAttempted,
+                        attempts: qRunCount,
                         timeComplexity: q.timeComplexity ?? '',
                         spaceComplexity: q.spaceComplexity ?? '',
-                        testResults: testResults,
+                        testResults: isAttempted ? testResults : [],
                         timeSpentSeconds: qTimeSpent,
                         timeSpentFormatted: qTimeFormatted,
                         submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString()
@@ -2266,6 +2287,13 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         const currentLang = activeQState.selectedLanguage || language || 'cpp';
         const qState = codingStateByQuestionRef.current[targetQKey] || activeQState;
 
+        // Track submit button click count
+        setQuestionSubmitCounts(prev => {
+            const updated = { ...prev, [targetQ.id]: (prev[targetQ.id] || 0) + 1 };
+            localStorage.setItem("codingQuestionSubmitCounts", JSON.stringify(updated));
+            return updated;
+        });
+
         // ENFORCE: User must run the code, it must pass all samples and then only enable the submit button.
         if (!qState.samplesPassedAll) {
             toast.info("Run Code and pass all sample test cases before submitting your solution.");
@@ -2535,6 +2563,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 const qTimeSpent = questionTiming[qKey]?.timeSpentSeconds ?? (activeTimeSpentMap[qId] || 0);
                 const qTimeFormatted = questionTiming[qKey]?.timeSpentFormatted;
 
+                const qRunCount = compilationCounts[qId] || 0;
+                const qSubmitCount = questionSubmitCounts[qId] || 0;
+                const isAttempted = qRunCount > 0 || qSubmitCount > 0;
+                const finalCode = isAttempted ? userCode : "";
+                const finalStatus = isAttempted ? status : "Did Not Attempt";
+
                 return buildCodingSubmission({
                     questionId: qId,
                     questionNumber: idx + 1,
@@ -2543,19 +2577,23 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     title: q.name || q.title || `Question ${idx + 1}`,
                     difficulty: q.difficulty || 'Easy',
                     language: qLang,
-                    code: userCode,
-                    solution: userCode,
-                    status,
-                    testsPassed: passed,
+                    code: finalCode,
+                    solution: finalCode,
+                    status: finalStatus,
+                    testsPassed: isAttempted ? passed : 0,
                     totalTests: total,
-                    score: scoreObj.score || 0,
+                    score: isAttempted ? (scoreObj.score || 0) : 0,
                     maxScore: q.weight || DEFAULT_QUESTION_WEIGHT,
-                    percentage: scoreObj.percentage || 0,
-                    compilationCount: compilationCounts[qId] || 0,
-                    attempts: compilationCounts[qId] || 0,
+                    percentage: isAttempted ? (scoreObj.percentage || 0) : 0,
+                    runCount: qRunCount,
+                    submitCount: qSubmitCount,
+                    compilationCount: qRunCount,
+                    submissionCount: qSubmitCount,
+                    attempted: isAttempted,
+                    attempts: qRunCount,
                     timeComplexity: q.timeComplexity ?? '',
                     spaceComplexity: q.spaceComplexity ?? '',
-                    testResults: testResults,
+                    testResults: isAttempted ? testResults : [],
                     timeSpentSeconds: qTimeSpent,
                     timeSpentFormatted: qTimeFormatted,
                     submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString()
@@ -2811,6 +2849,12 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 const qTimeSpent = questionTiming[qKey]?.timeSpentSeconds ?? (activeTimeSpentMap[qId] || 0);
                 const qTimeFormatted = questionTiming[qKey]?.timeSpentFormatted;
 
+                const qRunCount = compilationCounts[qId] || 0;
+                const qSubmitCount = questionSubmitCounts[qId] || 0;
+                const isAttempted = qRunCount > 0 || qSubmitCount > 0;
+                const finalCode = isAttempted ? userCode : "";
+                const finalStatus = isAttempted ? status : "Did Not Attempt";
+
                 return buildCodingSubmission({
                     questionId: qId,
                     questionNumber: idx + 1,
@@ -2819,23 +2863,27 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     title: q.name || q.title || `Question ${idx + 1}`,
                     difficulty: q.difficulty || 'Easy',
                     language: qLang,
-                    code: userCode,
-                    solution: userCode,
-                    status,
-                    testsPassed: passed,
+                    code: finalCode,
+                    solution: finalCode,
+                    status: finalStatus,
+                    testsPassed: isAttempted ? passed : 0,
                     totalTests: total,
-                    score: scoreObj.score || 0,
+                    score: isAttempted ? (scoreObj.score || 0) : 0,
                     maxScore: q.weight || DEFAULT_QUESTION_WEIGHT,
-                    percentage: scoreObj.percentage || 0,
-                    compilationCount: compilationCounts[qId] || 0,
-                    attempts: compilationCounts[qId] || 0,
+                    percentage: isAttempted ? (scoreObj.percentage || 0) : 0,
+                    runCount: qRunCount,
+                    submitCount: qSubmitCount,
+                    compilationCount: qRunCount,
+                    submissionCount: qSubmitCount,
+                    attempted: isAttempted,
+                    attempts: qRunCount,
                     timeComplexity: q.timeComplexity ?? '',
                     spaceComplexity: q.spaceComplexity ?? '',
                     timeSpentSeconds: qTimeSpent,
                     timeSpentFormatted: qTimeFormatted,
                     startedAt: questionStartTimes[qId] || new Date(startTime).toISOString(),
                     submittedAt: questionSubmitTimes[qId] || scoreObj.submittedAt || new Date().toISOString(),
-                    testResults: testResults
+                    testResults: isAttempted ? testResults : []
                 });
             });
 
@@ -2954,14 +3002,19 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                 if (courseCtx.courseId && courseCtx.seriesId) {
                     import('../services/mcqService').then(({ default: MCQService }) => {
                         const totalScore = Object.values(questionScores || {}).reduce((s, q) => s + (q.score || 0), 0);
-                        MCQService.markCourseProgress({
-                            uid: user?.uid ?? "",
-                            courseId: courseCtx.courseId,
-                            seriesId: courseCtx.seriesId,
-                            assessmentId: courseCtx.assessmentId || currentAssessment.id,
-                            totalScore: totalScore,
-                            maxScore: courseCtx.maxScore || 100,
-                        }).catch(() => {});
+                        const effectiveTestId = (courseCtx.testId || courseCtx.assessmentId || currentAssessment?.id || '').trim();
+                        if (effectiveTestId) {
+                            MCQService.markCourseProgress({
+                                uid: user?.uid ?? "",
+                                courseId: courseCtx.courseId,
+                                seriesId: courseCtx.seriesId,
+                                testId: effectiveTestId,
+                                assessmentId: effectiveTestId,
+                                score: totalScore,
+                                totalScore: totalScore,
+                                maxScore: courseCtx.maxScore || 100,
+                            }).catch(() => {});
+                        }
                     }).catch(() => {});
                 }
             } catch (_) { /* non-fatal */ }
@@ -2973,6 +3026,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         localStorage.removeItem("codingAssessmentCode");
         localStorage.removeItem("codingCompilationCounts");
         localStorage.removeItem("codingQuestionSubmitTimes");
+        localStorage.removeItem("codingQuestionSubmitCounts");
         localStorage.removeItem("codingCourseCtx");
         localStorage.removeItem("codingTimeSpentPerQ");
         localStorage.removeItem("codingQuestionTiming");
@@ -2988,6 +3042,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
         setCodeMap({});
         setQuestionScores({});
         setCompilationCounts({});
+        setQuestionSubmitCounts({});
         setQuestionSubmitTimes({});
     };
 

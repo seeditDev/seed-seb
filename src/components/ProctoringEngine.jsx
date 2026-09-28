@@ -900,7 +900,9 @@ const ProctoringEngine = ({
         if (!webcamInitialized) {
           initializedRef.current = false;
           if (onReadyRef.current) {
-            onReadyRef.current();
+            setTimeout(() => {
+              onReadyRef.current?.();
+            }, 0);
           }
           return;
         }
@@ -925,7 +927,9 @@ const ProctoringEngine = ({
             }
             // Always fire onReady whether modelsLoaded was true or false, so prelaunch is unblocked
             if (onReadyRef.current) {
-              onReadyRef.current();
+              setTimeout(() => {
+                onReadyRef.current?.();
+              }, 0);
             }
           };
 
@@ -992,11 +996,13 @@ const ProctoringEngine = ({
           const count = parseInt(saved, 10) || 0;
           setViolationCount(count);
           if (onViolationUpdate) {
-            onViolationUpdate({
-              violationCount: count,
-              violationType: 'init_sync',
-              timestamp: new Date().toISOString()
-            });
+            setTimeout(() => {
+              onViolationUpdate({
+                violationCount: count,
+                violationType: 'init_sync',
+                timestamp: new Date().toISOString()
+              });
+            }, 0);
           }
         } catch (error) {
           console.error('[ProctoringEngine] Error restoring violation count:', error);

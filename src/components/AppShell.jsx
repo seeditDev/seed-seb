@@ -444,7 +444,9 @@ export default function AppShell({ children }) {
             setSimultaneousLoginAlert(true);
           }
         }, (err) => {
-          console.warn("[SessionGuard] Session listener non-fatal error:", err);
+          if (err?.code !== 'permission-denied') {
+            console.warn("[SessionGuard] Session listener non-fatal error:", err);
+          }
         });
       }
     });

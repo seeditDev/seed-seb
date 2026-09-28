@@ -63,16 +63,8 @@ service cloud.firestore {
         : request.auth.token.get('tenantId', '');
     }
 
-    function tenantAllowed(tenantId) {
-      return isAdmin() || (isStaff() && (myTenant() == '' || tenantId == '' || tenantId == myTenant()));
-    }
-
     function isTenantMember(tenantId) {
       return isSignedIn() && (isAdmin() || myTenant() == '' || tenantId == '' || myTenant() == tenantId);
-    }
-
-    function isValidDuration(durationSecs) {
-      return durationSecs >= 1 && durationSecs <= 86400;
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -133,6 +125,14 @@ service cloud.firestore {
       match /{allSub=**} {
         allow read, write: if isUser(userId) || isPortal() || isSignedIn();
       }
+    }
+
+    // Single-System Login Sessions & Device Guard (AppShell.jsx & dataService.js)
+    match /userSessions/{userId} {
+      allow get: if isUser(userId) || isPortal() || isSignedIn();
+      allow list: if isPortal();
+      allow create, update: if isUser(userId) || isPortal() || isSignedIn();
+      allow delete: if isUser(userId) || isPortal() || isAdmin();
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -383,6 +383,41 @@ service cloud.firestore {
 
       match /{document=**} {
         allow read, write: if isPortal() || isSignedIn();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 5b. Recruiter Assessment Results (Corporate Test-wise submissions)
+    //     Path: recruitorAssessmentResults/{recruiterId}/{assessmentId}/{userId}
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /recruitorAssessmentResults/{recruiterId} {
+      allow read: if isPortal() || isRecruiter() || isSignedIn();
+      allow write: if isPortal() || isRecruiter() || isSignedIn();
+
+      match /{assessmentId}/{userId} {
+        allow read: if isPortal() || isRecruiter() || (isSignedIn() && request.auth.uid == userId);
+        allow create, update: if isUser(userId) || isPortal() || isRecruiter() || isSignedIn();
+        allow delete: if isPortal() || isAdmin();
+      }
+
+      match /{document=**} {
+        allow read, write: if isPortal() || isRecruiter() || isSignedIn();
+      }
+    }
+
+    match /recruiterAssessmentResults/{recruiterId} {
+      allow read: if isPortal() || isRecruiter() || isSignedIn();
+      allow write: if isPortal() || isRecruiter() || isSignedIn();
+
+      match /{assessmentId}/{userId} {
+        allow read: if isPortal() || isRecruiter() || (isSignedIn() && request.auth.uid == userId);
+        allow create, update: if isUser(userId) || isPortal() || isRecruiter() || isSignedIn();
+        allow delete: if isPortal() || isAdmin();
+      }
+
+      match /{document=**} {
+        allow read, write: if isPortal() || isRecruiter() || isSignedIn();
       }
     }
 

@@ -168,7 +168,20 @@ const LearnAndCodeHome = () => {
                 } else {
                     const fetched = [];
                     challengesSnap.forEach(doc => {
-                        fetched.push({ id: doc.id, ...doc.data() });
+                        const data = doc.data() || {};
+                        // Exclude recruiter-authored challenges from the student platform
+                        if (
+                            data.isRecruiterAuthored ||
+                            data.createdByRecruiter ||
+                            data.recruiterUsername ||
+                            data.companyId ||
+                            data.companyName ||
+                            (data.QBCategory && data.QBCategory !== 'custom' && data.QBCategory !== 'general') ||
+                            (data.qbCategory && data.qbCategory !== 'custom' && data.qbCategory !== 'general')
+                        ) {
+                            return;
+                        }
+                        fetched.push({ id: doc.id, ...data });
                     });
                     fetched.sort((a, b) => a.title.localeCompare(b.title));
                     setChallenges(fetched);

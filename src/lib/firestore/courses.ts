@@ -481,7 +481,9 @@ export async function getRecruitmentTests(): Promise<TestDoc[]> {
         return (
           cDoc.id.startsWith("recruiter_") ||
           cData.isRecruitment === true ||
-          (Array.isArray(cData.assignedTenants) && cData.assignedTenants.includes("ALL"))
+          cData.isRestricted === true ||
+          cData.recruiterControlled === true ||
+          Boolean(cData.companyId)
         );
       });
 
@@ -530,11 +532,28 @@ export async function getRecruitmentTests(): Promise<TestDoc[]> {
           if (t.courseId && !courseTitles.has(t.courseId)) {
             const cSnap = await getDoc(doc(db, "courses", t.courseId));
             if (cSnap.exists()) {
-              const cData = cSnap.data();
+              const cData = cSnap.data() || {};
               courseTitles.set(t.courseId, String(cData["title"] ?? t.courseId));
               if (!t.companyName && cData["companyName"]) {
                 t.companyName = String(cData["companyName"]);
               }
+              if (cData["companyId"]) {
+                (t as any).companyId = String(cData["companyId"]);
+                (t as any).recruiterId = String(cData["companyId"]);
+              }
+              if (cData["createdByUid"] || cData["recruiterUid"]) {
+                (t as any).recruiterUid = String(cData["createdByUid"] || cData["recruiterUid"]);
+                if (!(t as any).recruiterId) {
+                  (t as any).recruiterId = String(cData["createdByUid"] || cData["recruiterUid"]);
+                }
+              }
+              if (!(t as any).recruiterId && t.courseId?.startsWith("recruiter_")) {
+                (t as any).recruiterId = t.courseId.replace("recruiter_", "");
+              }
+              (t as any).courseIsRestricted = Boolean(cData["isRestricted"] || cData["isRecruitment"] || cData["recruiterControlled"] || t.courseId.startsWith("recruiter_"));
+              (t as any).courseTargetScope = cData["targetScope"] || ((t as any).courseIsRestricted ? "specific_tenant" : "global");
+              (t as any).courseTargetTenants = Array.isArray(cData["targetTenants"]) ? cData["targetTenants"] : (Array.isArray(cData["assignedTenants"]) ? cData["assignedTenants"] : []);
+              (t as any).courseTargetUsers = Array.isArray(cData["targetUsers"]) ? cData["targetUsers"] : [];
             }
           }
           if (t.courseId && t.seriesId && !seriesTitles.has(`${t.courseId}::${t.seriesId}`)) {

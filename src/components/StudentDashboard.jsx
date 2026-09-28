@@ -389,6 +389,14 @@ const StudentDashboard = () => {
   const [editPortfolio, setEditPortfolio] = useState('');
   const [editLeetcode, setEditLeetcode] = useState('');
   const [editCodechef, setEditCodechef] = useState('');
+  const [editTenthPercentage, setEditTenthPercentage] = useState('');
+  const [editTwelfthPercentage, setEditTwelfthPercentage] = useState('');
+  const [editDegreeCgpa, setEditDegreeCgpa] = useState('');
+  const [editActiveBacklogs, setEditActiveBacklogs] = useState(0);
+  const [editResumeDriveLink, setEditResumeDriveLink] = useState('');
+  const [editCollege, setEditCollege] = useState('');
+  const [editSkills, setEditSkills] = useState([]);
+  const [tenantColleges, setTenantColleges] = useState([]);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -439,6 +447,13 @@ const StudentDashboard = () => {
       setEditPortfolio(user.portfolio || user.portfolioUrl || user.website || '');
       setEditLeetcode(user.leetcode || user.leetcodeUrl || '');
       setEditCodechef(user.codechef || user.codechefUrl || '');
+      setEditTenthPercentage(user?.tenthPercentage !== undefined ? String(user.tenthPercentage) : '');
+      setEditTwelfthPercentage(user?.twelfthPercentage !== undefined ? String(user.twelfthPercentage) : '');
+      setEditDegreeCgpa(user?.degreeCgpa !== undefined ? String(user.degreeCgpa) : '');
+      setEditActiveBacklogs(user?.activeBacklogs || 0);
+      setEditResumeDriveLink(user?.resumeDriveLink || '');
+      setEditCollege(user?.college || user?.collegeName || '');
+      setEditSkills(Array.isArray(user?.skills) ? user.skills : []);
     }
   }, [user]);
 
@@ -456,6 +471,23 @@ const StudentDashboard = () => {
       }
     }).catch(() => {});
   }, [user?.uid]);
+
+  useEffect(() => {
+    getDocs(collection(db, 'tenants')).then(snap => {
+      const list = [];
+      snap.forEach(d => {
+        const data = d.data() || {};
+        list.push({ id: d.id, name: data.name || d.id });
+      });
+      if (list.length === 0) {
+        list.push(
+          { id: 'SEEDIT', name: 'SEED Innovating Technologies and Educational Services (SEED-IT)' },
+          { id: 'KITE', name: 'KGiSL Institute of Technology (KITE)' }
+        );
+      }
+      setTenantColleges(list);
+    }).catch(() => {});
+  }, []);
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0];
@@ -493,6 +525,13 @@ const StudentDashboard = () => {
       setEditPortfolio(user.portfolio || user.portfolioUrl || user.website || '');
       setEditLeetcode(user.leetcode || user.leetcodeUrl || '');
       setEditCodechef(user.codechef || user.codechefUrl || '');
+      setEditTenthPercentage(user?.tenthPercentage !== undefined ? String(user.tenthPercentage) : '');
+      setEditTwelfthPercentage(user?.twelfthPercentage !== undefined ? String(user.twelfthPercentage) : '');
+      setEditDegreeCgpa(user?.degreeCgpa !== undefined ? String(user.degreeCgpa) : '');
+      setEditActiveBacklogs(user?.activeBacklogs || 0);
+      setEditResumeDriveLink(user?.resumeDriveLink || '');
+      setEditCollege(user?.college || user?.collegeName || '');
+      setEditSkills(Array.isArray(user?.skills) ? user.skills : []);
     }
     setIsEditingProfile(false);
     setIsProfileSaved(false);
@@ -521,7 +560,17 @@ const StudentDashboard = () => {
         portfolio: cleanPortfolio,
         leetcode: cleanLeetcode,
         codechef: cleanCodechef,
+        tenthPercentage: editTenthPercentage ? Number(editTenthPercentage) : 0,
+        twelfthPercentage: editTwelfthPercentage ? Number(editTwelfthPercentage) : 0,
+        degreeCgpa: editDegreeCgpa ? Number(editDegreeCgpa) : 0,
+        activeBacklogs: Number(editActiveBacklogs || 0),
+        resumeDriveLink: String(editResumeDriveLink || '').trim(),
+        skills: editSkills,
       };
+
+      if (!user?.tenantId || user.tenantId === 'global' || user.tenantId === '') {
+        profilePatch.college = String(editCollege || '').trim();
+      }
 
       const updated = {
         ...user,
@@ -1844,7 +1893,7 @@ const StudentDashboard = () => {
             description: t.description || `Milestone assessment evaluation covering core concepts in ${t.name}.`,
             seriesName: (t.isRecruitment || t.tag === 'Recruitment')
               ? (t.recruitmentTag || (t.companyName ? `${t.companyName} • Recruitment` : (t.seriesTitle || 'Corporate Recruitment')))
-              : (t.seriesTitle || t.courseTitle || 'Assessments'),
+              : (t.seriesTitle || (t.isGlobal ? 'Global Open Challenges' : (t.courseTitle ? `${t.courseTitle} Evaluations` : 'Assessments'))),
             seriesDescription: t.description || t.seriesDescription || ((t.isRecruitment || t.tag === 'Recruitment')
               ? `Official corporate assessment drive for ${t.companyName || 'Corporate Partner'}`
               : `Comprehensive milestone evaluation and evaluation series for ${t.seriesTitle || t.courseTitle || 'programming tracks'}.`),
@@ -1855,6 +1904,8 @@ const StudentDashboard = () => {
             isRecruitment: Boolean(t.isRecruitment || t.tag === 'Recruitment'),
             companyName: t.companyName || '',
             tag: (t.isRecruitment || t.tag === 'Recruitment') ? 'Recruitment' : (t.tag || ''),
+            recruiterId: t.recruiterId || t.companyId || (t.courseId?.startsWith('recruiter_') ? t.courseId.replace('recruiter_', '') : ''),
+            companyId: t.companyId || t.recruiterId || '',
             difficulty: t.difficulty || 'Medium',
             // ── engine routing ──
             type: 'assessment',
@@ -2179,6 +2230,10 @@ const StudentDashboard = () => {
       assessmentId: assessment.id ?? '',
       totalMarks: assessment.maxScore || 100,
       settings: assessment.settings || {},
+      isRecruitment: Boolean(assessment.isRecruitment || assessment.tag === 'Recruitment'),
+      recruiterId: assessment.recruiterId || assessment.companyId || (assessment.courseId?.startsWith('recruiter_') ? assessment.courseId.replace('recruiter_', '') : ''),
+      companyId: assessment.companyId || assessment.recruiterId || '',
+      companyName: assessment.companyName || '',
     }));
     navigate(`/student/assessment/id/${assessment.slug}`);
   };
@@ -2292,6 +2347,10 @@ const StudentDashboard = () => {
         assessmentId: assessment.id ?? '',
         totalMarks: assessment.maxScore || 100,
         settings: assessment.settings || {},
+        isRecruitment: Boolean(assessment.isRecruitment || assessment.tag === 'Recruitment'),
+        recruiterId: assessment.recruiterId || assessment.companyId || (assessment.courseId?.startsWith('recruiter_') ? assessment.courseId.replace('recruiter_', '') : ''),
+        companyId: assessment.companyId || assessment.recruiterId || '',
+        companyName: assessment.companyName || '',
       }));
       setLaunchStep(null);
       navigate(`/student/assessment/id/${assessment.slug}`);
@@ -2792,13 +2851,15 @@ const StudentDashboard = () => {
     const seriesMap = {};
     assessments.forEach(a => {
       const sKey = a.seriesKey || 'general';
-      const sName = a.seriesName || 'General Assessments';
-      const sDesc = a.seriesDescription || `Practice and evaluation modules for ${sName}.`;
+      const sName = a.seriesName || (a.isGlobal ? 'Global Open Challenges' : 'General Assessments');
+      const sDesc = a.seriesDescription || (a.courseTitle ? `Assessments for ${a.courseTitle}` : `Practice and evaluation modules for ${sName}.`);
       if (!seriesMap[sKey]) {
         seriesMap[sKey] = {
           key: sKey,
           title: sName,
+          courseTitle: a.courseTitle || '',
           description: sDesc,
+          isGlobal: Boolean(a.isGlobal),
           assessments: []
         };
       }
@@ -2869,7 +2930,7 @@ const StudentDashboard = () => {
                 <FaSearch className="search-icon" />
                 <input
                   type="text"
-                  placeholder="Search series by name..."
+                  placeholder="Search series by name or course..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
@@ -2889,7 +2950,7 @@ const StudentDashboard = () => {
             ) : seriesList.length > 0 ? (
               <div className="ps-cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
                 {seriesList
-                  .filter(s => !searchTerm || s.title.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .filter(s => !searchTerm || s.title.toLowerCase().includes(searchTerm.toLowerCase()) || (s.courseTitle && s.courseTitle.toLowerCase().includes(searchTerm.toLowerCase())))
                   .map(series => {
                     const totalTests = series.assessments.length;
                     const completedTests = series.assessments.filter(a => a.completed).length;
@@ -2899,7 +2960,7 @@ const StudentDashboard = () => {
                         key={series.key}
                         className="ps-sheet-card"
                         style={{
-                          '--theme-border-color': 'var(--accent-coding)',
+                          '--theme-border-color': series.isGlobal ? 'var(--accent-primary, #6366f1)' : 'var(--accent-coding)',
                           minHeight: '190px'
                         }}
                       >
@@ -2911,7 +2972,24 @@ const StudentDashboard = () => {
                               </span>
                             </div>
                           )}
-                          <h3 className="ps-card-title">{series.title}</h3>
+                          {series.courseTitle && series.courseTitle !== series.title && (
+                            <div style={{ fontSize: '11.5px', fontWeight: '700', color: series.isGlobal ? '#6366f1' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                              {series.isGlobal ? '🌐 ' : ''}{series.courseTitle}
+                            </div>
+                          )}
+                          {(!series.courseTitle || series.courseTitle === series.title) && series.isGlobal && (
+                            <div style={{ fontSize: '11.5px', fontWeight: '700', color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                              🌐 Global Challenge
+                            </div>
+                          )}
+                          <h3 className="ps-card-title" style={{ fontSize: '17px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', lineHeight: '1.35' }}>
+                            {series.title}
+                            {series.isGlobal && (
+                              <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '999px', background: '#e0e7ff', color: '#4338ca', fontWeight: '600' }}>
+                                Global
+                              </span>
+                            )}
+                          </h3>
                           <p className="ps-card-desc" style={{ fontSize: '13px', marginTop: '6px', color: 'var(--text-muted)' }}>
                             {series.description}
                           </p>
@@ -3007,6 +3085,11 @@ const StudentDashboard = () => {
                     <FaArrowLeft /> Back to Series
                   </button>
                   <div>
+                    {series.courseTitle && series.courseTitle !== series.title && (
+                      <div style={{ fontSize: '11.5px', fontWeight: '700', color: series.isGlobal ? '#6366f1' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '3px' }}>
+                        {series.isGlobal ? '🌐 ' : ''}{series.courseTitle}
+                      </div>
+                    )}
                     <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>{series.title}</h2>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>{series.description}</p>
                   </div>
@@ -3078,7 +3161,7 @@ const StudentDashboard = () => {
                           <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
                               <div>
-                                <h3 className="ps-card-title" style={{ margin: 0, fontSize: '15px', fontWeight: 700, lineHeight: '1.3' }}>
+                                <h3 className="ps-card-title" style={{ margin: 0, fontSize: '16.5px', fontWeight: 700, lineHeight: '1.3' }}>
                                   {a.name}
                                 </h3>
                                 <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
@@ -4115,6 +4198,148 @@ const StudentDashboard = () => {
                       <span className="field-value">{user?.year || user?.Year || user?.cohortId || user?.CohortId || year || "—"}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Card 4B: Academic Qualifications & Placement Resume */}
+                <div className="profile-info-card">
+                  <div className="profile-card-header-bar">
+                    <div>
+                      <h3 className="profile-card-section-title">Academic Qualifications &amp; Placement Resume</h3>
+                      <p className="profile-card-section-subtitle">Verified marks, backlogs, skills, and Google Drive resume link for recruitment drives.</p>
+                    </div>
+                  </div>
+
+                  {isEditingProfile ? (
+                    <div className="profile-form-grid">
+                      <div className="form-field-group">
+                        <label className="form-field-label">Degree CGPA (0 - 10)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="form-text-input"
+                          value={editDegreeCgpa}
+                          onChange={(e) => setEditDegreeCgpa(e.target.value)}
+                          placeholder="e.g. 8.4"
+                        />
+                      </div>
+                      <div className="form-field-group">
+                        <label className="form-field-label">Active Standing Backlogs</label>
+                        <select
+                          className="form-text-input"
+                          value={editActiveBacklogs}
+                          onChange={(e) => setEditActiveBacklogs(Number(e.target.value))}
+                        >
+                          <option value={0}>0 (No Backlogs)</option>
+                          <option value={1}>1 Backlog</option>
+                          <option value={2}>2 Backlogs</option>
+                          <option value={3}>3+ Backlogs</option>
+                        </select>
+                      </div>
+                      <div className="form-field-group">
+                        <label className="form-field-label">10th Standard %</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          className="form-text-input"
+                          value={editTenthPercentage}
+                          onChange={(e) => setEditTenthPercentage(e.target.value)}
+                          placeholder="e.g. 85.5"
+                        />
+                      </div>
+                      <div className="form-field-group">
+                        <label className="form-field-label">12th / Diploma %</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          className="form-text-input"
+                          value={editTwelfthPercentage}
+                          onChange={(e) => setEditTwelfthPercentage(e.target.value)}
+                          placeholder="e.g. 82.0"
+                        />
+                      </div>
+                      {(!user?.tenantId || user.tenantId === 'global' || user.tenantId === '') && (
+                        <div className="form-field-group full-width">
+                          <label className="form-field-label">College / University Name (Direct Learner)</label>
+                          <input
+                            type="text"
+                            list="seb-profile-tenant-colleges-list"
+                            className="form-text-input"
+                            value={editCollege}
+                            onChange={(e) => setEditCollege(e.target.value)}
+                            placeholder="Select from partner colleges or enter your college or institute name"
+                          />
+                          <datalist id="seb-profile-tenant-colleges-list">
+                            {tenantColleges.map((t) => (
+                              <option key={t.id} value={t.name}>
+                                {t.id} - {t.name}
+                              </option>
+                            ))}
+                          </datalist>
+                          <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.45)', marginTop: 2 }}>
+                            Direct learners can choose a partner institution name or enter their own college. Your direct platform status is maintained without institutional tenant restrictions.
+                          </span>
+                        </div>
+                      )}
+                      <div className="form-field-group full-width">
+                        <label className="form-field-label">Google Drive Resume Link</label>
+                        <input
+                          type="url"
+                          className="form-text-input"
+                          value={editResumeDriveLink}
+                          onChange={(e) => setEditResumeDriveLink(e.target.value)}
+                          placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                        />
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: 2 }}>
+                          Ensure link permissions are set to "Anyone with the link can view".
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="profile-details-grid">
+                      <div className="profile-grid-cell">
+                        <span className="field-label">Degree CGPA</span>
+                        <span className="field-value" style={{ fontWeight: 700, color: '#7c3aed' }}>
+                          {user?.degreeCgpa !== undefined && user?.degreeCgpa !== null ? user.degreeCgpa : '—'}
+                        </span>
+                      </div>
+                      <div className="profile-grid-cell">
+                        <span className="field-label">Active Backlogs</span>
+                        <span className="field-value">
+                          {user?.activeBacklogs === 0 ? '0 (Clean Record)' : (user?.activeBacklogs ? `${user.activeBacklogs}` : '0')}
+                        </span>
+                      </div>
+                      <div className="profile-grid-cell">
+                        <span className="field-label">10th Standard Score</span>
+                        <span className="field-value">
+                          {user?.tenthPercentage ? `${user.tenthPercentage}%` : '—'}
+                        </span>
+                      </div>
+                      <div className="profile-grid-cell">
+                        <span className="field-label">12th / Diploma Score</span>
+                        <span className="field-value">
+                          {user?.twelfthPercentage ? `${user.twelfthPercentage}%` : '—'}
+                        </span>
+                      </div>
+                      <div className="profile-grid-cell full-width">
+                        <span className="field-label">Placement Resume Link</span>
+                        <span className="field-value">
+                          {user?.resumeDriveLink ? (
+                            <a
+                              href={user.resumeDriveLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#7c3aed', fontWeight: 600, textDecoration: 'none' }}
+                            >
+                              <span>Open Resume in Google Drive</span>
+                              <FaExternalLinkAlt size={11} />
+                            </a>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>No resume link attached. Click "Edit Details" to add one.</span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Card 5: Account & System Information */}

@@ -160,11 +160,21 @@ class MCQService {
      * @param {number} params.score
      * @param {number} params.maxScore
      */
-    static async markCourseProgress({ uid, courseId, seriesId, testId, score, maxScore }) {
-        if (!uid || courseId === '__legacy__') return;
+    static async markCourseProgress({ uid, courseId, seriesId, testId, assessmentId, score, totalScore, maxScore }) {
+        const effectiveTestId = (testId || assessmentId || '').trim();
+        const effectiveScore = score ?? totalScore ?? 0;
+        if (!uid || !courseId || !seriesId || !effectiveTestId || courseId === '__legacy__') return;
         try {
             const { markTestComplete } = await import('../lib/firestore/courseProgress');
-            await markTestComplete({ uid, courseId, seriesId, testId, score, maxScore });
+            await markTestComplete({
+                uid,
+                courseId,
+                seriesId,
+                testId: effectiveTestId,
+                assessmentId: effectiveTestId,
+                score: effectiveScore,
+                maxScore: maxScore || 100
+            });
         } catch (err) {
             console.warn('[MCQService] markCourseProgress error (non-fatal):', err);
         }

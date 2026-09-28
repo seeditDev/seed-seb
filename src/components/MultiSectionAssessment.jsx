@@ -1372,6 +1372,83 @@ const MultiSectionAssessment = () => {
       const sanitizedPayload = JSON.parse(JSON.stringify(attemptData));
       await setDoc(doc(db, v2DocPath), sanitizedPayload);
       console.log('[MSA] Final result saved to Firestore canonical path:', v2DocPath);
+
+      // ── RECRUITER ASSESSMENT RESULTS ISOLATION (Auto-termination) ──
+      try {
+        const courseCtx = (() => {
+          try { return JSON.parse(sessionStorage.getItem('msaCourseCtx') || '{}'); } catch (_) { return {}; }
+        })();
+        const isRecruiterAssessment = Boolean(
+          effectiveAssessment?.isRecruitment ||
+          effectiveAssessment?.tag === 'Recruitment' ||
+          effectiveAssessment?.category === 'recruiter' ||
+          effectiveAssessment?.recruiterAssessmentId ||
+          effectiveAssessment?.recruiterId ||
+          effectiveAssessment?.companyId ||
+          effectiveAssessment?.courseId?.startsWith('recruiter_') ||
+          courseCtx?.isRecruitment ||
+          courseCtx?.recruiterId ||
+          courseCtx?.companyId ||
+          courseCtx?.courseId?.startsWith('recruiter_')
+        );
+
+        if (isRecruiterAssessment) {
+          const effectiveRecruiterId = String(
+            effectiveAssessment?.recruiterId ||
+            courseCtx?.recruiterId ||
+            effectiveAssessment?.companyId ||
+            courseCtx?.companyId ||
+            (effectiveAssessment?.courseId?.startsWith('recruiter_') ? effectiveAssessment.courseId.replace('recruiter_', '') : '') ||
+            (courseCtx?.courseId?.startsWith('recruiter_') ? courseCtx.courseId.replace('recruiter_', '') : '') ||
+            effectiveAssessment?.createdByUid ||
+            courseCtx?.createdByUid ||
+            (effectiveAssessment?.companyName ? slugify(effectiveAssessment.companyName) : 'recruiter_default')
+          ).trim();
+
+          const recruiterPayload = {
+            ...sanitizedPayload,
+            recruiterId: effectiveRecruiterId,
+            companyId: effectiveAssessment?.companyId || courseCtx?.companyId || effectiveRecruiterId,
+            companyName: effectiveAssessment?.companyName || courseCtx?.companyName || 'Corporate Partner',
+            assessmentId: effectiveAssessment.id,
+            testId: effectiveAssessment.id,
+            testName: effectiveAssessment.name || effectiveAssessment.title || 'Recruitment Assessment',
+            userId,
+            studentUid: userId,
+            studentName: effectiveUser.name || '',
+            studentEmail: tenant.email || '',
+            studentCollege: tenant.college || '',
+            studentDepartment: tenant.department || '',
+            studentYear: tenant.year || '',
+            studentRollNumber: effectiveUser.rollNumber || '',
+            score: totalScore,
+            maxScore: totalMarksSum,
+            percentage: totalMarksSum > 0 ? Math.min(100, Math.round((totalScore / totalMarksSum) * 100)) : 0,
+            isPassed: totalMarksSum > 0 && (totalScore / totalMarksSum >= 0.5),
+            status: 'submitted',
+            autoSubmitted: true,
+            submissionReason: reason || 'proctoring_violations',
+            submittedAt: serverTimestamp(),
+            timeTakenSeconds: timeTaken,
+            proctorViolations: totalViolations,
+            sections: sectionsList,
+            codingSubmissions: aggregatedCoding,
+            questions: aggregatedQuestions,
+            essaySubmissions: aggregatedEssay,
+            questionTiming: aggregatedQuestionTiming
+          };
+
+          const rPath1 = `recruitorAssessmentResults/${effectiveRecruiterId}/${effectiveAssessment.id}/${userId}`;
+          const rPath2 = `recruiterAssessmentResults/${effectiveRecruiterId}/${effectiveAssessment.id}/${userId}`;
+          await Promise.all([
+            setDoc(doc(db, rPath1), recruiterPayload, { merge: true }),
+            setDoc(doc(db, rPath2), recruiterPayload, { merge: true })
+          ]);
+          console.log('[MSA] Recruiter auto-termination result saved to:', rPath1);
+        }
+      } catch (recWriteErr) {
+        console.warn('[MSA] Non-fatal recruiterAssessmentResults auto-terminate write error:', recWriteErr);
+      }
     } catch (writeErr) {
       console.error('[MSA] Remote write failed, saving local envelope:', writeErr);
       const envKey = `msa_pending_submission_${userId}_${effectiveAssessment.id}`;
@@ -1403,14 +1480,19 @@ const MultiSectionAssessment = () => {
       if (courseCtx.courseId && courseCtx.seriesId) {
         import('../services/mcqService').then(({ default: MCQService }) => {
           const totalScore = Object.values(combinedResults || {}).reduce((s, sec) => s + (sec.totalScore || 0), 0);
-          MCQService.markCourseProgress({
-            uid: effectiveUser?.uid ?? '',
-            courseId: courseCtx.courseId,
-            seriesId: courseCtx.seriesId,
-            assessmentId: courseCtx.assessmentId || (effectiveAssessment?.id ?? ''),
-            totalScore: totalScore,
-            maxScore: courseCtx.maxScore || 100,
-          }).catch(() => { });
+          const effectiveTestId = (courseCtx.testId || courseCtx.assessmentId || effectiveAssessment?.id || assessment?.id || '').trim();
+          if (effectiveTestId) {
+            MCQService.markCourseProgress({
+              uid: effectiveUser?.uid ?? '',
+              courseId: courseCtx.courseId,
+              seriesId: courseCtx.seriesId,
+              testId: effectiveTestId,
+              assessmentId: effectiveTestId,
+              score: totalScore,
+              totalScore: totalScore,
+              maxScore: courseCtx.maxScore || 100,
+            }).catch(() => { });
+          }
         }).catch(() => { });
         sessionStorage.removeItem('msaCourseCtx');
       }
@@ -1442,7 +1524,9 @@ const MultiSectionAssessment = () => {
 
   const handleProctorReady = useCallback(() => {
     console.log('[MSA] Camera Proctoring is ready');
-    setIsVisualProctorReady(true);
+    setTimeout(() => {
+      setIsVisualProctorReady(true);
+    }, 0);
   }, []);
 
   const handleProctorViolationUpdate = useCallback((info) => {
@@ -1458,21 +1542,23 @@ const MultiSectionAssessment = () => {
       });
     }
 
+    const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
+    const isTabSwitch = info.violationType === 'tab_switch';
+
     setProctoringData(prev => {
-      const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
       const nextCount = typeof info.violationCount === 'number' ? info.violationCount : (prev.violationCount + 1);
-      const isTabSwitch = info.violationType === 'tab_switch';
       const prevTabSwitches = (prev.violations || []).filter(v => v.type === 'tab_switch').length;
       const nextTabSwitches = isTabSwitch ? prevTabSwitches + 1 : prevTabSwitches;
 
       if ((maxViolations > 0 && nextCount >= maxViolations) || (tabSwitchLimit > 0 && nextTabSwitches >= tabSwitchLimit)) {
-        console.warn(`[MSA] Violation limit reached (count: ${nextCount}/${maxViolations}, tabs: ${nextTabSwitches}/${tabSwitchLimit}). Auto-submitting exam...`);
-        window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
-        stopAllMediaAndAI();
         setTimeout(() => {
+          console.warn(`[MSA] Violation limit reached (count: ${nextCount}/${maxViolations}, tabs: ${nextTabSwitches}/${tabSwitchLimit}). Auto-submitting exam...`);
+          window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+          stopAllMediaAndAI();
           autoSubmitEntireExam('proctoring_violations');
-        }, 300);
+        }, 0);
       }
+
       return {
         ...prev,
         violationCount: nextCount,
@@ -1492,7 +1578,9 @@ const MultiSectionAssessment = () => {
 
   const handleAudioProctorReady = useCallback(() => {
     console.log('[MSA] Audio Proctoring is ready');
-    setIsAudioProctorReady(true);
+    setTimeout(() => {
+      setIsAudioProctorReady(true);
+    }, 0);
   }, []);
 
   const handleAudioProctorViolationUpdate = useCallback((info) => {
@@ -1510,20 +1598,37 @@ const MultiSectionAssessment = () => {
 
     setProctoringData(prev => {
       const nextAudioCount = (prev.audioViolationCount || 0) + 1;
-      if (nextAudioCount >= maxAudioViolations) {
-        window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
-        stopAllMediaAndAI();
-        setTimeout(() => {
+
+      setTimeout(() => {
+        if (nextAudioCount >= maxAudioViolations) {
+          window.dispatchEvent(new CustomEvent('seb:stop-proctoring-hardware'));
+          stopAllMediaAndAI();
           autoSubmitEntireExam('proctoring_violations');
-        }, 300);
-      }
+        } else if (info.type === 'audio-noise-detected') {
+          toast.warning(`⚠️ Audio Warning: Voice / noise detected! (${nextAudioCount}/${maxAudioViolations})`, {
+            id: 'audio-violation-toast',
+            duration: 3500
+          });
+        } else if (info.type === 'audio-mic-disconnected') {
+          toast.error(`⚠️ Microphone disconnected!`, {
+            id: 'audio-mic-toast',
+            duration: 4000
+          });
+        } else if (info.type === 'audio-permission-denied') {
+          toast.error(`⚠️ Microphone access denied!`, {
+            id: 'audio-perm-toast',
+            duration: 4000
+          });
+        }
+      }, 0);
+
       return {
         ...prev,
         audioViolationCount: nextAudioCount,
         violations: [...prev.violations, { type: info.type, timestamp: info.timestamp }]
       };
     });
-  }, [maxAudioViolations, autoSubmitEntireExam]);
+  }, [maxAudioViolations, autoSubmitEntireExam, assessment?.id]);
 
   // ── Tab switch & visibility change proctoring listeners (P0-06 / P1) ─────────
   useEffect(() => {
@@ -2681,6 +2786,87 @@ const MultiSectionAssessment = () => {
           await setDoc(doc(db, v2DocPath), sanitizedPayload);
           console.log('[MSA] Final result saved to Firestore canonical path:', v2DocPath);
           resultWriteSuccess = true;
+
+          // ── RECRUITER ASSESSMENT RESULTS ISOLATION ──
+          // Maintain recruiter results under recruitorAssessmentResults/{recruiterId}/{assessmentId}/{userId}
+          // (with recruiterAssessmentResults mirror) so recruiter data is completely separated from local/institutional tests.
+          try {
+            const courseCtx = (() => {
+              try { return JSON.parse(sessionStorage.getItem('msaCourseCtx') || '{}'); } catch (_) { return {}; }
+            })();
+            const isRecruiterAssessment = Boolean(
+              assessment?.isRecruitment ||
+              assessment?.tag === 'Recruitment' ||
+              assessment?.category === 'recruiter' ||
+              assessment?.recruiterAssessmentId ||
+              assessment?.recruiterId ||
+              assessment?.companyId ||
+              assessment?.courseId?.startsWith('recruiter_') ||
+              courseCtx?.isRecruitment ||
+              courseCtx?.recruiterId ||
+              courseCtx?.companyId ||
+              courseCtx?.courseId?.startsWith('recruiter_')
+            );
+
+            if (isRecruiterAssessment) {
+              const effectiveRecruiterId = String(
+                assessment?.recruiterId ||
+                courseCtx?.recruiterId ||
+                assessment?.companyId ||
+                courseCtx?.companyId ||
+                (assessment?.courseId?.startsWith('recruiter_') ? assessment.courseId.replace('recruiter_', '') : '') ||
+                (courseCtx?.courseId?.startsWith('recruiter_') ? courseCtx.courseId.replace('recruiter_', '') : '') ||
+                assessment?.createdByUid ||
+                courseCtx?.createdByUid ||
+                (assessment?.companyName ? slugify(assessment.companyName) : 'recruiter_default')
+              ).trim();
+
+              const recruiterPayload = {
+                ...sanitizedPayload,
+                recruiterId: effectiveRecruiterId,
+                companyId: assessment?.companyId || courseCtx?.companyId || effectiveRecruiterId,
+                companyName: assessment?.companyName || courseCtx?.companyName || 'Corporate Partner',
+                assessmentId: assessment.id,
+                testId: assessment.id,
+                testName: assessment.name || assessment.title || 'Recruitment Assessment',
+                userId,
+                studentUid: userId,
+                studentName: user.name || user.displayName || '',
+                studentEmail: tenant.email || user.email || '',
+                studentCollege: tenant.college || '',
+                studentDepartment: tenant.department || '',
+                studentYear: tenant.year || '',
+                studentRollNumber: user.rollNumber || '',
+                score: primaryTotalScore,
+                maxScore: totalMarksSum,
+                percentage: totalMarksSum > 0 ? Math.min(100, Math.round(pct * 100)) : 0,
+                allPassScore: allPassTotalScore,
+                partialScore: totalScorePartial,
+                isPassed: totalMarksSum > 0 && (primaryTotalScore / totalMarksSum >= 0.5),
+                status: 'submitted',
+                submittedAt: serverTimestamp(),
+                submittedAtISO: timeEndedISO,
+                timeTakenSeconds: timeTaken,
+                timeTakenFormatted,
+                proctorViolations: totalViolations,
+                sections: sectionsList,
+                codingSubmissions: aggregatedCoding,
+                questions: aggregatedQuestions,
+                essaySubmissions: aggregatedEssay,
+                questionTiming: aggregatedQuestionTiming
+              };
+
+              const rPath1 = `recruitorAssessmentResults/${effectiveRecruiterId}/${assessment.id}/${userId}`;
+              const rPath2 = `recruiterAssessmentResults/${effectiveRecruiterId}/${assessment.id}/${userId}`;
+              await Promise.all([
+                setDoc(doc(db, rPath1), recruiterPayload, { merge: true }),
+                setDoc(doc(db, rPath2), recruiterPayload, { merge: true })
+              ]);
+              console.log('[MSA] Recruiter assessment result saved to:', rPath1);
+            }
+          } catch (recWriteErr) {
+            console.warn('[MSA] Non-fatal recruiterAssessmentResults write error:', recWriteErr);
+          }
 
           // ── If this assessment is a Contest, sync single submission & leaderboard entry ──
           if (isContest) {
