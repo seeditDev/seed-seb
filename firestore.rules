@@ -749,6 +749,26 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // 14. Institutional Demo & Walkthrough Requests
+    //     Public submission from website; managed in seed-admin portal
+    // ══════════════════════════════════════════════════════════════════════
+
+    match /institutionDemoRequests/{requestId} {
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.email is string
+                    && request.resource.data.institutionName is string;
+      allow read, update: if isPortal();
+      allow delete: if isAdmin();
+    }
+
+    match /demoRequests/{requestId} {
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.email is string;
+      allow read, update: if isPortal();
+      allow delete: if isAdmin();
+    }
+
     // Fallback: Default Deny All
     match /{document=**} {
       allow read, write: if false;
