@@ -3559,7 +3559,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                         console.log('[CodingAssessmentPage] Camera proctoring ready');
                     }}
                     onViolationUpdate={(violationInfo) => {
-                        if (!violationInfo?.violationType) return;
+                        if (!violationInfo?.violationType || violationInfo.violationType === 'init_sync') return;
                         const maxLimit = Number(currentAssessment.proctorConfig?.maxViolations ?? currentAssessment.maxViolations) || 200;
                         const currentCount = typeof violationInfo.violationCount === 'number' ? violationInfo.violationCount : 0;
                         if (currentCount >= maxLimit) {

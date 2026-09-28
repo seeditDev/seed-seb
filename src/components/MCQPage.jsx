@@ -3379,7 +3379,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                         console.log('[MCQPage] Camera proctoring ready');
                     }}
                     onViolationUpdate={(violationInfo) => {
-                        if (!violationInfo?.violationType) return;
+                        if (!violationInfo?.violationType || violationInfo.violationType === 'init_sync') return;
                         const maxLimit = Number(currentTest.testInfo?.maxViolations) || 200;
                         const count = typeof violationInfo.violationCount === 'number' ? violationInfo.violationCount : 0;
                         if (count >= maxLimit) {
@@ -3390,7 +3390,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                             }, 300);
                         }
                         setProctoringData(prev => {
-                            const isRealViolation = ['no_face', 'multiple_faces', 'tab_switch'].includes(violationInfo.violationType);
+                            const isRealViolation = ['no_face', 'multiple_faces', 'tab_switch', 'cell_phone', 'prohibited_object', 'looking_away', 'face_mismatch'].includes(violationInfo.violationType);
                             return {
                                 ...prev,
                                 violationCount: typeof violationInfo.violationCount === 'number'

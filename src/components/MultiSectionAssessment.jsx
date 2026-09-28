@@ -1530,7 +1530,7 @@ const MultiSectionAssessment = () => {
   }, []);
 
   const handleProctorViolationUpdate = useCallback((info) => {
-    if (!info?.violationType) return;
+    if (!info?.violationType || info.violationType === 'init_sync') return;
 
     // ── Firestore audit trail (fire-and-forget) ───────────────────────────────
     const uid = auth?.currentUser?.uid;
@@ -1542,7 +1542,8 @@ const MultiSectionAssessment = () => {
       });
     }
 
-    const isReal = ['no_face', 'multiple_faces', 'tab_switch'].includes(info.violationType);
+    const realViolationTypes = ['no_face', 'multiple_faces', 'tab_switch', 'cell_phone', 'prohibited_object', 'looking_away', 'face_mismatch'];
+    const isReal = realViolationTypes.includes(info.violationType);
     const isTabSwitch = info.violationType === 'tab_switch';
 
     setProctoringData(prev => {

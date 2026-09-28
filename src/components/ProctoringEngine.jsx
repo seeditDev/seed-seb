@@ -277,6 +277,15 @@ const ProctoringEngine = ({
         if (count > 0) {
           setViolationCount(count);
           violationCountRef.current = count;
+          if (onViolationUpdateRef.current) {
+            setTimeout(() => {
+              onViolationUpdateRef.current?.({
+                violationCount: count,
+                violationType: 'init_sync',
+                timestamp: new Date().toISOString()
+              });
+            }, 0);
+          }
           if (maxViolations > 0 && count >= maxViolations && onAutoSubmitRef.current) {
             console.warn(`[ProctoringEngine] Cached violation count (${count}) already meets limit (${maxViolations}). Auto-submitting...`);
             setTimeout(() => {
@@ -651,7 +660,7 @@ const ProctoringEngine = ({
       }
 
       // Record to local cache for Firestore submission
-      const record = recordViolation(assessmentId, uid, type, { message: msg });
+      const record = recordViolation(assessmentId, uid, type, { message: msg }, uid);
 
       // Defer side effects to prevent updating other React components during this state transition
       setTimeout(() => {
@@ -714,7 +723,7 @@ const ProctoringEngine = ({
         try {
           const faceDetections = await faceapi.detectAllFaces(
             video, 
-            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 })
+            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 })
           ).withFaceLandmarks().withFaceDescriptors();
 
           faceCount = faceDetections.length;
@@ -732,7 +741,7 @@ const ProctoringEngine = ({
                 const referenceDescriptor = new Float32Array(JSON.parse(savedDescriptorStr));
                 const distance = faceapi.euclideanDistance(referenceDescriptor, faceDetections[0].descriptor);
                 console.log('[ProctoringEngine] Face verification distance:', distance);
-                if (distance > 0.6) {
+                if (distance > 0.62) {
                   violationType = 'face_mismatch';
                 }
               } catch (err) {
@@ -757,7 +766,7 @@ const ProctoringEngine = ({
                 if (distLeft > 0 && distRight > 0) {
                   const ratio = distLeft / distRight;
                   console.log('[ProctoringEngine] Face ratio (nose/jaw):', ratio);
-                  if (ratio < 0.35 || ratio > 2.8) {
+                  if (ratio < 0.32 || ratio > 3.1) {
                     lookingAway = true;
                     violationType = 'looking_away';
                   }
@@ -783,6 +792,13 @@ const ProctoringEngine = ({
             } else if (faceCount > 1) {
               violationType = 'multiple_faces';
             }
+          } else {
+            // Hybrid verification: if Face-API momentarily missed face due to lighting/angle,
+            // but YOLO clearly detects personCount >= 1, avoid false no_face flag.
+            if (violationType === 'no_face' && yoloResult.personCount >= 1) {
+              console.log('[ProctoringEngine] YOLO confirms candidate is present at desk despite low landmark confidence');
+              violationType = null;
+            }
           }
 
           if (yoloResult.phoneDetected) {
@@ -803,7 +819,7 @@ const ProctoringEngine = ({
     } finally {
       detectionInProgressRef.current = false;
     }
-  }, [isTestActive]);
+  }, [isTestActive, assessmentId]);
 
   // Scheduled sequence: capture two frames and compare
   const runPresenceCheckSequence = useCallback(async () => {
@@ -842,11 +858,15 @@ const ProctoringEngine = ({
       const noFaceSecond = second.violationType === 'no_face';
       const lookingAwayFirst = first.violationType === 'looking_away';
       const lookingAwaySecond = second.violationType === 'looking_away';
+      const faceMismatchFirst = first.violationType === 'face_mismatch';
+      const faceMismatchSecond = second.violationType === 'face_mismatch';
 
       if (noFaceFirst && noFaceSecond) {
         handleViolation('no_face');
       } else if (lookingAwayFirst && lookingAwaySecond) {
         handleViolation('looking_away');
+      } else if (faceMismatchFirst && faceMismatchSecond) {
+        handleViolation('face_mismatch');
       }
     } catch (err) {
       console.error('[ProctoringEngine] Error in presence check sequence:', err);
@@ -986,35 +1006,6 @@ const ProctoringEngine = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTestActive]);
 
-  // Restore/Reset violation count from localStorage on mount or when test ID changes
-  useEffect(() => {
-    if (uid && assessmentId) {
-      const key = `proctor_violations_${uid}_${assessmentId}`;
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        try {
-          const count = parseInt(saved, 10) || 0;
-          setViolationCount(count);
-          if (onViolationUpdate) {
-            setTimeout(() => {
-              onViolationUpdate({
-                violationCount: count,
-                violationType: 'init_sync',
-                timestamp: new Date().toISOString()
-              });
-            }, 0);
-          }
-        } catch (error) {
-          console.error('[ProctoringEngine] Error restoring violation count:', error);
-          setViolationCount(0);
-        }
-      } else {
-        setViolationCount(0);
-      }
-    } else {
-      setViolationCount(0);
-    }
-  }, [uid, assessmentId]);
 
   // Save violation count to localStorage
   useEffect(() => {
