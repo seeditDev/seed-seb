@@ -23,11 +23,11 @@
   "content": {
     "problemStatement": "Chef likes rectangles. Among all possible rectangles, he loves rectangles that can be drawn like a grid, such that they have **N** rows and **M** columns. Grids are common in Byteland. Hence, Chef has drawn such a rectangle and plans on moving around in it.\n\nThe rows of the rectangle are labeled from **1** to **N** from top to bottom. The columns of the rectangle are labeled form **1** to **M** from left to right. Thus, the cell in the **top left** can be denoted by **(1,1)**. The **5th** cell from the left in the **4th** row form the top can be denoted by **(4,5)**. The **bottom right** cell can be denoted as **(N,M)**.\n\nChef wants to move from the cell in the **top left** to the cell in the **bottom right**. In each move, Chef may only move one cell right, or one cell down. Also, Chef is not allowed to move to any cell outside the boundary of the rectangle.\n\nOf course, there are many ways for Chef to move from **(1,1)** to **(N,M)**. Chef has a curious sport. While going from **(1,1)** to **(N,M)**, he drops a stone on each of the cells he steps on, except the cells **(1,1)** and\n**(N,M)**. Also, Chef repeats this game exactly **K** times.\n\nLet us say he moved from **(1,1)** to **(N,M)**, exactly **K** times. At the end of all the **K** journeys, let the number of stones, in the cell with the maximum number of stones, be equal to **S**. Chef wants to know what is the smallest possible value for **S**.",
     "constraints": [
-      "1 \u2264 T \u2264 100",
-      "1 \u2264 N, M, K \u2264 70"
+      "1 ≤ T ≤ 100",
+      "1 ≤ N, M, K ≤ 70"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. Each of the next T lines contains three space\u2011separated integers N, M and K.",
-    "outputFormat": "For each test case output a single integer \u2013 the minimum possible value of S, the maximum number of stones in any cell after Chef performs K optimal journeys.",
+    "inputFormat": "The first line contains an integer T, the number of test cases. Each of the next T lines contains three space‑separated integers N, M and K.",
+    "outputFormat": "For each test case output a single integer – the minimum possible value of S, the maximum number of stones in any cell after Chef performs K optimal journeys.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -113,7 +113,7 @@
     ]
   },
   "solution": {
-    "approach": "For a path from (1,1) to (N,M) Chef moves exactly N\u20111 steps down and M\u20111 steps right, thus visits (N+M\u20112) interior cells (excluding start and end). Every journey contributes one stone to each of those interior positions, so after K journeys a total of K\u00b7(N+M\u20112) stones are placed. To minimise the maximum stones in any single cell we should spread the K journeys as evenly as possible over the (N+M\u20112) positions. The best achievable maximum load is the ceiling of K divided by (N+M\u20112). If N=1 or M=1 the rectangle degenerates to a single line; there is only one possible path and every interior cell (if any) is visited by all K journeys, therefore S = K. The formula can be written as:\n    if N==1 or M==1: answer = K\n    else: answer = ceil(K / (N+M\u20112)) = (K + N + M - 3) / (N + M - 2) using integer division.",
+    "approach": "For a path from (1,1) to (N,M) Chef moves exactly N‑1 steps down and M‑1 steps right, thus visits (N+M‑2) interior cells (excluding start and end). Every journey contributes one stone to each of those interior positions, so after K journeys a total of K·(N+M‑2) stones are placed. To minimise the maximum stones in any single cell we should spread the K journeys as evenly as possible over the (N+M‑2) positions. The best achievable maximum load is the ceiling of K divided by (N+M‑2). If N=1 or M=1 the rectangle degenerates to a single line; there is only one possible path and every interior cell (if any) is visited by all K journeys, therefore S = K. The formula can be written as:\n    if N==1 or M==1: answer = K\n    else: answer = ceil(K / (N+M‑2)) = (K + N + M - 3) / (N + M - 2) using integer division.",
     "timeComplexity": "O(1) per test case, O(T) overall.",
     "spaceComplexity": "O(1).",
     "code": {
@@ -123,5 +123,6 @@
       "Python3": "import sys\n\ndef solve():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out = []\n    for _ in range(T):\n        N = int(next(it)); M = int(next(it)); K = int(next(it))\n        if N == 1 or M == 1:\n            out.append(str(K))\n        else:\n            denom = N + M - 2\n            ans = (K + denom - 1) // denom\n            out.append(str(ans))\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    solve()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet results = [];\nfor (let t = 0; t < T; t++) {\n  const N = Number(input[idx++]);\n  const M = Number(input[idx++]);\n  const K = Number(input[idx++]);\n  let ans;\n  if (N === 1 || M === 1) {\n    ans = K;\n  } else {\n    const denom = N + M - 2;\n    ans = Math.floor((K + denom - 1) / denom); // ceiling division\n  }\n  results.push(String(ans));\n}\nconsole.log(results.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

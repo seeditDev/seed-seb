@@ -21,15 +21,15 @@
     ]
   },
   "content": {
-    "problemStatement": "Chef was reading a book. He decided to highlight all the lovely sentences of the book. He calls a sentence a lovely sentence if, after removing all the non-alphabetical characters (like punctuation and spaces) from it and converting all uppercase letters to lowercase, it is possible to choose **four contiguous characters** from the sentence and reorder them to create the string \u201cchef\u201d.\n\nChef has almost completed the highlighting work, only a few sentences are left to be checked and highlighted. Now, he wants your help in checking the remaining sentences, as he has to help his mother in the kitchen.\n\nEach sentence **s** has already been preprocessed \u2014 all non-alphabetical characters have been erased and all remaining uppercase characters converted to lowercase. You should determine whether **s** is a lovely sentence or not. If it is a lovely sentence, then Chef is also interested in the number of possible ways to select 4 contiguous characters that can be reordered to give his name (the string \"chef\").",
+    "problemStatement": "Chef was reading a book. He decided to highlight all the lovely sentences of the book. He calls a sentence a lovely sentence if, after removing all the non-alphabetical characters (like punctuation and spaces) from it and converting all uppercase letters to lowercase, it is possible to choose **four contiguous characters** from the sentence and reorder them to create the string “chef”.\n\nChef has almost completed the highlighting work, only a few sentences are left to be checked and highlighted. Now, he wants your help in checking the remaining sentences, as he has to help his mother in the kitchen.\n\nEach sentence **s** has already been preprocessed — all non-alphabetical characters have been erased and all remaining uppercase characters converted to lowercase. You should determine whether **s** is a lovely sentence or not. If it is a lovely sentence, then Chef is also interested in the number of possible ways to select 4 contiguous characters that can be reordered to give his name (the string \"chef\").",
     "constraints": [
-      "1 \u2264 T \u2264 200,000",
-      "1 \u2264 |s| \u2264 500,000",
-      "sum of |s| for all test cases \u2264 2,000,000",
+      "1 ≤ T ≤ 200,000",
+      "1 ≤ |s| ≤ 500,000",
+      "sum of |s| for all test cases ≤ 2,000,000",
       "s contains only lowercase English letters"
     ],
     "inputFormat": "The first line of the input contains a single integer T denoting the number of test cases. The description of T test cases follows. The first and only line of each test case contains a single string s, denoting a preprocessed sentence.",
-    "outputFormat": "For each test case, print a single line. If the string s is not a lovely string, this line should contain a single string 'normal'. Otherwise, it should contain the string 'lovely' followed by one integer \u2014 the number of ways to select the four contiguous characters.",
+    "outputFormat": "For each test case, print a single line. If the string s is not a lovely string, this line should contain a single string 'normal'. Otherwise, it should contain the string 'lovely' followed by one integer — the number of ways to select the four contiguous characters.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -104,8 +104,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can iterate over each substring of length 4 in the given string and check if it can be rearranged to form the string 'chef'. We can use a sorting approach to check if the characters in the substring can be rearranged to form 'chef'. If the sorted substring is equal to the sorted string 'chef', then the substring can be rearranged to form 'chef'. We count the number of such substrings and print the result.",
-    "timeComplexity": "O(T * n * m log m) \u2014 where n is the length of the string and m is the length of the substring (which is 4 in this case). The reason is that for each test case, we are iterating over each substring of length 4 in the string and sorting the substring to check if it can be rearranged to form 'chef'.",
-    "spaceComplexity": "O(1) \u2014 the space complexity is constant because we are not using any data structures that scale with the input size.",
+    "timeComplexity": "O(T * n * m log m) — where n is the length of the string and m is the length of the substring (which is 4 in this case). The reason is that for each test case, we are iterating over each substring of length 4 in the string and sorting the substring to check if it can be rearranged to form 'chef'.",
+    "spaceComplexity": "O(1) — the space complexity is constant because we are not using any data structures that scale with the input size.",
     "code": {
       "C": "#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>\n\nint compare(const void *a, const void *b) {\n    return (*(char*)a - *(char*)b);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        char s[500001];\n        scanf(\"%s\", s);\n        int count = 0;\n        for (int i = 0; i <= strlen(s) - 4; i++) {\n            char sub[5];\n            strncpy(sub, s + i, 4);\n            sub[4] = '\\0';\n            char chef[] = \"chef\";\n            qsort(sub, 4, sizeof(char), compare);\n            qsort(chef, 4, sizeof(char), compare);\n            if (strcmp(sub, chef) == 0) {\n                count++;\n            }\n        }\n        if (count == 0) {\n            printf(\"normal\\n\");\n        } else {\n            printf(\"lovely %d\\n\", count);\n        }\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        string s;\n        cin >> s;\n        int count = 0;\n        for (int i = 0; i <= s.length() - 4; i++) {\n            string sub = s.substr(i, 4);\n            string chef = \"chef\";\n            sort(sub.begin(), sub.end());\n            sort(chef.begin(), chef.end());\n            if (sub == chef) {\n                count++;\n            }\n        }\n        if (count == 0) {\n            cout << \"normal\" << endl;\n        } else {\n            cout << \"lovely \" << count << endl;\n        }\n    }\n    return 0;\n}",
@@ -113,5 +113,6 @@
       "Python3": "import sys\n\nfor _ in range(int(input())):\n    s = input()\n    count = 0\n    for i in range(len(s) - 3):\n        sub = ''.join(sorted(s[i:i+4]))\n        if sub == 'cefh':\n            count += 1\n    if count == 0:\n        print('normal')\n    else:\n        print('lovely', count)",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction readline() {\n    return lines[idx++];\n}\n\nlet T = parseInt(readline());\nwhile (T-- > 0) {\n    let s = readline();\n    let count = 0;\n    for (let i = 0; i <= s.length - 4; i++) {\n        let sub = s.substring(i, i + 4).split('').sort().join('');\n        if (sub === 'cefh') {\n            count++;\n        }\n    }\n    if (count === 0) {\n        console.log('normal');\n    } else {\n        console.log(`lovely ${count}`);\n    }\n}"
     }
-  }
+  },
+  "verified": false
 }

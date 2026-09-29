@@ -23,18 +23,18 @@
   "content": {
     "problemStatement": "There are **n** villages in a line in an area. There are two kinds of tribes A and B that reside there. A village can be either empty or occupied by one of the tribes. An empty village is said to be controlled by a tribe of village A if it is surrounded by villages of tribes A from the left and from the right. Same goes for the tribe B.\n\nFind out the number of villages that are either occupied by or controlled by tribes A and B, respectively.",
     "constraints": [
-      "1 \u2264 T \u2264 20",
-      "1 \u2264 |s| \u2264 100000",
-      "s[i] \u2208 {'A','B','.'}"
+      "1 ≤ T ≤ 20",
+      "1 ≤ |s| ≤ 100000",
+      "s[i] ∈ {'A','B','.'}"
     ],
     "inputFormat": "The first line contains an integer T, the number of test cases. Each of the next T lines contains a string s consisting only of characters 'A', 'B' and '.'.",
-    "outputFormat": "For each test case output two space\u2011separated integers: the number of villages occupied by or controlled by tribe A, followed by the same count for tribe B.",
+    "outputFormat": "For each test case output two space‑separated integers: the number of villages occupied by or controlled by tribe A, followed by the same count for tribe B.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "4\nA..A..B...B\n..A..\nA....A\n..B..B..B..",
         "output": "4 5\n1 0\n6 0\n0 7",
-        "explanation": "First case: A at positions 0 and 3 control the two dots between them (2), plus the two occupied A villages \u2192 4 A villages. B at positions 6 and 10 control the three dots between them \u2192 5 B villages. The other cases are analogous."
+        "explanation": "First case: A at positions 0 and 3 control the two dots between them (2), plus the two occupied A villages → 4 A villages. B at positions 6 and 10 control the three dots between them → 5 B villages. The other cases are analogous."
       }
     ]
   },
@@ -70,7 +70,7 @@
       },
       {
         "id": "tc_5",
-        "label": "multiple same\u2011tribe segments",
+        "label": "multiple same‑tribe segments",
         "input": "1\nA..A..A",
         "expectedOutput": "7 0",
         "weight": 2
@@ -102,8 +102,8 @@
     ]
   },
   "solution": {
-    "approach": "Scan the string from left to right keeping the last seen non\u2011dot tribe (lastChar) and its position (lastPos). Whenever a tribe character is encountered, increment its occupied counter. If lastChar equals the current tribe, all dots between lastPos and the current index are controlled by that tribe; add their count to the same counter. Update lastChar and lastPos. Dots before the first tribe or after the last tribe are never controlled. This is O(n) time and O(1) extra space per test case.",
-    "timeComplexity": "O(|s|) per test case, overall O(\u2211|s|) for all test cases.",
+    "approach": "Scan the string from left to right keeping the last seen non‑dot tribe (lastChar) and its position (lastPos). Whenever a tribe character is encountered, increment its occupied counter. If lastChar equals the current tribe, all dots between lastPos and the current index are controlled by that tribe; add their count to the same counter. Update lastChar and lastPos. Dots before the first tribe or after the last tribe are never controlled. This is O(n) time and O(1) extra space per test case.",
+    "timeComplexity": "O(|s|) per test case, overall O(∑|s|) for all test cases.",
     "spaceComplexity": "O(1) besides the input string.",
     "code": {
       "C": "#include <stdio.h>\n#include <string.h>\nint main(){\n    int T; if(scanf(\"%d\",&T)!=1) return 0;\n    char s[100005];\n    while(T--){\n        scanf(\"%s\",s);\n        long long a=0,b=0;\n        char last='?';\n        int lastPos=-1;\n        int n=strlen(s);\n        for(int i=0;i<n;i++){\n            if(s[i]!='.'){\n                if(s[i]=='A') a++; else b++;\n                if(last==s[i]){\n                    int dots=i-lastPos-1;\n                    if(s[i]=='A') a+=dots; else b+=dots;\n                }\n                last=s[i];\n                lastPos=i;\n            }\n        }\n        printf(\"%lld %lld\\n\",a,b);\n    }\n    return 0;\n}",
@@ -112,5 +112,6 @@
       "Python3": "import sys\n\ndef solve():\n    data = sys.stdin.read().strip().splitlines()\n    if not data:\n        return\n    T = int(data[0])\n    out = []\n    for i in range(1, T+1):\n        s = data[i].strip()\n        a = b = 0\n        last = None\n        last_pos = -1\n        for idx, ch in enumerate(s):\n            if ch != '.':\n                if ch == 'A':\n                    a += 1\n                else:\n                    b += 1\n                if last == ch:\n                    dots = idx - last_pos - 1\n                    if ch == 'A':\n                        a += dots\n                    else:\n                        b += dots\n                last = ch\n                last_pos = idx\n        out.append(f\"{a} {b}\")\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    solve()",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split(/\\n/);\nlet idx = 0;\nconst T = parseInt(lines[idx++], 10);\nlet result = [];\nfor (let t = 0; t < T; t++) {\n  const s = lines[idx++].trim();\n  let a = 0, b = 0;\n  let last = null;\n  let lastPos = -1;\n  for (let i = 0; i < s.length; i++) {\n    const ch = s[i];\n    if (ch !== '.') {\n      if (ch === 'A') a++; else b++;\n      if (last === ch) {\n        const dots = i - lastPos - 1;\n        if (ch === 'A') a += dots; else b += dots;\n      }\n      last = ch;\n      lastPos = i;\n    }\n  }\n  result.push(`${a} ${b}`);\n}\nconsole.log(result.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

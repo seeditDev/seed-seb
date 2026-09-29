@@ -21,27 +21,27 @@
     ]
   },
   "content": {
-    "problemStatement": "There's an array **A** consisting of **N** **non-zero** integers **A1..N**. A subarray of **A** is called alternating if any two adjacent elements in it have different signs (i.e. one of them should be negative and the other should be positive).\n\n\nFor each **x** from **1** to **N**, compute the length of the longest alternating subarray that starts at **x** - that is, a subarray **Ax..y** for the maximum possible **y \u2265 x**. The length of such a subarray is **y-x+1**.",
+    "problemStatement": "There's an array **A** consisting of **N** **non-zero** integers **A1..N**. A subarray of **A** is called alternating if any two adjacent elements in it have different signs (i.e. one of them should be negative and the other should be positive).\n\n\nFor each **x** from **1** to **N**, compute the length of the longest alternating subarray that starts at **x** - that is, a subarray **Ax..y** for the maximum possible **y ≥ x**. The length of such a subarray is **y-x+1**.",
     "constraints": [
       "1 <= T <= 10",
       "1 <= N <= 100000",
       "Ai != 0",
       "|Ai| <= 10^9"
     ],
-    "inputFormat": "First line contains an integer T, the number of test cases. Each test case consists of two lines: the first line contains an integer N (the length of the array). The second line contains N space-separated non-zero integers A1 \u2026 AN.",
+    "inputFormat": "First line contains an integer T, the number of test cases. Each test case consists of two lines: the first line contains an integer N (the length of the array). The second line contains N space-separated non-zero integers A1 … AN.",
     "outputFormat": "For each test case output one line with N space-separated integers. The i-th integer is the length of the longest subarray starting at position i that alternates in sign.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "3\n4\n1 2 3 4\n4\n1 -5 1 -5\n6\n-5 -1 -1 2 -2 -3\n",
         "output": "1 1 1 1\n4 3 2 1\n1 1 3 2 1 1\n",
-        "explanation": "First test: no adjacent opposite signs, so each answer is 1. Second test: signs alternate everywhere, giving decreasing lengths from left to right. Third test: only positions 3\u20115 form a length\u20113 alternating segment."
+        "explanation": "First test: no adjacent opposite signs, so each answer is 1. Second test: signs alternate everywhere, giving decreasing lengths from left to right. Third test: only positions 3‑5 form a length‑3 alternating segment."
       },
       {
         "id": "sample_2",
         "input": "2\n3\n1 2 3\n5\n-1 2 -3 4 -5\n",
         "output": "1 1 1\n5 4 3 2 1\n",
-        "explanation": "First case same as before. Second case the whole array alternates, so lengths are N, N\u20111, \u2026, 1."
+        "explanation": "First case same as before. Second case the whole array alternates, so lengths are N, N‑1, …, 1."
       },
       {
         "id": "sample_3",
@@ -115,7 +115,7 @@
     ]
   },
   "solution": {
-    "approach": "Traverse the array from right to left. Let ans[i] be the answer for position i (0\u2011based). The last element always forms a subarray of length 1, so ans[N\u20111] = 1. For i from N\u20112 down to 0, if A[i] and A[i+1] have opposite signs (their product is negative) then ans[i] = ans[i+1] + 1, otherwise ans[i] = 1. This works because a longest alternating subarray starting at i either stops at i (if the next element has the same sign) or extends the longest alternating subarray starting at i+1 by one element.",
+    "approach": "Traverse the array from right to left. Let ans[i] be the answer for position i (0‑based). The last element always forms a subarray of length 1, so ans[N‑1] = 1. For i from N‑2 down to 0, if A[i] and A[i+1] have opposite signs (their product is negative) then ans[i] = ans[i+1] + 1, otherwise ans[i] = 1. This works because a longest alternating subarray starting at i either stops at i (if the next element has the same sign) or extends the longest alternating subarray starting at i+1 by one element.",
     "timeComplexity": "O(N) per test case, O(total N) over all test cases.",
     "spaceComplexity": "O(N) for the answer array (can be O(1) extra if printed on the fly).",
     "code": {
@@ -125,5 +125,6 @@
       "Python3": "import sys\n\ndef solve():\n    data = sys.stdin.buffer.read().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out_lines = []\n    for _ in range(T):\n        N = int(next(it))\n        A = [int(next(it)) for _ in range(N)]\n        ans = [1] * N\n        for i in range(N-2, -1, -1):\n            if A[i] * A[i+1] < 0:\n                ans[i] = ans[i+1] + 1\n        out_lines.append(' '.join(map(str, ans)))\n    sys.stdout.write('\\n'.join(out_lines))\n\nif __name__ == \"__main__\":\n    solve()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet output = [];\nfor (let t = 0; t < T; ++t) {\n  const N = Number(input[idx++]);\n  const A = new Array(N);\n  for (let i = 0; i < N; ++i) A[i] = Number(input[idx++]);\n  const ans = new Array(N).fill(1);\n  for (let i = N - 2; i >= 0; --i) {\n    if (A[i] * A[i + 1] < 0) ans[i] = ans[i + 1] + 1;\n    else ans[i] = 1;\n  }\n  output.push(ans.join(' '));\n}\nconsole.log(output.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

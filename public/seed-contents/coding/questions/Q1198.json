@@ -21,27 +21,27 @@
     ]
   },
   "content": {
-    "problemStatement": "There are NNN people on a street (numbered 111 through NNN). For simplicity, we'll view them as points on a line. For each valid iii, the position of the iii-th person is XiX_iXi\u200b.\n\nIt turns out that exactly one of these people is infected with the virus COVID-19, but we do not know which one. The virus will spread from an infected person to a non-infected person whenever the distance between them is at most 222. If we wait long enough, a specific set of people (depending on the person that was infected initially) will become infected; let's call the size of this set the final number of infected people.\n\nYour task is to find the smallest and largest value of the final number of infected people, i.e. this number in the best and in the worst possible scenario.",
+    "problemStatement": "There are NNN people on a street (numbered 111 through NNN). For simplicity, we'll view them as points on a line. For each valid iii, the position of the iii-th person is XiX_iXi​.\n\nIt turns out that exactly one of these people is infected with the virus COVID-19, but we do not know which one. The virus will spread from an infected person to a non-infected person whenever the distance between them is at most 222. If we wait long enough, a specific set of people (depending on the person that was infected initially) will become infected; let's call the size of this set the final number of infected people.\n\nYour task is to find the smallest and largest value of the final number of infected people, i.e. this number in the best and in the worst possible scenario.",
     "constraints": [
-      "1 \u2264 T \u2264 2000",
-      "1 \u2264 N \u2264 1000",
-      "0 \u2264 Xi \u2264 10^9",
-      "X1 < X2 < \u2026 < XN"
+      "1 ≤ T ≤ 2000",
+      "1 ≤ N ≤ 1000",
+      "0 ≤ Xi ≤ 10^9",
+      "X1 < X2 < … < XN"
     ],
-    "inputFormat": "First line contains an integer T, the number of test cases. For each test case: first line contains an integer N (1 \u2264 N \u2264 1000) \u2013 the number of people. Second line contains N distinct integers X1, X2, \u2026, XN (0 \u2264 Xi \u2264 10^9) in strictly increasing order, the positions of the people on the line.",
+    "inputFormat": "First line contains an integer T, the number of test cases. For each test case: first line contains an integer N (1 ≤ N ≤ 1000) – the number of people. Second line contains N distinct integers X1, X2, …, XN (0 ≤ Xi ≤ 10^9) in strictly increasing order, the positions of the people on the line.",
     "outputFormat": "For each test case output a single line with two integers separated by a space: the minimum possible final number of infected people and the maximum possible final number of infected people.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "3\n2\n3 6\n3\n1 3 5\n5\n1 2 5 6 7",
         "output": "1 1\n3 3\n2 3",
-        "explanation": "Case 1: distance 3 > 2, each person stays isolated \u2192 component sizes 1 and 1. Case 2: every adjacent distance is exactly 2, all 3 people belong to one component. Case 3: positions form components {1,2} (size 2) and {5,6,7} (size 3). Minimum size is 2, maximum size is 3."
+        "explanation": "Case 1: distance 3 > 2, each person stays isolated → component sizes 1 and 1. Case 2: every adjacent distance is exactly 2, all 3 people belong to one component. Case 3: positions form components {1,2} (size 2) and {5,6,7} (size 3). Minimum size is 2, maximum size is 3."
       },
       {
         "id": "sample_2",
         "input": "1\n4\n0 1 4 5",
         "output": "2 2",
-        "explanation": "Positions 0\u20111 are within distance 2 \u2192 component size 2. Positions 4\u20115 form another component of size 2. Both components have the same size, so min = max = 2."
+        "explanation": "Positions 0‑1 are within distance 2 → component size 2. Positions 4‑5 form another component of size 2. Both components have the same size, so min = max = 2."
       },
       {
         "id": "sample_3",
@@ -115,7 +115,7 @@
     ]
   },
   "solution": {
-    "approach": "The virus can spread only between people whose distance is at most 2. Because the positions are sorted, the whole set splits into maximal contiguous groups where every adjacent gap \u2264 2. Each such group forms a connected component and will be completely infected if any member of the group is the initial carrier. Therefore the final infected size for a starting person equals the size of the component containing that person. The answer is simply the smallest and the largest component sizes. We scan the array once, keep a running count of the current component length, and update global minima and maxima whenever a gap > 2 ends the component.",
+    "approach": "The virus can spread only between people whose distance is at most 2. Because the positions are sorted, the whole set splits into maximal contiguous groups where every adjacent gap ≤ 2. Each such group forms a connected component and will be completely infected if any member of the group is the initial carrier. Therefore the final infected size for a starting person equals the size of the component containing that person. The answer is simply the smallest and the largest component sizes. We scan the array once, keep a running count of the current component length, and update global minima and maxima whenever a gap > 2 ends the component.",
     "timeComplexity": "O(N) per test case, O(total N) over all test cases.",
     "spaceComplexity": "O(1) besides the input array.",
     "code": {
@@ -125,5 +125,6 @@
       "Python3": "import sys\n\ndef solve():\n    data = sys.stdin.buffer.read().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out_lines = []\n    for _ in range(T):\n        N = int(next(it))\n        X = [int(next(it)) for _ in range(N)]\n        min_sz, max_sz = N, 1\n        cur = 1\n        for i in range(1, N):\n            if X[i] - X[i-1] <= 2:\n                cur += 1\n            else:\n                if cur < min_sz:\n                    min_sz = cur\n                if cur > max_sz:\n                    max_sz = cur\n                cur = 1\n        if cur < min_sz:\n            min_sz = cur\n        if cur > max_sz:\n            max_sz = cur\n        out_lines.append(f\"{min_sz} {max_sz}\")\n    sys.stdout.write(\"\\n\".join(out_lines))\n\nif __name__ == \"__main__\":\n    solve()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet out = [];\nfor (let t = 0; t < T; ++t) {\n  const N = Number(input[idx++]);\n  const X = new Array(N);\n  for (let i = 0; i < N; ++i) X[i] = Number(input[idx++]);\n  let minSize = N, maxSize = 1;\n  let cur = 1;\n  for (let i = 1; i < N; ++i) {\n    if (X[i] - X[i-1] <= 2) {\n      ++cur;\n    } else {\n      if (cur < minSize) minSize = cur;\n      if (cur > maxSize) maxSize = cur;\n      cur = 1;\n    }\n  }\n  if (cur < minSize) minSize = cur;\n  if (cur > maxSize) maxSize = cur;\n  out.push(minSize + ' ' + maxSize);\n}\nconsole.log(out.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

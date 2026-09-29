@@ -151,7 +151,7 @@
       "JavaScript": "const readline = require(\"readline\");\n\nfunction oddEvenJumps(arr) {\n    const n = arr.length;\n    if (n <= 1) return n;\n\n    function buildNext(indices) {\n        const next = new Int32Array(n);\n        next.fill(-1);\n        const stack = [];\n        for (const i of indices) {\n            while (stack.length && stack[stack.length - 1] < i) next[stack.pop()] = i;\n            stack.push(i);\n        }\n        return next;\n    }\n\n    let indices = Array.from({length:n}, (_,i)=>i);\n    indices.sort((a,b)=>arr[a]-arr[b] || a-b);\n    const nextOdd = buildNext(indices);\n    indices = Array.from({length:n}, (_,i)=>i);\n    indices.sort((a,b)=>arr[b]-arr[a] || a-b);\n    const nextEven = buildNext(indices);\n\n    const oddGood = new Uint8Array(n);\n    const evenGood = new Uint8Array(n);\n    oddGood[n-1] = 1; evenGood[n-1] = 1;\n    for (let i=n-2;i>=0;--i) {\n        const o=nextOdd[i], e=nextEven[i];\n        if (o!==-1) oddGood[i]=evenGood[o];\n        if (e!==-1) evenGood[i]=oddGood[e];\n    }\n    let ans=0;\n    for (let i=0;i<n;++i) ans += oddGood[i];\n    return ans;\n}"
     }
   },
-  "verified": false,
+  "verified": true,
   "_internal": {
     "params": [
       {

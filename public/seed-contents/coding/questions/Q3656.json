@@ -20,12 +20,12 @@
     ]
   },
   "content": {
-    "problemStatement": "The Chef has acquired a vicious bunch of snakes, and these snakes are ever hungry and end up eating each other. In particular, each snake i has a length **Li**, whose initial value is given to you. A snake can eat any other snake which is not longer than itself. That is, snake i can eat snake j (i \u2260 j), if **Li** \u2265 **Lj**. And when a snake eats another snake, its length increases by 1. That is, **Li** increases by 1. A snake can eat multiple other snakes.\n\nThe Chef doesn't care about snakes eating each other. All he wants is to have as many snakes as possible, which are at least some particular lengths long. You are given **Q** values: **K1, K2, .., KQ**. Treat each of them independently and output the answer for each. That is, for each **Ki**, assume that you start out from the beginning with all the snakes alive and the lengths as the initial values given in the input, and find out the maximum number of snakes you can get whose length is at least **Ki**.",
+    "problemStatement": "The Chef has acquired a vicious bunch of snakes, and these snakes are ever hungry and end up eating each other. In particular, each snake i has a length **Li**, whose initial value is given to you. A snake can eat any other snake which is not longer than itself. That is, snake i can eat snake j (i ≠ j), if **Li** ≥ **Lj**. And when a snake eats another snake, its length increases by 1. That is, **Li** increases by 1. A snake can eat multiple other snakes.\n\nThe Chef doesn't care about snakes eating each other. All he wants is to have as many snakes as possible, which are at least some particular lengths long. You are given **Q** values: **K1, K2, .., KQ**. Treat each of them independently and output the answer for each. That is, for each **Ki**, assume that you start out from the beginning with all the snakes alive and the lengths as the initial values given in the input, and find out the maximum number of snakes you can get whose length is at least **Ki**.",
     "constraints": [
-      "1 \u2264 T \u2264 5",
-      "1 \u2264 N, Q \u2264 105",
-      "1 \u2264 Li \u2264 109",
-      "1 \u2264 Ki \u2264 109"
+      "1 ≤ T ≤ 5",
+      "1 ≤ N, Q ≤ 105",
+      "1 ≤ Li ≤ 109",
+      "1 ≤ Ki ≤ 109"
     ],
     "inputFormat": "The first line contains an integer T, which is the number of testcases. The description of each testcase follows. The first line of each testcase contains two integers: N and Q, which denote the number of snakes initially, and the number of queries, respectively. The second line contains N space separated integers: L1, L2, .., LN, the initial lengths of the snakes. The i-th of the next Q lines contains a single integer, Ki.",
     "outputFormat": "For each testcase, output Q lines, the i-th of which should have a single integer: The maximum number of snakes the Chef can get which are of length at least Ki.",
@@ -34,7 +34,7 @@
         "id": "sample_1",
         "input": "2\n5 2\n21 9 5 8 10\n10\n15\n5 1\n1 2 3 4 5\n100",
         "output": "3\n1\n0",
-        "explanation": "Explanation: In the first testcase, first query, the second snake (length 9) can eat the fourth snake (length 8), and hence make its length 10. Now, there are four snakes left, and their lengths are {21, 10, 5, 10}. So, we have three snakes with length \u2265 10: Two snakes of length 10 and one snake of length 21. This is the best you can do. In the second query, no matter what happens, you cannot get more than one snake of length \u2265 15. In the second testcase, no matter what happens, you cannot get any snake of length \u2265 100. Hence the answer is 0."
+        "explanation": "Explanation: In the first testcase, first query, the second snake (length 9) can eat the fourth snake (length 8), and hence make its length 10. Now, there are four snakes left, and their lengths are {21, 10, 5, 10}. So, we have three snakes with length ≥ 10: Two snakes of length 10 and one snake of length 21. This is the best you can do. In the second query, no matter what happens, you cannot get more than one snake of length ≥ 15. In the second testcase, no matter what happens, you cannot get any snake of length ≥ 100. Hence the answer is 0."
       }
     ]
   },
@@ -103,8 +103,8 @@
   },
   "solution": {
     "approach": "The problem can be solved by sorting the lengths of the snakes and then using a two-pointer technique to find the maximum number of snakes that can be made to have a length of at least Ki. The idea is to start from the smallest length and try to make as many snakes as possible to have a length of at least Ki by eating smaller snakes.",
-    "timeComplexity": "O(T * (N log N + Q log Q)) \u2014 sorting the lengths of the snakes and the queries, and then using a two-pointer technique to find the maximum number of snakes that can be made to have a length of at least Ki.",
-    "spaceComplexity": "O(N + Q) \u2014 storing the lengths of the snakes and the queries.",
+    "timeComplexity": "O(T * (N log N + Q log Q)) — sorting the lengths of the snakes and the queries, and then using a two-pointer technique to find the maximum number of snakes that can be made to have a length of at least Ki.",
+    "spaceComplexity": "O(N + Q) — storing the lengths of the snakes and the queries.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint compare(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, Q;\n        scanf(\"%d %d\", &N, &Q);\n        int L[N], K[Q];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &L[i]);\n        }\n        for (int i = 0; i < Q; i++) {\n            scanf(\"%d\", &K[i]);\n        }\n        qsort(L, N, sizeof(int), compare);\n        qsort(K, Q, sizeof(int), compare);\n        for (int i = 0; i < Q; i++) {\n            int count = 0;\n            int j = N - 1;\n            while (j >= 0 && L[j] >= K[i]) {\n                count++;\n                j--;\n            }\n            printf(\"%d\\n\", count);\n        }\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, Q;\n        cin >> N >> Q;\n        int L[N], K[Q];\n        for (int i = 0; i < N; i++) {\n            cin >> L[i];\n        }\n        for (int i = 0; i < Q; i++) {\n            cin >> K[i];\n        }\n        sort(L, L + N);\n        sort(K, K + Q);\n        for (int i = 0; i < Q; i++) {\n            int count = 0;\n            int j = N - 1;\n            while (j >= 0 && L[j] >= K[i]) {\n                count++;\n                j--;\n            }\n            cout << count << endl;\n        }\n    }\n    return 0;\n}",
@@ -112,5 +112,6 @@
       "Python3": "import sys\n\nT = int(input())\nfor _ in range(T):\n    N, Q = map(int, input().split())\n    L = list(map(int, input().split()))\n    K = [int(input()) for _ in range(Q)]\n    L.sort()\n    K.sort()\n    for i in range(Q):\n        count = 0\n        j = N - 1\n        while j >= 0 and L[j] >= K[i]:\n            count += 1\n            j -= 1\n        print(count)\n",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction nextInt() {\n    return parseInt(lines[idx++]);\n}\n\nfunction nextIntArray() {\n    return lines[idx++].trim().split(' ').map(Number);\n}\n\nlet T = nextInt();\nwhile (T-- > 0) {\n    let [N, Q] = nextIntArray();\n    let L = nextIntArray();\n    let K = [];\n    for (let i = 0; i < Q; i++) {\n        K.push(nextInt());\n    }\n    L.sort((a, b) => a - b);\n    K.sort((a, b) => a - b);\n    for (let i = 0; i < Q; i++) {\n        let count = 0;\n        let j = N - 1;\n        while (j >= 0 && L[j] >= K[i]) {\n            count++;\n            j--;\n        }\n        console.log(count);\n    }\n}\n"
     }
-  }
+  },
+  "verified": false
 }

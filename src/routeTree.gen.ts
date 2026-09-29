@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
+import { Route as AudioTestRouteImport } from './routes/audio-test'
 import { Route as GuestRouteImport } from './routes/guest'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
@@ -34,6 +35,11 @@ const IndexRoute = IndexRouteImport.update({
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AudioTestRoute = AudioTestRouteImport.update({
+  id: '/audio-test',
+  path: '/audio-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuestRoute = GuestRouteImport.update({
@@ -115,6 +121,7 @@ const StudentPracticeCourseCourseIdQuestionIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/audio-test': typeof AudioTestRoute
   '/guest': typeof GuestRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/audio-test': typeof AudioTestRoute
   '/guest': typeof GuestRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/audio-test': typeof AudioTestRoute
   '/guest': typeof GuestRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/audio-test'
     | '/guest'
     | '/home'
     | '/login'
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$'
+    | '/audio-test'
     | '/guest'
     | '/home'
     | '/login'
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$'
+    | '/audio-test'
     | '/guest'
     | '/home'
     | '/login'
@@ -227,6 +239,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  AudioTestRoute: typeof AudioTestRoute
   GuestRoute: typeof GuestRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
@@ -257,6 +270,13 @@ declare module '@tanstack/react-router' {
       path: '/$'
       fullPath: '/$'
       preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audio-test': {
+      id: '/audio-test'
+      path: '/audio-test'
+      fullPath: '/audio-test'
+      preLoaderRoute: typeof AudioTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guest': {
@@ -363,6 +383,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  AudioTestRoute: AudioTestRoute,
   GuestRoute: GuestRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,

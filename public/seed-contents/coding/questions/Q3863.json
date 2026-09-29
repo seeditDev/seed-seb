@@ -20,7 +20,7 @@
     ]
   },
   "content": {
-    "problemStatement": "Chef has a sequence **A** with length **N** and a line given by the equation **y**(**x**) = **k \u00b7 x + b**. Let us say that an element **Aj** is reachable from another element **Ai** if the point (**Ai**, **Aj**) is lying above or on the line **y**(**x**), i.e. if **Aj** \u2265  **k \u00b7 Ai + b**.\n\nConsider an arbitrary subsequence of **A**; let's denote it by **B**. Subsequence **B** is called good if its elements can be reordered in such a way that for each valid **i**, **Bi+1** is reachable from **Bi**.\n\nChef asked you to compute the maximum possible length of a good subsequence. Can you help him?",
+    "problemStatement": "Chef has a sequence **A** with length **N** and a line given by the equation **y**(**x**) = **k · x + b**. Let us say that an element **Aj** is reachable from another element **Ai** if the point (**Ai**, **Aj**) is lying above or on the line **y**(**x**), i.e. if **Aj** ≥  **k · Ai + b**.\n\nConsider an arbitrary subsequence of **A**; let's denote it by **B**. Subsequence **B** is called good if its elements can be reordered in such a way that for each valid **i**, **Bi+1** is reachable from **Bi**.\n\nChef asked you to compute the maximum possible length of a good subsequence. Can you help him?",
     "constraints": [
       "1 <= T <= 5000",
       "1 <= N <= 100000",
@@ -29,7 +29,7 @@
       "1 <= sum of N over all test cases <= 200000"
     ],
     "inputFormat": "The first line of the input contains a single integer T denoting the number of test cases. The description of T test cases follows. The first line of each test case contains three space-separated integers N, k and b. The second line contains N space-separated integers A1, A2, ..., AN.",
-    "outputFormat": "For each test case, print a single line containing one integer \u2014 the length of the longest good subsequence of A.",
+    "outputFormat": "For each test case, print a single line containing one integer — the length of the longest good subsequence of A.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -116,8 +116,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can use dynamic programming to find the longest increasing subsequence in the given array A. However, we need to modify the approach to consider the given line equation y(x) = k * x + b. We can sort the array A and then use dynamic programming to find the longest subsequence that satisfies the condition Aj >= k * Ai + b for each pair of elements (Ai, Aj).",
-    "timeComplexity": "O(T * N log N) \u2014 where T is the number of test cases and N is the maximum length of the array A. The sorting step takes O(N log N) time, and the dynamic programming step takes O(N^2) time in the worst case.",
-    "spaceComplexity": "O(N) \u2014 where N is the maximum length of the array A. We need to store the sorted array and the dynamic programming table.",
+    "timeComplexity": "O(T * N log N) — where T is the number of test cases and N is the maximum length of the array A. The sorting step takes O(N log N) time, and the dynamic programming step takes O(N^2) time in the worst case.",
+    "spaceComplexity": "O(N) — where N is the maximum length of the array A. We need to store the sorted array and the dynamic programming table.",
     "code": {
       "C": "// COMPLETE, COMPILABLE C code\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <math.h>\n#define MAXN 100000\n\nint compare(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, k, b;\n        scanf(\"%d %d %d\", &N, &k, &b);\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &A[i]);\n        }\n        qsort(A, N, sizeof(int), compare);\n        int dp[N];\n        int maxLen = 0;\n        for (int i = 0; i < N; i++) {\n            dp[i] = 1;\n            for (int j = 0; j < i; j++) {\n                if (A[i] >= k * A[j] + b) {\n                    dp[i] = (dp[i] > dp[j] + 1) ? dp[i] : dp[j] + 1;\n                }\n            }\n            maxLen = (maxLen > dp[i]) ? maxLen : dp[i];\n        }\n        printf(\"%d\\n\", maxLen);\n    }\n    return 0;\n}",
       "C++": "// COMPLETE, COMPILABLE C++ code\n#include <iostream>\n#include <algorithm>\nusing namespace std;\n#define MAXN 100000\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, k, b;\n        cin >> N >> k >> b;\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            cin >> A[i];\n        }\n        sort(A, A + N);\n        int dp[N];\n        int maxLen = 0;\n        for (int i = 0; i < N; i++) {\n            dp[i] = 1;\n            for (int j = 0; j < i; j++) {\n                if (A[i] >= k * A[j] + b) {\n                    dp[i] = max(dp[i], dp[j] + 1);\n                }\n            }\n            maxLen = max(maxLen, dp[i]);\n        }\n        cout << maxLen << endl;\n    }\n    return 0;\n}",
@@ -125,5 +125,6 @@
       "Python3": "# COMPLETE, RUNNABLE Python3 code\nimport sys\ninput = sys.stdin.readline\nT = int(input())\nfor _ in range(T):\n    N, k, b = map(int, input().split())\n    A = list(map(int, input().split()))\n    A.sort()\n    dp = [1] * N\n    maxLen = 0\n    for i in range(N):\n        for j in range(i):\n            if A[i] >= k * A[j] + b:\n                dp[i] = max(dp[i], dp[j] + 1)\n        maxLen = max(maxLen, dp[i])\n    print(maxLen)",
       "JavaScript": "// COMPLETE, RUNNABLE JavaScript code\nconst fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [N, k, b] = readline().split(' ').map(Number);\n    const A = readline().split(' ').map(Number).sort((a, b) => a - b);\n    const dp = new Array(N).fill(1);\n    let maxLen = 0;\n    for (let j = 0; j < N; j++) {\n        for (let l = 0; l < j; l++) {\n            if (A[j] >= k * A[l] + b) {\n                dp[j] = Math.max(dp[j], dp[l] + 1);\n            }\n        }\n        maxLen = Math.max(maxLen, dp[j]);\n    }\n    console.log(maxLen);\n}"
     }
-  }
+  },
+  "verified": false
 }

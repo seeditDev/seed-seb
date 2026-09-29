@@ -20,7 +20,7 @@
     ]
   },
   "content": {
-    "problemStatement": "Let's consider a rectangular table **R** consisting of **N** rows and **M** columns. Rows are enumerated from **1**  to **N** from top to bottom. Columns are enumerated from 1 to **M** from left to right. Each element of **R** is a non-negative integer. **R** is called **steady** if the sum of elements in the **ith** row is not less then the sum of elements in the **(i-1)th** row for each **i** where **2 \u2264 i \u2264 N** and the sum of elements in the **Nth** row is less than or equal to **M**. Your task is to find the number of different steady tables of size **N x M** modulo **1 000 000 000**.",
+    "problemStatement": "Let's consider a rectangular table **R** consisting of **N** rows and **M** columns. Rows are enumerated from **1**  to **N** from top to bottom. Columns are enumerated from 1 to **M** from left to right. Each element of **R** is a non-negative integer. **R** is called **steady** if the sum of elements in the **ith** row is not less then the sum of elements in the **(i-1)th** row for each **i** where **2 ≤ i ≤ N** and the sum of elements in the **Nth** row is less than or equal to **M**. Your task is to find the number of different steady tables of size **N x M** modulo **1 000 000 000**.",
     "constraints": [
       "1 <= T <= 10",
       "1 <= N, M <= 2000"
@@ -114,7 +114,7 @@
   "solution": {
     "approach": "The problem can be solved using dynamic programming. We create a 2D array dp where dp[i][j] represents the number of steady tables of size i x j. We iterate over each cell in the table and for each cell, we calculate the number of steady tables by considering all possible sums of the previous row that are less than or equal to the current sum. We use modular arithmetic to avoid overflow.",
     "timeComplexity": "O(T * N * M^2) per test case, O(T * N * M^2) total.",
-    "spaceComplexity": "O(N * M) \u2014 the dominant structure is the 2D dp array.",
+    "spaceComplexity": "O(N * M) — the dominant structure is the 2D dp array.",
     "code": {
       "C": "#include <stdio.h>\n#define MOD 1000000000\nint dp[2001][2001];\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, M;\n        scanf(\"%d %d\", &N, &M);\n        for (int i = 0; i <= N; i++) {\n            for (int j = 0; j <= M; j++) {\n                dp[i][j] = 0;\n            }\n        }\n        dp[0][0] = 1;\n        for (int i = 1; i <= N; i++) {\n            for (int j = 0; j <= M; j++) {\n                for (int k = 0; k <= j; k++) {\n                    dp[i][j] = (dp[i][j] + dp[i - 1][k]) % MOD;\n                }\n            }\n        }\n        int ans = 0;\n        for (int j = 0; j <= M; j++) {\n            ans = (ans + dp[N][j]) % MOD;\n        }\n        printf(\"%d\\n\", ans);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#define MOD 1000000000\nusing namespace std;\nint dp[2001][2001];\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, M;\n        cin >> N >> M;\n        for (int i = 0; i <= N; i++) {\n            for (int j = 0; j <= M; j++) {\n                dp[i][j] = 0;\n            }\n        }\n        dp[0][0] = 1;\n        for (int i = 1; i <= N; i++) {\n            for (int j = 0; j <= M; j++) {\n                for (int k = 0; k <= j; k++) {\n                    dp[i][j] = (dp[i][j] + dp[i - 1][k]) % MOD;\n                }\n            }\n        }\n        int ans = 0;\n        for (int j = 0; j <= M; j++) {\n            ans = (ans + dp[N][j]) % MOD;\n        }\n        cout << ans << endl;\n    }\n    return 0;\n}",
@@ -122,5 +122,6 @@
       "Python3": "MOD = 1000000000\nimport sys\ninput = sys.stdin.readline\ndp = [[0] * 2001 for _ in range(2001)]\nT = int(input())\nfor _ in range(T):\n    N, M = map(int, input().split())\n    for i in range(N + 1):\n        for j in range(M + 1):\n            dp[i][j] = 0\n    dp[0][0] = 1\n    for i in range(1, N + 1):\n        for j in range(M + 1):\n            for k in range(j + 1):\n                dp[i][j] = (dp[i][j] + dp[i - 1][k]) % MOD\n    ans = 0\n    for j in range(M + 1):\n        ans = (ans + dp[N][j]) % MOD\n    print(ans)",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst MOD = 1000000000;\nconst dp = Array(2001).fill(0).map(() => Array(2001).fill(0));\nconst T = parseInt(input[idx++]);\nfor (let i = 0; i < T; i++) {\n    const [N, M] = input[idx++].split(' ').map(Number);\n    for (let j = 0; j <= N; j++) {\n        for (let k = 0; k <= M; k++) {\n            dp[j][k] = 0;\n        }\n    }\n    dp[0][0] = 1;\n    for (let j = 1; j <= N; j++) {\n        for (let k = 0; k <= M; k++) {\n            for (let l = 0; l <= k; l++) {\n                dp[j][k] = (dp[j][k] + dp[j - 1][l]) % MOD;\n            }\n        }\n    }\n    let ans = 0;\n    for (let k = 0; k <= M; k++) {\n        ans = (ans + dp[N][k]) % MOD;\n    }\n    console.log(ans);\n}"
     }
-  }
+  },
+  "verified": false
 }

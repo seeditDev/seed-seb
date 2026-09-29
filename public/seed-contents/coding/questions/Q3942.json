@@ -20,16 +20,16 @@
     ]
   },
   "content": {
-    "problemStatement": "Chef has started learning to solve dynamic programming problems recently. He has practiced on a lot of problems already, so he wants to try his hands on the hardest problems in this domain.\n\nChef only likes the interesting part of solving dynamic programming problems \u2014 specifically, he just likes to divide a problem into beautiful subproblems which consist of solving recurrences; he finds actually solving these recurrences quite boring. Since you are Chef's assistant, your job is solving this boring part for Chef.\n\nLet's define a recurrent sequence {dp(k)}k=1\u221e\\left\\lbrace{dp(k)}\\right\\rbrace_{k=1}^\\infty{dp(k)}k=1\u221e\u200b with parametres AAA, BBB and KKK as follows:\n\n\ndp(1)=Kdp(1) = Kdp(1)=K\nfor n&gt;1n \\gt 1n&gt;1, dp(n)=A\u22c5dp(n\u22121)+B\u22c5\u2211i=1n\u22121dp(i)\u22c5dp(n\u2212i)dp(n) = A \\cdot dp(n-1) + B\\cdot \\sum\\limits_{i=1}^{n-1} dp(i) \\cdot dp(n-i)dp(n)=A\u22c5dp(n\u22121)+B\u22c5i=1\u2211n\u22121\u200bdp(i)\u22c5dp(n\u2212i)\nChef would like you to find the sum \u2211i=LRdp(i)2\\sum\\limits_{i=L}^{R} dp(i)^2i=L\u2211R\u200bdp(i)2. Since this number can be very large, compute it modulo 109+710^9+7109+7. He wants to do this for QQQ pairs of LLL and RRR.",
+    "problemStatement": "Chef has started learning to solve dynamic programming problems recently. He has practiced on a lot of problems already, so he wants to try his hands on the hardest problems in this domain.\n\nChef only likes the interesting part of solving dynamic programming problems — specifically, he just likes to divide a problem into beautiful subproblems which consist of solving recurrences; he finds actually solving these recurrences quite boring. Since you are Chef's assistant, your job is solving this boring part for Chef.\n\nLet's define a recurrent sequence {dp(k)}k=1∞\\left\\lbrace{dp(k)}\\right\\rbrace_{k=1}^\\infty{dp(k)}k=1∞​ with parametres AAA, BBB and KKK as follows:\n\n\ndp(1)=Kdp(1) = Kdp(1)=K\nfor n&gt;1n \\gt 1n&gt;1, dp(n)=A⋅dp(n−1)+B⋅∑i=1n−1dp(i)⋅dp(n−i)dp(n) = A \\cdot dp(n-1) + B\\cdot \\sum\\limits_{i=1}^{n-1} dp(i) \\cdot dp(n-i)dp(n)=A⋅dp(n−1)+B⋅i=1∑n−1​dp(i)⋅dp(n−i)\nChef would like you to find the sum ∑i=LRdp(i)2\\sum\\limits_{i=L}^{R} dp(i)^2i=L∑R​dp(i)2. Since this number can be very large, compute it modulo 109+710^9+7109+7. He wants to do this for QQQ pairs of LLL and RRR.",
     "constraints": [
-      "1 \u2264 N \u2264 10^7",
-      "1 \u2264 Q \u2264 5*10^4",
-      "1 \u2264 L \u2264 R \u2264 N",
-      "1 \u2264 B, K \u2264 10^9+7",
-      "0 \u2264 A \u2264 10^9+7"
+      "1 ≤ N ≤ 10^7",
+      "1 ≤ Q ≤ 5*10^4",
+      "1 ≤ L ≤ R ≤ N",
+      "1 ≤ B, K ≤ 10^9+7",
+      "0 ≤ A ≤ 10^9+7"
     ],
     "inputFormat": "The first line contains four space-separated integers N, K, A, and B. The second line contains Q. The next Q lines contain two space-separated integers L and R.",
-    "outputFormat": "For every query, print a single line containing one integer \u2014 the sum \u2211i=L^R dp(i)^2 modulo 10^9+7.",
+    "outputFormat": "For every query, print a single line containing one integer — the sum ∑i=L^R dp(i)^2 modulo 10^9+7.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -103,9 +103,9 @@
     ]
   },
   "solution": {
-    "approach": "To solve this problem, we first need to compute the values of dp(i) for i from 1 to N using the given recurrence relation. We can do this by maintaining an array dp of size N+1, where dp[i] stores the value of dp(i). We then compute the sum \u2211i=L^R dp(i)^2 for each query by iterating over the range [L, R] and adding the square of dp(i) to the sum. Finally, we take the sum modulo 10^9+7 to get the final answer.",
-    "timeComplexity": "O(N + Q*R) \u2014 where N is the maximum value of N and R is the maximum value of R in the queries.",
-    "spaceComplexity": "O(N) \u2014 for storing the values of dp(i) in the array dp.",
+    "approach": "To solve this problem, we first need to compute the values of dp(i) for i from 1 to N using the given recurrence relation. We can do this by maintaining an array dp of size N+1, where dp[i] stores the value of dp(i). We then compute the sum ∑i=L^R dp(i)^2 for each query by iterating over the range [L, R] and adding the square of dp(i) to the sum. Finally, we take the sum modulo 10^9+7 to get the final answer.",
+    "timeComplexity": "O(N + Q*R) — where N is the maximum value of N and R is the maximum value of R in the queries.",
+    "spaceComplexity": "O(N) — for storing the values of dp(i) in the array dp.",
     "code": {
       "C": "// COMPLETE, COMPILABLE C code\n#include <stdio.h>\n#define MOD 1000000007\nlong long dp[10000001];\nint main() {\n    int N, K, A, B, Q;\n    scanf(\"%d %d %d %d\", &N, &K, &A, &B);\n    dp[1] = K;\n    for (int i = 2; i <= N; i++) {\n        dp[i] = (A * dp[i-1] + B * dp[i-1] * dp[i-1]) % MOD;\n        for (int j = 1; j < i-1; j++) {\n            dp[i] = (dp[i] + B * dp[j] * dp[i-j]) % MOD;\n        }\n    }\n    scanf(\"%d\", &Q);\n    while (Q--) {\n        int L, R;\n        scanf(\"%d %d\", &L, &R);\n        long long sum = 0;\n        for (int i = L; i <= R; i++) {\n            sum = (sum + dp[i] * dp[i]) % MOD;\n        }\n        printf(\"%lld\\n\", sum);\n    }\n    return 0;\n}",
       "C++": "// COMPLETE, COMPILABLE C++ code\n#include <iostream>\n#define MOD 1000000007\nusing namespace std;\nlong long dp[10000001];\nint main() {\n    int N, K, A, B, Q;\n    cin >> N >> K >> A >> B;\n    dp[1] = K;\n    for (int i = 2; i <= N; i++) {\n        dp[i] = (A * dp[i-1] + B * dp[i-1] * dp[i-1]) % MOD;\n        for (int j = 1; j < i-1; j++) {\n            dp[i] = (dp[i] + B * dp[j] * dp[i-j]) % MOD;\n        }\n    }\n    cin >> Q;\n    while (Q--) {\n        int L, R;\n        cin >> L >> R;\n        long long sum = 0;\n        for (int i = L; i <= R; i++) {\n            sum = (sum + dp[i] * dp[i]) % MOD;\n        }\n        cout << sum << endl;\n    }\n    return 0;\n}",
@@ -113,5 +113,6 @@
       "Python3": "# COMPLETE, RUNNABLE Python3 code\nMOD = 1000000007\ndp = [0] * 10000001\ndp[1] = int(input().split()[1])\nN, K, A, B = map(int, input().split())\ndp[1] = K\nfor i in range(2, N+1):\n    dp[i] = (A * dp[i-1] + B * dp[i-1] * dp[i-1]) % MOD\n    for j in range(1, i-1):\n        dp[i] = (dp[i] + B * dp[j] * dp[i-j]) % MOD\nQ = int(input())\nfor _ in range(Q):\n    L, R = map(int, input().split())\n    sum = 0\n    for i in range(L, R+1):\n        sum = (sum + dp[i] * dp[i]) % MOD\n    print(sum)",
       "JavaScript": "// COMPLETE, RUNNABLE JavaScript code\nconst fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst MOD = 1000000007;\nconst dp = new Array(10000001).fill(0);\nconst N = +lines[idx].split(' ')[0];\nconst K = +lines[idx].split(' ')[1];\ndp[1] = K;\nidx++;\nconst A = +lines[idx].split(' ')[2];\nconst B = +lines[idx].split(' ')[3];\nidx++;\nfor (let i = 2; i <= N; i++) {\n    dp[i] = (A * dp[i-1] + B * dp[i-1] * dp[i-1]) % MOD;\n    for (let j = 1; j < i-1; j++) {\n        dp[i] = (dp[i] + B * dp[j] * dp[i-j]) % MOD;\n    }\n}\nconst Q = +lines[idx];\nidx++;\nfor (let i = 0; i < Q; i++) {\n    const [L, R] = lines[idx].split(' ').map(Number);\n    idx++;\n    let sum = 0;\n    for (let j = L; j <= R; j++) {\n        sum = (sum + dp[j] * dp[j]) % MOD;\n    }\n    console.log(sum);\n}"
     }
-  }
+  },
+  "verified": false
 }

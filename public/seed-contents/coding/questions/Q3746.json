@@ -20,13 +20,13 @@
     ]
   },
   "content": {
-    "problemStatement": "You have two arrays **A** and **B**, each containing **N** integers.\n\nElements of array **B** cannot be modified.\n\nYou may perform an arbitrary number of operations (including zero number of operations). In one operation, you can choose one index i (1 \u2264 i \u2264 **N**) and increment **Ai** by 1. Each index can be chosen any number of times.\n\n\nFind the minimum number of operations required to modify the array **A** such that for every pair **i, j (1 \u2264 i, j \u2264 N)**, \n**(Ai % Bi)** equals **(Aj % Bj)**. Here, % denotes the modulo operator (the remainder after dividing by **Bi**). Note that **0 \u2264 (Ai % Bi) &lt; Bi**.",
+    "problemStatement": "You have two arrays **A** and **B**, each containing **N** integers.\n\nElements of array **B** cannot be modified.\n\nYou may perform an arbitrary number of operations (including zero number of operations). In one operation, you can choose one index i (1 ≤ i ≤ **N**) and increment **Ai** by 1. Each index can be chosen any number of times.\n\n\nFind the minimum number of operations required to modify the array **A** such that for every pair **i, j (1 ≤ i, j ≤ N)**, \n**(Ai % Bi)** equals **(Aj % Bj)**. Here, % denotes the modulo operator (the remainder after dividing by **Bi**). Note that **0 ≤ (Ai % Bi) &lt; Bi**.",
     "constraints": [
-      "1 \u2264 T \u2264 1000",
-      "1 \u2264 N \u2264 5 * 10^5",
-      "0 \u2264 Ai \u2264 10^9",
-      "1 \u2264 Bi \u2264 10^9",
-      "Sum of N across all testcases in a single file will be \u2264 5 * 10^5"
+      "1 ≤ T ≤ 1000",
+      "1 ≤ N ≤ 5 * 10^5",
+      "0 ≤ Ai ≤ 10^9",
+      "1 ≤ Bi ≤ 10^9",
+      "Sum of N across all testcases in a single file will be ≤ 5 * 10^5"
     ],
     "inputFormat": "The first line contains an integer T, the number of test cases. Each test case consists of three lines. The first line contains a positive integer N, the number of elements in arrays A and B. The second line contains N space-separated whole numbers A1, A2, ..., AN. The third line contains N space-separated natural numbers B1, B2, ..., BN.",
     "outputFormat": "For each test case, output a single line containing the minimum number of operations required to modify the array A in order to satisfy the required conditions.",
@@ -103,9 +103,9 @@
     ]
   },
   "solution": {
-    "approach": "To solve this problem, we need to find the minimum number of operations required to modify the array A such that for every pair i, j (1 \u2264 i, j \u2264 N), (Ai % Bi) equals (Aj % Bj). We can achieve this by finding the minimum remainder that can be obtained by taking the modulo of each element in A with the corresponding element in B. Then, we calculate the difference between each element in A and the minimum remainder, and add up these differences to get the total number of operations required.",
-    "timeComplexity": "O(T * N) \u2014 where T is the number of test cases and N is the number of elements in arrays A and B. The reason is that we are iterating over each test case and for each test case, we are iterating over the elements of arrays A and B.",
-    "spaceComplexity": "O(N) \u2014 where N is the number of elements in arrays A and B. The reason is that we need to store the elements of arrays A and B.",
+    "approach": "To solve this problem, we need to find the minimum number of operations required to modify the array A such that for every pair i, j (1 ≤ i, j ≤ N), (Ai % Bi) equals (Aj % Bj). We can achieve this by finding the minimum remainder that can be obtained by taking the modulo of each element in A with the corresponding element in B. Then, we calculate the difference between each element in A and the minimum remainder, and add up these differences to get the total number of operations required.",
+    "timeComplexity": "O(T * N) — where T is the number of test cases and N is the number of elements in arrays A and B. The reason is that we are iterating over each test case and for each test case, we are iterating over the elements of arrays A and B.",
+    "spaceComplexity": "O(N) — where N is the number of elements in arrays A and B. The reason is that we need to store the elements of arrays A and B.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint compare(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        int A[N], B[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &A[i]);\n        }\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &B[i]);\n        }\n        int minRemainder = A[0] % B[0];\n        int totalOperations = 0;\n        for (int i = 0; i < N; i++) {\n            int remainder = A[i] % B[i];\n            if (remainder < minRemainder) {\n                minRemainder = remainder;\n            }\n        }\n        for (int i = 0; i < N; i++) {\n            int operations = (A[i] % B[i]) - minRemainder;\n            if (operations < 0) {\n                operations += B[i];\n            }\n            totalOperations += operations;\n        }\n        printf(\"%d\\n\", totalOperations);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <vector>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N;\n        cin >> N;\n        vector<int> A(N), B(N);\n        for (int i = 0; i < N; i++) {\n            cin >> A[i];\n        }\n        for (int i = 0; i < N; i++) {\n            cin >> B[i];\n        }\n        int minRemainder = A[0] % B[0];\n        int totalOperations = 0;\n        for (int i = 0; i < N; i++) {\n            int remainder = A[i] % B[i];\n            if (remainder < minRemainder) {\n                minRemainder = remainder;\n            }\n        }\n        for (int i = 0; i < N; i++) {\n            int operations = (A[i] % B[i]) - minRemainder;\n            if (operations < 0) {\n                operations += B[i];\n            }\n            totalOperations += operations;\n        }\n        cout << totalOperations << endl;\n    }\n    return 0;\n}",
@@ -113,5 +113,6 @@
       "Python3": "import sys\nT = int(input())\nfor _ in range(T):\n    N = int(input())\n    A = list(map(int, input().split()))\n    B = list(map(int, input().split()))\n    minRemainder = A[0] % B[0]\n    totalOperations = 0\n    for i in range(N):\n        remainder = A[i] % B[i]\n        if remainder < minRemainder:\n            minRemainder = remainder\n    for i in range(N):\n        operations = (A[i] % B[i]) - minRemainder\n        if operations < 0:\n            operations += B[i]\n        totalOperations += operations\n    print(totalOperations)",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const N = parseInt(readline());\n    const A = readline().split(' ').map(Number);\n    const B = readline().split(' ').map(Number);\n    let minRemainder = A[0] % B[0];\n    let totalOperations = 0;\n    for (let j = 0; j < N; j++) {\n        const remainder = A[j] % B[j];\n        if (remainder < minRemainder) {\n            minRemainder = remainder;\n        }\n    }\n    for (let j = 0; j < N; j++) {\n        let operations = (A[j] % B[j]) - minRemainder;\n        if (operations < 0) {\n            operations += B[j];\n        }\n        totalOperations += operations;\n    }\n    console.log(totalOperations);\n}"
     }
-  }
+  },
+  "verified": false
 }

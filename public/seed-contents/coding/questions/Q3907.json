@@ -20,14 +20,14 @@
     ]
   },
   "content": {
-    "problemStatement": "Chef has started learning to solve dynamic programming problems recently. He has practiced on a lot of problems already, so he wants to try his hands on the hardest problems in this domain.\n\nChef only likes the interesting part of solving dynamic programming problems \u2014 specifically, he just likes to divide a problem into beautiful subproblems which consist of solving recurrences; he finds actually solving these recurrences quite boring. Since you are Chef's assistant, your job is solving this boring part for Chef.\n\nLet's define a recurrent sequence {dp(k)}k=1\u221e\\left\\lbrace{dp(k)}\\right\\rbrace_{k=1}^\\infty{dp(k)}k=1\u221e\u200b with parametres AAA, BBB and KKK as follows:\n\n\ndp(1)=Kdp(1) = Kdp(1)=K\nfor n&gt;1n \\gt 1n&gt;1, dp(n)=A\u22c5dp(n\u22121)+B\u22c5\u2211i=1n\u22121dp(i)\u22c5dp(n\u2212i)dp(n) = A \\cdot dp(n-1) + B\\cdot \\sum\\limits_{i=1}^{n-1} dp(i) \\cdot dp(n-i)dp(n)=A\u22c5dp(n\u22121)+B\u22c5i=1\u2211n\u22121\u200bdp(i)\u22c5dp(n\u2212i)\nChef would like you to find dp(N)dp(N)dp(N). Since this number can be very large, compute it modulo 109+710^9+7109+7.",
+    "problemStatement": "Chef has started learning to solve dynamic programming problems recently. He has practiced on a lot of problems already, so he wants to try his hands on the hardest problems in this domain.\n\nChef only likes the interesting part of solving dynamic programming problems — specifically, he just likes to divide a problem into beautiful subproblems which consist of solving recurrences; he finds actually solving these recurrences quite boring. Since you are Chef's assistant, your job is solving this boring part for Chef.\n\nLet's define a recurrent sequence {dp(k)}k=1∞\\left\\lbrace{dp(k)}\\right\\rbrace_{k=1}^\\infty{dp(k)}k=1∞​ with parametres AAA, BBB and KKK as follows:\n\n\ndp(1)=Kdp(1) = Kdp(1)=K\nfor n&gt;1n \\gt 1n&gt;1, dp(n)=A⋅dp(n−1)+B⋅∑i=1n−1dp(i)⋅dp(n−i)dp(n) = A \\cdot dp(n-1) + B\\cdot \\sum\\limits_{i=1}^{n-1} dp(i) \\cdot dp(n-i)dp(n)=A⋅dp(n−1)+B⋅i=1∑n−1​dp(i)⋅dp(n−i)\nChef would like you to find dp(N)dp(N)dp(N). Since this number can be very large, compute it modulo 109+710^9+7109+7.",
     "constraints": [
       "1 <= N <= 10^7",
       "1 <= B, K <= 10^9+7",
       "0 <= A <= 10^9+7"
     ],
     "inputFormat": "The first and only line of the input contains four space-separated integers N, K, A, and B.",
-    "outputFormat": "Print a single line containing one integer \u2014 the value of dp(N) modulo 10^9+7.",
+    "outputFormat": "Print a single line containing one integer — the value of dp(N) modulo 10^9+7.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -108,8 +108,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we will use dynamic programming to compute the value of dp(N) modulo 10^9+7. We will start by initializing an array dp of size N+1, where dp[i] will store the value of dp(i) modulo 10^9+7. We will then fill up the dp array using the given recurrence relation. Finally, we will return the value of dp[N].",
-    "timeComplexity": "O(N^2) \u2014 because we are using a nested loop to fill up the dp array",
-    "spaceComplexity": "O(N) \u2014 because we are using an array of size N+1 to store the dp values",
+    "timeComplexity": "O(N^2) — because we are using a nested loop to fill up the dp array",
+    "spaceComplexity": "O(N) — because we are using an array of size N+1 to store the dp values",
     "code": {
       "C": "#include <stdio.h>\n#define MOD 1000000007\nlong long dp[10000001];\nint main() {\n    int N, K, A, B;\n    scanf(\"%d %d %d %d\", &N, &K, &A, &B);\n    dp[1] = K;\n    for (int i = 2; i <= N; i++) {\n        long long sum = 0;\n        for (int j = 1; j < i; j++) {\n            sum = (sum + dp[j] * dp[i - j]) % MOD;\n        }\n        dp[i] = (A * dp[i - 1] + B * sum) % MOD;\n    }\n    printf(\"%lld\\n\", dp[N]);\n    return 0;\n}",
       "C++": "#include <iostream>\n#define MOD 1000000007\nusing namespace std;\nlong long dp[10000001];\nint main() {\n    int N, K, A, B;\n    cin >> N >> K >> A >> B;\n    dp[1] = K;\n    for (int i = 2; i <= N; i++) {\n        long long sum = 0;\n        for (int j = 1; j < i; j++) {\n            sum = (sum + dp[j] * dp[i - j]) % MOD;\n        }\n        dp[i] = (A * dp[i - 1] + B * sum) % MOD;\n    }\n    cout << dp[N] << endl;\n    return 0;\n}",
@@ -117,5 +117,6 @@
       "Python3": "MOD = 1000000007\nmaxN = 10000001\ndp = [0] * maxN\ndef solve(N, K, A, B):\n    dp[1] = K\n    for i in range(2, N + 1):\n        sum = 0\n        for j in range(1, i):\n            sum = (sum + dp[j] * dp[i - j]) % MOD\n        dp[i] = (A * dp[i - 1] + B * sum) % MOD\n    return dp[N]\nN, K, A, B = map(int, input().split())\nprint(solve(N, K, A, B))",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(' ');\nconst N = parseInt(input[0]);\nconst K = parseInt(input[1]);\nconst A = parseInt(input[2]);\nconst B = parseInt(input[3]);\nconst MOD = 1000000007;\nconst maxN = 10000001;\nconst dp = new Array(maxN).fill(0);\ndp[1] = K;\nfor (let i = 2; i <= N; i++) {\n    let sum = 0;\n    for (let j = 1; j < i; j++) {\n        sum = (sum + dp[j] * dp[i - j]) % MOD;\n    }\n    dp[i] = (A * dp[i - 1] + B * sum) % MOD;\n}\nconsole.log(dp[N]);"
     }
-  }
+  },
+  "verified": false
 }

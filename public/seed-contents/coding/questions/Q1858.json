@@ -21,20 +21,20 @@
     ]
   },
   "content": {
-    "problemStatement": "Merge sort  (5 Marks)You are given an array of N integers. Your task is to sort the array in ascending order using the Merge Sort algorithm.\n\nMerge Sort is a divide and conquer algorithm that:\n\nDivides the array into two halves\n\nRecursively sorts both halves\n\nMerges the sorted halves\n\nYou must implement Merge Sort to solve this problem.\n\n\nInput Format\nThe first line contains an integer N \u2014 the number of elements in the array.\n\n\nThe second line contains N space-separated integers representing the array elemen\n\n\n\nOutput Format\nPrint the sorted array in ascending order.\n\n\nOutput should contain N space-separated integers.",
+    "problemStatement": "Merge sort  (5 Marks)You are given an array of N integers. Your task is to sort the array in ascending order using the Merge Sort algorithm.\n\nMerge Sort is a divide and conquer algorithm that:\n\nDivides the array into two halves\n\nRecursively sorts both halves\n\nMerges the sorted halves\n\nYou must implement Merge Sort to solve this problem.\n\n\nInput Format\nThe first line contains an integer N — the number of elements in the array.\n\n\nThe second line contains N space-separated integers representing the array elemen\n\n\n\nOutput Format\nPrint the sorted array in ascending order.\n\n\nOutput should contain N space-separated integers.",
     "constraints": [
-      "1 \u2264 T \u2264 10",
-      "1 \u2264 N \u2264 10^5",
-      "-10^9 \u2264 A[i] \u2264 10^9"
+      "1 ≤ T ≤ 10",
+      "1 ≤ N ≤ 10^5",
+      "-10^9 ≤ A[i] ≤ 10^9"
     ],
-    "inputFormat": "The first line contains an integer T \u2014 the number of test cases. For each test case, the first line contains an integer N \u2014 the number of elements in the array. The second line contains N space\u2011separated integers.",
+    "inputFormat": "The first line contains an integer T — the number of test cases. For each test case, the first line contains an integer N — the number of elements in the array. The second line contains N space‑separated integers.",
     "outputFormat": "For each test case, output the sorted array in ascending order on a single line. Elements must be separated by a single space.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "3\n5\n4 2 1 5 3\n10\n9 8 7 6 5 4 3 2 1 0\n1\n5",
         "output": "1 2 3 4 5\n0 1 2 3 4 5 6 7 8 9\n5",
-        "explanation": "Three test cases are processed. The first array becomes [1,2,3,4,5], the second becomes [0,1,2,3,4,5,6,7,8,9], and the single\u2011element array remains [5]."
+        "explanation": "Three test cases are processed. The first array becomes [1,2,3,4,5], the second becomes [0,1,2,3,4,5,6,7,8,9], and the single‑element array remains [5]."
       },
       {
         "id": "sample_2",
@@ -114,7 +114,7 @@
     ]
   },
   "solution": {
-    "approach": "For each test case we apply the classic Merge Sort algorithm. The array is recursively divided into two halves until sub\u2011arrays of size one are obtained. Then the two sorted halves are merged in linear time using an auxiliary buffer. This guarantees O(N log N) time per test case and O(N) extra space for the temporary arrays used during merging.",
+    "approach": "For each test case we apply the classic Merge Sort algorithm. The array is recursively divided into two halves until sub‑arrays of size one are obtained. Then the two sorted halves are merged in linear time using an auxiliary buffer. This guarantees O(N log N) time per test case and O(N) extra space for the temporary arrays used during merging.",
     "timeComplexity": "O(N log N) per test case, where N is the size of the current array.",
     "spaceComplexity": "O(N) auxiliary space for the temporary buffers used during merging.",
     "code": {
@@ -124,5 +124,6 @@
       "Python3": "import sys\n\ndef merge(arr, left, mid, right):\n    n1 = mid - left + 1\n    n2 = right - mid\n    L = arr[left:left + n1]\n    R = arr[mid + 1:mid + 1 + n2]\n    i = j = 0\n    k = left\n    while i < n1 and j < n2:\n        if L[i] <= R[j]:\n            arr[k] = L[i]\n            i += 1\n        else:\n            arr[k] = R[j]\n            j += 1\n        k += 1\n    while i < n1:\n        arr[k] = L[i]\n        i += 1\n        k += 1\n    while j < n2:\n        arr[k] = R[j]\n        j += 1\n        k += 1\n\ndef merge_sort(arr, left, right):\n    if left < right:\n        mid = left + (right - left) // 2\n        merge_sort(arr, left, mid)\n        merge_sort(arr, mid + 1, right)\n        merge(arr, left, mid, right)\n\ndata = sys.stdin.read().strip().split()\nif not data:\n    sys.exit()\nidx = 0\nT = int(data[idx]); idx += 1\nout_lines = []\nfor _ in range(T):\n    N = int(data[idx]); idx += 1\n    arr = list(map(int, data[idx:idx + N])); idx += N\n    merge_sort(arr, 0, N - 1)\n    out_lines.append(' '.join(map(str, arr)))\nprint('\\n'.join(out_lines))",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet outputs = [];\nfunction merge(arr, left, mid, right) {\n  const n1 = mid - left + 1;\n  const n2 = right - mid;\n  const L = new Array(n1);\n  const R = new Array(n2);\n  for (let i = 0; i < n1; i++) L[i] = arr[left + i];\n  for (let j = 0; j < n2; j++) R[j] = arr[mid + 1 + j];\n  let i = 0, j = 0, k = left;\n  while (i < n1 && j < n2) {\n    if (L[i] <= R[j]) arr[k++] = L[i++];\n    else arr[k++] = R[j++];\n  }\n  while (i < n1) arr[k++] = L[i++];\n  while (j < n2) arr[k++] = R[j++];\n}\nfunction mergeSort(arr, left, right) {\n  if (left < right) {\n    const mid = left + Math.floor((right - left) / 2);\n    mergeSort(arr, left, mid);\n    mergeSort(arr, mid + 1, right);\n    merge(arr, left, mid, right);\n  }\n}\nfor (let t = 0; t < T; t++) {\n  const N = Number(input[idx++]);\n  const arr = new Array(N);\n  for (let i = 0; i < N; i++) arr[i] = Number(input[idx++]);\n  mergeSort(arr, 0, N - 1);\n  outputs.push(arr.join(' '));\n}\nconsole.log(outputs.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

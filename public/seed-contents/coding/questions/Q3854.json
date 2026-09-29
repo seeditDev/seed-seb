@@ -20,14 +20,14 @@
     ]
   },
   "content": {
-    "problemStatement": "You are given a sequence **A1, A2, ..., AN** and **Q** queries. In each query, you are given two parameters **L** and **R**; you have to find the smallest integer **X** such that 0 \u2264 **X** &lt; 231 and the value of (**AL** xor **X**) + (**AL+1** xor **X**) + ... + (**AR** xor **X**) is maximum possible.\n\nNote: xor denotes the bitwise xor operation.",
+    "problemStatement": "You are given a sequence **A1, A2, ..., AN** and **Q** queries. In each query, you are given two parameters **L** and **R**; you have to find the smallest integer **X** such that 0 ≤ **X** &lt; 231 and the value of (**AL** xor **X**) + (**AL+1** xor **X**) + ... + (**AR** xor **X**) is maximum possible.\n\nNote: xor denotes the bitwise xor operation.",
     "constraints": [
       "1 <= N <= 10^5",
       "1 <= Q <= 10^5",
       "0 <= Ai < 2^31 for each valid i"
     ],
     "inputFormat": "The first line contains two space-separated integers N and Q denoting the number of elements in A and the number of queries respectively. The second line contains N space-separated integers A1, A2, ..., AN. Each of the next Q lines contains two space-separated integers L and R describing one query.",
-    "outputFormat": "For each query, print a single line containing one integer \u2014 the minimum value of X.",
+    "outputFormat": "For each query, print a single line containing one integer — the minimum value of X.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -102,8 +102,8 @@
   },
   "solution": {
     "approach": "For each query, we need to find the smallest integer X such that the sum of (Ai xor X) from L to R is maximum. We can iterate over all possible values of X (from 0 to 2^31 - 1) and calculate the sum for each X. We keep track of the X that gives the maximum sum.",
-    "timeComplexity": "O(Q * N * 2^31) \u2014 for each query, we iterate over all possible values of X and calculate the sum.",
-    "spaceComplexity": "O(1) \u2014 we only use a constant amount of space to store the maximum sum and the corresponding X.",
+    "timeComplexity": "O(Q * N * 2^31) — for each query, we iterate over all possible values of X and calculate the sum.",
+    "spaceComplexity": "O(1) — we only use a constant amount of space to store the maximum sum and the corresponding X.",
     "code": {
       "C": "#include <stdio.h>\nint main() {\n    int N, Q;\n    scanf(\"%d %d\", &N, &Q);\n    int A[N];\n    for (int i = 0; i < N; i++) {\n        scanf(\"%d\", &A[i]);\n    }\n    while (Q--) {\n        int L, R;\n        scanf(\"%d %d\", &L, &R);\n        long long maxSum = -1;\n        int bestX = -1;\n        for (int X = 0; X < (1 << 31); X++) {\n            long long sum = 0;\n            for (int i = L - 1; i < R; i++) {\n                sum += (A[i] ^ X);\n            }\n            if (sum > maxSum) {\n                maxSum = sum;\n                bestX = X;\n            }\n        }\n        printf(\"%d\\n\", bestX);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    int N, Q;\n    cin >> N >> Q;\n    int A[N];\n    for (int i = 0; i < N; i++) {\n        cin >> A[i];\n    }\n    while (Q--) {\n        int L, R;\n        cin >> L >> R;\n        long long maxSum = -1;\n        int bestX = -1;\n        for (int X = 0; X < (1 << 31); X++) {\n            long long sum = 0;\n            for (int i = L - 1; i < R; i++) {\n                sum += (A[i] ^ X);\n            }\n            if (sum > maxSum) {\n                maxSum = sum;\n                bestX = X;\n            }\n        }\n        cout << bestX << endl;\n    }\n    return 0;\n}",
@@ -111,5 +111,6 @@
       "Python3": "import sys\ninput = sys.stdin.readline\nN, Q = map(int, input().split())\nA = list(map(int, input().split()))\nfor _ in range(Q):\n    L, R = map(int, input().split())\n    maxSum = -1\n    bestX = -1\n    for X in range(1 << 31):\n        sum = 0\n        for i in range(L - 1, R):\n            sum += (A[i] ^ X)\n        if sum > maxSum:\n            maxSum = sum\n            bestX = X\n    print(bestX)",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst input = () => lines[idx++];\nconst [N, Q] = input().split(' ').map(Number);\nconst A = input().split(' ').map(Number);\nfor (let i = 0; i < Q; i++) {\n    const [L, R] = input().split(' ').map(Number);\n    let maxSum = -1;\n    let bestX = -1;\n    for (let X = 0; X < (1 << 31); X++) {\n        let sum = 0;\n        for (let j = L - 1; j < R; j++) {\n            sum += (A[j] ^ X);\n        }\n        if (sum > maxSum) {\n            maxSum = sum;\n            bestX = X;\n        }\n    }\n    console.log(bestX);\n}"
     }
-  }
+  },
+  "verified": false
 }

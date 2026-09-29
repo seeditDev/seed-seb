@@ -46,7 +46,7 @@
         "id": "sample_3",
         "input": "1\\n1000000000",
         "output": "44720",
-        "explanation": "Using the formula k = floor((sqrt(8*10^9+1)-1)/2) gives 44720. The sum of first 44720 layers is 999961560 which is <= 1e9, while adding the 44721\u2011st layer would exceed the limit."
+        "explanation": "Using the formula k = floor((sqrt(8*10^9+1)-1)/2) gives 44720. The sum of first 44720 layers is 999961560 which is <= 1e9, while adding the 44721‑st layer would exceed the limit."
       }
     ]
   },
@@ -114,7 +114,7 @@
     ]
   },
   "solution": {
-    "approach": "The total bricks needed for k complete layers is the triangular number S(k)=k*(k+1)/2. We need the largest k such that S(k)\u2264N. Solving k^2+k-2N\u22640 gives k=floor((sqrt(8N+1)-1)/2). Because of possible floating\u2011point rounding we adjust k by at most one step up or down. This yields O(1) time per test case.",
+    "approach": "The total bricks needed for k complete layers is the triangular number S(k)=k*(k+1)/2. We need the largest k such that S(k)≤N. Solving k^2+k-2N≤0 gives k=floor((sqrt(8N+1)-1)/2). Because of possible floating‑point rounding we adjust k by at most one step up or down. This yields O(1) time per test case.",
     "timeComplexity": "O(1) per test case, O(T) overall.",
     "spaceComplexity": "O(1) auxiliary space.",
     "code": {
@@ -124,5 +124,6 @@
       "Python3": "import sys, math\n\ndef max_layers(N: int) -> int:\n    # Use integer sqrt to avoid floating point errors\n    k = (math.isqrt(8 * N + 1) - 1) // 2\n    while (k + 1) * (k + 2) // 2 <= N:\n        k += 1\n    while k * (k + 1) // 2 > N:\n        k -= 1\n    return k\n\ndef main():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    t = int(data[0])\n    out = []\n    idx = 1\n    for _ in range(t):\n        N = int(data[idx]); idx += 1\n        out.append(str(max_layers(N)))\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    main()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet pos = 0;\nconst T = Number(input[pos++]);\nlet results = [];\nfunction maxLayers(N) {\n    let k = Math.floor((Math.sqrt(8 * N + 1) - 1) / 2);\n    while ((k + 1) * (k + 2) / 2 <= N) k++;\n    while (k * (k + 1) / 2 > N) k--;\n    return k;\n}\nfor (let i = 0; i < T; i++) {\n    const N = Number(input[pos++]);\n    results.push(String(maxLayers(N)));\n}\nconsole.log(results.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

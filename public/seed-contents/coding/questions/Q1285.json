@@ -24,12 +24,12 @@
   "content": {
     "problemStatement": "Fill in the blanks to implement the optimizations in the previous lessons in the code editor.",
     "constraints": [
-      "1 \u2264 T \u2264 10",
-      "1 \u2264 n \u2264 10^6",
-      "1 \u2264 m \u2264 10^6",
-      "0 \u2264 a, b < n"
+      "1 ≤ T ≤ 10",
+      "1 ≤ n ≤ 10^6",
+      "1 ≤ m ≤ 10^6",
+      "0 ≤ a, b < n"
     ],
-    "inputFormat": "First line contains an integer T, the number of test cases. Each test case starts with two integers n and m (1 \u2264 n \u2264 10^6, 1 \u2264 m \u2264 10^6) \u2013 the number of elements and the number of operations. Then m lines follow, each describing an operation. An operation is either \"union a b\" (merge the sets containing a and b) or \"find a\" (output the representative of the set containing a). Elements are numbered from 0 to n\u20111.",
+    "inputFormat": "First line contains an integer T, the number of test cases. Each test case starts with two integers n and m (1 ≤ n ≤ 10^6, 1 ≤ m ≤ 10^6) – the number of elements and the number of operations. Then m lines follow, each describing an operation. An operation is either \"union a b\" (merge the sets containing a and b) or \"find a\" (output the representative of the set containing a). Elements are numbered from 0 to n‑1.",
     "outputFormat": "For every \"find\" operation, print the leader (representative) of the set containing the queried element on a separate line.",
     "sampleTestCases": [
       {
@@ -110,8 +110,8 @@
     ]
   },
   "solution": {
-    "approach": "We maintain a parent array and a size array. The function find(x) returns the root of x using path compression (while recursing, we set parent[x] to the root). The function union(a,b) first finds the roots ra and rb. If they are different, we attach the smaller tree to the larger one (union by size) and update the size of the new root. Both operations run in almost constant amortised time, O(\u03b1(n)), where \u03b1 is the inverse Ackermann function. For each test case we initialise the structures, process the m operations sequentially and output the answer for every find query.",
-    "timeComplexity": "O((n + m) \u00b7 \u03b1(n)) per test case, where \u03b1(n) is the inverse Ackermann function (practically \u2264 5).",
+    "approach": "We maintain a parent array and a size array. The function find(x) returns the root of x using path compression (while recursing, we set parent[x] to the root). The function union(a,b) first finds the roots ra and rb. If they are different, we attach the smaller tree to the larger one (union by size) and update the size of the new root. Both operations run in almost constant amortised time, O(α(n)), where α is the inverse Ackermann function. For each test case we initialise the structures, process the m operations sequentially and output the answer for every find query.",
+    "timeComplexity": "O((n + m) · α(n)) per test case, where α(n) is the inverse Ackermann function (practically ≤ 5).",
     "spaceComplexity": "O(n) for the parent and size arrays per test case.",
     "code": {
       "C": "#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>\n\nint *parent;\nint *setSize;\n\nint dsuFind(int a) {\n    if (parent[a] == a) return a;\n    return parent[a] = dsuFind(parent[a]);\n}\n\nvoid dsuUnion(int a, int b) {\n    int ra = dsuFind(a);\n    int rb = dsuFind(b);\n    if (ra == rb) return;\n    if (setSize[ra] < setSize[rb]) {\n        int tmp = ra; ra = rb; rb = tmp;\n    }\n    parent[rb] = ra;\n    setSize[ra] += setSize[rb];\n}\n\nint main() {\n    int T; if (scanf(\"%d\", &T)!=1) return 0;\n    while (T--) {\n        int n, m; scanf(\"%d %d\", &n, &m);\n        parent = (int*)malloc(n * sizeof(int));\n        setSize = (int*)malloc(n * sizeof(int));\n        for (int i = 0; i < n; ++i) { parent[i] = i; setSize[i] = 1; }\n        for (int i = 0; i < m; ++i) {\n            char cmd[10]; scanf(\"%s\", cmd);\n            if (strcmp(cmd, \"union\") == 0) {\n                int a, b; scanf(\"%d %d\", &a, &b);\n                dsuUnion(a, b);\n            } else { // find\n                int a; scanf(\"%d\", &a);\n                printf(\"%d\\n\", dsuFind(a));\n            }\n        }\n        free(parent);\n        free(setSize);\n    }\n    return 0;\n}",
@@ -120,5 +120,6 @@
       "Python3": "import sys\n\ndef solve():\n    data = sys.stdin.buffer.read().splitlines()\n    if not data:\n        return\n    idx = 0\n    T = int(data[idx]); idx += 1\n    out = []\n    for _ in range(T):\n        n, m = map(int, data[idx].split()); idx += 1\n        parent = list(range(n))\n        size = [1]*n\n        def find(x):\n            while parent[x] != x:\n                parent[x] = parent[parent[x]]\n                x = parent[x]\n            return x\n        def union(a,b):\n            ra, rb = find(a), find(b)\n            if ra == rb:\n                return\n            if size[ra] < size[rb]:\n                ra, rb = rb, ra\n            parent[rb] = ra\n            size[ra] += size[rb]\n        for _ in range(m):\n            parts = data[idx].split(); idx += 1\n            if parts[0] == b'union':\n                union(int(parts[1]), int(parts[2]))\n            else:  # find\n                out.append(str(find(int(parts[1]))))\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    solve()\n",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst T = parseInt(lines[idx++]);\nlet output = [];\nfor (let tc = 0; tc < T; ++tc) {\n  const [nStr, mStr] = lines[idx++].trim().split(/\\s+/);\n  const n = Number(nStr), m = Number(mStr);\n  const parent = new Array(n);\n  const size = new Array(n).fill(1);\n  for (let i = 0; i < n; ++i) parent[i] = i;\n  const find = (x) => {\n    if (parent[x] === x) return x;\n    parent[x] = find(parent[x]);\n    return parent[x];\n  };\n  const unite = (a, b) => {\n    let ra = find(a), rb = find(b);\n    if (ra === rb) return;\n    if (size[ra] < size[rb]) { const tmp = ra; ra = rb; rb = tmp; }\n    parent[rb] = ra;\n    size[ra] += size[rb];\n  };\n  for (let i = 0; i < m; ++i) {\n    const parts = lines[idx++].trim().split(/\\s+/);\n    if (parts[0] === 'union') {\n      unite(Number(parts[1]), Number(parts[2]));\n    } else { // find\n      output.push(String(find(Number(parts[1]))));\n    }\n  }\n}\nconsole.log(output.join('\\n'));\n"
     }
-  }
+  },
+  "verified": false
 }

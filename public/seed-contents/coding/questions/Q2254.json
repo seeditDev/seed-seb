@@ -22,13 +22,13 @@
   "content": {
     "problemStatement": "The Chef is planning on serving cupcakes for dessert. However, time is running out and the Chef has only enough time to bake one batch. Thankfully, the cupcake baking tin the Chef plans on using has barely enough spaces to ensure each guest receives one cupcake.\n\n\n\nTo the Chef's dismay, some of the spaces in the cupcake tin are too close to each other. If cupcake batter is placed in two such spaces then they will bake together and neither will have the aesthetically pleasing round shape one expects from gourmet cupcakes.\n\n\n\nThe Chef wants to impress his guests with this dessert, so he wants all cupcakes to be perfectly round. You must determine if it is possible for the desired number of cupcakes to be baked without any two baking in to each other.",
     "constraints": [
-      "1 \u2264 T \u2264 30",
-      "1 \u2264 n \u2264 1000",
-      "1 \u2264 m \u2264 20000",
-      "0 \u2264 g \u2264 n",
-      "n - g \u2264 15"
+      "1 ≤ T ≤ 30",
+      "1 ≤ n ≤ 1000",
+      "1 ≤ m ≤ 20000",
+      "0 ≤ g ≤ n",
+      "n - g ≤ 15"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. Each test case starts with three integers n, m, g where n is the number of spaces, m the number of conflicting pairs, and g the number of guests. The next m lines each contain two distinct integers i and j (0 \u2264 i, j < n) describing a conflict edge.",
+    "inputFormat": "The first line contains an integer T, the number of test cases. Each test case starts with three integers n, m, g where n is the number of spaces, m the number of conflicting pairs, and g the number of guests. The next m lines each contain two distinct integers i and j (0 ≤ i, j < n) describing a conflict edge.",
     "outputFormat": "For each test case, output a single line containing 'Possible' if the Chef can place batter in exactly g spaces without any conflicting pair, otherwise output 'Impossible'.",
     "sampleTestCases": [
       {
@@ -117,7 +117,7 @@
   "solution": {
     "approach": "The problem can be solved by using a backtracking approach to find an independent set of size g in the graph. The graph is constructed from the given conflict edges. We start by trying to include each space in the independent set and then recursively check if it's possible to include the remaining spaces without any conflicts.",
     "timeComplexity": "O(2^(n-g)) per test case, O(T * 2^(n-g)) total. The precomputation is done once for each test case.",
-    "spaceComplexity": "O(n) \u2014 the dominant structure is the recursion stack and the graph representation.",
+    "spaceComplexity": "O(n) — the dominant structure is the recursion stack and the graph representation.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint n, m, g, k;\nint *U, *V; // edges\nchar *removed;\n\nint dfs(int rem) {\n    if (rem < 0) return 0;\n    int i;\n    for (i = 0; i < m; ++i) {\n        if (!removed[U[i]] && !removed[V[i]]) break; // uncovered edge\n    }\n    if (i == m) return 1; // all edges covered\n    int u = U[i], v = V[i];\n    // branch u\n    removed[u] = 1;\n    if (dfs(rem - 1)) return 1;\n    removed[u] = 0;\n    // branch v\n    removed[v] = 1;\n    if (dfs(rem - 1)) return 1;\n    removed[v] = 0;\n    return 0;\n}\n\nint main(){\n    int T; if (scanf(\"%d\", &T)!=1) return 0;\n    while (T--) {\n        if (scanf(\"%d %d %d\", &n, &m, &g)!=3) return 0;\n        k = n - g;\n        U = (int*)malloc(m * sizeof(int));\n        V = (int*)malloc(m * sizeof(int));\n        for (int i=0;i<m;++i) scanf(\"%d %d\", &U[i], &V[i]);\n        removed = (char*)calloc(n, sizeof(char));\n        int ok = dfs(k);\n        printf(ok ? \"Possible\\n\" : \"Impossible\\n\");\n        free(U); free(V); free(removed);\n    }\n    return 0;\n}",
       "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint n,m,g,k;\nvector<pair<int,int>> edges;\nvector<char> removed;\n\nbool dfs(int rem){\n    if(rem<0) return false;\n    int idx=-1;\n    for(int i=0;i<m;++i){\n        auto [u,v]=edges[i];\n        if(!removed[u] && !removed[v]){ idx=i; break; }\n    }\n    if(idx==-1) return true; // all covered\n    int u=edges[idx].first, v=edges[idx].second;\n    removed[u]=1;\n    if(dfs(rem-1)) return true;\n    removed[u]=0;\n    removed[v]=1;\n    if(dfs(rem-1)) return true;\n    removed[v]=0;\n    return false;\n}\n\nint main(){\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int T; if(!(cin>>T)) return 0;\n    while(T--){\n        cin>>n>>m>>g;\n        k=n-g;\n        edges.resize(m);\n        for(int i=0;i<m;++i){\n            int a,b;cin>>a>>b;edges[i]={a,b};\n        }\n        removed.assign(n,0);\n        bool ok=dfs(k);\n        cout<<(ok?\"Possible\":\"Impossible\")<<'\\n';\n    }\n    return 0;\n}",
@@ -125,5 +125,6 @@
       "Python3": "#!/usr/bin/env python3\nimport sys\nsys.setrecursionlimit(10000)\n\ndef solve_one(n,m,g,edges):\n    k = n - g\n    removed = [False]*n\n    def dfs(rem):\n        if rem < 0:\n            return False\n        # find uncovered edge\n        for u,v in edges:\n            if not removed[u] and not removed[v]:\n                break\n        else:\n            return True\n        # branch on u\n        removed[u] = True\n        if dfs(rem-1):\n            return True\n        removed[u] = False\n        # branch on v\n        removed[v] = True\n        if dfs(rem-1):\n            return True\n        removed[v] = False\n        return False\n    return dfs(k)\n\ndef main():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out = []\n    for _ in range(T):\n        n = int(next(it)); m = int(next(it)); g = int(next(it))\n        edges = [(int(next(it)), int(next(it))) for __ in range(m)]\n        out.append('Possible' if solve_one(n,m,g,edges) else 'Impossible')\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    main()\n",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet out = [];\nfunction dfs(rem, edges, removed){\n    if (rem < 0) return false;\n    let u=-1, v=-1;\n    for (let i=0;i<edges.length;i++){\n        const [a,b] = edges[i];\n        if (!removed[a] && !removed[b]){ u=a; v=b; break; }\n    }\n    if (u===-1) return true;\n    removed[u]=true;\n    if (dfs(rem-1, edges, removed)) return true;\n    removed[u]=false;\n    removed[v]=true;\n    if (dfs(rem-1, edges, removed)) return true;\n    removed[v]=false;\n    return false;\n}\nfor(let t=0;t<T;t++){\n    const n = Number(input[idx++]);\n    const m = Number(input[idx++]);\n    const g = Number(input[idx++]);\n    const k = n - g;\n    const edges = [];\n    for(let i=0;i<m;i++){\n        const a = Number(input[idx++]);\n        const b = Number(input[idx++]);\n        edges.push([a,b]);\n    }\n    const removed = new Array(n).fill(false);\n    const ok = dfs(k, edges, removed);\n    out.push(ok ? 'Possible' : 'Impossible');\n}\nconsole.log(out.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

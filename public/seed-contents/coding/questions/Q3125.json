@@ -24,18 +24,18 @@
   "content": {
     "problemStatement": "Rahul and Rashi are bored of playing the game of  Nim all day. More so, Rahul has been losing all the games. Actually, the array of stone piles for a game is always selected by Rashi from a huge **N**-length array **A**. This selected array is always a subarray of **A**.\n\nRahul, now frustrated by his losing streak, insists that he would play the next game only if she chooses a game array of length **m**. \n\nCan you find the number of such subarrays that Rashi can choose so that Rahul still loses? Moreover, since the value of **m** is decided by Rahul, can you do this for all possible values of **m**?\n\nPlease note that Rahul is always the first player.\n\nInput:The first line contains an integer **T**, the number of test cases to follow.\nIn each of the test cases, the first line contains a single integer **N**, and the next line contains **N** integers, representing the array **A**.\n\n\nOutput:Output the results of each test case on a new line. For each test case, output the results for all values of **m**, that is, **m** = 1, **m** = 2 ... **m** = **N**, separated by a single space.",
     "constraints": [
-      "1 \u2264 T \u2264 10",
-      "1 \u2264 N \u2264 1000",
-      "0 \u2264 A[i] \u2264 10^9"
+      "1 ≤ T ≤ 10",
+      "1 ≤ N ≤ 1000",
+      "0 ≤ A[i] ≤ 10^9"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases.\nFor each test case:\n- A line with integer N, the length of the array.\n- A line with N integers A[1] \u2026 A[N] (0 \u2264 A[i] \u2264 10^9).",
-    "outputFormat": "For each test case output N integers on one line. The i\u2011th integer (1\u2011based) is the number of sub\u2011arrays of length i whose XOR is zero. Separate the numbers by a single space.",
+    "inputFormat": "The first line contains an integer T, the number of test cases.\nFor each test case:\n- A line with integer N, the length of the array.\n- A line with N integers A[1] … A[N] (0 ≤ A[i] ≤ 10^9).",
+    "outputFormat": "For each test case output N integers on one line. The i‑th integer (1‑based) is the number of sub‑arrays of length i whose XOR is zero. Separate the numbers by a single space.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "2\n6\n1 2 3 2 1 3\n4\n1 1 1 1",
         "output": "0 0 3 0 0 1\n0 3 0 1",
-        "explanation": "For the first test case, sub\u2011arrays of length 3 with XOR zero are [1,2,3], [3,2,1] and [2,1,3]; no other length yields a zero XOR. For the second test case, only length 2 sub\u2011arrays have XOR zero (three of them) and length 4 has one (the whole array)."
+        "explanation": "For the first test case, sub‑arrays of length 3 with XOR zero are [1,2,3], [3,2,1] and [2,1,3]; no other length yields a zero XOR. For the second test case, only length 2 sub‑arrays have XOR zero (three of them) and length 4 has one (the whole array)."
       }
     ]
   },
@@ -103,7 +103,7 @@
     ]
   },
   "solution": {
-    "approach": "For a sub\u2011array A[l \u2026 r] (1\u2011based) the XOR is pref[r] ^ pref[l\u20111] where pref[i] is the XOR of the first i elements (pref[0] = 0). The sub\u2011array has XOR zero iff pref[l\u20111] == pref[r].\nFor a fixed length m we need to count indices i (0\u2011based) such that pref[i] == pref[i+m].\nWe compute the prefix XOR array once (O(N)). Then for each possible length m from 1 to N we scan i = 0 \u2026 N\u2011m and compare the two prefix values, incrementing the answer for that m when they are equal. This yields an O(N^2) algorithm, which is fast enough for the given constraint N \u2264 1000.\nTime Complexity: O(N^2) per test case.\nSpace Complexity: O(N) for the prefix array and the answer array.",
+    "approach": "For a sub‑array A[l … r] (1‑based) the XOR is pref[r] ^ pref[l‑1] where pref[i] is the XOR of the first i elements (pref[0] = 0). The sub‑array has XOR zero iff pref[l‑1] == pref[r].\nFor a fixed length m we need to count indices i (0‑based) such that pref[i] == pref[i+m].\nWe compute the prefix XOR array once (O(N)). Then for each possible length m from 1 to N we scan i = 0 … N‑m and compare the two prefix values, incrementing the answer for that m when they are equal. This yields an O(N^2) algorithm, which is fast enough for the given constraint N ≤ 1000.\nTime Complexity: O(N^2) per test case.\nSpace Complexity: O(N) for the prefix array and the answer array.",
     "timeComplexity": "O(N^2) per test case",
     "spaceComplexity": "O(N)",
     "code": {
@@ -113,5 +113,6 @@
       "Python3": "import sys\n\ndef solve():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out_lines = []\n    for _ in range(T):\n        N = int(next(it))\n        A = [int(next(it)) for _ in range(N)]\n        pref = [0]\n        for x in A:\n            pref.append(pref[-1] ^ x)\n        ans = []\n        for m in range(1, N + 1):\n            cnt = 0\n            for i in range(N - m + 1):\n                if pref[i] == pref[i + m]:\n                    cnt += 1\n            ans.append(str(cnt))\n        out_lines.append(' '.join(ans))\n    sys.stdout.write('\\n'.join(out_lines))\n\nif __name__ == \"__main__\":\n    solve()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet outputs = [];\nfor (let t = 0; t < T; ++t) {\n  const N = Number(input[idx++]);\n  const A = new Array(N);\n  for (let i = 0; i < N; ++i) A[i] = Number(input[idx++]);\n  const pref = new Array(N + 1);\n  pref[0] = 0;\n  for (let i = 1; i <= N; ++i) pref[i] = pref[i - 1] ^ A[i - 1];\n  const ans = new Array(N);\n  for (let m = 1; m <= N; ++m) {\n    let cnt = 0;\n    for (let i = 0; i + m <= N; ++i) {\n      if (pref[i] === pref[i + m]) cnt++;\n    }\n    ans[m - 1] = cnt;\n  }\n  outputs.push(ans.join(' '));\n}\nconsole.log(outputs.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

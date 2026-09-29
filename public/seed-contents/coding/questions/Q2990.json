@@ -22,9 +22,9 @@
   "content": {
     "problemStatement": "In the city of \"M\", there are N girls who attend a certain high school. Historically, all of the students of this school are divided into two groups, not necessarily equal in size, right before they start to study.\n\nEach girl in the city of \"M\" has an integer ID number **Ai**, that somehow corresponds to her interests, ideology and beliefs. Each girl is unique, so each ID is unique as well.\n\nSome of the girls have similar interests. For any pair of girls, say the **i**-th and the **j**-th one, we call the value of similarity the number **min(AiAj mod (109+7), AjAi mod (109+7))**.\n\nThe teachers have decided that they want the students in each group to be as diverse as possible. This way they will be encouraged to become acquainted and make friends faster. For this reason they want to divide the students in such a way that the maximal similarity value of any two girls' IDs in the same group is as small as possible.\n\nPlease help them and find the minimal possible maximal similarity value of two girls' IDs within a single group after the optimal division.",
     "constraints": [
-      "1 \u2264 T \u2264 1000",
-      "1 \u2264 N \u2264 1000",
-      "1 \u2264 Ai \u2264 10^9"
+      "1 ≤ T ≤ 1000",
+      "1 ≤ N ≤ 1000",
+      "1 ≤ Ai ≤ 10^9"
     ],
     "inputFormat": "First line contains T, the number of test cases. Each test case starts with a line containing an integer N, the number of students. The next line contains N space-separated integers A1, A2, ..., AN, the IDs of the girls.",
     "outputFormat": "For each test case, print the minimal possible maximal similarity value of two girls' IDs within a single group after the optimal division.",
@@ -115,7 +115,7 @@
   "solution": {
     "approach": "To solve this problem, we calculate the similarity between each pair of girls and then divide them into two groups such that the maximum similarity within each group is minimized. We use a greedy approach to divide the girls into two groups based on their IDs.",
     "timeComplexity": "O(T * N^2) per test case, O(T * N^2) total. The precomputation is done once for each test case.",
-    "spaceComplexity": "O(N) \u2014 the dominant structure is the array to store the IDs of the girls.",
+    "spaceComplexity": "O(N) — the dominant structure is the array to store the IDs of the girls.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n#define MOD 1000000007\n\nint compare(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\n\nint min(int a, int b) {\n    return (a < b) ? a : b;\n}\n\nint max(int a, int b) {\n    return (a > b) ? a : b;\n}\n\nint calculateSimilarity(int a, int b) {\n    return min((a * b) % MOD, (b * a) % MOD);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        int *A = (int*)malloc(N * sizeof(int));\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &A[i]);\n        }\n        qsort(A, N, sizeof(int), compare);\n        int maxSimilarity = 0;\n        for (int i = 0; i < N - 1; i++) {\n            int similarity = calculateSimilarity(A[i], A[i + 1]);\n            maxSimilarity = max(maxSimilarity, similarity);\n        }\n        printf(\"%d\\n\", maxSimilarity);\n        free(A);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <algorithm>\nusing namespace std;\n#define MOD 1000000007\n\nint calculateSimilarity(int a, int b) {\n    return min((a * b) % MOD, (b * a) % MOD);\n}\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T;\n    cin >> T;\n    while (T--) {\n        int N;\n        cin >> N;\n        int *A = new int[N];\n        for (int i = 0; i < N; i++) {\n            cin >> A[i];\n        }\n        sort(A, A + N);\n        int maxSimilarity = 0;\n        for (int i = 0; i < N - 1; i++) {\n            int similarity = calculateSimilarity(A[i], A[i + 1]);\n            maxSimilarity = max(maxSimilarity, similarity);\n        }\n        cout << maxSimilarity << endl;\n        delete[] A;\n    }\n    return 0;\n}",
@@ -123,5 +123,6 @@
       "Python3": "import sys\nMOD = 1000000007\n\ndef calculateSimilarity(a, b):\n    return min((a * b) % MOD, (b * a) % MOD)\n\ndef main():\n    T = int(input())\n    for _ in range(T):\n        N = int(input())\n        A = list(map(int, input().split()))\n        A.sort()\n        maxSimilarity = 0\n        for i in range(N - 1):\n            similarity = calculateSimilarity(A[i], A[i + 1])\n            maxSimilarity = max(maxSimilarity, similarity)\n        print(maxSimilarity)\n\ndef solve():\n    main()\n\nif __name__ == '__main__':\n    solve()",
       "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet i = 0;\nconst readline = () => lines[i++];\nconst MOD = 1000000007;\n\nfunction calculateSimilarity(a, b) {\n    return Math.min((a * b) % MOD, (b * a) % MOD);\n}\n\nfunction main() {\n    const T = parseInt(readline());\n    for (let i = 0; i < T; i++) {\n        const N = parseInt(readline());\n        const A = readline().split(' ').map(Number);\n        A.sort((a, b) => a - b);\n        let maxSimilarity = 0;\n        for (let j = 0; j < N - 1; j++) {\n            const similarity = calculateSimilarity(A[j], A[j + 1]);\n            maxSimilarity = Math.max(maxSimilarity, similarity);\n        }\n        console.log(maxSimilarity);\n    }\n}\n\nmain();"
     }
-  }
+  },
+  "verified": false
 }

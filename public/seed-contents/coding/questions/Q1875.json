@@ -21,16 +21,16 @@
     ]
   },
   "content": {
-    "problemStatement": "You\u2019re working on a leaderboard feature for a quiz app. The scores of users are stored in a `HashMap&lt;String, Integer&gt;`, where the key is the username and the value is their score.\n\nYour task is to write a program that **sorts this map by values in descending order** (i.e., highest score first), and prints each key-value pair on a new line in the format:\n\n`username: score`\n\n\nInput Format\n\nFirst line: An integer `N`, the number of entries in the map.\nNext `N` lines: Each line contains a `username` and `score`, separated by a space.\n\n\nOutput Format\n\nPrint the sorted key-value pairs (by score descending), one per line, in the format:\n\n`username: score`",
+    "problemStatement": "You’re working on a leaderboard feature for a quiz app. The scores of users are stored in a `HashMap&lt;String, Integer&gt;`, where the key is the username and the value is their score.\n\nYour task is to write a program that **sorts this map by values in descending order** (i.e., highest score first), and prints each key-value pair on a new line in the format:\n\n`username: score`\n\n\nInput Format\n\nFirst line: An integer `N`, the number of entries in the map.\nNext `N` lines: Each line contains a `username` and `score`, separated by a space.\n\n\nOutput Format\n\nPrint the sorted key-value pairs (by score descending), one per line, in the format:\n\n`username: score`",
     "constraints": [
       "1 <= T <= 10",
       "1 <= N <= 1000",
-      "Usernames contain only lowercase letters and have length \u2264 100",
+      "Usernames contain only lowercase letters and have length ≤ 100",
       "0 <= score <= 10^6",
       "All usernames within a test case are distinct"
     ],
-    "inputFormat": "The first line contains an integer T (1 \u2264 T \u2264 10), the number of test cases. For each test case, the first line contains an integer N (1 \u2264 N \u2264 1000), the number of entries. The next N lines each contain a username (lower\u2011case letters, length \u2264 100, no spaces) and an integer score (0 \u2264 score \u2264 10^6) separated by a single space.",
-    "outputFormat": "For each test case, print the N username\u2011score pairs sorted by score in descending order. Each pair is printed on its own line in the format \"username: score\". The outputs of consecutive test cases follow directly without blank lines.",
+    "inputFormat": "The first line contains an integer T (1 ≤ T ≤ 10), the number of test cases. For each test case, the first line contains an integer N (1 ≤ N ≤ 1000), the number of entries. The next N lines each contain a username (lower‑case letters, length ≤ 100, no spaces) and an integer score (0 ≤ score ≤ 10^6) separated by a single space.",
+    "outputFormat": "For each test case, print the N username‑score pairs sorted by score in descending order. Each pair is printed on its own line in the format \"username: score\". The outputs of consecutive test cases follow directly without blank lines.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -117,7 +117,7 @@
   },
   "solution": {
     "approach": "For each test case read all (username, score) pairs into a list/array. Sort the list using a comparator that orders by score in descending order. After sorting, iterate over the list and print each pair in the required \"username: score\" format. The algorithm is dominated by the sort step, which is O(N log N). Memory usage is O(N) for storing the pairs.",
-    "timeComplexity": "O(T * N log N) \u2013 sorting each test case of size N.",
+    "timeComplexity": "O(T * N log N) – sorting each test case of size N.",
     "spaceComplexity": "O(N) per test case for the array of pairs.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\ntypedef struct {\n    char username[101];\n    int score;\n} Pair;\n\nint cmpDesc(const void *a, const void *b) {\n    const Pair *p1 = (const Pair *)a;\n    const Pair *p2 = (const Pair *)b;\n    return p2->score - p1->score; // descending by score\n}\n\nint main() {\n    int T;\n    if (scanf(\"%d\", &T) != 1) return 0;\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        Pair *arr = (Pair *)malloc(N * sizeof(Pair));\n        for (int i = 0; i < N; ++i) {\n            scanf(\"%100s %d\", arr[i].username, &arr[i].score);\n        }\n        qsort(arr, N, sizeof(Pair), cmpDesc);\n        for (int i = 0; i < N; ++i) {\n            printf(\"%s: %d\\n\", arr[i].username, arr[i].score);\n        }\n        free(arr);\n    }\n    return 0;\n}",
@@ -126,5 +126,6 @@
       "Python3": "import sys\n\ndef main():\n    data = sys.stdin.read().strip().splitlines()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out = []\n    for _ in range(T):\n        N = int(next(it))\n        pairs = []\n        for _ in range(N):\n            username, score = next(it).split()\n            pairs.append((username, int(score)))\n        pairs.sort(key=lambda x: x[1], reverse=True)\n        for u, s in pairs:\n            out.append(f\"{u}: {s}\")\n    sys.stdout.write(\"\\n\".join(out))\n\nif __name__ == \"__main__\":\n    main()",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst T = parseInt(lines[idx++], 10);\nlet output = [];\nfor (let t = 0; t < T; t++) {\n  const N = parseInt(lines[idx++], 10);\n  const arr = [];\n  for (let i = 0; i < N; i++) {\n    const [username, scoreStr] = lines[idx++].trim().split(' ');\n    arr.push({username, score: parseInt(scoreStr, 10)});\n  }\n  arr.sort((a, b) => b.score - a.score);\n  for (const p of arr) {\n    output.push(`${p.username}: ${p.score}`);\n  }\n}\nconsole.log(output.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

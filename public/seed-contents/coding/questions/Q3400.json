@@ -22,10 +22,10 @@
   "content": {
     "problemStatement": "Chef and his little brother are playing with sticks. They have total **N** sticks. Length of **i**-th stick is **Ai**. \nChef asks his brother to choose any four sticks and to make a rectangle with those sticks its sides. Chef warns his brother to not to break any of the sticks, he has to use sticks as a whole. Also, he wants that the rectangle formed should have the maximum possible area among all the rectangles that Chef's brother can make. \n\n\n\nChef's little brother takes this challenge up and overcomes it. Can you also do so? That is, you have to tell whether it is even possible to create a rectangle? If yes, then you have to tell the maximum possible area of rectangle.",
     "constraints": [
-      "1 \u2264 T \u2264 100",
-      "1 \u2264 N \u2264 10^3",
-      "1 \u2264 sum of N's over all test-cases in a single test file \u2264 10^3",
-      "1 \u2264 Ai \u2264 10^3"
+      "1 ≤ T ≤ 100",
+      "1 ≤ N ≤ 10^3",
+      "1 ≤ sum of N's over all test-cases in a single test file ≤ 10^3",
+      "1 ≤ Ai ≤ 10^3"
     ],
     "inputFormat": "The first line contains a single integer T denoting the number of test-cases. Each test case consists of two lines. The first line contains a single integer N denoting the number of sticks. The second line contains N space-separated integers A1, A2, ..., AN denoting the lengths of sticks.",
     "outputFormat": "For each test case, output a single line containing an integer representing the maximum possible area for rectangle or -1 if it's impossible to form any rectangle using the available sticks.",
@@ -103,8 +103,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we first sort the array of stick lengths in descending order. Then, we try to find two pairs of equal stick lengths. If we can find two pairs, we calculate the area of the rectangle that can be formed using these sticks and print it. If we cannot find two pairs, we print -1.",
-    "timeComplexity": "O(T * N log N) \u2014 due to sorting the array of stick lengths for each test case",
-    "spaceComplexity": "O(N) \u2014 for storing the array of stick lengths",
+    "timeComplexity": "O(T * N log N) — due to sorting the array of stick lengths for each test case",
+    "spaceComplexity": "O(N) — for storing the array of stick lengths",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint cmp_desc(const void *a, const void *b) {\n    return (*(int*)b - *(int*)a);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    \n    while (T--) {\n        int n;\n        scanf(\"%d\", &n);\n        int V[n];\n        \n        for (int i = 0; i < n; i++) {\n            scanf(\"%d\", &V[i]);\n        }\n        \n        // Sort in descending order\n        qsort(V, n, sizeof(int), cmp_desc);\n        \n        int max1 = 0, max2 = 0;\n        int i = 0;\n        \n        // Find the first pair of equal sticks\n        while (i < n - 1) {\n            if (V[i] == V[i + 1]) {\n                max1 = V[i];\n                i += 2;\n                break;\n            }\n            i++;\n        }\n        \n        // Find the second pair of equal sticks\n        while (i < n - 1) {\n            if (V[i] == V[i + 1]) {\n                max2 = V[i];\n                i += 2;\n                break;\n            }\n            i++;\n        }\n        \n        if (max1 > 0 && max2 > 0) {\n            printf(\"%d\\n\", max1 * max2);\n        } else {\n            printf(\"-1\\n\");\n        }\n    }\n    \n    return 0;\n}",
       "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int n;\n        cin >> n;\n        vector<int> V(n);\n        \n        for (int i = 0; i < n; i++) {\n            cin >> V[i];\n        }\n        \n        sort(V.begin(), V.end(), greater<int>());\n        \n        int max1 = 0, max2 = 0;\n        int i = 0;\n        \n        // Find the first pair of equal sticks\n        while (i < n - 1) {\n            if (V[i] == V[i + 1]) {\n                max1 = V[i];\n                i += 2;\n                break;\n            }\n            i++;\n        }\n        \n        // Find the second pair of equal sticks\n        while (i < n - 1) {\n            if (V[i] == V[i + 1]) {\n                max2 = V[i];\n                i += 2;\n                break;\n            }\n            i++;\n        }\n        \n        if (max1 > 0 && max2 > 0) {\n            cout << max1 * max2 << endl;\n        } else {\n            cout << -1 << endl;\n        }\n    }\n}\n\nint main() {\n    solve();\n    return 0;\n}",
@@ -112,5 +112,6 @@
       "Python3": "def solve():\n    T = int(input())\n    \n    for _ in range(T):\n        n = int(input())\n        V = list(map(int, input().split()))\n        \n        V.sort(reverse=True)\n        \n        max1, max2 = 0, 0\n        i = 0\n        \n        # Find the first pair of equal sticks\n        while i < n - 1:\n            if V[i] == V[i + 1]:\n                max1 = V[i]\n                i += 2\n                break\n            i += 1\n        \n        # Find the second pair of equal sticks\n        while i < n - 1:\n            if V[i] == V[i + 1]:\n                max2 = V[i]\n                i += 2\n                break\n            i += 1\n        \n        if max1 > 0 and max2 > 0:\n            print(max1 * max2)\n        else:\n            print(-1)\n\nsolve()",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction nextLine() {\n    return lines[idx++];\n}\n\nfunction nextInt() {\n    return parseInt(nextLine());\n}\n\nfunction nextIntArray() {\n    return nextLine().split(' ').map(Number);\n}\n\nfunction solve() {\n    let T = nextInt();\n    while (T-- > 0) {\n        let n = nextInt();\n        let V = nextIntArray();\n        \n        V.sort((a, b) => b - a);\n        \n        let max1 = 0, max2 = 0;\n        let i = 0;\n        \n        // Find the first pair of equal sticks\n        while (i < n - 1) {\n            if (V[i] == V[i + 1]) {\n                max1 = V[i];\n                i += 2;\n                break;\n            }\n            i++;\n        }\n        \n        // Find the second pair of equal sticks\n        while (i < n - 1) {\n            if (V[i] == V[i + 1]) {\n                max2 = V[i];\n                i += 2;\n                break;\n            }\n            i++;\n        }\n        \n        if (max1 > 0 && max2 > 0) {\n            console.log(max1 * max2);\n        } else {\n            console.log(-1);\n        }\n    }\n}\n\nsolve();"
     }
-  }
+  },
+  "verified": false
 }

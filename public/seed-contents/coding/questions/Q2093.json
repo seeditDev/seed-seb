@@ -28,14 +28,14 @@
       "0 <= length of each string <= 100",
       "Number of strings per test case <= 15"
     ],
-    "inputFormat": "The first line contains an integer T (1\u202f\u2264\u202fT\u202f\u2264\u202f10) \u2013 the number of test cases. Each of the next T lines contains a space\u2011separated list of strings. Each string consists of printable ASCII characters, may be empty, and its length is between 0 and 100. The number of strings in a line does not exceed 15.",
+    "inputFormat": "The first line contains an integer T (1 ≤ T ≤ 10) – the number of test cases. Each of the next T lines contains a space‑separated list of strings. Each string consists of printable ASCII characters, may be empty, and its length is between 0 and 100. The number of strings in a line does not exceed 15.",
     "outputFormat": "For each test case output one line containing the reversed strings in the same order, separated by a single space. If a test case contains no strings, output an empty line.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "3\nhello world python\nabc\na b c d e",
         "output": "olleh dlrow nohtyp\ncba\na b c d e",
-        "explanation": "Test case 1: each word is reversed. Test case 2: single word \"abc\" becomes \"cba\". Test case 3: all single\u2011character strings stay unchanged."
+        "explanation": "Test case 1: each word is reversed. Test case 2: single word \"abc\" becomes \"cba\". Test case 3: all single‑character strings stay unchanged."
       },
       {
         "id": "sample_2",
@@ -115,8 +115,8 @@
     ]
   },
   "solution": {
-    "approach": "For each test case we split the input line by whitespace to obtain the list of strings. Using a lambda (or an equivalent short function) we reverse each string \u2013 in most languages this is a one\u2011liner (e.g., x[::-1] in Python, std::reverse in C++). The lambda is applied to every element with map (or a loop that mimics map). Finally we join the reversed strings with a single space and print the line. The algorithm is linear in the total number of characters.",
-    "timeComplexity": "O(total_characters) \u2013 each character is visited once when reversing its string.",
+    "approach": "For each test case we split the input line by whitespace to obtain the list of strings. Using a lambda (or an equivalent short function) we reverse each string – in most languages this is a one‑liner (e.g., x[::-1] in Python, std::reverse in C++). The lambda is applied to every element with map (or a loop that mimics map). Finally we join the reversed strings with a single space and print the line. The algorithm is linear in the total number of characters.",
+    "timeComplexity": "O(total_characters) – each character is visited once when reversing its string.",
     "spaceComplexity": "O(total_characters) for storing the input and the reversed strings.",
     "code": {
       "C": "#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>\n#define MAX_LINE 10000\nvoid reverse_str(char *s){\n    int i=0, j=strlen(s)-1;\n    while(i<j){\n        char tmp=s[i]; s[i]=s[j]; s[j]=tmp;\n        i++; j--;\n    }\n}\nint main(){\n    char line[MAX_LINE];\n    int T;\n    if(scanf(\"%d\", &T)!=1) return 0;\n    fgets(line, MAX_LINE, stdin); // consume endline after T\n    for(int tc=0; tc<T; ++tc){\n        if(!fgets(line, MAX_LINE, stdin)) line[0]='\\0';\n        line[strcspn(line, \"\\n\")] = '\\0'; // remove trailing newline\n        char *token = strtok(line, \" \");\n        int first = 1;\n        while(token){\n            reverse_str(token);\n            if(!first) printf(\" \");\n            printf(\"%s\", token);\n            first = 0;\n            token = strtok(NULL, \" \");\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}",
@@ -125,5 +125,6 @@
       "Python3": "import sys\n\ndef reverse_strings(strings):\n    # Lambda that returns the reversed version of a string\n    return list(map(lambda x: x[::-1], strings))\n\ndef main():\n    data = sys.stdin.read().splitlines()\n    if not data:\n        return\n    T = int(data[0].strip())\n    out_lines = []\n    for i in range(1, T+1):\n        tokens = data[i].split() if i < len(data) else []\n        out_lines.append(' '.join(reverse_strings(tokens)))\n    sys.stdout.write('\\n'.join(out_lines))\n\nif __name__ == \"__main__\":\n    main()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').split('\\n');\nconst T = parseInt((input[0]||'').trim(), 10);\nlet results = [];\nfor(let i=1; i<=T; i++){\n  const line = (input[i]||'').trim();\n  const tokens = line.length===0 ? [] : line.split(/\\s+/);\n  const rev = tokens.map(s => s.split('').reverse().join(''));\n  results.push(rev.join(' '));\n}\nconsole.log(results.join('\\n'));\n"
     }
-  }
+  },
+  "verified": false
 }

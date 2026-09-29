@@ -22,14 +22,14 @@
     ]
   },
   "content": {
-    "problemStatement": "A competition with NNN participants (numbered 111 through NNN) is taking place in Chefland. There are N\u22121N-1N\u22121 rounds in the competition; in each round, two arbitrarily chosen contestants battle, one of them loses and drops out of the competition.\n\nThere are 101010 types of weapons (numbered 111 through 101010). You are given NNN strings S1,S2,\u2026,SNS_1, S_2, \\ldots, S_NS1\u200b,S2\u200b,\u2026,SN\u200b; for each valid iii and jjj, the jjj-th character of SiS_iSi\u200b is '1' if the iii-th contestant initially has a weapon of type jjj or '0' otherwise. During each battle, for each type jjj such that both contestants in this battle currently have weapons of type jjj, these weapons of both contestants are destroyed; after the battle, the winner collects all remaining (not destroyed) weapons of the loser. Note that each contestant may win or lose regardless of the weapons he/she has.\n\nChef is feeling bored watching the contest, so he wants to find the maximum possible number of weapons the winner of the tournament could have after the last battle, regardless of which contestants fight in which battles or the results of the battles. Can you help him?",
+    "problemStatement": "A competition with NNN participants (numbered 111 through NNN) is taking place in Chefland. There are N−1N-1N−1 rounds in the competition; in each round, two arbitrarily chosen contestants battle, one of them loses and drops out of the competition.\n\nThere are 101010 types of weapons (numbered 111 through 101010). You are given NNN strings S1,S2,…,SNS_1, S_2, \\ldots, S_NS1​,S2​,…,SN​; for each valid iii and jjj, the jjj-th character of SiS_iSi​ is '1' if the iii-th contestant initially has a weapon of type jjj or '0' otherwise. During each battle, for each type jjj such that both contestants in this battle currently have weapons of type jjj, these weapons of both contestants are destroyed; after the battle, the winner collects all remaining (not destroyed) weapons of the loser. Note that each contestant may win or lose regardless of the weapons he/she has.\n\nChef is feeling bored watching the contest, so he wants to find the maximum possible number of weapons the winner of the tournament could have after the last battle, regardless of which contestants fight in which battles or the results of the battles. Can you help him?",
     "constraints": [
       "1 <= T <= 10",
       "1 <= N <= 100000",
       "Each binary string has exactly 10 characters"
     ],
-    "inputFormat": "First line contains an integer T, the number of test cases. Each test case starts with an integer N (1 \u2264 N \u2264 100000). Then N lines follow, each containing a binary string of length 10 (characters are only '0' or '1'), representing the weapon types owned by that participant.",
-    "outputFormat": "For each test case output a single line containing one integer \u2013 the maximum possible number of weapons the tournament winner can have after all battles.",
+    "inputFormat": "First line contains an integer T, the number of test cases. Each test case starts with an integer N (1 ≤ N ≤ 100000). Then N lines follow, each containing a binary string of length 10 (characters are only '0' or '1'), representing the weapon types owned by that participant.",
+    "outputFormat": "For each test case output a single line containing one integer – the maximum possible number of weapons the tournament winner can have after all battles.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -41,7 +41,7 @@
         "id": "sample_2",
         "input": "1\\n2\\n101\\n010",
         "output": "2",
-        "explanation": "The given strings are interpreted as 10\u2011bit strings with leading zeros: 0000000101 and 0000000010. Their XOR is 0000000111, which has 2 set bits among the 10 positions, matching the expected output."
+        "explanation": "The given strings are interpreted as 10‑bit strings with leading zeros: 0000000101 and 0000000010. Their XOR is 0000000111, which has 2 set bits among the 10 positions, matching the expected output."
       },
       {
         "id": "sample_3",
@@ -115,7 +115,7 @@
     ]
   },
   "solution": {
-    "approach": "For each weapon type we only need to know whether it appears an odd or even number of times among all participants. During a battle, a weapon type present in both contestants is destroyed for both, which effectively removes two copies of that type. Hence the parity of the total count of each weapon type never changes. The final winner can keep a weapon type only if the total number of that type across all participants is odd. Therefore the answer is the number of set bits in the XOR of all participants' 10\u2011bit masks. Compute the XOR of all masks and count its set bits.",
+    "approach": "For each weapon type we only need to know whether it appears an odd or even number of times among all participants. During a battle, a weapon type present in both contestants is destroyed for both, which effectively removes two copies of that type. Hence the parity of the total count of each weapon type never changes. The final winner can keep a weapon type only if the total number of that type across all participants is odd. Therefore the answer is the number of set bits in the XOR of all participants' 10‑bit masks. Compute the XOR of all masks and count its set bits.",
     "timeComplexity": "O(N) per test case, O(1) additional work for each participant (10 bits). Overall O(total N) for the whole input.",
     "spaceComplexity": "O(1) extra space besides input storage.",
     "code": {
@@ -125,5 +125,6 @@
       "Python3": "import sys\ndef solve():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out = []\n    for _ in range(T):\n        N = int(next(it))\n        xor_mask = 0\n        for _ in range(N):\n            s = next(it)\n            mask = int(s, 2)\n            xor_mask ^= mask\n        out.append(str(bin(xor_mask).count('1')))\n    sys.stdout.write('\\n'.join(out))\nif __name__ == \"__main__\":\n    solve()\n",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet results = [];\nfor (let t = 0; t < T; ++t) {\n  const N = Number(input[idx++]);\n  let xorMask = 0;\n  for (let i = 0; i < N; ++i) {\n    const s = input[idx++];\n    const mask = parseInt(s, 2);\n    xorMask ^= mask;\n  }\n  let cnt = 0;\n  let x = xorMask;\n  while (x) { cnt += x & 1; x >>= 1; }\n  results.push(String(cnt));\n}\nconsole.log(results.join('\\n'));\n"
     }
-  }
+  },
+  "verified": false
 }

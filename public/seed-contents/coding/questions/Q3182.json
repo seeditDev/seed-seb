@@ -22,9 +22,9 @@
   "content": {
     "problemStatement": "Chef loves to play with arrays by himself. Today, he has an array **A** consisting of **N** distinct integers. He wants to perform the following operation on his array **A**.\n\n\n\n\nSelect a pair of adjacent integers and remove the larger one of these two. This decreases the array size by 1. Cost of this operation will be equal to the smaller of them.\n\n\n\nFind out minimum sum of costs of operations needed to convert the array into a single element.",
     "constraints": [
-      "1 \u2264 T \u2264 10",
-      "2 \u2264 N \u2264 50000",
-      "1 \u2264 Ai \u2264 10^5"
+      "1 ≤ T ≤ 10",
+      "2 ≤ N ≤ 50000",
+      "1 ≤ Ai ≤ 10^5"
     ],
     "inputFormat": "The first line contains a single integer T denoting the number of test cases. Each test case starts with an integer N denoting the size of the array A. The next line contains N space-separated integers, where the ith integer denotes the value Ai.",
     "outputFormat": "For each test case, print the minimum cost required for the transformation.",
@@ -114,8 +114,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can use a dynamic programming approach. We will maintain a 2D array dp where dp[i][j] represents the minimum cost to reduce the subarray from i to j to a single element. We will fill up the dp array in a bottom-up manner. For each subarray, we will try to remove the larger element and add the smaller element to the cost. We will take the minimum cost among all possible ways to reduce the subarray to a single element.",
-    "timeComplexity": "O(T * N^2) \u2014 where T is the number of test cases and N is the maximum size of the array A. The reason is that we are using a nested loop to fill up the dp array.",
-    "spaceComplexity": "O(N^2) \u2014 where N is the maximum size of the array A. The reason is that we are using a 2D array dp of size N x N.",
+    "timeComplexity": "O(T * N^2) — where T is the number of test cases and N is the maximum size of the array A. The reason is that we are using a nested loop to fill up the dp array.",
+    "spaceComplexity": "O(N^2) — where N is the maximum size of the array A. The reason is that we are using a 2D array dp of size N x N.",
     "code": {
       "C": "#include <stdio.h>\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &A[i]);\n        }\n        int dp[N][N];\n        for (int i = 0; i < N; i++) {\n            dp[i][i] = 0;\n        }\n        for (int len = 2; len <= N; len++) {\n            for (int i = 0; i <= N - len; i++) {\n                int j = i + len - 1;\n                dp[i][j] = A[i];\n                for (int k = i + 1; k <= j; k++) {\n                    if (A[k] < A[i]) {\n                        dp[i][j] = dp[i][j] > dp[i + 1][j] + A[k] ? dp[i + 1][j] + A[k] : dp[i][j];\n                    }\n                }\n            }\n        }\n        printf(\"%d\\n\", dp[0][N - 1]);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N;\n        cin >> N;\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            cin >> A[i];\n        }\n        int dp[N][N];\n        for (int i = 0; i < N; i++) {\n            dp[i][i] = 0;\n        }\n        for (int len = 2; len <= N; len++) {\n            for (int i = 0; i <= N - len; i++) {\n                int j = i + len - 1;\n                dp[i][j] = A[i];\n                for (int k = i + 1; k <= j; k++) {\n                    if (A[k] < A[i]) {\n                        dp[i][j] = dp[i][j] > dp[i + 1][j] + A[k] ? dp[i + 1][j] + A[k] : dp[i][j];\n                    }\n                }\n            }\n        }\n        cout << dp[0][N - 1] << endl;\n    }\n    return 0;\n}",
@@ -123,5 +123,6 @@
       "Python3": "import sys\ninput = sys.stdin.readline\nT = int(input())\nfor _ in range(T):\n    N = int(input())\n    A = list(map(int, input().split()))\n    dp = [[0] * N for _ in range(N)]\n    for i in range(N):\n        dp[i][i] = 0\n    for length in range(2, N + 1):\n        for i in range(N - length + 1):\n            j = i + length - 1\n            dp[i][j] = A[i]\n            for k in range(i + 1, j + 1):\n                if A[k] < A[i]:\n                    dp[i][j] = min(dp[i][j], dp[i + 1][j] + A[k])\n    print(dp[0][N - 1])",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => input[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const N = parseInt(readline());\n    const A = readline().split(' ').map(Number);\n    const dp = Array(N).fill(0).map(() => Array(N).fill(0));\n    for (let j = 0; j < N; j++) {\n        dp[j][j] = 0;\n    }\n    for (let len = 2; len <= N; len++) {\n        for (let j = 0; j <= N - len; j++) {\n            const k = j + len - 1;\n            dp[j][k] = A[j];\n            for (let l = j + 1; l <= k; l++) {\n                if (A[l] < A[j]) {\n                    dp[j][k] = Math.min(dp[j][k], dp[j + 1][k] + A[l]);\n                }\n            }\n        }\n    }\n    console.log(dp[0][N - 1]);\n}"
     }
-  }
+  },
+  "verified": false
 }

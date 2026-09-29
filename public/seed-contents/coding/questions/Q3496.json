@@ -22,10 +22,10 @@
   "content": {
     "problemStatement": "Chef is teaching his students about properties of integers. Today he is teaching them about numbers which are squares of some number, e.g. 1, 4, 9, 16, 25 etc. These numbers are said perfect squares.\n\nHe gave his students the following task as homework. He gives an array **a** consisting of **n** positive integers. He calls the array **w0w** if for every pair of indices **i, j**, the product **ai * aj** is a perfect square.\n\nChef wants you to make this array w0w. For achieving this, you can pick any integer **ai** and can multiply it by any prime number. You can perform this operation several times, even multiple times on the same number. Find out the minimum number of operations that you will require.",
     "constraints": [
-      "1 \u2264 T \u2264 10^6",
-      "1 \u2264 n \u2264 10^6",
-      "1 \u2264 a[i] \u2264 10^6",
-      "1 \u2264 Sum of n over all test cases in a single test file \u2264 10^6"
+      "1 ≤ T ≤ 10^6",
+      "1 ≤ n ≤ 10^6",
+      "1 ≤ a[i] ≤ 10^6",
+      "1 ≤ Sum of n over all test cases in a single test file ≤ 10^6"
     ],
     "inputFormat": "The first line of the input contains an integer T denoting the number of the test cases. The first line of each test case will contain an integer n denoting number of elements in array a. The next line will contain n space separated integers denoting elements of array a.",
     "outputFormat": "For each test case, output a single integer corresponding to minimum number of operations required to make array w0w.",
@@ -103,8 +103,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we need to find the minimum number of operations required to make the array w0w. We can achieve this by iterating over each element in the array and checking if it is a perfect square. If it is not, we need to find the minimum number of prime factors required to make it a perfect square. We can use a prime factorization approach to achieve this.",
-    "timeComplexity": "O(T * n * sqrt(a[i])) \u2014 explain: per query is O(n * sqrt(a[i])), total is O(T * n * sqrt(a[i]))",
-    "spaceComplexity": "O(n) \u2014 explain: we need to store the array of size n",
+    "timeComplexity": "O(T * n * sqrt(a[i])) — explain: per query is O(n * sqrt(a[i])), total is O(T * n * sqrt(a[i]))",
+    "spaceComplexity": "O(n) — explain: we need to store the array of size n",
     "code": {
       "C": "#include <stdio.h>\n#include <math.h>\nint isPerfectSquare(int n) {\n    int sqrt_n = sqrt(n);\n    return (sqrt_n * sqrt_n == n);\n}\nint minOperations(int a[], int n) {\n    int count = 0;\n    for (int i = 0; i < n; i++) {\n        if (!isPerfectSquare(a[i])) {\n            int j = 2;\n            while (j * j <= a[i]) {\n                if (a[i] % j == 0) {\n                    a[i] /= j;\n                    count++;\n                } else {\n                    j++;\n                }\n            }\n        }\n    }\n    return count;\n}\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int n;\n        scanf(\"%d\", &n);\n        int a[n];\n        for (int i = 0; i < n; i++) {\n            scanf(\"%d\", &a[i]);\n        }\n        printf(\"%d\\n\", minOperations(a, n));\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <cmath>\nusing namespace std;\nbool isPerfectSquare(int n) {\n    int sqrt_n = sqrt(n);\n    return (sqrt_n * sqrt_n == n);\n}\nint minOperations(int a[], int n) {\n    int count = 0;\n    for (int i = 0; i < n; i++) {\n        if (!isPerfectSquare(a[i])) {\n            int j = 2;\n            while (j * j <= a[i]) {\n                if (a[i] % j == 0) {\n                    a[i] /= j;\n                    count++;\n                } else {\n                    j++;\n                }\n            }\n        }\n    }\n    return count;\n}\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int n;\n        cin >> n;\n        int a[n];\n        for (int i = 0; i < n; i++) {\n            cin >> a[i];\n        }\n        cout << minOperations(a, n) << endl;\n    }\n    return 0;\n}",
@@ -112,5 +112,6 @@
       "Python3": "import math\n\ndef is_perfect_square(n):\n    sqrt_n = math.sqrt(n)\n    return (sqrt_n == int(sqrt_n))\n\ndef min_operations(a):\n    count = 0\n    for i in range(len(a)):\n        if not is_perfect_square(a[i]):\n            j = 2\n            while j * j <= a[i]:\n                if a[i] % j == 0:\n                    a[i] //= j\n                    count += 1\n                else:\n                    j += 1\n    return count\nT = int(input())\nfor _ in range(T):\n    n = int(input())\n    a = list(map(int, input().split()))\n    print(min_operations(a))",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nfunction isPerfectSquare(n) {\n    const sqrt_n = Math.sqrt(n);\n    return (sqrt_n === Math.floor(sqrt_n));\n}\nfunction minOperations(a) {\n    let count = 0;\n    for (let i = 0; i < a.length; i++) {\n        if (!isPerfectSquare(a[i])) {\n            let j = 2;\n            while (j * j <= a[i]) {\n                if (a[i] % j === 0) {\n                    a[i] /= j;\n                    count++;\n                } else {\n                    j++;\n                }\n            }\n        }\n    }\n    return count;\n}\nlet T = parseInt(lines[idx++]);\nwhile (T-- > 0) {\n    let n = parseInt(lines[idx++]);\n    let a = lines[idx++].split(' ').map(x => parseInt(x));\n    console.log(minOperations(a));\n}"
     }
-  }
+  },
+  "verified": false
 }

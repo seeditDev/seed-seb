@@ -21,7 +21,7 @@
     ]
   },
   "content": {
-    "problemStatement": "At the end of a busy day, The Chef and his assistants play a game together. The game is not just for fun but also used to decide who will have to clean the kitchen. The Chef is a Game Master, so his concern is how to manage the game but not how to win the game like his assistants do.\n\n\n\nThe game requires players to find the only ball under one of the **N** cups after their positions are changed in a special way. At the beginning of the game, The Chef places **N** cups in a row and put a ball under the **C**-th cup from the left (the cups are numbered from **1** to **N**). All players can see the initial position of the ball. Then Chef performs **Q** flip operations. Each flip operation is defined by two integers **L** and **R** such that **1 \u2264 L \u2264 R \u2264 N** and consists in reversing the segment **[L, R]** of cups. Namely, Chef swaps **L**-th and **R**-th cups, **(L+1)**-th and **(R\u22121)**-th cups, and so on. After performing all the operations Chef asks his assistants to choose a cup that they think the ball is under it. Who can guess the position of the ball will win the game, and of course, the others will have to clean the kitchen.\n\n\n\nThe Chef doesn't want to check all the **N** cups at the end of the game. He notes down the value of **C** and the pairs **(L, R)** and asked you, the mastered programmer, to determine the cup that contains the ball.",
+    "problemStatement": "At the end of a busy day, The Chef and his assistants play a game together. The game is not just for fun but also used to decide who will have to clean the kitchen. The Chef is a Game Master, so his concern is how to manage the game but not how to win the game like his assistants do.\n\n\n\nThe game requires players to find the only ball under one of the **N** cups after their positions are changed in a special way. At the beginning of the game, The Chef places **N** cups in a row and put a ball under the **C**-th cup from the left (the cups are numbered from **1** to **N**). All players can see the initial position of the ball. Then Chef performs **Q** flip operations. Each flip operation is defined by two integers **L** and **R** such that **1 ≤ L ≤ R ≤ N** and consists in reversing the segment **[L, R]** of cups. Namely, Chef swaps **L**-th and **R**-th cups, **(L+1)**-th and **(R−1)**-th cups, and so on. After performing all the operations Chef asks his assistants to choose a cup that they think the ball is under it. Who can guess the position of the ball will win the game, and of course, the others will have to clean the kitchen.\n\n\n\nThe Chef doesn't want to check all the **N** cups at the end of the game. He notes down the value of **C** and the pairs **(L, R)** and asked you, the mastered programmer, to determine the cup that contains the ball.",
     "constraints": [
       "1 <= T <= 10",
       "1 <= N <= 100000",
@@ -29,14 +29,14 @@
       "0 <= Q <= 10000",
       "1 <= L <= R <= N"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. For each test case, the first line contains three integers N, C and Q \u2014 the number of cups, the initial position of the ball (1\u2011indexed) and the number of flip operations. Each of the next Q lines contains two integers L and R (1\u202f\u2264\u202fL\u202f\u2264\u202fR\u202f\u2264\u202fN) describing a reversal of the segment [L,R].",
+    "inputFormat": "The first line contains an integer T, the number of test cases. For each test case, the first line contains three integers N, C and Q — the number of cups, the initial position of the ball (1‑indexed) and the number of flip operations. Each of the next Q lines contains two integers L and R (1 ≤ L ≤ R ≤ N) describing a reversal of the segment [L,R].",
     "outputFormat": "For each test case output a single line with the final position of the ball after performing all Q flips.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "1\\n5 2 3\\n1 4\\n3 5\\n1 5",
         "output": "1",
-        "explanation": "Initial ball at cup 2. After flips (1,4) \u2192 position becomes 3, after (3,5) \u2192 5, after (1,5) \u2192 1."
+        "explanation": "Initial ball at cup 2. After flips (1,4) → position becomes 3, after (3,5) → 5, after (1,5) → 1."
       },
       {
         "id": "sample_2",
@@ -117,7 +117,7 @@
   },
   "solution": {
     "approach": "We only need to know where the ball is, not the whole arrangement. Keep a variable pos initialized to C. For each operation (L,R) check if pos lies inside the interval. If it does, after reversing the segment the ball moves to the symmetric position inside the same interval, which can be computed as pos = L + R - pos. If pos is outside, it stays unchanged. Process all Q operations sequentially; the final value of pos is the answer.",
-    "timeComplexity": "O(Q) per test case, because each flip is handled in O(1). Overall O(T\u00b7Q) \u2264 10\u00b710000 = 1e5 operations.",
+    "timeComplexity": "O(Q) per test case, because each flip is handled in O(1). Overall O(T·Q) ≤ 10·10000 = 1e5 operations.",
     "spaceComplexity": "O(1) additional memory.",
     "code": {
       "C": "#include <stdio.h>\nint main(){\n    int T; if(scanf(\"%d\",&T)!=1) return 0;\n    while(T--){\n        int N,C,Q; scanf(\"%d %d %d\",&N,&C,&Q);\n        for(int i=0;i<Q;i++){\n            int L,R; scanf(\"%d %d\",&L,&R);\n            if(C>=L && C<=R) C = L + R - C;\n        }\n        printf(\"%d\\n\",C);\n    }\n    return 0;\n}",
@@ -126,5 +126,6 @@
       "Python3": "import sys\ndata = sys.stdin.read().strip().split()\nif not data:\n    sys.exit()\nit = iter(data)\nT = int(next(it))\nout_lines = []\nfor _ in range(T):\n    N = int(next(it)); C = int(next(it)); Q = int(next(it))\n    for __ in range(Q):\n        L = int(next(it)); R = int(next(it))\n        if L <= C <= R:\n            C = L + R - C\n    out_lines.append(str(C))\nsys.stdout.write('\\n'.join(out_lines))\n",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0,'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nif (input.length===0) process.exit(0);\nconst T = Number(input[idx++]);\nlet outputs = [];\nfor(let t=0;t<T;t++){\n  const N = Number(input[idx++]);\n  let pos = Number(input[idx++]);\n  const Q = Number(input[idx++]);\n  for(let i=0;i<Q;i++){\n    const L = Number(input[idx++]);\n    const R = Number(input[idx++]);\n    if(pos>=L && pos<=R){\n      pos = L + R - pos;\n    }\n  }\n  outputs.push(String(pos));\n}\nconsole.log(outputs.join('\\n'));\n"
     }
-  }
+  },
+  "verified": false
 }

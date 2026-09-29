@@ -22,9 +22,9 @@
   "content": {
     "problemStatement": "Chef lives in a big apartment in Chefland. The apartment charges maintenance fees that he is supposed to pay monthly on time. But Chef is a lazy person and sometimes misses the deadlines. The apartment charges 1000 Rs per month as maintenance fees. Also, they also charge a one-time fine of 100 Rs for each of the late payments. It does not matter how late the payment is done, the fine is fixed to be Rs.100.\n\nChef has been living in the apartment for **N** months. Now, he wants to switch the apartment, so he has to pay the entire dues to the apartment. The deadline for the **N**-th month is also over. From his bank statement, he finds the information whether he paid apartment rent for a particular month for not. You are given this information by an array **A** of size **N**, where **Ai** (can be either 0 or 1) specifies whether he has paid the 1000Rs in the **i**-th month or not. Assume that Chef paid the fees in the **i**-th month, then this fees will be considered for the earliest month for which Chef has not yet paid the fees.\n\n\nFor example, assume Chef did not pay any money in first month and 1000Rs in the second month. Then this rent of 1000Rs will be considered for 1st month. But this counts as late payment for the first month's fees, and hence he will have to pay Rs. 100 for that. And since the payment he made in the second month is not accounted for the second month, but rather for the first month, he will incur a fine of Rs.100 even for the second month. \n\n\nHe has not paid any of the fines so far. Can you please help in finding Chef total due (all the fines, plus all the unpaid maintenance fees) that he has to pay to apartment?",
     "constraints": [
-      "1 \u2264 T \u2264 25",
-      "1 \u2264 N \u2264 10^3",
-      "0 \u2264 Ai \u2264 1"
+      "1 ≤ T ≤ 25",
+      "1 ≤ N ≤ 10^3",
+      "0 ≤ Ai ≤ 1"
     ],
     "inputFormat": "The first line contains an integer T denoting the number of test cases. Each test case consists of two lines. The first line contains an integer N denoting the number of months. The second line contains N space-separated integers (each 0 or 1) denoting whether Chef paid the maintenance fees for the corresponding month or not.",
     "outputFormat": "For each test case, output a single integer denoting the total amount including fine that Chef has to pay.",
@@ -102,8 +102,8 @@
   },
   "solution": {
     "approach": "The approach is to iterate through the array of payments and calculate the total amount due. For each month, if the payment is 0, it means Chef did not pay the maintenance fees, so we add 1000 (maintenance fees) and 100 (fine) to the total amount due. If the payment is 1, it means Chef paid the maintenance fees, but if there are any pending payments, we add 100 (fine) to the total amount due and subtract 1000 (maintenance fees) from the pending payments.",
-    "timeComplexity": "O(T*N) \u2014 where T is the number of test cases and N is the number of months",
-    "spaceComplexity": "O(1) \u2014 as we only use a constant amount of space to store the total amount due and the pending payments",
+    "timeComplexity": "O(T*N) — where T is the number of test cases and N is the number of months",
+    "spaceComplexity": "O(1) — as we only use a constant amount of space to store the total amount due and the pending payments",
     "code": {
       "C": "#include <stdio.h>\nint main() {\n    int T, N, i, j, paid, due;\n    scanf(\"%d\", &T);\n    while (T--) {\n        scanf(\"%d\", &N);\n        due = 0;\n        paid = 0;\n        for (i = 0; i < N; i++) {\n            int x;\n            scanf(\"%d\", &x);\n            if (x == 1) {\n                paid++;\n            }\n        }\n        for (i = 0; i < N; i++) {\n            int x;\n            scanf(\"%d\", &x);\n            if (x == 0) {\n                due += 1100;\n            } else if (paid > 0) {\n                paid--;\n                due += 100;\n            }\n        }\n        printf(\"%d\\n\", due);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    int T, N, i, j, paid, due;\n    cin >> T;\n    while (T--) {\n        cin >> N;\n        due = 0;\n        paid = 0;\n        int arr[N];\n        for (i = 0; i < N; i++) {\n            cin >> arr[i];\n            if (arr[i] == 1) {\n                paid++;\n            }\n        }\n        for (i = 0; i < N; i++) {\n            if (arr[i] == 0) {\n                due += 1100;\n            } else if (paid > 0) {\n                paid--;\n                due += 100;\n            }\n        }\n        cout << due << endl;\n    }\n    return 0;\n}",
@@ -111,5 +111,6 @@
       "Python3": "import sys\ninput = sys.stdin.readline\nfor _ in range(int(input())):\n    N = int(input())\n    due = 0\n    paid = 0\n    arr = list(map(int, input().split()))\n    for i in range(N):\n        if arr[i] == 1:\n            paid += 1\n    for i in range(N):\n        if arr[i] == 0:\n            due += 1100\n        elif paid > 0:\n            paid -= 1\n            due += 100\n    print(due)",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst input = () => lines[idx++];\nconst T = parseInt(input());\nfor (let i = 0; i < T; i++) {\n    const N = parseInt(input());\n    let due = 0;\n    let paid = 0;\n    const arr = input().split(' ').map(x => parseInt(x));\n    for (let j = 0; j < N; j++) {\n        if (arr[j] == 1) {\n            paid++;\n        }\n    }\n    for (let j = 0; j < N; j++) {\n        if (arr[j] == 0) {\n            due += 1100;\n        } else if (paid > 0) {\n            paid--;\n            due += 100;\n        }\n    }\n    console.log(due);\n}"
     }
-  }
+  },
+  "verified": false
 }

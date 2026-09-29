@@ -21,11 +21,11 @@
   "content": {
     "problemStatement": "You are given a function f which is defined as :\n\n \n\nYour task is to find the value of \n\n \n\n\nwhere **M** is given in input.",
     "constraints": [
-      "2 \u2264 N \u2264 10^6",
-      "1 \u2264 M \u2264 10^9",
-      "2 \u2264 Sum of N over all test cases \u2264 10^6",
-      "1 \u2264 Sum of Q over all test cases \u2264 2*10^5",
-      "1 \u2264 T \u2264 10^5",
+      "2 ≤ N ≤ 10^6",
+      "1 ≤ M ≤ 10^9",
+      "2 ≤ Sum of N over all test cases ≤ 10^6",
+      "1 ≤ Sum of Q over all test cases ≤ 2*10^5",
+      "1 ≤ T ≤ 10^5",
       "1 < r < N"
     ],
     "inputFormat": "The first line contains T, the number of test cases. Each test case starts with a line containing three space-separated integers N, M, and Q. Then, Q lines follow, each containing an integer r.",
@@ -104,8 +104,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can use dynamic programming to calculate the values of f[i] for each i from 1 to N. We can then use these values to calculate the required answer for each query. We need to be careful with overflow and use modular arithmetic to avoid it.",
-    "timeComplexity": "O(T * (N + Q)) \u2014 we need to calculate the values of f[i] for each test case, which takes O(N) time, and then answer each query, which takes O(1) time.",
-    "spaceComplexity": "O(N) \u2014 we need to store the values of f[i] for each test case.",
+    "timeComplexity": "O(T * (N + Q)) — we need to calculate the values of f[i] for each test case, which takes O(N) time, and then answer each query, which takes O(1) time.",
+    "spaceComplexity": "O(N) — we need to store the values of f[i] for each test case.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, M, Q;\n        scanf(\"%d %d %d\", &N, &M, &Q);\n        long long f[N + 1];\n        f[1] = 1;\n        for (int i = 2; i <= N; i++) {\n            f[i] = (f[i - 1] * i) % M;\n        }\n        for (int i = 0; i < Q; i++) {\n            int r;\n            scanf(\"%d\", &r);\n            long long ans = (f[N] * powMod(f[r], M - 2, M) * powMod(f[N - r], M - 2, M)) % M;\n            printf(\"%lld\\n\", ans);\n        }\n    }\n    return 0;\n}\n",
       "C++": "#include <iostream>\n#include <cmath>\nusing namespace std;\n\nlong long powMod(long long a, long long b, long long m) {\n    long long res = 1;\n    while (b > 0) {\n        if (b & 1) res = (res * a) % m;\n        a = (a * a) % m;\n        b >>= 1;\n    }\n    return res;\n}\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, M, Q;\n        cin >> N >> M >> Q;\n        long long f[N + 1];\n        f[1] = 1;\n        for (int i = 2; i <= N; i++) {\n            f[i] = (f[i - 1] * i) % M;\n        }\n        for (int i = 0; i < Q; i++) {\n            int r;\n            cin >> r;\n            long long ans = (f[N] * powMod(f[r], M - 2, M) * powMod(f[N - r], M - 2, M)) % M;\n            cout << ans << endl;\n        }\n    }\n    return 0;\n}\n",
@@ -113,5 +113,6 @@
       "Python3": "import sys\ninput = sys.stdin.readline\n\ndef powMod(a, b, m):\n    res = 1\n    while b > 0:\n        if b % 2 == 1: res = (res * a) % m\n        a = (a * a) % m\n        b >>= 1\n    return res\n\nT = int(input())\nfor _ in range(T):\n    N, M, Q = map(int, input().split())\n    f = [0] * (N + 1)\n    f[1] = 1\n    for i in range(2, N + 1):\n        f[i] = (f[i - 1] * i) % M\n    for _ in range(Q):\n        r = int(input())\n        ans = (f[N] * powMod(f[r], M - 2, M) * powMod(f[N - r], M - 2, M)) % M\n        print(ans)\n",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction powMod(a, b, m) {\n    let res = 1;\n    while (b > 0) {\n        if (b % 2 == 1) res = (res * a) % m;\n        a = (a * a) % m;\n        b >>= 1;\n    }\n    return res;\n}\n\nlet T = parseInt(lines[idx++]);\nwhile (T-- > 0) {\n    let [N, M, Q] = lines[idx++].trim().split(' ').map(x => parseInt(x));\n    let f = new Array(N + 1).fill(0);\n    f[1] = 1;\n    for (let i = 2; i <= N; i++) {\n        f[i] = (f[i - 1] * i) % M;\n    }\n    for (let i = 0; i < Q; i++) {\n        let r = parseInt(lines[idx++]);\n        let ans = (f[N] * powMod(f[r], M - 2, M) * powMod(f[N - r], M - 2, M)) % M;\n        console.log(ans);\n    }\n}\n"
     }
-  }
+  },
+  "verified": false
 }

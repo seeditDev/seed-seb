@@ -1,6 +1,11 @@
 {
   "slug": "longest-palindromic-segment",
-  "hints": [],
+  "hints": [
+    "A palindrome reads the same backwards as forwards. A key observation is that a palindrome mirrors around its center.",
+    "There are 2n - 1 possible centers for a string of length n (n single characters for odd-length palindromes, and n - 1 spaces between characters for even-length palindromes).",
+    "Expand around each center as long as the mirrored characters match, updating the maximum palindrome found so far.",
+    "Can you optimize further using dynamic programming or Manacher's algorithm for linear time?"
+  ],
   "title": "Maximum-Length Palindromic Segment",
   "content": {
     "notes": [
@@ -106,20 +111,46 @@
   },
   "solution": {
     "code": {
-      "Python3": "class Solution:\n    def longestPalindrome(self, s: str) -> str:\n        if not s: return \"\"\n        start, max_l = 0, 1\n        def expand(l, r):\n            while l >= 0 and r < len(s) and s[l] == s[r]:\n                l -= 1\n                r += 1\n            return l + 1, r - 1\n        for i in range(len(s)):\n            l1, r1 = expand(i, i)\n            if r1 - l1 + 1 > max_l:\n                start, max_l = l1, r1 - l1 + 1\n            l2, r2 = expand(i, i + 1)\n            if r2 - l2 + 1 > max_l:\n                start, max_l = l2, r2 - l2 + 1\n        return s[start:start+max_l]\n\nif __name__ == '__main__':\n    import sys, json\n    args = json.loads(sys.stdin.readline())\n    s = args[0] if isinstance(args, list) else args\n    print(json.dumps(Solution().longestPalindrome(s)))\n",
-      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Minimal driver: judge provides a JSON array [s]\n// Implement longestPalindrome(char* s) below and return a malloc'd string.\n\nchar* longestPalindrome(char* s) {\n    // Implement Manacher's algorithm or expand-around-center here.\n    // Placeholder: return first character as a valid (but not optimal) palindrome.\n    char* res = (char*)malloc(2);\n    res[0] = s[0]; res[1] = '\\0';\n    return res;\n}",
-      "C++": "class Solution {\npublic:\n    string longestPalindrome(string s) {\n        // Write your solution here.\n        return \"\";\n    }\n};",
-      "Java": "",
-      "JavaScript": ""
+      "C": "char* longestPalindrome(char* s) {\n    if (!s || s[0] == '\\0') {\n        char* empty = (char*)malloc(1);\n        empty[0] = '\\0';\n        return empty;\n    }\n    int n = strlen(s);\n    int start = 0, maxLen = 1;\n\n    for (int i = 0; i < n; i++) {\n        // Odd-length palindrome\n        int l = i, r = i;\n        while (l >= 0 && r < n && s[l] == s[r]) {\n            l--;\n            r++;\n        }\n        int curLen = (r - 1) - (l + 1) + 1;\n        if (curLen > maxLen) {\n            start = l + 1;\n            maxLen = curLen;\n        }\n\n        // Even-length palindrome\n        l = i;\n        r = i + 1;\n        while (l >= 0 && r < n && s[l] == s[r]) {\n            l--;\n            r++;\n        }\n        curLen = (r - 1) - (l + 1) + 1;\n        if (curLen > maxLen) {\n            start = l + 1;\n            maxLen = curLen;\n        }\n    }\n\n    char* res = (char*)malloc(maxLen + 1);\n    strncpy(res, s + start, maxLen);\n    res[maxLen] = '\\0';\n    return res;\n}",
+      "C++": "class Solution {\npublic:\n    string longestPalindrome(string s) {\n        if (s.empty()) return \"\";\n        int start = 0, maxLen = 1;\n        int n = s.length();\n\n        auto expand = [&](int l, int r) {\n            while (l >= 0 && r < n && s[l] == s[r]) {\n                l--;\n                r++;\n            }\n            return make_pair(l + 1, r - 1);\n        };\n\n        for (int i = 0; i < n; i++) {\n            auto r1 = expand(i, i);\n            if (r1.second - r1.first + 1 > maxLen) {\n                start = r1.first;\n                maxLen = r1.second - r1.first + 1;\n            }\n            auto r2 = expand(i, i + 1);\n            if (r2.second - r2.first + 1 > maxLen) {\n                start = r2.first;\n                maxLen = r2.second - r2.first + 1;\n            }\n        }\n        return s.substr(start, maxLen);\n    }\n};",
+      "Java": "class Solution {\n    private int[] expand(String s, int l, int r) {\n        while (l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) {\n            l--;\n            r++;\n        }\n        return new int[]{l + 1, r - 1};\n    }\n\n    public String longestPalindrome(String s) {\n        if (s == null || s.isEmpty()) return \"\";\n        int start = 0, maxLen = 1;\n        for (int i = 0; i < s.length(); i++) {\n            int[] r1 = expand(s, i, i);\n            if (r1[1] - r1[0] + 1 > maxLen) {\n                start = r1[0];\n                maxLen = r1[1] - r1[0] + 1;\n            }\n            int[] r2 = expand(s, i, i + 1);\n            if (r2[1] - r2[0] + 1 > maxLen) {\n                start = r2[0];\n                maxLen = r2[1] - r2[0] + 1;\n            }\n        }\n        return s.substring(start, start + maxLen);\n    }\n}",
+      "Python3": "class Solution:\n    def longestPalindrome(self, s: str) -> str:\n        if not s: return \"\"\n        start, max_l = 0, 1\n        def expand(l, r):\n            while l >= 0 and r < len(s) and s[l] == s[r]:\n                l -= 1\n                r += 1\n            return l + 1, r - 1\n        for i in range(len(s)):\n            l1, r1 = expand(i, i)\n            if r1 - l1 + 1 > max_l:\n                start, max_l = l1, r1 - l1 + 1\n            l2, r2 = expand(i, i + 1)\n            if r2 - l2 + 1 > max_l:\n                start, max_l = l2, r2 - l2 + 1\n        return s[start:start+max_l]\n",
+      "JavaScript": "var longestPalindrome = function(s) {\n    if (!s || s.length === 0) return \"\";\n    let start = 0, maxLen = 1;\n\n    function expand(l, r) {\n        while (l >= 0 && r < s.length && s[l] === s[r]) {\n            l--;\n            r++;\n        }\n        return [l + 1, r - 1];\n    }\n\n    for (let i = 0; i < s.length; i++) {\n        const [l1, r1] = expand(i, i);\n        if (r1 - l1 + 1 > maxLen) {\n            start = l1;\n            maxLen = r1 - l1 + 1;\n        }\n        const [l2, r2] = expand(i, i + 1);\n        if (r2 - l2 + 1 > maxLen) {\n            start = l2;\n            maxLen = r2 - l2 + 1;\n        }\n    }\n    return s.substring(start, start + maxLen);\n};"
     },
-    "approach": "Expand around centers to find the longest palindromic substring.",
+    "approach": "Expand around center: A palindrome mirrors around its center. For a string of length n, there are 2n - 1 potential centers (n single-character centers for odd-length palindromes and n - 1 between-character centers for even-length palindromes). We expand outward from each center while characters match, keeping track of the longest palindrome discovered.",
     "timeComplexity": "O(n^2)",
-    "spaceComplexity": "O(1)"
+    "spaceComplexity": "O(1)",
+    "editorial": {
+      "optimal": {
+        "complexity": "Time: O(n) using Manacher's algorithm or O(n^2) using expand around center; Space: O(1) auxiliary space.",
+        "description": "Expand around center checks each of the 2n - 1 possible centers and expands outward in O(n) per center, resulting in O(n^2) time and O(1) extra space. Manacher's algorithm can further optimize this to linear O(n) time by reusing previously computed palindrome radii."
+      },
+      "better": {
+        "complexity": "Time: O(n^2), Space: O(n^2)",
+        "description": "Dynamic Programming: Let dp[i][j] be true if substring s[i..j] is a palindrome. dp[i][j] = true if s[i] == s[j] and (j - i < 2 or dp[i+1][j-1]). While correct and structured, it requires O(n^2) table space."
+      },
+      "bruteForce": {
+        "complexity": "Time: O(n^3), Space: O(1)",
+        "description": "Examine all O(n^2) substrings and check each one for the palindrome property in O(n) time, yielding O(n^3) overall complexity."
+      }
+    }
   },
   "verified": true,
-  "_internal": {},
+  "_internal": {
+    "params": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "methodName": "longestPalindrome"
+  },
   "createdAt": "2026-07-09",
-  "followUps": [],
+  "followUps": [
+    "Can you solve this in O(n) time using Manacher's Algorithm?",
+    "How would you handle finding all distinct palindromic substrings instead of just the longest one?",
+    "How would the solution change if the string could be infinitely long or provided as a stream?"
+  ],
   "testCases": {
     "hidden": [
       {
@@ -366,18 +397,23 @@
     "totalWeight": 100,
     "totalTestCases": 30
   },
-  "updatedAt": "2026-07-25",
+  "updatedAt": "2026-09-28",
   "questionId": "Q5",
   "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Minimal driver: judge provides a JSON array [s]\n// Implement longestPalindrome(char* s) below and return a malloc'd string.\n\nchar* longestPalindrome(char* s) {\n    return NULL;\n}\n\nint main() {\n    char line[2000];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n    // Very small JSON parser for single string input [\"...\"]\n    char* start = strchr(line, '\"');\n    if (!start) return 0;\n    start++;\n    char* end = strrchr(start, '\"');\n    if (!end) return 0;\n    *end = '\\0';\n    char* s = start;\n    char* ans = longestPalindrome(s);\n    printf(\"\\\"%s\\\"\\n\", ans);\n    free(ans);\n    return 0;\n}\n",
-    "C++": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string longestPalindrome(string s) {\n        return \"\";\n    }\n};\n",
-    "Java": "class Solution {\n    public String longestPalindrome(String s) {\n        // Write your solution here.\n        return \"\";\n    }\n}\n",
-    "Python3": "class Solution:\n    def longestPalindrome(self, s: str) -> str:\n        pass\n\nif __name__ == '__main__':\n    import sys, json\n    args = json.loads(sys.stdin.readline())\n    s = args[0] if isinstance(args, list) else args\n    print(json.dumps(Solution().longestPalindrome(s)))\n",
-    "JavaScript": "'use strict';\nconst rl = require('readline');\nconst reader = rl.createInterface({ input: process.stdin });\nreader.on('line', line => {\n    const args = JSON.parse(line.trim());\n    const s = args[0];\n    // Implement algorithm here. Placeholder returns first character.\n    console.log(JSON.stringify(s[0]));\n    reader.close();\n});\n"
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nchar* longestPalindrome(char* s) {\n    /* Write your code here */\n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nstatic char* parse_json_string(const char* line) {\n    const char* p = strchr(line, '\"');\n    if (!p) return NULL;\n    ++p;\n\n    size_t cap = 256, len = 0;\n    char* out = (char*)malloc(cap);\n    if (!out) return NULL;\n\n    while (*p) {\n        unsigned char c = (unsigned char)*p++;\n        if (c == '\"') {\n            out[len] = '\\0';\n            return out;\n        }\n        if (c == '\\\\') {\n            char e = *p++;\n            switch (e) {\n                case '\"': c = '\"'; break;\n                case '\\\\': c = '\\\\'; break;\n                case '/': c = '/'; break;\n                case 'b': c = '\\b'; break;\n                case 'f': c = '\\f'; break;\n                case 'n': c = '\\n'; break;\n                case 'r': c = '\\r'; break;\n                case 't': c = '\\t'; break;\n                default: free(out); return NULL;\n            }\n        }\n        if (len + 1 >= cap) {\n            cap *= 2;\n            char* tmp = (char*)realloc(out, cap);\n            if (!tmp) { free(out); return NULL; }\n            out = tmp;\n        }\n        out[len++] = (char)c;\n    }\n\n    free(out);\n    return NULL;\n}\n\nint main(void) {\n    char line[65536];\n    if (!fgets(line, sizeof(line), stdin)) return 0;\n    char* s = parse_json_string(line);\n    if (!s) return 0;\n    char* ans = longestPalindrome(s);\n    if (ans) {\n        printf(\"\\\"%s\\\"\\n\", ans);\n        free(ans);\n    } else {\n        printf(\"\\\"\\\"\\n\");\n    }\n    free(s);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    string longestPalindrome(string s) {\n        // Write your code here\n        return \"\";\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nstatic string parseJsonString(const string& line) {\n    size_t pos = line.find('\"');\n    if (pos == string::npos) return \"\";\n    ++pos;\n\n    string out;\n    while (pos < line.size()) {\n        char c = line[pos++];\n        if (c == '\"') return out;\n        if (c != '\\\\') {\n            out += c;\n            continue;\n        }\n        if (pos >= line.size()) break;\n        char e = line[pos++];\n        switch (e) {\n            case '\"': out += '\"'; break;\n            case '\\\\': out += '\\\\'; break;\n            case '/': out += '/'; break;\n            case 'b': out += '\\b'; break;\n            case 'f': out += '\\f'; break;\n            case 'n': out += '\\n'; break;\n            case 'r': out += '\\r'; break;\n            case 't': out += '\\t'; break;\n            default: break;\n        }\n    }\n    return out;\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        string s = parseJsonString(line);\n        cout << '\"' << Solution().longestPalindrome(s) << \"\\\"\\n\";\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public String longestPalindrome(String s) {\n        // Write your code here\n        return \"\";\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static String parseJsonString(String line) {\n        int i = line.indexOf('\"');\n        if (i < 0) return \"\";\n        StringBuilder s = new StringBuilder();\n        i++;\n        while (i < line.length()) {\n            char c = line.charAt(i++);\n            if (c == '\"') return s.toString();\n            if (c != '\\\\') {\n                s.append(c);\n                continue;\n            }\n            if (i >= line.length()) break;\n            char e = line.charAt(i++);\n            switch (e) {\n                case '\"': s.append('\"'); break;\n                case '\\\\': s.append('\\\\'); break;\n                case '/': s.append('/'); break;\n                case 'b': s.append('\\b'); break;\n                case 'f': s.append('\\f'); break;\n                case 'n': s.append('\\n'); break;\n                case 'r': s.append('\\r'); break;\n                case 't': s.append('\\t'); break;\n                default: break;\n            }\n        }\n        return s.toString();\n    }\n\n    public static void main(String[] args) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null || line.trim().isEmpty()) return;\n        String s = parseJsonString(line.trim());\n        String ans = new Solution().longestPalindrome(s);\n        System.out.println(\"\\\"\" + ans + \"\\\"\");\n    }\n}\n",
+    "Python3": "import sys, json\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def longestPalindrome(self, s: str) -> str:\n        # Write your code here\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    s = args[0] if isinstance(args, list) else args\n    print(json.dumps(Solution().longestPalindrome(s)))\n",
+    "JavaScript": "const fs = require('fs');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {string} s\n * @return {string}\n */\nvar longestPalindrome = function(s) {\n    // Write your code here\n    return \"\";\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst input = fs.readFileSync(0, 'utf8').trim();\nif (input) {\n    const args = JSON.parse(input);\n    const s = Array.isArray(args) ? args[0] : args;\n    console.log(JSON.stringify(longestPalindrome(s)));\n}\n"
   },
   "acceptanceRate": null,
   "similarProblems": [],
   "recommendedAfter": [],
-  "estimatedSolveTime": "",
-  "learningObjectives": []
+  "estimatedSolveTime": "15–20 minutes",
+  "learningObjectives": [
+    "Two pointers / Expand around center technique",
+    "Palindrome property and center symmetry",
+    "Dynamic programming for substring problems",
+    "String slicing and boundary management"
+  ]
 }

@@ -28,7 +28,7 @@
       "1 <= k <= n",
       "1 <= arr[i] <= 1000000"
     ],
-    "inputFormat": "First line contains an integer T, the number of test cases. Each test case consists of two lines: the first line contains two integers n and k (1 \u2264 k \u2264 n \u2264 10^5). The second line contains n positive integers denoting the array elements.",
+    "inputFormat": "First line contains an integer T, the number of test cases. Each test case consists of two lines: the first line contains two integers n and k (1 ≤ k ≤ n ≤ 10^5). The second line contains n positive integers denoting the array elements.",
     "outputFormat": "For each test case output a single line containing the maximum possible sum of exactly k elements taken from the beginning of the array, the end of the array, or a combination of both.",
     "sampleTestCases": [
       {
@@ -115,8 +115,8 @@
     ]
   },
   "solution": {
-    "approach": "The optimal choice is to take i elements from the start and k\u2011i elements from the end for some i (0\u202f\u2264\u202fi\u202f\u2264\u202fk). Compute the sum of the first k elements as the initial window. Then slide the window by removing one element from the left side of the window and adding one element from the right side (the array end). Keep the maximum sum encountered. This runs in O(k) per test case, which is O(n) because k\u202f\u2264\u202fn, and uses O(1) extra space.",
-    "timeComplexity": "O(n) per test case (overall O(\u2211n) for all test cases)",
+    "approach": "The optimal choice is to take i elements from the start and k‑i elements from the end for some i (0 ≤ i ≤ k). Compute the sum of the first k elements as the initial window. Then slide the window by removing one element from the left side of the window and adding one element from the right side (the array end). Keep the maximum sum encountered. This runs in O(k) per test case, which is O(n) because k ≤ n, and uses O(1) extra space.",
+    "timeComplexity": "O(n) per test case (overall O(∑n) for all test cases)",
     "spaceComplexity": "O(1) auxiliary space",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n\nlong long maxSumK(long long *a,int n,int k){\n    long long cur=0;\n    for(int i=0;i<k;i++) cur+=a[i];\n    long long best=cur;\n    for(int i=1;i<=k;i++){\n        cur=cur-a[i-1]+a[n-i];\n        if(cur>best) best=cur;\n    }\n    return best;\n}\n\nint main(){\n    int T; if(scanf(\"%d\",&T)!=1) return 0;\n    while(T--){\n        int n,k; scanf(\"%d %d\",&n,&k);\n        long long *arr=malloc(sizeof(long long)*n);\n        for(int i=0;i<n;i++) scanf(\"%lld\",&arr[i]);\n        printf(\"%lld\\n\",maxSumK(arr,n,k));\n        free(arr);\n    }\n    return 0;\n}",
@@ -125,5 +125,6 @@
       "Python3": "import sys\n\ndef max_sum(arr, k):\n    cur = sum(arr[:k])\n    best = cur\n    n = len(arr)\n    for i in range(1, k + 1):\n        cur = cur - arr[i - 1] + arr[n - i]\n        if cur > best:\n            best = cur\n    return best\n\ndef main():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out = []\n    for _ in range(T):\n        n = int(next(it))\n        k = int(next(it))\n        arr = [int(next(it)) for _ in range(n)]\n        out.append(str(max_sum(arr, k)))\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == '__main__':\n    main()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet res = [];\nfor (let t = 0; t < T; t++) {\n  const n = Number(input[idx++]);\n  const k = Number(input[idx++]);\n  const arr = new Array(n);\n  for (let i = 0; i < n; i++) arr[i] = Number(input[idx++]);\n  let cur = 0;\n  for (let i = 0; i < k; i++) cur += arr[i];\n  let best = cur;\n  for (let i = 1; i <= k; i++) {\n    cur = cur - arr[i - 1] + arr[n - i];\n    if (cur > best) best = cur;\n  }\n  res.push(String(best));\n}\nconsole.log(res.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

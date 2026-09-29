@@ -22,10 +22,10 @@
   "content": {
     "problemStatement": "Chef has **n** non-negative integers **a1, a2, ..., an**. He defined the following function \n**f(k) = (a1k + a2k + ... + ank) mod (109 + 7)** over them.\n\n\n\nChef knows the values **f(1), f(2), ..., f(n)**, but he has forgotten the values **a1, a2, ..., an**.\n\n\n\nNow Chef wants to evaluate the function **f** over some integers (total **Q**  of them), can you please help him in this?",
     "constraints": [
-      "1 \u2264 n \u2264 300",
-      "1 \u2264 Q \u2264 30",
-      "0 \u2264 f(i) < 10^9 + 7",
-      "n < xi \u2264 10^18"
+      "1 ≤ n ≤ 300",
+      "1 ≤ Q ≤ 30",
+      "0 ≤ f(i) < 10^9 + 7",
+      "n < xi ≤ 10^18"
     ],
     "inputFormat": "The first line of the input contains an integer T denoting the number of test cases. Each test case consists of three lines. The first line contains two space-separated integers n and Q. The second line contains n space-separated integers - the values of f(1), f(2), ..., f(n). The third line contains Q space-separated integers x1, x2, ..., xq, where xi denotes the number in the i-th query.",
     "outputFormat": "For each test case, print a single line containing Q space-separated integers denoting the values of f(x1), f(x2), ..., f(xq).",
@@ -118,5 +118,6 @@
       "Python3": "MOD = 1000000007\n\n# Function to calculate the modular inverse\ndef mod_inverse(a, m):\n    m0 = m\n    y = 0\n    x = 1\n    if m == 1:\n        return 0\n    while a > 1:\n        q = a // m\n        t = m\n        m = a % m\n        a = t\n        t = y\n        y = x - q * y\n        x = t\n    if x < 0:\n        x += m0\n    return x\n\n# Function to calculate the polynomial interpolation\ndef interpolate(f, n):\n    a = [0] * n\n    for i in range(n):\n        numerator = f[i]\n        denominator = 1\n        for j in range(n):\n            if i != j:\n                numerator = (numerator * (j + 1)) % MOD\n                denominator = (denominator * (i - j)) % MOD\n        a[i] = (numerator * mod_inverse(denominator, MOD)) % MOD\n    return a\n\nT = int(input())\nwhile T > 0:\n    n, Q = map(int, input().split())\n    f = list(map(int, input().split()))\n    a = interpolate(f, n)\n    for x in map(int, input().split()):\n        result = 0\n        for j in range(n):\n            result = (result + a[j] * (x % MOD)) % MOD\n        print(result, end=' ')\n    print()\n    T -= 1",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst MOD = 1000000007;\n\n// Function to calculate the modular inverse\nfunction modInverse(a, m) {\n    let m0 = m;\n    let y = 0;\n    let x = 1;\n    if (m == 1)\n        return 0;\n    while (a > 1) {\n        let q = Math.floor(a / m);\n        let t = m;\n        m = a % m;\n        a = t;\n        t = y;\n        y = x - q * y;\n        x = t;\n    }\n    if (x < 0)\n        x += m0;\n    return x;\n}\n\n// Function to calculate the polynomial interpolation\nfunction interpolate(f, n) {\n    let a = new Array(n).fill(0);\n    for (let i = 0; i < n; i++) {\n        let numerator = f[i];\n        let denominator = 1;\n        for (let j = 0; j < n; j++) {\n            if (i != j) {\n                numerator = (numerator * (j + 1)) % MOD;\n                denominator = (denominator * (i - j)) % MOD;\n            }\n        }\n        a[i] = (numerator * modInverse(denominator, MOD)) % MOD;\n    }\n    return a;\n}\n\nlet T = parseInt(input[idx++]);\nwhile (T-- > 0) {\n    let [n, Q] = input[idx++].split(' ').map(Number);\n    let f = input[idx++].split(' ').map(Number);\n    let a = interpolate(f, n);\n    let queries = input[idx++].split(' ').map(Number);\n    for (let x of queries) {\n        let result = 0;\n        for (let j = 0; j < n; j++) {\n            result = (result + a[j] * (x % MOD)) % MOD;\n        }\n        process.stdout.write(result + ' ');\n    }\n    process.stdout.write('\\n');\n}"
     }
-  }
+  },
+  "verified": false
 }

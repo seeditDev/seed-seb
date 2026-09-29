@@ -22,10 +22,10 @@
   "content": {
     "problemStatement": "You are given a one dimensional integer array **A** of length **N**. You need to maintain the array under **Q** queries of the following four types. Assume 1-based indexing and M = 109 + 7.\n\n\n\n**Query 1** : 1 x y v \n\nThis implies adding v to array **A** to all the indices from x to y, i.e.,\n`\n`\n\n`\nfor (i = x; i &lt;= y; i++)\t\n\t**A**i += v;\n\t**A**i %= M; \n``\n`\n**Query 2** : 2 x y v  \nThis implies multiplying the scalar v with the array **A** for all the indices from x to y, i.e.,\n`\n`\n\n`\nfor (i = x; i &lt;= y; i++)\t\n        **A**i *= v\n        **A**i %= M\n``\n`\n**Query 3** : 3 x y v \nThis implies initializing the array **A** at all the indices from x to y with the value v, i.e.,\n`\n`\n\n`\nfor (i = x; i &lt;= y; i++)\t\n\t**A**i = v \n``\n`\n**Query 4** : 4 x y\n\nThis is a report query which needs to find the sum of the values in **A** from x to y, i.e.,\n`\n`\n\n`\nsum = 0;\nfor (i = x; i &lt;= y; i++)\n\tsum += **A**i\n\tsum %= M\nOutput sum.\n``\n`**Note:** a%b represents the remainder of a when divided by b.",
     "constraints": [
-      "1 \u2264 N \u2264 10^5",
-      "1 \u2264 Q \u2264 10^5",
-      "1 \u2264 Initial value of A[i] \u2264 10^9",
-      "1 \u2264 v \u2264 10^9",
+      "1 ≤ N ≤ 10^5",
+      "1 ≤ Q ≤ 10^5",
+      "1 ≤ Initial value of A[i] ≤ 10^9",
+      "1 ≤ v ≤ 10^9",
       "M = 10^9 + 7"
     ],
     "inputFormat": "The first line contains two space-separated integers N and Q, where N is the length of the array A and Q is the number of queries. The second line contains N space-separated integers denoting the array A. The next Q lines contain queries which can be of any of the four types.",
@@ -104,8 +104,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can use a prefix sum array to efficiently calculate the sum of elements in the array A for queries of type 4. For queries of type 1, 2, and 3, we can update the prefix sum array accordingly. We need to handle the modular arithmetic carefully to avoid overflow.",
-    "timeComplexity": "O(Q * N) \u2014 explain: per query is O(N), total is O(Q * N)",
-    "spaceComplexity": "O(N) \u2014 explain: we need to store the prefix sum array of size N",
+    "timeComplexity": "O(Q * N) — explain: per query is O(N), total is O(Q * N)",
+    "spaceComplexity": "O(N) — explain: we need to store the prefix sum array of size N",
     "code": {
       "C": "#include <stdio.h>\n#define M 1000000007\nint main() {\n    int N, Q;\n    scanf(\"%d %d\", &N, &Q);\n    int A[N];\n    for (int i = 0; i < N; i++) {\n        scanf(\"%d\", &A[i]);\n    }\n    while (Q--) {\n        int type, x, y, v;\n        scanf(\"%d %d %d\", &type, &x, &y);\n        x--; y--;\n        if (type == 1) {\n            scanf(\"%d\", &v);\n            for (int i = x; i <= y; i++) {\n                A[i] = (A[i] + v) % M;\n            }\n        } else if (type == 2) {\n            scanf(\"%d\", &v);\n            for (int i = x; i <= y; i++) {\n                A[i] = (A[i] * v) % M;\n            }\n        } else if (type == 3) {\n            scanf(\"%d\", &v);\n            for (int i = x; i <= y; i++) {\n                A[i] = v;\n            }\n        } else {\n            int sum = 0;\n            for (int i = x; i <= y; i++) {\n                sum = (sum + A[i]) % M;\n            }\n            printf(\"%d\\n\", sum);\n        }\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#define M 1000000007\nusing namespace std;\nint main() {\n    int N, Q;\n    cin >> N >> Q;\n    int A[N];\n    for (int i = 0; i < N; i++) {\n        cin >> A[i];\n    }\n    while (Q--) {\n        int type, x, y, v;\n        cin >> type >> x >> y;\n        x--; y--;\n        if (type == 1) {\n            cin >> v;\n            for (int i = x; i <= y; i++) {\n                A[i] = (A[i] + v) % M;\n            }\n        } else if (type == 2) {\n            cin >> v;\n            for (int i = x; i <= y; i++) {\n                A[i] = (A[i] * v) % M;\n            }\n        } else if (type == 3) {\n            cin >> v;\n            for (int i = x; i <= y; i++) {\n                A[i] = v;\n            }\n        } else {\n            int sum = 0;\n            for (int i = x; i <= y; i++) {\n                sum = (sum + A[i]) % M;\n            }\n            cout << sum << endl;\n        }\n    }\n    return 0;\n}",
@@ -113,5 +113,6 @@
       "Python3": "import sys\nM = 10**9 + 7\nN, Q = map(int, sys.stdin.readline().split())\nA = list(map(int, sys.stdin.readline().split()))\nfor _ in range(Q):\n    type, x, y = map(int, sys.stdin.readline().split())\n    x -= 1; y -= 1\n    if type == 1:\n        v = int(sys.stdin.readline())\n        for i in range(x, y + 1):\n            A[i] = (A[i] + v) % M\n    elif type == 2:\n        v = int(sys.stdin.readline())\n        for i in range(x, y + 1):\n            A[i] = (A[i] * v) % M\n    elif type == 3:\n        v = int(sys.stdin.readline())\n        for i in range(x, y + 1):\n            A[i] = v\n    else:\n        sum = 0\n        for i in range(x, y + 1):\n            sum = (sum + A[i]) % M\n        print(sum)",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst M = 10**9 + 7;\nlet [N, Q] = readline().split(' ').map(Number);\nlet A = readline().split(' ').map(Number);\nfor (let i = 0; i < Q; i++) {\n    let [type, x, y] = readline().split(' ').map(Number);\n    x--; y--;\n    if (type == 1) {\n        let v = Number(readline());\n        for (let j = x; j <= y; j++) {\n            A[j] = (A[j] + v) % M;\n        }\n    } else if (type == 2) {\n        let v = Number(readline());\n        for (let j = x; j <= y; j++) {\n            A[j] = (A[j] * v) % M;\n        }\n    } else if (type == 3) {\n        let v = Number(readline());\n        for (let j = x; j <= y; j++) {\n            A[j] = v;\n        }\n    } else {\n        let sum = 0;\n        for (let j = x; j <= y; j++) {\n            sum = (sum + A[j]) % M;\n        }\n        console.log(sum);\n    }\n}"
     }
-  }
+  },
+  "verified": false
 }

@@ -20,13 +20,13 @@
     ]
   },
   "content": {
-    "problemStatement": "Chef loves lucky numbers. Everybody knows that lucky numbers are positive integers whose decimal representation contains only the lucky digits **4** and **7**. For example, numbers **47**, **744**, **4** are lucky and **5**, **17**, **467** are not.\n\n\n Let **Fd(x)** equals to the number of digits **d** in decimal representation of the positive integer **x**. Chef interests only in functions **F4(x)** and **F7(x)**. For the given positive integer **N** he wants to know the total number of different pairs **(L; R)** such that ** F4(L) + F4(L + 1) + ... + F4(R)** equals to ** F7(L) + F7(L + 1) + ... + F7(R)** and **1 \u2264  L \u2264 R \u2264 N**.",
+    "problemStatement": "Chef loves lucky numbers. Everybody knows that lucky numbers are positive integers whose decimal representation contains only the lucky digits **4** and **7**. For example, numbers **47**, **744**, **4** are lucky and **5**, **17**, **467** are not.\n\n\n Let **Fd(x)** equals to the number of digits **d** in decimal representation of the positive integer **x**. Chef interests only in functions **F4(x)** and **F7(x)**. For the given positive integer **N** he wants to know the total number of different pairs **(L; R)** such that ** F4(L) + F4(L + 1) + ... + F4(R)** equals to ** F7(L) + F7(L + 1) + ... + F7(R)** and **1 ≤  L ≤ R ≤ N**.",
     "constraints": [
-      "1 \u2264 T \u2264 100000",
-      "1 \u2264 N \u2264 100000"
+      "1 ≤ T ≤ 100000",
+      "1 ≤ N ≤ 100000"
     ],
     "inputFormat": "First line contains T, the number of test cases. Each test case contains a single integer N.",
-    "outputFormat": "For each test case, print the total number of different pairs (L; R) such that F4(L) + F4(L + 1) + ... + F4(R) equals to F7(L) + F7(L + 1) + ... + F7(R) and 1 \u2264 L \u2264 R \u2264 N.",
+    "outputFormat": "For each test case, print the total number of different pairs (L; R) such that F4(L) + F4(L + 1) + ... + F4(R) equals to F7(L) + F7(L + 1) + ... + F7(R) and 1 ≤ L ≤ R ≤ N.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -114,7 +114,7 @@
   "solution": {
     "approach": "The key insight is to iterate over all possible pairs (L, R) and calculate the sum of F4 and F7 for each pair. We can then compare these sums to determine if the pair is lucky. The time complexity is O(T * N^2 * log N) due to the nested loops and the calculation of F4 and F7 for each number in the range [L, R].",
     "timeComplexity": "O(T * N^2 * log N) per test case, O(T * N^2 * log N) total.",
-    "spaceComplexity": "O(1) \u2014 the space used does not grow with the input size, only a constant amount of space is used.",
+    "spaceComplexity": "O(1) — the space used does not grow with the input size, only a constant amount of space is used.",
     "code": {
       "C": "#include <stdio.h>\nint countLuckyPairs(int N) {\n    int count = 0;\n    for (int L = 1; L <= N; L++) {\n        for (int R = L; R <= N; R++) {\n            int sum4 = 0, sum7 = 0;\n            for (int i = L; i <= R; i++) {\n                int num = i;\n                while (num > 0) {\n                    if (num % 10 == 4) sum4++;\n                    if (num % 10 == 7) sum7++;\n                    num /= 10;\n                }\n            }\n            if (sum4 == sum7) count++;\n        }\n    }\n    return count;\n}\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        printf(\"%d\\n\", countLuckyPairs(N));\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\nusing namespace std;\nint countLuckyPairs(int N) {\n    int count = 0;\n    for (int L = 1; L <= N; L++) {\n        for (int R = L; R <= N; R++) {\n            int sum4 = 0, sum7 = 0;\n            for (int i = L; i <= R; i++) {\n                int num = i;\n                while (num > 0) {\n                    if (num % 10 == 4) sum4++;\n                    if (num % 10 == 7) sum7++;\n                    num /= 10;\n                }\n            }\n            if (sum4 == sum7) count++;\n        }\n    }\n    return count;\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(NULL);\n    int T;\n    cin >> T;\n    while (T--) {\n        int N;\n        cin >> N;\n        cout << countLuckyPairs(N) << endl;\n    }\n    return 0;\n}",
@@ -122,5 +122,6 @@
       "Python3": "def countLuckyPairs(N):\n    count = 0\n    for L in range(1, N + 1):\n        for R in range(L, N + 1):\n            sum4 = 0\n            sum7 = 0\n            for i in range(L, R + 1):\n                num = i\n                while num > 0:\n                    if num % 10 == 4: sum4 += 1\n                    if num % 10 == 7: sum7 += 1\n                    num //= 10\n            if sum4 == sum7: count += 1\n    return count\nimport sys\nT = int(sys.stdin.readline())\nfor _ in range(T):\n    N = int(sys.stdin.readline())\n    print(countLuckyPairs(N))",
       "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nfunction countLuckyPairs(N) {\n    let count = 0;\n    for (let L = 1; L <= N; L++) {\n        for (let R = L; R <= N; R++) {\n            let sum4 = 0, sum7 = 0;\n            for (let i = L; i <= R; i++) {\n                let num = i;\n                while (num > 0) {\n                    if (num % 10 == 4) sum4++;\n                    if (num % 10 == 7) sum7++;\n                    num = Math.floor(num / 10);\n                }\n            }\n            if (sum4 == sum7) count++;\n        }\n    }\n    return count;\n}\nlet T = parseInt(lines[idx++]);\nwhile (T-- > 0) {\n    let N = parseInt(lines[idx++]);\n    console.log(countLuckyPairs(N));\n}"
     }
-  }
+  },
+  "verified": false
 }

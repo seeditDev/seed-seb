@@ -22,21 +22,21 @@
     ]
   },
   "content": {
-    "problemStatement": "Chef Po has given an online advertisement to provide **Event organizing services**. Chef got a huge response for his advertisement. He got various orders to conduct the events from different organizations. In turn, Chef will receive a compensation depend upon the type of event and the total numbers of persons in the event. Chef has received **N** orders for conducting events in this weekend in all. As weekend consists of two days all events will take place during the period of **48** hours. For the **i**-th order the corresponding event will start at **Si** hours, ends at **Ei** hours and Chef will receive a compensation **Ci** for this event. For example, if **Si = 17** and **Ei = 22** then duration of event is **22 \u2013 17 = 5** hours and its time period is **17:00 \u2013 22:00** of Saturday. Hours of Sunday are numbered by numbers from **24** to **48**. So, for example, **10:00** of Sunday will be represented as **10 + 24 = 34**. Because Chef is a newbie, the organizations had put a condition that Chef will receive a compensation for the event if and only if he is available for the entire duration of the event. It means that he can not choose overlapping events. Note, however, that if some event starts just in the moment another event has finished the Chef can safely conduct them both.\n\n\n\nIn general Chef will obey the orders on first come first serve basis. But on weekends Chef will select the orders in such a way that the total compensation for all the events he will conduct will be the maximal. Now your task is to help Chef and find this maximal total compensation.",
+    "problemStatement": "Chef Po has given an online advertisement to provide **Event organizing services**. Chef got a huge response for his advertisement. He got various orders to conduct the events from different organizations. In turn, Chef will receive a compensation depend upon the type of event and the total numbers of persons in the event. Chef has received **N** orders for conducting events in this weekend in all. As weekend consists of two days all events will take place during the period of **48** hours. For the **i**-th order the corresponding event will start at **Si** hours, ends at **Ei** hours and Chef will receive a compensation **Ci** for this event. For example, if **Si = 17** and **Ei = 22** then duration of event is **22 – 17 = 5** hours and its time period is **17:00 – 22:00** of Saturday. Hours of Sunday are numbered by numbers from **24** to **48**. So, for example, **10:00** of Sunday will be represented as **10 + 24 = 34**. Because Chef is a newbie, the organizations had put a condition that Chef will receive a compensation for the event if and only if he is available for the entire duration of the event. It means that he can not choose overlapping events. Note, however, that if some event starts just in the moment another event has finished the Chef can safely conduct them both.\n\n\n\nIn general Chef will obey the orders on first come first serve basis. But on weekends Chef will select the orders in such a way that the total compensation for all the events he will conduct will be the maximal. Now your task is to help Chef and find this maximal total compensation.",
     "constraints": [
       "1 <= T <= 10",
       "1 <= N <= 2000",
       "0 <= Si < Ei <= 48",
       "0 <= Ci <= 10^6"
     ],
-    "inputFormat": "First line contains an integer T, the number of test cases. Each test case starts with an integer N, the number of orders. Then N lines follow, each containing three integers Si, Ei and Ci \u2014 the start time, end time and compensation of an order.",
-    "outputFormat": "For each test case, print a single line containing the maximal total compensation Chef can obtain by selecting a subset of non\u2011overlapping events.",
+    "inputFormat": "First line contains an integer T, the number of test cases. Each test case starts with an integer N, the number of orders. Then N lines follow, each containing three integers Si, Ei and Ci — the start time, end time and compensation of an order.",
+    "outputFormat": "For each test case, print a single line containing the maximal total compensation Chef can obtain by selecting a subset of non‑overlapping events.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "2\n4\n1 2 100\n2 3 200\n3 4 1600\n1 3 2100\n3\n1 10 2000\n2 5 100\n6 9 400",
         "output": "3700\n2000",
-        "explanation": "First case: choose events (3,4,1600) and (1,3,2100) \u2013 they do not overlap because the second ends at 3 and the first starts at 3. Total = 3700. Second case: best is the single event with compensation 2000."
+        "explanation": "First case: choose events (3,4,1600) and (1,3,2100) – they do not overlap because the second ends at 3 and the first starts at 3. Total = 3700. Second case: best is the single event with compensation 2000."
       },
       {
         "id": "sample_2",
@@ -116,7 +116,7 @@
     ]
   },
   "solution": {
-    "approach": "The problem is a classic weighted interval scheduling problem. Sort all events by their ending time. For each event i, let dp[i] be the maximum compensation achievable considering events up to i (inclusive). To compute dp[i] we have two choices: 1) skip event i \u2192 dp[i\u20111]; 2) take event i \u2192 Ci + dp[p], where p is the last event that ends not later than Si (found by binary search on the sorted end times). dp[i] = max(skip, take). The answer for a test case is dp[N\u20111]. Sorting takes O(N log N) and each binary search O(log N), so total O(N log N) time and O(N) extra space.",
+    "approach": "The problem is a classic weighted interval scheduling problem. Sort all events by their ending time. For each event i, let dp[i] be the maximum compensation achievable considering events up to i (inclusive). To compute dp[i] we have two choices: 1) skip event i → dp[i‑1]; 2) take event i → Ci + dp[p], where p is the last event that ends not later than Si (found by binary search on the sorted end times). dp[i] = max(skip, take). The answer for a test case is dp[N‑1]. Sorting takes O(N log N) and each binary search O(log N), so total O(N log N) time and O(N) extra space.",
     "timeComplexity": "O(N log N) per test case (sorting + binary searches).",
     "spaceComplexity": "O(N) per test case for storing events and the dp array.",
     "code": {
@@ -126,5 +126,6 @@
       "Python3": "import sys, bisect\n\ndef solve():\n    data = sys.stdin.buffer.read().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out_lines = []\n    for _ in range(T):\n        N = int(next(it))\n        events = []\n        for _ in range(N):\n            s = int(next(it)); e = int(next(it)); c = int(next(it))\n            events.append((e, s, c))\n        events.sort()\n        ends = [e for e,_,_ in events]\n        dp = []\n        for i, (e, s, c) in enumerate(events):\n            incl = c\n            j = bisect.bisect_right(ends, s, 0, i) - 1\n            if j >= 0:\n                incl += dp[j]\n            excl = dp[i-1] if i else 0\n            dp.append(incl if incl > excl else excl)\n        out_lines.append(str(dp[-1]))\n    sys.stdout.write('\\n'.join(out_lines))\n\nif __name__ == \"__main__\":\n    solve()\n",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet outputs = [];\nfor (let tc = 0; tc < T; tc++) {\n  const N = Number(input[idx++]);\n  let events = [];\n  for (let i = 0; i < N; i++) {\n    const s = Number(input[idx++]);\n    const e = Number(input[idx++]);\n    const c = Number(input[idx++]);\n    events.push({s, e, c});\n  }\n  events.sort((a, b) => a.e - b.e);\n  const ends = events.map(ev => ev.e);\n  const dp = new Array(N);\n  for (let i = 0; i < N; i++) {\n    let incl = events[i].c;\n    let lo = 0, hi = i - 1, pos = -1;\n    while (lo <= hi) {\n      const mid = (lo + hi) >> 1;\n      if (ends[mid] <= events[i].s) { pos = mid; lo = mid + 1; }\n      else hi = mid - 1;\n    }\n    if (pos !== -1) incl += dp[pos];\n    const excl = i ? dp[i - 1] : 0;\n    dp[i] = incl > excl ? incl : excl;\n  }\n  outputs.push(String(dp[N - 1]));\n}\nconsole.log(outputs.join('\\n'));\n"
     }
-  }
+  },
+  "verified": false
 }

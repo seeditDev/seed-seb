@@ -26,16 +26,16 @@
       "1 <= T <= 10",
       "1 <= N <= 1000",
       "0 <= index <= N",
-      "Array elements and the inserted element are 32\u2011bit signed integers"
+      "Array elements and the inserted element are 32‑bit signed integers"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. For each test case, the first line contains the array elements separated by single spaces (the array length N satisfies 1 \u2264 N \u2264 1000). The second line contains two integers: index (0 \u2264 index \u2264 N) and element, the value to be inserted at the given index.",
+    "inputFormat": "The first line contains an integer T, the number of test cases. For each test case, the first line contains the array elements separated by single spaces (the array length N satisfies 1 ≤ N ≤ 1000). The second line contains two integers: index (0 ≤ index ≤ N) and element, the value to be inserted at the given index.",
     "outputFormat": "For each test case output a single line containing the updated array after insertion. Elements are separated by a single space and no extra spaces appear at the beginning or end of the line.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "3\n4 5 3 10 12 18\n5 7\n1 2 3\n0 10\n10 20 30\n2 100",
         "output": "4 5 3 10 12 7 18\n10 1 2 3\n10 20 100 30",
-        "explanation": "Three test cases are processed.\\n1) Insert 7 at index 5 \u2192 4 5 3 10 12 7 18.\\n2) Insert 10 at index 0 \u2192 10 1 2 3.\\n3) Insert 100 at index 2 \u2192 10 20 100 30."
+        "explanation": "Three test cases are processed.\\n1) Insert 7 at index 5 → 4 5 3 10 12 7 18.\\n2) Insert 10 at index 0 → 10 1 2 3.\\n3) Insert 100 at index 2 → 10 20 100 30."
       },
       {
         "id": "sample_2",
@@ -47,7 +47,7 @@
         "id": "sample_3",
         "input": "1\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15\n15 99",
         "output": "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 99",
-        "explanation": "Insert 99 at the end of a 15\u2011element array (index equals N)."
+        "explanation": "Insert 99 at the end of a 15‑element array (index equals N)."
       }
     ]
   },
@@ -116,7 +116,7 @@
   },
   "solution": {
     "approach": "For each test case we read the whole line of the array, split it into integers and store them in a dynamic container (e.g., vector or list). The given index tells where the new element must appear. Inserting at position i can be done by shifting all elements from i to the end one position to the right (O(N)) and then writing the new value at i. All standard libraries provide an insert operation that internally performs this shift. After insertion we output the whole container separated by spaces. The algorithm is linear in the size of the array for each test case.",
-    "timeComplexity": "O(N) per test case, where N is the original length of the array. Overall O(T * N_max) with N_max \u2264 1000.",
+    "timeComplexity": "O(N) per test case, where N is the original length of the array. Overall O(T * N_max) with N_max ≤ 1000.",
     "spaceComplexity": "O(N) additional space for storing the array of each test case.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint count_numbers(const char *s) {\n    int cnt = 0, in = 0;\n    while (*s) {\n        if (*s != ' ' && *s != '\\n' && *s != '\\r' && *s != '\\t') {\n            if (!in) { in = 1; cnt++; }\n        } else {\n            in = 0;\n        }\n        s++;\n    }\n    return cnt;\n}\n\nint main() {\n    int T;\n    if (scanf(\"%d\", &T) != 1) return 0;\n    getchar(); // consume newline after T\n    for (int tc = 0; tc < T; ++tc) {\n        char line[5000];\n        // read array line\n        if (!fgets(line, sizeof(line), stdin)) break;\n        line[strcspn(line, \"\\n\")] = '\\0';\n        int N = count_numbers(line);\n        int *arr = (int*)malloc((N + 1) * sizeof(int));\n        char *token = strtok(line, \" \");\n        for (int i = 0; i < N; ++i) {\n            arr[i] = atoi(token);\n            token = strtok(NULL, \" \");\n        }\n        int index, element;\n        scanf(\"%d %d\", &index, &element);\n        getchar(); // consume newline after the second line\n        for (int i = N; i > index; --i) {\n            arr[i] = arr[i-1];\n        }\n        arr[index] = element;\n        for (int i = 0; i <= N; ++i) {\n            if (i) printf(\" \");\n            printf(\"%d\", arr[i]);\n        }\n        if (tc != T-1) printf(\"\\n\");\n        free(arr);\n    }\n    return 0;\n}",
@@ -125,5 +125,6 @@
       "Python3": "import sys\n\ndef solve():\n    data = sys.stdin.read().splitlines()\n    if not data:\n        return\n    t = int(data[0].strip())\n    idx = 1\n    out_lines = []\n    for _ in range(t):\n        # skip empty lines before array line\n        while idx < len(data) and data[idx].strip() == '':\n            idx += 1\n        arr = list(map(int, data[idx].split()))\n        idx += 1\n        # skip empty lines before index line\n        while idx < len(data) and data[idx].strip() == '':\n            idx += 1\n        index, element = map(int, data[idx].split())\n        idx += 1\n        arr.insert(index, element)\n        out_lines.append(' '.join(map(str, arr)))\n    sys.stdout.write('\\n'.join(out_lines))\n\nif __name__ == \"__main__\":\n    solve()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet lineIdx = 0;\nconst T = parseInt(input[lineIdx++].trim(), 10);\nlet outputs = [];\nfor (let tc = 0; tc < T; ++tc) {\n  while (lineIdx < input.length && input[lineIdx].trim() === '') lineIdx++;\n  const arr = input[lineIdx++].trim().split(/\\s+/).map(Number);\n  while (lineIdx < input.length && input[lineIdx].trim() === '') lineIdx++;\n  const [indexStr, elementStr] = input[lineIdx++].trim().split(/\\s+/);\n  const index = parseInt(indexStr, 10);\n  const element = parseInt(elementStr, 10);\n  arr.splice(index, 0, element);\n  outputs.push(arr.join(' '));\n}\nconsole.log(outputs.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

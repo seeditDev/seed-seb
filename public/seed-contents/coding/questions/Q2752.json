@@ -22,8 +22,8 @@
   "content": {
     "problemStatement": "Read problems statements in Russian here The Head Chef has received his id from the Association of Byteland . He wants to know the numerical rank of his number among the numbers that can be formed by the exact same digits ( i.e. among numbers having same number of 0's , 1's ... 9's as his id ) .  Note that id's can start with 0 . Given a number, find the rank of the number .",
     "constraints": [
-      "1 \u2264 T \u2264 10000",
-      "1 \u2264 number of digits in N \u2264 18"
+      "1 ≤ T ≤ 10000",
+      "1 ≤ number of digits in N ≤ 18"
     ],
     "inputFormat": "The first line contains T, the number of test cases. Each test case contains a single integer N.",
     "outputFormat": "For each test case, print the rank of the number.",
@@ -114,7 +114,7 @@
   "solution": {
     "approach": "The problem can be solved by calculating the rank of the number among all possible permutations of its digits. This can be done by iterating over each digit in the number and calculating the number of permutations that would come before it. The factorial of the remaining digits is used to calculate the number of permutations.",
     "timeComplexity": "O(T * N) per test case, O(T * N) total. Precomputation is not required.",
-    "spaceComplexity": "O(N) \u2014 for storing the frequency of each digit.",
+    "spaceComplexity": "O(N) — for storing the frequency of each digit.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nint compare(const void *a, const void *b) {\n    return *(char*)a - *(char*)b;\n}\n\nint factorial(int n) {\n    int result = 1;\n    for (int i = 2; i <= n; i++) {\n        result *= i;\n    }\n    return result;\n}\n\nint findRank(char *str) {\n    int len = strlen(str);\n    int rank = 1;\n    int *freq = (int*)calloc(10, sizeof(int));\n    for (int i = 0; i < len; i++) {\n        freq[str[i] - '0']++;\n    }\n    int *fact = (int*)malloc(len * sizeof(int));\n    fact[0] = 1;\n    for (int i = 1; i < len; i++) {\n        fact[i] = fact[i - 1] * i;\n    }\n    for (int i = 0; i < len - 1; i++) {\n        int count = 0;\n        for (int j = 0; j < str[i] - '0'; j++) {\n            if (freq[j] > 0) {\n                count += fact[len - i - 1] * freq[j];\n            }\n        }\n        rank += count;\n        freq[str[i] - '0']--;\n    }\n    free(fact);\n    free(freq);\n    return rank;\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        char str[19];\n        scanf(\"%s\", str);\n        printf(\"%d\\n\", findRank(str));\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <algorithm>\n#include <string>\nusing namespace std;\n\nint findRank(string str) {\n    int len = str.length();\n    int rank = 1;\n    int freq[10] = {0};\n    for (int i = 0; i < len; i++) {\n        freq[str[i] - '0']++;\n    }\n    int fact[18] = {1};\n    for (int i = 1; i < 18; i++) {\n        fact[i] = fact[i - 1] * i;\n    }\n    for (int i = 0; i < len - 1; i++) {\n        int count = 0;\n        for (int j = 0; j < str[i] - '0'; j++) {\n            if (freq[j] > 0) {\n                count += fact[len - i - 1] * freq[j];\n            }\n        }\n        rank += count;\n        freq[str[i] - '0']--;\n    }\n    return rank;\n}\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        string str;\n        cin >> str;\n        cout << findRank(str) << endl;\n    }\n    return 0;\n}",
@@ -122,5 +122,6 @@
       "Python3": "import math\n\ndef findRank(s):\n    n = len(s)\n    rank = 1\n    freq = [0] * 10\n    for i in range(n):\n        freq[int(s[i])] += 1\n    fact = [math.factorial(i) for i in range(18)]\n    for i in range(n - 1):\n        count = 0\n        for j in range(int(s[i])):\n            if freq[j] > 0:\n                count += fact[n - i - 1] * freq[j]\n        rank += count\n        freq[int(s[i])] -= 1\n    return rank\n\nT = int(input())\nfor _ in range(T):\n    s = input()\n    print(findRank(s))",
       "JavaScript": "const readline = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction findRank(s) {\n    let n = s.length;\n    let rank = 1;\n    let freq = new Array(10).fill(0);\n    for (let i = 0; i < n; i++) {\n        freq[s.charCodeAt(i) - '0'.charCodeAt(0)]++;\n    }\n    let fact = new Array(18).fill(1);\n    for (let i = 1; i < 18; i++) {\n        fact[i] = fact[i - 1] * i;\n    }\n    for (let i = 0; i < n - 1; i++) {\n        let count = 0;\n        for (let j = 0; j < s.charCodeAt(i) - '0'.charCodeAt(0); j++) {\n            if (freq[j] > 0) {\n                count += fact[n - i - 1] * freq[j];\n            }\n        }\n        rank += count;\n        freq[s.charCodeAt(i) - '0'.charCodeAt(0)]--;\n    }\n    return rank;\n}\n\nlet T = parseInt(readline[idx++]);\nwhile (T-- > 0) {\n    let s = readline[idx++];\n    console.log(findRank(s));\n}"
     }
-  }
+  },
+  "verified": false
 }

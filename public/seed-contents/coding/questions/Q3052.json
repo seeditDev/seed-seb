@@ -22,10 +22,10 @@
   "content": {
     "problemStatement": "Given a set **S** of first **N** non-negative integers i.e. **S = {0, 1, 2, ..., N}**. Find number of ways of choosing a **K** size subset of **S** with the property that the XOR-sum of all chosen integers has exactly **B** set bits in its binary representation (i.e. the bits that are equal to **1**). Since the answer can be large, output it modulo **(109 + 7)**. Please refer to notes section for formal definition of XOR-sum.",
     "constraints": [
-      "1 \u2264 T \u2264 5",
-      "1 \u2264 N \u2264 10^9",
-      "1 \u2264 K \u2264 7",
-      "0 \u2264 B \u2264 30"
+      "1 ≤ T ≤ 5",
+      "1 ≤ N ≤ 10^9",
+      "1 ≤ K ≤ 7",
+      "0 ≤ B ≤ 30"
     ],
     "inputFormat": "The first line contains T, the number of test cases. Each test case contains three space-separated integers N, K, and B.",
     "outputFormat": "For each test case, print the number of ways of choosing a K size subset of S with the property that the XOR-sum of all chosen integers has exactly B set bits in its binary representation, modulo (10^9 + 7).",
@@ -116,7 +116,7 @@
   "solution": {
     "approach": "The problem can be solved by generating all possible subsets of size K from the set S and then checking the XOR-sum of each subset. However, this approach is inefficient due to the large size of the set S. A more efficient approach is to use bit manipulation to generate all possible subsets and then calculate the XOR-sum of each subset. The number of ways to choose a subset with exactly B set bits in its XOR-sum can be calculated using combinatorial formulas and modular arithmetic.",
     "timeComplexity": "O(T * 2^K * B) per test case, O(T * 2^K * B) total.",
-    "spaceComplexity": "O(1) \u2014 the space complexity is constant as we only use a fixed amount of space to store the input and output.",
+    "spaceComplexity": "O(1) — the space complexity is constant as we only use a fixed amount of space to store the input and output.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdint.h>\n\nconst int MOD = 1000000007;\n\nint countSubsets(int N, int K, int B) {\n    int count = 0;\n    for (uint64_t mask = 0; mask < (1ULL << N); mask++) {\n        if (__builtin_popcountll(mask) == K) {\n            uint64_t xorSum = 0;\n            for (int i = 0; i < N; i++) {\n                if ((mask & (1ULL << i)) != 0) {\n                    xorSum ^= i;\n                }\n            }\n            if (__builtin_popcountll(xorSum) == B) {\n                count = (count + 1) % MOD;\n            }\n        }\n    }\n    return count;\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    for (int t = 0; t < T; t++) {\n        int N, K, B;\n        scanf(\"%d %d %d\", &N, &K, &B);\n        printf(\"%d\\n\", countSubsets(N, K, B));\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <cstdint>\n\nconst int MOD = 1000000007;\n\nint countSubsets(int N, int K, int B) {\n    int count = 0;\n    for (uint64_t mask = 0; mask < (1ULL << N); mask++) {\n        if (__builtin_popcountll(mask) == K) {\n            uint64_t xorSum = 0;\n            for (int i = 0; i < N; i++) {\n                if ((mask & (1ULL << i)) != 0) {\n                    xorSum ^= i;\n                }\n            }\n            if (__builtin_popcountll(xorSum) == B) {\n                count = (count + 1) % MOD;\n            }\n        }\n    }\n    return count;\n}\n\nint main() {\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(NULL);\n    int T;\n    std::cin >> T;\n    for (int t = 0; t < T; t++) {\n        int N, K, B;\n        std::cin >> N >> K >> B;\n        std::cout << countSubsets(N, K, B) << std::endl;\n    }\n    return 0;\n}",
@@ -124,5 +124,6 @@
       "Python3": "import sys\n\nMOD = 1000000007\n\ndef countSubsets(N, K, B):\n    count = 0\n    for mask in range(1 << N):\n        if bin(mask).count('1') == K:\n            xorSum = 0\n            for i in range(N):\n                if (mask & (1 << i)) != 0:\n                    xorSum ^= i\n            if bin(xorSum).count('1') == B:\n                count = (count + 1) % MOD\n    return count\n\nT = int(sys.stdin.readline())\nfor t in range(T):\n    N, K, B = map(int, sys.stdin.readline().split())\n    print(countSubsets(N, K, B))",
       "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet i = 0;\n\nfunction countSubsets(N, K, B) {\n    let count = 0;\n    for (let mask = 0; mask < (1 << N); mask++) {\n        if (countBits(mask) === K) {\n            let xorSum = 0;\n            for (let i = 0; i < N; i++) {\n                if ((mask & (1 << i)) !== 0) {\n                    xorSum ^= i;\n                }\n            }\n            if (countBits(xorSum) === B) {\n                count = (count + 1) % 1000000007;\n            }\n        }\n    }\n    return count;\n}\n\nfunction countBits(n) {\n    let count = 0;\n    while (n !== 0) {\n        count++;\n        n &= n - 1;\n    }\n    return count;\n}\n\nlet T = parseInt(lines[i++]);\nfor (let t = 0; t < T; t++) {\n    let [N, K, B] = lines[i++].trim().split(' ').map(Number);\n    console.log(countSubsets(N, K, B));\n}"
     }
-  }
+  },
+  "verified": false
 }

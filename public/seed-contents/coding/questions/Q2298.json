@@ -22,35 +22,35 @@
     ]
   },
   "content": {
-    "problemStatement": "Let X be the set of all integers between 0 and n-1. Suppose we have a collection S1, S2, ..., Sm of subsets of X. Say an atom A is a subset of X such that for each Si we have either A is a subset of Si or A and Si do not have any common elements.\n\n\n\nYour task is to find a collection A1, ..., Ak of atoms such that every item in X is in some Ai and no two Ai, Aj with i \u2260 j share a common item. Surely such a collection exists as we could create a single set {x} for each x in X. A more interesting question is to minimize k, the number of atoms.",
+    "problemStatement": "Let X be the set of all integers between 0 and n-1. Suppose we have a collection S1, S2, ..., Sm of subsets of X. Say an atom A is a subset of X such that for each Si we have either A is a subset of Si or A and Si do not have any common elements.\n\n\n\nYour task is to find a collection A1, ..., Ak of atoms such that every item in X is in some Ai and no two Ai, Aj with i ≠ j share a common item. Surely such a collection exists as we could create a single set {x} for each x in X. A more interesting question is to minimize k, the number of atoms.",
     "constraints": [
-      "1 \u2264 t \u2264 30",
-      "1 \u2264 n \u2264 100",
-      "1 \u2264 m \u2264 30",
-      "1 \u2264 vi \u2264 n",
-      "All elements are between 0 and n\u20111",
+      "1 ≤ t ≤ 30",
+      "1 ≤ n ≤ 100",
+      "1 ≤ m ≤ 30",
+      "1 ≤ vi ≤ n",
+      "All elements are between 0 and n‑1",
       "Each element of X belongs to at least one Si"
     ],
-    "inputFormat": "The first line contains an integer t (1 \u2264 t \u2264 30), the number of test cases. Each test case starts with two integers n and m (1 \u2264 n \u2264 100, 1 \u2264 m \u2264 30). Then follow m lines. The i\u2011th line begins with vi (1 \u2264 vi \u2264 n) \u2013 the size of set Si \u2013 followed by vi distinct integers in the range [0, n\u20111] describing the elements of Si. Every integer from 0 to n\u20111 appears in at least one Si.",
-    "outputFormat": "For each test case output a single line containing one integer \u2013 the minimum possible number of atoms into which X can be partitioned.",
+    "inputFormat": "The first line contains an integer t (1 ≤ t ≤ 30), the number of test cases. Each test case starts with two integers n and m (1 ≤ n ≤ 100, 1 ≤ m ≤ 30). Then follow m lines. The i‑th line begins with vi (1 ≤ vi ≤ n) – the size of set Si – followed by vi distinct integers in the range [0, n‑1] describing the elements of Si. Every integer from 0 to n‑1 appears in at least one Si.",
+    "outputFormat": "For each test case output a single line containing one integer – the minimum possible number of atoms into which X can be partitioned.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "2\n5 2\n3 0 1 2\n3 2 3 4\n4 3\n2 0 1\n2 1 2\n2 2 3",
         "output": "3\n4",
-        "explanation": "First test case: masks are {0,1}:{001}, {2}:{011}, {3,4}:{010}. Three distinct masks \u2192 3 atoms. Second test case: each element obtains a unique mask, so 4 atoms."
+        "explanation": "First test case: masks are {0,1}:{001}, {2}:{011}, {3,4}:{010}. Three distinct masks → 3 atoms. Second test case: each element obtains a unique mask, so 4 atoms."
       },
       {
         "id": "sample_2",
         "input": "1\n3 1\n2 0 2",
         "output": "2",
-        "explanation": "Masks: element 0 \u2192 1, element 1 \u2192 0, element 2 \u2192 1. Distinct masks are {0,1}, so the minimum number of atoms is 2."
+        "explanation": "Masks: element 0 → 1, element 1 → 0, element 2 → 1. Distinct masks are {0,1}, so the minimum number of atoms is 2."
       },
       {
         "id": "sample_3",
         "input": "1\n4 2\n2 0 1\n2 2 3",
         "output": "2",
-        "explanation": "Masks: 0 and 1 have 01, 2 and 3 have 10. Two different masks \u2192 2 atoms."
+        "explanation": "Masks: 0 and 1 have 01, 2 and 3 have 10. Two different masks → 2 atoms."
       }
     ]
   },
@@ -118,8 +118,8 @@
     ]
   },
   "solution": {
-    "approach": "For every element x in X we build a binary mask of length m. Bit i (0\u2011based) is 1 iff x belongs to Si. Two elements can be placed in the same atom exactly when their masks are identical, because an atom must be either completely inside a set or completely outside it. Therefore the minimum number of atoms equals the number of distinct masks among the n elements. The algorithm:  \u2022 Initialise an array mask[0\u2026n\u20111] with 0.  \u2022 For each set Si (i from 0 to m\u20111) read its elements and set the i\u2011th bit in mask[x] for every x in Si.  \u2022 Insert all mask values into a hash set (or sort and count unique values).  \u2022 The size of the set is the answer. The procedure is repeated for each test case.",
-    "timeComplexity": "O( \u03a3 vi ) per test case, i.e. O(n\u00b7m) in the worst case because each element can appear in every set. With the given limits this is at most 3000 operations per case.",
+    "approach": "For every element x in X we build a binary mask of length m. Bit i (0‑based) is 1 iff x belongs to Si. Two elements can be placed in the same atom exactly when their masks are identical, because an atom must be either completely inside a set or completely outside it. Therefore the minimum number of atoms equals the number of distinct masks among the n elements. The algorithm:  • Initialise an array mask[0…n‑1] with 0.  • For each set Si (i from 0 to m‑1) read its elements and set the i‑th bit in mask[x] for every x in Si.  • Insert all mask values into a hash set (or sort and count unique values).  • The size of the set is the answer. The procedure is repeated for each test case.",
+    "timeComplexity": "O( Σ vi ) per test case, i.e. O(n·m) in the worst case because each element can appear in every set. With the given limits this is at most 3000 operations per case.",
     "spaceComplexity": "O(n) for the mask array plus O(n) for the set of distinct masks.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n    int T;\n    if (scanf(\"%d\", &T) != 1) return 0;\n    while (T--) {\n        int n, m;\n        scanf(\"%d %d\", &n, &m);\n        int *mask = (int *)calloc(n, sizeof(int));\n        for (int i = 0; i < m; ++i) {\n            int v; scanf(\"%d\", &v);\n            for (int j = 0; j < v; ++j) {\n                int x; scanf(\"%d\", &x);\n                mask[x] |= (1 << i);\n            }\n        }\n        // count distinct masks\n        int distinct = 0;\n        for (int i = 0; i < n; ++i) {\n            int seen = 0;\n            for (int j = 0; j < i; ++j) {\n                if (mask[j] == mask[i]) { seen = 1; break; }\n            }\n            if (!seen) ++distinct;\n        }\n        printf(\"%d\\n\", distinct);\n        free(mask);\n    }\n    return 0;\n}\n",
@@ -128,5 +128,6 @@
       "Python3": "import sys\n\ndef solve():\n    data = list(map(int, sys.stdin.read().strip().split()))\n    if not data:\n        return\n    it = iter(data)\n    T = next(it)\n    out = []\n    for _ in range(T):\n        n = next(it); m = next(it)\n        mask = [0] * n\n        for i in range(m):\n            v = next(it)\n            for _ in range(v):\n                x = next(it)\n                mask[x] |= (1 << i)\n        out.append(str(len(set(mask))))\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    solve()\n",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/).map(Number);\nlet idx = 0;\nconst T = input[idx++];\nlet results = [];\nfor (let tc = 0; tc < T; ++tc) {\n  const n = input[idx++];\n  const m = input[idx++];\n  const mask = new Array(n).fill(0);\n  for (let i = 0; i < m; ++i) {\n    const v = input[idx++];\n    for (let j = 0; j < v; ++j) {\n      const x = input[idx++];\n      mask[x] |= (1 << i);\n    }\n  }\n  const set = new Set(mask);\n  results.push(String(set.size));\n}\nconsole.log(results.join('\\n'));\n"
     }
-  }
+  },
+  "verified": false
 }

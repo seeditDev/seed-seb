@@ -22,11 +22,11 @@
   "content": {
     "problemStatement": "The Baratheons have been ruling in the Seven Kingdoms for many years. They have seen a lot: prosperity and hunger, tranquility and rebellions, live and death. But nevertheless, they still hold the throne.\n\nKing Joffrey Baratheon's reign is running now. As a wise man, he honors the history of his family. So, he commanded to build up **two** monuments, that will remind about some historical periods of the Baratheons.\n\nFormally, the Baratheons have been ruling for **N** years. Every year is described by an integer **Ai**, the level of prosperity in **i**-th year. If **i**-th year was a great year, then **Ai** might be a positive integer. Otherwise, if **i**-th year was a horrible year, then **Ai** might be a negative integer.\n\nEach historical period can be described as two integers **S** and **F**, the start and the finish of the period respectively. Of course, **S** is not greater than **F** for each period, that we consider in this task.\n\nYou are to pick two historical periods, but there are some rules:\n\nTwo periods shouldn't have common years. I.e. a period [1, 5] has no common years with a period [6, 7];\nThe first period should start earlier than the second one. I.e. a period [1, 5] starts earlier than [6, 7];\nTwo periods shouldn't be too close to each other. There must be at least **K** years between the finish of the first period and the start of the second period. I.e. periods [1, 5] and [10, 10] can be chosen in case **K** equals to 4, while they can't in case **K** equals to 5.\nThe sum of the levels of prosperity in chosen years should be as big as possible.\nAfterwards, you should report the sum of the levels of prosperity in chosen years to your King. Make everything right, otherwise King Joffrey won't be merciful!",
     "constraints": [
-      "1 \u2264 T \u2264 5",
-      "2 \u2264 N \u2264 10^5",
-      "0 \u2264 K \u2264 10^5",
-      "-10^9 \u2264 Ai \u2264 10^9 for every 1 \u2264 i \u2264 N",
-      "K + 2 \u2264 N"
+      "1 ≤ T ≤ 5",
+      "2 ≤ N ≤ 10^5",
+      "0 ≤ K ≤ 10^5",
+      "-10^9 ≤ Ai ≤ 10^9 for every 1 ≤ i ≤ N",
+      "K + 2 ≤ N"
     ],
     "inputFormat": "The first line contains an integer T, the number of test cases. Each test case consists of two lines. The first line contains two integers N and K, where N is the number of years and K is the minimum gap between two periods. The second line contains N integers, representing the level of prosperity in each year.",
     "outputFormat": "For each test case, output the maximum sum of the levels of prosperity in the chosen years.",
@@ -117,7 +117,7 @@
   "solution": {
     "approach": "The problem can be solved by using a prefix sum array to store the cumulative sum of the levels of prosperity. Then, we can use two pointers to find the maximum sum of two non-overlapping periods. The time complexity is O(N^2) due to the nested loops, but it can be optimized to O(N) by using a more efficient algorithm.",
     "timeComplexity": "O(N^2) per test case, O(T * N^2) total",
-    "spaceComplexity": "O(N) \u2014 for the prefix sum array",
+    "spaceComplexity": "O(N) — for the prefix sum array",
     "code": {
       "C": "#include <stdio.h>\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, K;\n        scanf(\"%d %d\", &N, &K);\n        long long arr[N], prefix[N + 1] = {0};\n        for (int i = 0; i < N; i++) {\n            scanf(\"%lld\", &arr[i]);\n            prefix[i + 1] = prefix[i] + arr[i];\n        }\n        long long max_sum = LLONG_MIN;\n        for (int i = 0; i < N; i++) {\n            for (int j = i + K + 1; j < N; j++) {\n                long long sum1 = prefix[i + 1] - prefix[0];\n                long long sum2 = prefix[j + 1] - prefix[i + K + 1];\n                max_sum = (max_sum > sum1 + sum2) ? max_sum : sum1 + sum2;\n            }\n        }\n        printf(\"%lld\\n\", max_sum);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, K;\n        cin >> N >> K;\n        long long arr[N], prefix[N + 1] = {0};\n        for (int i = 0; i < N; i++) {\n            cin >> arr[i];\n            prefix[i + 1] = prefix[i] + arr[i];\n        }\n        long long max_sum = LLONG_MIN;\n        for (int i = 0; i < N; i++) {\n            for (int j = i + K + 1; j < N; j++) {\n                long long sum1 = prefix[i + 1] - prefix[0];\n                long long sum2 = prefix[j + 1] - prefix[i + K + 1];\n                max_sum = (max_sum > sum1 + sum2) ? max_sum : sum1 + sum2;\n            }\n        }\n        cout << max_sum << endl;\n    }\n    return 0;\n}",
@@ -125,5 +125,6 @@
       "Python3": "import sys\ninput = sys.stdin.readline\nT = int(input())\nfor _ in range(T):\n    N, K = map(int, input().split())\n    arr = list(map(int, input().split()))\n    prefix = [0] * (N + 1)\n    for i in range(N):\n        prefix[i + 1] = prefix[i] + arr[i]\n    max_sum = float('-inf')\n    for i in range(N):\n        for j in range(i + K + 1, N):\n            sum1 = prefix[i + 1] - prefix[0]\n            sum2 = prefix[j + 1] - prefix[i + K + 1]\n            max_sum = max(max_sum, sum1 + sum2)\n    print(max_sum)",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => input[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [N, K] = readline().split(' ').map(Number);\n    const arr = readline().split(' ').map(Number);\n    const prefix = new Array(N + 1).fill(0);\n    for (let j = 0; j < N; j++) {\n        prefix[j + 1] = prefix[j] + arr[j];\n    }\n    let max_sum = -Infinity;\n    for (let j = 0; j < N; j++) {\n        for (let k = j + K + 1; k < N; k++) {\n            const sum1 = prefix[j + 1] - prefix[0];\n            const sum2 = prefix[k + 1] - prefix[j + K + 1];\n            max_sum = Math.max(max_sum, sum1 + sum2);\n        }\n    }\n    console.log(max_sum);\n}"
     }
-  }
+  },
+  "verified": false
 }

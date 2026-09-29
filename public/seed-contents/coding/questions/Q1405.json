@@ -1,35 +1,23 @@
 {
-  "questionId": "Q1405",
-  "title": "Maximum-Length Happy String",
   "slug": "longest-happy-string",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Strings",
-    "difficulty": "Medium",
-    "isPremium": false,
-    "tags": [
-      "string",
-      "greedy",
-      "heap-priority-queue"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "string",
-      "greedy",
-      "heap-priority-queue"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Which remaining character should you prefer when several choices are legal?",
+    "What should you do when the most frequent character would create \"aaa\", \"bbb\", or \"ccc\"?",
+    "After using the second-most frequent character to break a run, remember to put the blocked character back for later.",
+    "A priority queue is convenient here because you repeatedly need the character with the largest remaining count."
+  ],
+  "title": "Maximum-Length Happy String",
   "content": {
-    "problemStatement": "A string `s` is called **happy** if it satisfies the following conditions:\n\n* `s` only includes the letters `'a'`, `'b'`, and `'c'`.\n* `s` does not contain any of `\"aaa\"`, `\"bbb\"`, or `\"ccc\"` as a substring.\n* `s` includes **no more than** `a` occurrences of the letter `'a'`.\n* `s` includes **no more than** `b` occurrences of the letter `'b'`.\n* `s` includes **no more than** `c` occurrences of the letter `'c'`.\n\nWith three integers `a`, `b`, and `c`, output *the **longest possible happy** string*. If there are multiple longest happy strings, output *any of them*. If there is no such string, output *the empty string* `\"\"`.\n\nA **substring** is a contiguous sequence of characters within a string.\n\n**Example 1:**\n\n```\nInput: a = 1, b = 1, c = 7\nOutput: \"ccaccbcc\"\nExplanation: \"ccbccacc\" would also be a correct answer.\n```\n\n**Example 2:**\n\n```\nInput: a = 7, b = 1, c = 0\nOutput: \"aabaa\"\nExplanation: It is the only correct answer in this case.\n```\n\n**Constraints:**\n\n* `0 <= a, b, c <= 100`\n* `a + b + c > 0`",
+    "notes": [
+      "The result may be any longest happy string; multiple different strings can be correct.",
+      "For deterministic regression checks, hidden expected outputs use a max-heap greedy reference with lexicographic tie-breaking among equal remaining counts."
+    ],
     "constraints": [
       "0 <= a, b, c <= 100",
       "a + b + c > 0"
     ],
-    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
-    "outputFormat": "Single line: JSON-serialised return value",
+    "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, arg3].",
+    "outputFormat": "Single line: JSON-serialised string return value",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -46,267 +34,36 @@
         "explanation": "It is the only correct answer in this case."
       }
     ],
-    "notes": []
+    "problemStatement": "A string `s` is called **happy** if it satisfies the following conditions:\n\n* `s` only includes the letters `'a'`, `'b'`, and `'c'`.\n* `s` does not contain any of `\"aaa\"`, `\"bbb\"`, or `\"ccc\"` as a substring.\n* `s` includes **no more than** `a` occurrences of the letter `'a'`.\n* `s` includes **no more than** `b` occurrences of the letter `'b'`.\n* `s` includes **no more than** `c` occurrences of the letter `'c'`.\n\nWith three integers `a`, `b`, and `c`, output *the **longest possible happy** string*. If there are multiple longest happy strings, output *any of them*. If there is no such string, output *the empty string* `\"\"`.\n\nA **substring** is a contiguous sequence of characters within a string.\n\n**Example 1:**\n\n```\nInput: a = 1, b = 1, c = 7\nOutput: \"ccaccbcc\"\nExplanation: \"ccbccacc\" would also be a correct answer.\n```\n\n**Example 2:**\n\n```\nInput: a = 7, b = 1, c = 0\nOutput: \"aabaa\"\nExplanation: It is the only correct answer in this case.\n```\n\n**Constraints:**\n\n* `0 <= a, b, c <= 100`\n* `a + b + c > 0`"
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Length 1",
-        "input": "[1, 0, 0]",
-        "expectedOutput": "\"a\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Length 2",
-        "input": "[1, 1, 0]",
-        "expectedOutput": "\"ab\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "Maximum length",
-        "input": "[100, 0, 0]",
-        "expectedOutput": "\"aa\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Unique characters",
-        "input": "[1, 1, 1]",
-        "expectedOutput": "\"abc\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Repeated substring",
-        "input": "[2, 2, 2]",
-        "expectedOutput": "\"abcabc\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Suffix match",
-        "input": "[0, 0, 1]",
-        "expectedOutput": "\"c\"",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Maximum length stress",
-        "input": "[0, 0, 100]",
-        "expectedOutput": "\"cc\"",
-        "weight": 10
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Two-character alphabet stress",
-        "input": "[50, 50, 0]",
-        "expectedOutput": "\"abababababababababababababababababababababababababababababababababababababababababababababababababab\"",
-        "weight": 10
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "Inputs are three integers [a,b,c]. The output is a string encoded as a JSON string.",
+      "Because multiple longest happy strings are valid, production judging should validate that the returned string is happy, respects all three count limits, and has maximum possible length; the stored expected outputs are deterministic regression references."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      10,
-      10,
-      3,
-      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       3,
       3,
       3,
@@ -328,57 +85,345 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "string",
+      "greedy",
+      "heap-priority-queue"
     ],
-    "notes": []
+    "category": "Strings",
+    "isPremium": false,
+    "topicTags": [
+      "string",
+      "greedy",
+      "heap-priority-queue"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses a max heap to store the frequency of each character, ensuring the most frequent character is always chosen first, and a result list to store the final happy string, handling the case where the last two characters are the same.",
-    "timeComplexity": "O(a + b + c)",
-    "spaceComplexity": "O(a + b + c)",
-    "code": {
-      "Python3": "# Time:  O(n)\n# Space: O(1) (excluding result storage)\n\nimport heapq\n\n\nclass Solution(object):\n    def longestDiverseString(self, a, b, c):\n        \"\"\"\n        :type a: int\n        :type b: int\n        :type c: int\n        :rtype: str\n        \"\"\"\n        max_heap = []\n        if a:\n            heapq.heappush(max_heap, (-a, 'a'))\n        if b:\n            heapq.heappush(max_heap, (-b, 'b'))\n        if c:\n            heapq.heappush(max_heap, (-c, 'c'))\n        result = []\n        while max_heap:\n            count1, c1 = heapq.heappop(max_heap)\n            if len(result) >= 2 and result[-1] == result[-2] == c1:\n                if not max_heap:\n                    return \"\".join(result)\n                count2, c2 = heapq.heappop(max_heap)\n                result.append(c2)\n                count2 += 1\n                if count2:\n                    heapq.heappush(max_heap, (count2, c2))\n                heapq.heappush(max_heap, (count1, c1))\n                continue\n            result.append(c1)\n            count1 += 1\n            if count1 != 0:\n                heapq.heappush(max_heap, (count1, c1))\n        return \"\".join(result)"
-    },
-    "notes": [],
+    "notes": [
+      "The greedy choice preserves the maximum number of future separators by using the most frequent currently usable character.",
+      "If the most frequent character is blocked by the two-character suffix, the second-most frequent available character is the only useful way to continue.",
+      "With only three fixed character types, the priority queue size is constant."
+    ],
+    "approach": "Use a max heap keyed by remaining character count. At each step, normally append the most frequent available character. If doing so would create three consecutive copies of that character, temporarily choose the next most frequent character, append one copy of it, and then return the blocked character to the heap. With only three character types, heap operations are O(log 3), which is constant.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(a+b+c) time and O(a+b+c) space including the output.",
+        "description": "Because there are only three character types, a priority queue is not strictly necessary. Store the three remaining counts in a fixed array and scan the three entries to choose the largest usable count at each step. The constant-sized scan gives the same O(n) asymptotic time as the heap solution."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(a+b+c) time and O(a+b+c) space including the output; auxiliary heap space is O(1).",
+        "description": "Maintain the remaining counts in a max heap. Select the most frequent character unless the last two output characters are already the same; in that case, select the next most frequent character to break the run. Reinsert any character that still has copies remaining. The heap contains at most three entries, so each operation is constant-time up to a fixed log 3 factor, and every output character is processed once."
+      },
+      "bruteForce": {
+        "complexity": "Exponential time in the total available character count; O(a+b+c) recursion depth in the worst case.",
+        "description": "Enumerate all happy strings obtainable by recursively choosing one of the three letters while counts remain available, then keep the longest result. This explores an exponential number of prefixes in the worst case and is suitable only for tiny inputs."
       }
+    },
+    "timeComplexity": "O(a + b + c)",
+    "spaceComplexity": "O(a + b + c) including the returned string; the heap itself stores at most three entries.",
+    "code": {
+      "Python3": "import heapq\n\nclass Solution:\n    def longestDiverseString(self, a: int, b: int, c: int) -> str:\n        heap = []\n        for count, ch in ((a, \"a\"), (b, \"b\"), (c, \"c\")):\n            if count > 0:\n                heapq.heappush(heap, (-count, ch))\n\n        result = []\n        while heap:\n            count1, ch1 = heapq.heappop(heap)\n\n            if len(result) >= 2 and result[-1] == result[-2] == ch1:\n                if not heap:\n                    break\n                count2, ch2 = heapq.heappop(heap)\n                result.append(ch2)\n                count2 += 1\n                if count2 < 0:\n                    heapq.heappush(heap, (count2, ch2))\n                heapq.heappush(heap, (count1, ch1))\n            else:\n                result.append(ch1)\n                count1 += 1\n                if count1 < 0:\n                    heapq.heappush(heap, (count1, ch1))\n\n        return \"\".join(result)",
+      "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    static class Entry {\n        int count;\n        char ch;\n        Entry(int count, char ch) {\n            this.count = count;\n            this.ch = ch;\n        }\n    }\n\n    public String longestDiverseString(int a, int b, int c) {\n        PriorityQueue<Entry> pq = new PriorityQueue<>(\n            (x, y) -> x.count != y.count\n                ? Integer.compare(y.count, x.count)\n                : Character.compare(x.ch, y.ch)\n        );\n\n        if (a > 0) pq.offer(new Entry(a, 'a'));\n        if (b > 0) pq.offer(new Entry(b, 'b'));\n        if (c > 0) pq.offer(new Entry(c, 'c'));\n\n        StringBuilder result = new StringBuilder();\n\n        while (!pq.isEmpty()) {\n            Entry first = pq.poll();\n\n            if (result.length() >= 2\n                    && result.charAt(result.length() - 1) == first.ch\n                    && result.charAt(result.length() - 2) == first.ch) {\n                if (pq.isEmpty()) break;\n\n                Entry second = pq.poll();\n                result.append(second.ch);\n                second.count--;\n                if (second.count > 0) pq.offer(second);\n                pq.offer(first);\n            } else {\n                result.append(first.ch);\n                first.count--;\n                if (first.count > 0) pq.offer(first);\n            }\n        }\n\n        return result.toString();\n    }\n}",
+      "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\n    struct Entry {\n        int count;\n        char ch;\n    };\n\n    struct Compare {\n        bool operator()(const Entry& x, const Entry& y) const {\n            if (x.count != y.count) return x.count < y.count;\n            return x.ch > y.ch;\n        }\n    };\n\npublic:\n    string longestDiverseString(int a, int b, int c) {\n        priority_queue<Entry, vector<Entry>, Compare> pq;\n\n        if (a > 0) pq.push({a, 'a'});\n        if (b > 0) pq.push({b, 'b'});\n        if (c > 0) pq.push({c, 'c'});\n\n        string result;\n\n        while (!pq.empty()) {\n            Entry first = pq.top();\n            pq.pop();\n\n            if (result.size() >= 2 &&\n                result[result.size() - 1] == first.ch &&\n                result[result.size() - 2] == first.ch) {\n\n                if (pq.empty()) break;\n\n                Entry second = pq.top();\n                pq.pop();\n\n                result.push_back(second.ch);\n                --second.count;\n                if (second.count > 0) pq.push(second);\n                pq.push(first);\n            } else {\n                result.push_back(first.ch);\n                --first.count;\n                if (first.count > 0) pq.push(first);\n            }\n        }\n\n        return result;\n    }\n};",
+      "JavaScript": "function longestDiverseString(a, b, c) {\n    const heap = [];\n    const push = (count, ch) => {\n        if (count > 0) heap.push({ count, ch });\n        heap.sort((x, y) => y.count - x.count || x.ch.localeCompare(y.ch));\n    };\n    const pop = () => {\n        const item = heap.shift();\n        return item;\n    };\n\n    push(a, \"a\");\n    push(b, \"b\");\n    push(c, \"c\");\n\n    const result = [];\n\n    while (heap.length) {\n        const first = pop();\n\n        if (\n            result.length >= 2 &&\n            result[result.length - 1] === first.ch &&\n            result[result.length - 2] === first.ch\n        ) {\n            if (!heap.length) break;\n\n            const second = pop();\n            result.push(second.ch);\n            second.count--;\n            if (second.count > 0) push(second.count, second.ch);\n            push(first.count, first.ch);\n        } else {\n            result.push(first.ch);\n            first.count--;\n            if (first.count > 0) push(first.count, first.ch);\n        }\n    }\n\n    return result.join(\"\");\n}",
+      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nchar* longestDiverseString(int a, int b, int c) {\n    int count[3] = {a, b, c};\n    const char letters[3] = {'a', 'b', 'c'};\n    char* result = (char*)malloc(301);\n    if (!result) exit(EXIT_FAILURE);\n\n    int len = 0;\n\n    while (1) {\n        int best = -1;\n        for (int i = 0; i < 3; ++i) {\n            if (count[i] > 0 && (best == -1 || count[i] > count[best])) {\n                best = i;\n            }\n        }\n        if (best == -1) break;\n\n        if (len >= 2 &&\n            result[len - 1] == letters[best] &&\n            result[len - 2] == letters[best]) {\n\n            int second = -1;\n            for (int i = 0; i < 3; ++i) {\n                if (i == best || count[i] == 0) continue;\n                if (second == -1 || count[i] > count[second]) {\n                    second = i;\n                }\n            }\n\n            if (second == -1) break;\n\n            result[len++] = letters[second];\n            count[second]--;\n        } else {\n            result[len++] = letters[best];\n            count[best]--;\n        }\n    }\n\n    result[len] = '\\0';\n    return result;\n}"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nchar* longestDiverseString(int a, int b, int c) {\n    \n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        int a = parse_int(&tok);\n        int b = parse_int(&tok);\n        int c = parse_int(&tok);\n        char* result = longestDiverseString(a, b, c);\n        printf(\"\\\"%s\\\"\\n\", result);\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def longestDiverseString(self, a: int, b: int, c: int) -> str:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _a = _args[0]\n    _b = _args[1]\n    _c = _args[2]\n    _result = Solution().longestDiverseString(_a, _b, _c)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number} a\n * @param {number} b\n * @param {number} c\n * @return {string}\n */\nvar longestDiverseString = function(a, b, c) {\n    \n    return \"\";\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = longestDiverseString(_args[0], _args[1], _args[2]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public String longestDiverseString(int a, int b, int c) {\n        \n        return \"\";\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        int a = Integer.parseInt(nextToken());\n        int b = Integer.parseInt(nextToken());\n        int c = Integer.parseInt(nextToken());\n        String result = new Solution().longestDiverseString(a, b, c);\n        System.out.println(\"\\\"\"+result+\"\\\"\" );\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    string longestDiverseString(int a, int b, int c) {\n        \n        return \"\";\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    int a = readInt(tok);\n    int b = readInt(tok);\n    int c = readInt(tok);\n    auto result = Solution().longestDiverseString(a, b, c);\n    cout << \"\\\"\" << result << \"\\\"\" << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "a",
+        "type": "integer"
+      },
+      {
+        "name": "b",
+        "type": "integer"
+      },
+      {
+        "name": "c",
+        "type": "integer"
+      }
+    ],
+    "methodName": "longestDiverseString"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "Can you solve it without a priority queue by exploiting the fact that there are only three character types?",
+    "Can you prove why breaking a blocked run with the second-most frequent available character preserves an optimal length?",
+    "How would the approach change if the forbidden run length were K instead of 3?",
+    "What changes if the alphabet contains many different character types?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[1,0,0]",
+        "label": "Single available 'a'",
+        "weight": 4,
+        "expectedOutput": "\"a\""
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[0,1,0]",
+        "label": "Single available 'b'",
+        "weight": 4,
+        "expectedOutput": "\"b\""
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[0,0,1]",
+        "label": "Single available 'c'",
+        "weight": 4,
+        "expectedOutput": "\"c\""
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[1,1,0]",
+        "label": "Two different letters",
+        "weight": 4,
+        "expectedOutput": "\"ab\""
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[2,0,0]",
+        "label": "Exactly two copies of one letter",
+        "weight": 4,
+        "expectedOutput": "\"aa\""
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[3,0,0]",
+        "label": "Single-letter supply exceeds the run limit",
+        "weight": 4,
+        "expectedOutput": "\"aa\""
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[2,2,0]",
+        "label": "Balanced two-letter supply",
+        "weight": 4,
+        "expectedOutput": "\"abab\""
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[3,3,0]",
+        "label": "Equal two-letter counts with longer output",
+        "weight": 4,
+        "expectedOutput": "\"ababab\""
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[4,1,0]",
+        "label": "Dominant letter with one separator",
+        "weight": 4,
+        "expectedOutput": "\"aabaa\""
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[8,1,0]",
+        "label": "Severely dominant letter with one separator",
+        "weight": 4,
+        "expectedOutput": "\"aabaa\""
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[2,2,1]",
+        "label": "Three letters with equal high-priority choices",
+        "weight": 3,
+        "expectedOutput": "\"ababc\""
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[3,2,1]",
+        "label": "Moderate three-letter imbalance",
+        "weight": 3,
+        "expectedOutput": "\"aababc\""
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[4,1,1]",
+        "label": "Dominant letter constrained by two alternatives",
+        "weight": 3,
+        "expectedOutput": "\"aabaac\""
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[5,1,1]",
+        "label": "Strong dominant letter with two separators",
+        "weight": 3,
+        "expectedOutput": "\"aabaaca\""
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[6,1,1]",
+        "label": "Stronger dominant letter still using both alternatives",
+        "weight": 3,
+        "expectedOutput": "\"aabaacaa\""
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[10,2,0]",
+        "label": "Two-letter dominant case",
+        "weight": 3,
+        "expectedOutput": "\"aabaabaa\""
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[10,2,1]",
+        "label": "Three-letter reintroduction after a forced break",
+        "weight": 3,
+        "expectedOutput": "\"aabaabaacaa\""
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[10,3,0]",
+        "label": "Two-letter case with extra dominant copies",
+        "weight": 3,
+        "expectedOutput": "\"aabaabaabaa\""
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[10,3,1]",
+        "label": "Three-letter case requiring repeated greedy choices",
+        "weight": 3,
+        "expectedOutput": "\"aabaabaabaacaa\""
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[100,1,0]",
+        "label": "Maximum-value dominant letter with one separator",
+        "weight": 3,
+        "expectedOutput": "\"aabaa\""
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[100,1,1]",
+        "label": "Maximum dominant letter with two separators",
+        "weight": 3,
+        "expectedOutput": "\"aabaacaa\""
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[100,50,0]",
+        "label": "Large two-letter imbalanced case",
+        "weight": 3,
+        "expectedOutput": "\"aabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaabaab\""
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[100,2,50]",
+        "label": "Large three-letter imbalance",
+        "weight": 3,
+        "expectedOutput": "\"aacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaabacabc\""
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[50,100,1]",
+        "label": "Dominant letter changes from 'a' to 'b'",
+        "weight": 3,
+        "expectedOutput": "\"bbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbabbababc\""
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[100,99,1]",
+        "label": "Near-balanced large counts",
+        "weight": 3,
+        "expectedOutput": "\"aabababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababc\""
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[100,100,1]",
+        "label": "Near-maximum total with one rare letter",
+        "weight": 3,
+        "expectedOutput": "\"ababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababc\""
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[100,0,99]",
+        "label": "Near-balanced two-letter maximum case",
+        "weight": 3,
+        "expectedOutput": "\"aacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacac\""
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[98,1,100]",
+        "label": "Near-maximum counts with different dominant character",
+        "weight": 3,
+        "expectedOutput": "\"ccacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacabc\""
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[100,100,100]",
+        "label": "All three counts at the constraint maximum",
+        "weight": 3,
+        "expectedOutput": "\"abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc\""
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[100,0,50]",
+        "label": "Maximum two-letter boundary case",
+        "weight": 3,
+        "expectedOutput": "\"aacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaacaac\""
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-07-10",
+  "questionId": "Q1405",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nchar* longestDiverseString(int a, int b, int c) {\n    return NULL;\n}\n\nint main(void) {\n    int a, b, c;\n    if (scanf(\"[ %d , %d , %d ]\", &a, &b, &c) != 3) return 1;\n\n    char* result = longestDiverseString(a, b, c);\n    printf(\"\\\"%s\\\"\\n\", result);\n    free(result);\n    return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\n    struct Entry {\n        int count;\n        char ch;\n    };\n\n    struct Compare {\n        bool operator()(const Entry& x, const Entry& y) const {\n            if (x.count != y.count) return x.count < y.count;\n            return x.ch > y.ch;\n        }\n    };\n\npublic:\n    string longestDiverseString(int a, int b, int c) {\n        return \"\";\n    }\n};\n\nint main() {\n    string line;\n    getline(cin, line);\n    int a, b, c;\n    sscanf(line.c_str(), \"[%d,%d,%d]\", &a, &b, &c);\n\n    cout << \"\\\"\" << Solution().longestDiverseString(a, b, c) << \"\\\"\\n\";\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    static class Entry {\n        int count;\n        char ch;\n        Entry(int count, char ch) {\n            this.count = count;\n            this.ch = ch;\n        }\n    }\n\n    public String longestDiverseString(int a, int b, int c) {\n        return \"\";\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        String body = line.substring(1, line.length() - 1);\n        String[] parts = body.split(\",\");\n        int a = Integer.parseInt(parts[0].trim());\n        int b = Integer.parseInt(parts[1].trim());\n        int c = Integer.parseInt(parts[2].trim());\n\n        System.out.println(\"\\\"\" + new Solution().longestDiverseString(a, b, c) + \"\\\"\");\n    }\n}\n",
+    "Python3": "import sys, json, heapq\n\nclass Solution:\n    def longestDiverseString(self, a: int, b: int, c: int) -> str:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    print(json.dumps(Solution().longestDiverseString(args[0], args[1], args[2])))\n",
+    "JavaScript": "\"use strict\";\nconst fs = require(\"fs\");\n\nfunction longestDiverseString(a, b, c) {\n    return 0;\n}\n\nconst args = JSON.parse(fs.readFileSync(0, \"utf8\"));\nprocess.stdout.write(JSON.stringify(longestDiverseString(args[0], args[1], args[2])) + \"\\n\");\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "-2-5---4-0- -m-i-n-",
+  "learningObjectives": [
+    "Apply greedy choice to a constrained string-construction problem.",
+    "Use a priority queue to repeatedly select the most frequent currently usable option.",
+    "Recognize and handle local feasibility constraints involving the last few output characters.",
+    "Distinguish validity of a constructed string from optimality of its length."
+  ]
 }

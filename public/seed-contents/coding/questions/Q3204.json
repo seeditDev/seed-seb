@@ -23,10 +23,10 @@
   "content": {
     "problemStatement": "You are given a string **S** constisting of uppercase Latin letters. Is it possible to reorder the characters in this string to get a string with prefix \"**LTIME**\" and suffix \"**EMITL**\"?\n\nWe remind you that a **prefix** of a string is any substring which contains its first character, while a **suffix** of a string is substring containing its last character.",
     "constraints": [
-      "1 \u2264 T \u2264 1000",
-      "1 \u2264 |S| \u2264 100"
+      "1 ≤ T ≤ 1000",
+      "1 ≤ |S| ≤ 100"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. Each of the next T lines contains a non\u2011empty string S consisting only of uppercase Latin letters (|S| \u2264 100).",
+    "inputFormat": "The first line contains an integer T, the number of test cases. Each of the next T lines contains a non‑empty string S consisting only of uppercase Latin letters (|S| ≤ 100).",
     "outputFormat": "For each test case output a single line containing \"YES\" if the characters of S can be reordered to obtain a string whose prefix is \"LTIME\" and suffix is \"EMITL\", otherwise output \"NO\".",
     "sampleTestCases": [
       {
@@ -39,7 +39,7 @@
         "id": "sample_2",
         "input": "1\nLTIMEMITL",
         "output": "YES",
-        "explanation": "Length is 9. The string already equals the needed pattern L T I M E M I T L, which uses two copies of L,T,I,M and one copy of E \u2013 satisfying the minimal condition for length 9."
+        "explanation": "Length is 9. The string already equals the needed pattern L T I M E M I T L, which uses two copies of L,T,I,M and one copy of E – satisfying the minimal condition for length 9."
       },
       {
         "id": "sample_3",
@@ -113,7 +113,7 @@
     ]
   },
   "solution": {
-    "approach": "We only need to know how many copies of the letters L, T, I, M and E are present. The required prefix uses one copy of each letter, the suffix uses another copy of each letter, but the two parts may overlap. The smallest possible length is 9, where the middle character (position 5) belongs to both the prefix and the suffix and must be 'E'. Therefore:\n- If |S| < 9 \u2192 impossible.\n- If |S| = 9 \u2192 we need at least 2 copies of L, T, I, M and at least 1 copy of E.\n- If |S| \u2265 10 \u2192 we need at least 2 copies of each of the five letters.\nAll other letters are irrelevant. The algorithm counts the frequencies of the five letters and checks the appropriate condition.\nThe time complexity per test case is O(|S|) and the memory usage is O(1).",
+    "approach": "We only need to know how many copies of the letters L, T, I, M and E are present. The required prefix uses one copy of each letter, the suffix uses another copy of each letter, but the two parts may overlap. The smallest possible length is 9, where the middle character (position 5) belongs to both the prefix and the suffix and must be 'E'. Therefore:\n- If |S| < 9 → impossible.\n- If |S| = 9 → we need at least 2 copies of L, T, I, M and at least 1 copy of E.\n- If |S| ≥ 10 → we need at least 2 copies of each of the five letters.\nAll other letters are irrelevant. The algorithm counts the frequencies of the five letters and checks the appropriate condition.\nThe time complexity per test case is O(|S|) and the memory usage is O(1).",
     "timeComplexity": "O(|S|) per test case",
     "spaceComplexity": "O(1)",
     "code": {
@@ -123,5 +123,6 @@
       "Python3": "import sys\n\ndef can_make(s: str) -> str:\n    cnt = [0] * 26\n    for ch in s:\n        cnt[ord(ch) - ord('A')] += 1\n    L = cnt[ord('L') - ord('A')]\n    Tt = cnt[ord('T') - ord('A')]\n    I = cnt[ord('I') - ord('A')]\n    M = cnt[ord('M') - ord('A')]\n    E = cnt[ord('E') - ord('A')]\n    n = len(s)\n    if n >= 10:\n        ok = L >= 2 and Tt >= 2 and I >= 2 and M >= 2 and E >= 2\n    elif n == 9:\n        ok = L >= 2 and Tt >= 2 and I >= 2 and M >= 2 and E >= 1\n    else:\n        ok = False\n    return \"YES\" if ok else \"NO\"\n\ndata = sys.stdin.read().strip().splitlines()\nif not data:\n    sys.exit()\nT = int(data[0])\nout = []\nfor i in range(1, T + 1):\n    out.append(can_make(data[i].strip()))\nprint('\\n'.join(out))",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst T = parseInt(lines[idx++], 10);\nlet result = [];\nfor (let t = 0; t < T; ++t) {\n  const S = lines[idx++].trim();\n  const cnt = new Array(26).fill(0);\n  for (const ch of S) cnt[ch.charCodeAt(0) - 65]++;\n  const L = cnt['L'.charCodeAt(0) - 65];\n  const Tt = cnt['T'.charCodeAt(0) - 65];\n  const I = cnt['I'.charCodeAt(0) - 65];\n  const M = cnt['M'.charCodeAt(0) - 65];\n  const E = cnt['E'.charCodeAt(0) - 65];\n  const n = S.length;\n  let ok = false;\n  if (n >= 10) ok = (L >= 2 && Tt >= 2 && I >= 2 && M >= 2 && E >= 2);\n  else if (n === 9) ok = (L >= 2 && Tt >= 2 && I >= 2 && M >= 2 && E >= 1);\n  result.push(ok ? 'YES' : 'NO');\n}\nconsole.log(result.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

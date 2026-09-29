@@ -23,13 +23,13 @@
   "content": {
     "problemStatement": "Chef recently visited a strange land with strange currency.  One day Chef needed to make change to pay for an item with coins, and wondered how many ways it could be done, assuming an infinite supply of each type of coins.  Two ways are considered different if there is some coin that appears a different number of times in each sum.  The answer may be very large, so Chef only needs to know the remainder when the answer is divided by **1000000007** (**109 + 7**).\n\nChef noticed something curious about the currency in question: not only do all coins have different denominations, but no two denominations of coin share any common factor other than 1.",
     "constraints": [
-      "1 \u2264 T \u2264 5",
-      "1 \u2264 N \u2264 50",
-      "1 \u2264 C \u2264 100000 (the intended limit for an O(N\u00b7C) DP solution)",
-      "1 \u2264 Di \u2264 500",
+      "1 ≤ T ≤ 5",
+      "1 ≤ N ≤ 50",
+      "1 ≤ C ≤ 100000 (the intended limit for an O(N·C) DP solution)",
+      "1 ≤ Di ≤ 500",
       "All Di are distinct and pairwise coprime"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. Each test case consists of two lines. The first line contains two space\u2011separated integers N and C, where N is the number of different coin types and C is the desired total amount. The second line contains N space\u2011separated integers D1, D2, ..., DN \u2013 the distinct denominations of the coins. All denominations are pairwise relatively prime.",
+    "inputFormat": "The first line contains an integer T, the number of test cases. Each test case consists of two lines. The first line contains two space‑separated integers N and C, where N is the number of different coin types and C is the desired total amount. The second line contains N space‑separated integers D1, D2, ..., DN – the distinct denominations of the coins. All denominations are pairwise relatively prime.",
     "outputFormat": "For each test case output a single line containing the number of different ways to obtain exactly C units of money using an unlimited supply of the given coin types. Since the answer can be huge, output it modulo 1000000007.",
     "sampleTestCases": [
       {
@@ -42,13 +42,13 @@
         "id": "sample_2",
         "input": "1\n2 10\n2 5",
         "output": "2",
-        "explanation": "Two ways: five 2\u2011coins or two 5\u2011coins."
+        "explanation": "Two ways: five 2‑coins or two 5‑coins."
       },
       {
         "id": "sample_3",
         "input": "1\n1 10\n10",
         "output": "1",
-        "explanation": "Only one way: a single 10\u2011coin."
+        "explanation": "Only one way: a single 10‑coin."
       }
     ]
   },
@@ -116,8 +116,8 @@
     ]
   },
   "solution": {
-    "approach": "The problem is the classic unbounded\u2011coin\u2011change counting problem. Because the order of coins does not matter, we can use a one\u2011dimensional DP where dp[x] stores the number of ways to obtain amount x using the already processed coin types. Initialise dp[0] = 1 (empty set). For each coin value d, iterate x from d to C and update dp[x] = (dp[x] + dp[x\u2011d]) mod MOD. After all coins are processed, dp[C] is the required answer. The pairwise\u2011coprime property guarantees that a solution exists for sufficiently large C, but it is not needed for the DP algorithm.\n\nComplexity analysis: The outer loop runs N times and the inner loop runs at most C iterations, giving O(N\u00b7C) time. The DP array of size C+1 dominates the memory usage, i.e. O(C) space.",
-    "timeComplexity": "O(N \u00b7 C)",
+    "approach": "The problem is the classic unbounded‑coin‑change counting problem. Because the order of coins does not matter, we can use a one‑dimensional DP where dp[x] stores the number of ways to obtain amount x using the already processed coin types. Initialise dp[0] = 1 (empty set). For each coin value d, iterate x from d to C and update dp[x] = (dp[x] + dp[x‑d]) mod MOD. After all coins are processed, dp[C] is the required answer. The pairwise‑coprime property guarantees that a solution exists for sufficiently large C, but it is not needed for the DP algorithm.\n\nComplexity analysis: The outer loop runs N times and the inner loop runs at most C iterations, giving O(N·C) time. The DP array of size C+1 dominates the memory usage, i.e. O(C) space.",
+    "timeComplexity": "O(N · C)",
     "spaceComplexity": "O(C)",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n#define MOD 1000000007\n\nint main() {\n    int T;\n    if (scanf(\"%d\", &T) != 1) return 0;\n    while (T--) {\n        int N, C;\n        scanf(\"%d %d\", &N, &C);\n        int *coins = (int *)malloc(N * sizeof(int));\n        for (int i = 0; i < N; ++i) scanf(\"%d\", &coins[i]);\n        long long *dp = (long long *)calloc(C + 1, sizeof(long long));\n        dp[0] = 1;\n        for (int i = 0; i < N; ++i) {\n            int d = coins[i];\n            for (int x = d; x <= C; ++x) {\n                dp[x] += dp[x - d];\n                if (dp[x] >= MOD) dp[x] -= MOD;\n            }\n        }\n        printf(\"%lld\\n\", dp[C] % MOD);\n        free(coins);\n        free(dp);\n    }\n    return 0;\n}",
@@ -126,5 +126,6 @@
       "Python3": "import sys\nMOD = 1000000007\n\ndef solve():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out_lines = []\n    for _ in range(T):\n        N = int(next(it)); C = int(next(it))\n        coins = [int(next(it)) for _ in range(N)]\n        dp = [0] * (C + 1)\n        dp[0] = 1\n        for d in coins:\n            for x in range(d, C + 1):\n                dp[x] = (dp[x] + dp[x - d]) % MOD\n        out_lines.append(str(dp[C]))\n    sys.stdout.write('\\n'.join(out_lines))\n\nif __name__ == \"__main__\":\n    solve()",
       "JavaScript": "const fs = require('fs');\nconst MOD = 1000000007n;\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/).map(BigInt);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet outputs = [];\nfor (let t = 0; t < T; ++t) {\n  const N = Number(input[idx++]);\n  const C = Number(input[idx++]);\n  let coins = [];\n  for (let i = 0; i < N; ++i) coins.push(Number(input[idx++]));\n  let dp = new Array(C + 1).fill(0n);\n  dp[0] = 1n;\n  for (let d of coins) {\n    for (let x = d; x <= C; ++x) {\n      dp[x] = (dp[x] + dp[x - d]) % MOD;\n    }\n  }\n  outputs.push((dp[C] % MOD).toString());\n}\nconsole.log(outputs.join('\\n'));\n"
     }
-  }
+  },
+  "verified": false
 }

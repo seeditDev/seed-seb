@@ -103,8 +103,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can use dynamic programming to calculate the number of easy numbers for each base and number of digits. We start by initializing a 2D array dp where dp[i][j] represents the number of easy numbers in base i with j digits. We then fill up the dp array using the given conditions and finally return the value of dp[b][d] modulo 10^9 + 7.",
-    "timeComplexity": "O(T * b * d) \u2014 explain: per query is O(b * d), total is O(T * b * d)",
-    "spaceComplexity": "O(b * d) \u2014 explain what dominates",
+    "timeComplexity": "O(T * b * d) — explain: per query is O(b * d), total is O(T * b * d)",
+    "spaceComplexity": "O(b * d) — explain what dominates",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n#define MOD 1000000007\n\nlong long dp[17][100001];\n\nlong long countEasyNumbers(int b, int d) {\n    if (d == 1) return b - 1;\n    if (dp[b][d] != -1) return dp[b][d];\n    long long count = 0;\n    for (int i = 1; i < b; i++) {\n        if (i % d == 0) {\n            count = (count + countEasyNumbers(b, d - 1)) % MOD;\n        }\n    }\n    return dp[b][d] = count;\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int b, d;\n        scanf(\"%d %d\", &b, &d);\n        for (int i = 0; i <= b; i++) {\n            for (int j = 0; j <= d; j++) {\n                dp[i][j] = -1;\n            }\n        }\n        printf(\"%lld\\n\", countEasyNumbers(b, d));\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <vector>\n#define MOD 1000000007\nusing namespace std;\n\nlong long countEasyNumbers(int b, int d, vector<vector<long long>> &dp) {\n    if (d == 1) return b - 1;\n    if (dp[b][d] != -1) return dp[b][d];\n    long long count = 0;\n    for (int i = 1; i < b; i++) {\n        if (i % d == 0) {\n            count = (count + countEasyNumbers(b, d - 1, dp)) % MOD;\n        }\n    }\n    return dp[b][d] = count;\n}\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int b, d;\n        cin >> b >> d;\n        vector<vector<long long>> dp(b + 1, vector<long long>(d + 1, -1));\n        cout << countEasyNumbers(b, d, dp) << endl;\n    }\n    return 0;\n}",
@@ -112,5 +112,6 @@
       "Python3": "def countEasyNumbers(b, d, dp):\n    if d == 1:\n        return b - 1\n    if dp[b][d] != -1:\n        return dp[b][d]\n    count = 0\n    for i in range(1, b):\n        if i % d == 0:\n            count = (count + countEasyNumbers(b, d - 1, dp)) % (10**9 + 7)\n    return dp[b][d]\n\nT = int(input())\nfor _ in range(T):\n    b, d = map(int, input().split())\n    dp = [[-1 for _ in range(d + 1)] for _ in range(b + 1)]\n    print(countEasyNumbers(b, d, dp))",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst MOD = 1000000007;\nconst countEasyNumbers = (b, d, dp) => {\n    if (d == 1) return b - 1;\n    if (dp[b][d] != -1) return dp[b][d];\n    let count = 0;\n    for (let i = 1; i < b; i++) {\n        if (i % d == 0) {\n            count = (count + countEasyNumbers(b, d - 1, dp)) % MOD;\n        }\n    }\n    return dp[b][d] = count;\n};\nconst T = parseInt(lines[idx++]);\nfor (let i = 0; i < T; i++) {\n    const [b, d] = lines[idx++].split(' ').map(x => parseInt(x));\n    const dp = Array(b + 1).fill(0).map(() => Array(d + 1).fill(-1));\n    console.log(countEasyNumbers(b, d, dp));\n}"
     }
-  }
+  },
+  "verified": false
 }

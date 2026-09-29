@@ -20,14 +20,14 @@
     ]
   },
   "content": {
-    "problemStatement": "Chef is learning linear algebra. Recently, he learnt that for a square matrix MMM, trace(M)\\mathop{\\rm trace}(M)trace(M) is defined as the sum of all elements on the main diagonal of MMM (an element lies on the main diagonal if its row index and column index are equal).\n\nNow, Chef wants to solve some excercises related to this new quantity, so he wrote down a square matrix AAA with size N\u00d7NN\\times NN\u00d7N. A square submatrix of AAA with size l\u00d7ll\\times ll\u00d7l is a contiguous block of l\u00d7ll\\times ll\u00d7l elements of AAA. Formally, if BBB is a submatrix of AAA with size l\u00d7ll\\times ll\u00d7l, then there must be integers rrr and ccc (1\u2264r,c\u2264N+1\u2212l1\\le r, c \\le N+1-l1\u2264r,c\u2264N+1\u2212l) such that Bi,j=Ar+i\u22121,c+j\u22121B_{i,j} = A_{r+i-1, c+j-1}Bi,j\u200b=Ar+i\u22121,c+j\u22121\u200b for each 1\u2264i,j\u2264l1 \\le i, j \\le l1\u2264i,j\u2264l.\n\nHelp Chef find the maximum trace of a square submatrix of AAA.",
+    "problemStatement": "Chef is learning linear algebra. Recently, he learnt that for a square matrix MMM, trace(M)\\mathop{\\rm trace}(M)trace(M) is defined as the sum of all elements on the main diagonal of MMM (an element lies on the main diagonal if its row index and column index are equal).\n\nNow, Chef wants to solve some excercises related to this new quantity, so he wrote down a square matrix AAA with size N×NN\\times NN×N. A square submatrix of AAA with size l×ll\\times ll×l is a contiguous block of l×ll\\times ll×l elements of AAA. Formally, if BBB is a submatrix of AAA with size l×ll\\times ll×l, then there must be integers rrr and ccc (1≤r,c≤N+1−l1\\le r, c \\le N+1-l1≤r,c≤N+1−l) such that Bi,j=Ar+i−1,c+j−1B_{i,j} = A_{r+i-1, c+j-1}Bi,j​=Ar+i−1,c+j−1​ for each 1≤i,j≤l1 \\le i, j \\le l1≤i,j≤l.\n\nHelp Chef find the maximum trace of a square submatrix of AAA.",
     "constraints": [
       "1 <= T <= 100",
       "2 <= N <= 100",
       "1 <= A[i][j] <= 100"
     ],
     "inputFormat": "The first line contains a single integer T denoting the number of test cases. For each test case, the first line contains a single integer N. N lines follow, each containing N space-separated integers representing the matrix A.",
-    "outputFormat": "For each test case, print a single line containing one integer \u2014 the maximum possible trace.",
+    "outputFormat": "For each test case, print a single line containing one integer — the maximum possible trace.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -102,8 +102,8 @@
   },
   "solution": {
     "approach": "To find the maximum possible trace, we need to consider all possible square submatrices of the given matrix A. For each submatrix, we calculate its trace by summing the elements on its main diagonal. We keep track of the maximum trace found so far.",
-    "timeComplexity": "O(T * N^4) \u2014 for each test case, we iterate over all possible submatrices (O(N^4)) and calculate their traces (O(N^2))",
-    "spaceComplexity": "O(N^2) \u2014 we need to store the given matrix A",
+    "timeComplexity": "O(T * N^4) — for each test case, we iterate over all possible submatrices (O(N^4)) and calculate their traces (O(N^2))",
+    "spaceComplexity": "O(N^2) — we need to store the given matrix A",
     "code": {
       "C": "#include <stdio.h>\nint main() {\n    int T, N;\n    scanf(\"%d\", &T);\n    while (T--) {\n        scanf(\"%d\", &N);\n        int A[N][N];\n        for (int i = 0; i < N; i++) {\n            for (int j = 0; j < N; j++) {\n                scanf(\"%d\", &A[i][j]);\n            }\n        }\n        int max_trace = 0;\n        for (int size = 1; size <= N; size++) {\n            for (int i = 0; i <= N - size; i++) {\n                for (int j = 0; j <= N - size; j++) {\n                    int trace = 0;\n                    for (int k = 0; k < size; k++) {\n                        trace += A[i + k][j + k];\n                    }\n                    max_trace = (max_trace > trace) ? max_trace : trace;\n                }\n            }\n        }\n        printf(\"%d\\n\", max_trace);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    int T, N;\n    cin >> T;\n    while (T--) {\n        cin >> N;\n        int A[N][N];\n        for (int i = 0; i < N; i++) {\n            for (int j = 0; j < N; j++) {\n                cin >> A[i][j];\n            }\n        }\n        int max_trace = 0;\n        for (int size = 1; size <= N; size++) {\n            for (int i = 0; i <= N - size; i++) {\n                for (int j = 0; j <= N - size; j++) {\n                    int trace = 0;\n                    for (int k = 0; k < size; k++) {\n                        trace += A[i + k][j + k];\n                    }\n                    max_trace = (max_trace > trace) ? max_trace : trace;\n                }\n            }\n        }\n        cout << max_trace << endl;\n    }\n    return 0;\n}",
@@ -111,5 +111,6 @@
       "Python3": "import sys\ninput = sys.stdin.readline\nfor _ in range(int(input())):\n    N = int(input())\n    A = [list(map(int, input().split())) for _ in range(N)]\n    max_trace = 0\n    for size in range(1, N + 1):\n        for i in range(N - size + 1):\n            for j in range(N - size + 1):\n                trace = 0\n                for k in range(size):\n                    trace += A[i + k][j + k]\n                max_trace = max(max_trace, trace)\n    print(max_trace)",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst input = () => lines[idx++];\nconst T = parseInt(input());\nfor (let i = 0; i < T; i++) {\n    const N = parseInt(input());\n    const A = [];\n    for (let j = 0; j < N; j++) {\n        A.push(input().split(' ').map(Number));\n    }\n    let max_trace = 0;\n    for (let size = 1; size <= N; size++) {\n        for (let x = 0; x <= N - size; x++) {\n            for (let y = 0; y <= N - size; y++) {\n                let trace = 0;\n                for (let k = 0; k < size; k++) {\n                    trace += A[x + k][y + k];\n                }\n                max_trace = Math.max(max_trace, trace);\n            }\n        }\n    }\n    console.log(max_trace);\n}"
     }
-  }
+  },
+  "verified": false
 }

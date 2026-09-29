@@ -23,9 +23,9 @@
   "content": {
     "problemStatement": "Problem Statement2 players, Cyborg and Geno are playing a game on a matrix. In each turn, the player choses a number from the matrix which is not selected yet and adds the number to his sum. In the end, the player with the largest sum wins the game.\n\nAssuming both players play optimally and Cyborg starts the game, predict who will be the winner of the game. Assume that the initial sum is **0** for both the players.\n\nInput sectionThe first line contains **T**, the number of test cases. The description of **T** test cases follows.\n\nEach test case begin with 2 integers, **N** and **M**, denoting the number of rows and columns in the matrix. The next **N** lines contains **M** space separated integers denoting the numbers present in the matrix.\n\nOutput sectionFor each testcase, output \"Cyborg\", \"Geno\" or \"Draw\" based on the outcome of the game.",
     "constraints": [
-      "1 \u2264 T \u2264 20",
-      "1 \u2264 N, M \u2264 50",
-      "0 \u2264 A[i][j] \u2264 100, where A[i][j] denotes the element of the matrix in the ith row and jth column"
+      "1 ≤ T ≤ 20",
+      "1 ≤ N, M ≤ 50",
+      "0 ≤ A[i][j] ≤ 100, where A[i][j] denotes the element of the matrix in the ith row and jth column"
     ],
     "inputFormat": "The first line contains T, the number of test cases. Each test case begins with 2 integers, N and M, denoting the number of rows and columns in the matrix. The next N lines contain M space-separated integers denoting the numbers present in the matrix.",
     "outputFormat": "For each test case, output 'Cyborg', 'Geno', or 'Draw' based on the outcome of the game.",
@@ -103,8 +103,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we need to find the optimal strategy for both players. We can use a greedy approach to find the maximum sum for each player. The player with the maximum sum at the end of the game wins. If both players have the same sum, the result is a draw.",
-    "timeComplexity": "O(T * N * M * log(N * M)) \u2014 explain: per query is O(N * M * log(N * M)), total is O(T * N * M * log(N * M))",
-    "spaceComplexity": "O(N * M) \u2014 explain: we need to store the matrix of size N * M",
+    "timeComplexity": "O(T * N * M * log(N * M)) — explain: per query is O(N * M * log(N * M)), total is O(T * N * M * log(N * M))",
+    "spaceComplexity": "O(N * M) — explain: we need to store the matrix of size N * M",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint compare(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, M;\n        scanf(\"%d %d\", &N, &M);\n        int matrix[N * M];\n        for (int i = 0; i < N; i++) {\n            for (int j = 0; j < M; j++) {\n                scanf(\"%d\", &matrix[i * M + j]);\n            }\n        }\n        qsort(matrix, N * M, sizeof(int), compare);\n        int sum1 = 0, sum2 = 0;\n        for (int i = N * M - 1; i >= 0; i--) {\n            if (i % 2 == 0) {\n                sum1 += matrix[i];\n            } else {\n                sum2 += matrix[i];\n            }\n        }\n        if (sum1 > sum2) {\n            printf(\"Cyborg\\n\");\n        } else if (sum1 < sum2) {\n            printf(\"Geno\\n\");\n        } else {\n            printf(\"Draw\\n\");\n        }\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, M;\n        cin >> N >> M;\n        int matrix[N * M];\n        for (int i = 0; i < N; i++) {\n            for (int j = 0; j < M; j++) {\n                cin >> matrix[i * M + j];\n            }\n        }\n        sort(matrix, matrix + N * M, greater<int>());\n        int sum1 = 0, sum2 = 0;\n        for (int i = 0; i < N * M; i++) {\n            if (i % 2 == 0) {\n                sum1 += matrix[i];\n            } else {\n                sum2 += matrix[i];\n            }\n        }\n        if (sum1 > sum2) {\n            cout << \"Cyborg\" << endl;\n        } else if (sum1 < sum2) {\n            cout << \"Geno\" << endl;\n        } else {\n            cout << \"Draw\" << endl;\n        }\n    }\n    return 0;\n}",
@@ -112,5 +112,6 @@
       "Python3": "import sys\n\nT = int(input())\nfor _ in range(T):\n    N, M = map(int, input().split())\n    matrix = [int(x) for x in sys.stdin.readline().split() for _ in range(N)]\n    matrix.sort(reverse=True)\n    sum1, sum2 = 0, 0\n    for i in range(N * M):\n        if i % 2 == 0:\n            sum1 += matrix[i]\n        else:\n            sum2 += matrix[i]\n    if sum1 > sum2:\n        print('Cyborg')\n    elif sum1 < sum2:\n        print('Geno')\n    else:\n        print('Draw')",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction nextLine() {\n    return lines[idx++];\n}\n\nfunction nextInt() {\n    return parseInt(nextLine());\n}\n\nfunction nextIntArray() {\n    return nextLine().split(' ').map(x => parseInt(x));\n}\n\nlet T = nextInt();\nwhile (T-- > 0) {\n    let [N, M] = nextIntArray();\n    let matrix = [];\n    for (let i = 0; i < N; i++) {\n        let row = nextIntArray();\n        matrix = matrix.concat(row);\n    }\n    matrix.sort((a, b) => b - a);\n    let sum1 = 0, sum2 = 0;\n    for (let i = 0; i < N * M; i++) {\n        if (i % 2 == 0) {\n            sum1 += matrix[i];\n        } else {\n            sum2 += matrix[i];\n        }\n    }\n    if (sum1 > sum2) {\n        console.log('Cyborg');\n    } else if (sum1 < sum2) {\n        console.log('Geno');\n    } else {\n        console.log('Draw');\n    }\n}"
     }
-  }
+  },
+  "verified": false
 }

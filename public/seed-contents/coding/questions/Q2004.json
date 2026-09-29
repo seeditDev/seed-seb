@@ -22,16 +22,16 @@
     ]
   },
   "content": {
-    "problemStatement": "**Awesome! You\u2019ve Successfully Built a JSON \u2194 CSV Converter Using Python**\n\nHere are some improvements you can try:\n\n\n\n**Improve Data Formatting**\n\n\n\nDisplay parsed data in a more readable tabular format.\n\n\n\n**Dynamic Column Handling**\n\n\n\n\nAuto-detect nested JSON structures and flatten them into CSV columns.\n\n\n\n\nAllow users to customize CSV headers (e.g., rename id to Student_ID).\n\n\n\n\n\n\n**Advanced Error Handling**\n\n\n\n\nSkip malformed JSON records instead of failing the entire conversion.\n\n\n\n\nValidate CSV output against the original JSON data for integrity.\n\n\n\n\n\nTry implementing these enhancements to make your **JSON \u2194 CSV Converter** even better!",
+    "problemStatement": "**Awesome! You’ve Successfully Built a JSON ↔ CSV Converter Using Python**\n\nHere are some improvements you can try:\n\n\n\n**Improve Data Formatting**\n\n\n\nDisplay parsed data in a more readable tabular format.\n\n\n\n**Dynamic Column Handling**\n\n\n\n\nAuto-detect nested JSON structures and flatten them into CSV columns.\n\n\n\n\nAllow users to customize CSV headers (e.g., rename id to Student_ID).\n\n\n\n\n\n\n**Advanced Error Handling**\n\n\n\n\nSkip malformed JSON records instead of failing the entire conversion.\n\n\n\n\nValidate CSV output against the original JSON data for integrity.\n\n\n\n\n\nTry implementing these enhancements to make your **JSON ↔ CSV Converter** even better!",
     "constraints": [
-      "1 \u2264 T \u2264 10",
-      "1 \u2264 N \u2264 100",
-      "0 \u2264 M \u2264 20",
-      "Total length of a JSON line \u2264 200 characters",
+      "1 ≤ T ≤ 10",
+      "1 ≤ N ≤ 100",
+      "0 ≤ M ≤ 20",
+      "Total length of a JSON line ≤ 200 characters",
       "Keys consist of letters, digits, and underscores only",
       "Values are either integers or strings enclosed in double quotes"
     ],
-    "inputFormat": "First line contains T, the number of test cases. For each test case: a line with an integer N (1 \u2264 N \u2264 100), the number of JSON records, followed by N lines, each containing a JSON object. Then, a line with an integer M (0 \u2264 M \u2264 20), the number of custom header mappings, followed by M lines, each containing two strings separated by a space: original_key new_header_name.",
+    "inputFormat": "First line contains T, the number of test cases. For each test case: a line with an integer N (1 ≤ N ≤ 100), the number of JSON records, followed by N lines, each containing a JSON object. Then, a line with an integer M (0 ≤ M ≤ 20), the number of custom header mappings, followed by M lines, each containing two strings separated by a space: original_key new_header_name.",
     "outputFormat": "For each test case, output the CSV representation of the valid JSON records. First, a header line with all distinct keys that appear in any valid record, flattened using dot notation for nested objects, ordered by first appearance across the records. If a custom header mapping is provided for a key, use the new name instead of the original key. Then, one CSV line per valid JSON record in the same order as input.",
     "sampleTestCases": [
       {
@@ -128,5 +128,6 @@
       "Python3": "import sys\nimport json\n\ndef flatten(json_obj, prefix, out):\n    for key, value in json_obj.items():\n        new_key = prefix + (\"\" if prefix == \"\" else \".\") + key\n        if isinstance(value, dict):\n            flatten(value, new_key, out)\n        else:\n            out.append((new_key, str(value)))\n\nT = int(sys.stdin.readline())\nwhile T > 0:\n    N = int(sys.stdin.readline())\n    records = []\n    for _ in range(N):\n        line = sys.stdin.readline().strip()\n        record = json.loads(line)\n        records.append(record)\n    M = int(sys.stdin.readline())\n    custom_headers = {}\n    for _ in range(M):\n        key, new_key = sys.stdin.readline().split()\n        custom_headers[key] = new_key\n    # output CSV\n    T -= 1",
       "JavaScript": "const lines = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nlet i = 0;\n\nfunction flatten(json_obj, prefix, out) {\n    for (let key in json_obj) {\n        let new_key = prefix + (prefix === '' ? '' : '.') + key;\n        if (typeof json_obj[key] === 'object') {\n            flatten(json_obj[key], new_key, out);\n        } else {\n            out.push([new_key, json_obj[key]]);\n        }\n    }\n}\n\nlet T = +lines[i++];\nwhile (T--) {\n    let N = +lines[i++];\n    let records = [];\n    for (let j = 0; j < N; j++) {\n        let line = lines[i++];\n        let record = JSON.parse(line);\n        records.push(record);\n    }\n    let M = +lines[i++];\n    let custom_headers = {};\n    for (let j = 0; j < M; j++) {\n        let parts = lines[i++].split(' ');\n        custom_headers[parts[0]] = parts[1];\n    }\n    // output CSV\n}"
     }
-  }
+  },
+  "verified": false
 }

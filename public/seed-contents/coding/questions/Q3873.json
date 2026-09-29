@@ -23,15 +23,15 @@
   "content": {
     "problemStatement": "Let's define a border substring of a string as a non-empty substring that's both a suffix and a prefix of this string.\n\nYou are given a string **S** with length **N** and **Q** queries. In each query, you are given the **p**-th prefix of **S** (let's denote it by **S1..p**) and an integer **k**. Consider the **k**-th shortest border of **S1..p** (if it exists). Compute the length of this border substring or determine that it doesn't exist.",
     "constraints": [
-      "1 \u2264 T \u2264 100",
-      "1 \u2264 N, Q \u2264 200,000",
-      "1 \u2264 sum of N over all test cases \u2264 200,000",
-      "1 \u2264 sum of Q over all test cases \u2264 200,000",
-      "1 \u2264 p, k \u2264 N",
+      "1 ≤ T ≤ 100",
+      "1 ≤ N, Q ≤ 200,000",
+      "1 ≤ sum of N over all test cases ≤ 200,000",
+      "1 ≤ sum of Q over all test cases ≤ 200,000",
+      "1 ≤ p, k ≤ N",
       "S contains only lowercase English letters"
     ],
     "inputFormat": "The first line contains a single integer T denoting the number of test cases. The description of T test cases follows. The first line of each test case contains two space-separated integers N and Q. The second line contains a single string S. Each of the following Q lines contains two space-separated integers p and k describing one query.",
-    "outputFormat": "For each test case, print Q lines. For each i (1 \u2264 i \u2264 Q), the i-th of these lines should contain a single integer \u2014 the answer to the i-th query (the length of the k-th shortest border or -1 if it doesn't exist).",
+    "outputFormat": "For each test case, print Q lines. For each i (1 ≤ i ≤ Q), the i-th of these lines should contain a single integer — the answer to the i-th query (the length of the k-th shortest border or -1 if it doesn't exist).",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -106,8 +106,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can iterate over all prefixes of the given string S and for each prefix, we can find all its border substrings. A border substring is a non-empty substring that is both a suffix and a prefix of the string. We can use a hashmap or a set to store the lengths of the border substrings for each prefix. Then, for each query, we can find the k-th shortest border substring of the given prefix of S.",
-    "timeComplexity": "O(T * (N + Q * logN)) \u2014 where T is the number of test cases, N is the length of the string S, and Q is the number of queries. The time complexity is dominated by the iteration over all prefixes of S and the sorting of the border substrings for each prefix.",
-    "spaceComplexity": "O(N) \u2014 where N is the length of the string S. The space complexity is dominated by the storage of the border substrings for each prefix of S.",
+    "timeComplexity": "O(T * (N + Q * logN)) — where T is the number of test cases, N is the length of the string S, and Q is the number of queries. The time complexity is dominated by the iteration over all prefixes of S and the sorting of the border substrings for each prefix.",
+    "spaceComplexity": "O(N) — where N is the length of the string S. The space complexity is dominated by the storage of the border substrings for each prefix of S.",
     "code": {
       "C": "#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>\n\nint compare(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, Q;\n        scanf(\"%d %d\", &N, &Q);\n        char S[N + 1];\n        scanf(\"%s\", S);\n        while (Q--) {\n            int p, k;\n            scanf(\"%d %d\", &p, &k);\n            int borders[p + 1];\n            int count = 0;\n            for (int i = 1; i <= p; i++) {\n                if (strncmp(S, S + p - i, i) == 0) {\n                    borders[count++] = i;\n                }\n            }\n            qsort(borders, count, sizeof(int), compare);\n            if (k > count) {\n                printf(\"-1\\n\");\n            } else {\n                printf(\"%d\\n\", borders[k - 1]);\n            }\n        }\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <string>\n#include <set>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, Q;\n        cin >> N >> Q;\n        string S;\n        cin >> S;\n        while (Q--) {\n            int p, k;\n            cin >> p >> k;\n            string prefix = S.substr(0, p);\n            set<int> borders;\n            for (int i = 1; i <= p; i++) {\n                if (prefix.substr(0, i) == prefix.substr(p - i, i)) {\n                    borders.insert(i);\n                }\n            }\n            if (k > borders.size()) {\n                cout << -1 << endl;\n            } else {\n                auto it = borders.begin();\n                for (int i = 0; i < k - 1; i++) {\n                    it++;\n                }\n                cout << *it << endl;\n            }\n        }\n    }\n    return 0;\n}",
@@ -115,5 +115,6 @@
       "Python3": "import sys\nfor _ in range(int(input())):\n    N, Q = map(int, input().split())\n    S = input()\n    for _ in range(Q):\n        p, k = map(int, input().split())\n        prefix = S[:p]\n        borders = [i for i in range(1, p + 1) if prefix[:i] == prefix[-i:]]\n        borders.sort()\n        if k > len(borders):\n            print(-1)\n        else:\n            print(borders[k - 1])",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [N, Q] = readline().split(' ').map(Number);\n    const S = readline();\n    for (let j = 0; j < Q; j++) {\n        const [p, k] = readline().split(' ').map(Number);\n        const prefix = S.substring(0, p);\n        const borders = [];\n        for (let l = 1; l <= p; l++) {\n            if (prefix.substring(0, l) === prefix.substring(p - l, p)) {\n                borders.push(l);\n            }\n        }\n        borders.sort((a, b) => a - b);\n        if (k > borders.length) {\n            console.log(-1);\n        } else {\n            console.log(borders[k - 1]);\n        }\n    }\n}"
     }
-  }
+  },
+  "verified": false
 }

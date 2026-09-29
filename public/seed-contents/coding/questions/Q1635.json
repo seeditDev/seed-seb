@@ -23,20 +23,20 @@
   "content": {
     "problemStatement": "In the last two lessons, we saw how to insert at the start and end of a linked list. How about inserting after some k-th node in the linked list?\n\nThe approach is similar to inserting at the end, but rather than going to the end of the list, we will just iterate to the k-th node.\n\nTo insert a node in between the k and k+1 node, we will have to change the next pointer of both the k-th node and new Node.\n\n\nSet next of new Node to next of current\nSet next of current to new Node\nTaskComplete the function **insertAfterK** in IDE to insert an element after k-th node.\n\n\nInput Format\nFirst line denotes 'n' the number of elements in the list.\n\nSecond line consists of two space separated integers, xxx - the value to be added and kkk - the position after which the value is added.\n\nThird line consists of n space-separated integers denoting the elements in the list.\n\n\n\nOutput Format\nThe complete list after insertion.",
     "constraints": [
-      "1 \u2264 T \u2264 10",
-      "1 \u2264 n \u2264 15",
-      "1 \u2264 k \u2264 n",
-      "1 \u2264 x \u2264 1000",
-      "1 \u2264 list elements \u2264 1000"
+      "1 ≤ T ≤ 10",
+      "1 ≤ n ≤ 15",
+      "1 ≤ k ≤ n",
+      "1 ≤ x ≤ 1000",
+      "1 ≤ list elements ≤ 1000"
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases. For each test case:\n- A line with integer n, the number of elements in the linked list.\n- A line with two integers x and k, where x is the value to be inserted and k is the position after which the new node must be placed (1\u2011based, 1 \u2264 k \u2264 n).\n- A line with n space\u2011separated integers representing the initial linked list.\nAll numbers are positive.",
+    "inputFormat": "The first line contains an integer T, the number of test cases. For each test case:\n- A line with integer n, the number of elements in the linked list.\n- A line with two integers x and k, where x is the value to be inserted and k is the position after which the new node must be placed (1‑based, 1 ≤ k ≤ n).\n- A line with n space‑separated integers representing the initial linked list.\nAll numbers are positive.",
     "outputFormat": "For each test case output a single line containing the elements of the linked list after the insertion, separated by a single space.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "3\n4\n3 2\n2 32 23 53\n5\n10 3\n1 2 3 4 5\n3\n20 1\n1 2 3",
         "output": "2 32 3 23 53\n1 2 3 10 4 5\n1 20 2 3",
-        "explanation": "Three independent test cases. Each case inserts the given value after the specified k\u2011th node and prints the resulting list."
+        "explanation": "Three independent test cases. Each case inserts the given value after the specified k‑th node and prints the resulting list."
       }
     ]
   },
@@ -58,21 +58,21 @@
       },
       {
         "id": "tc_3",
-        "label": "edge case \u2013 insert after first of two elements",
+        "label": "edge case – insert after first of two elements",
         "input": "1\n2\n150 1\n100 200",
         "expectedOutput": "100 150 200",
         "weight": 2
       },
       {
         "id": "tc_4",
-        "label": "general case \u2013 middle insertion",
+        "label": "general case – middle insertion",
         "input": "1\n6\n42 3\n7 8 9 10 11 12",
         "expectedOutput": "7 8 9 42 10 11 12",
         "weight": 2
       },
       {
         "id": "tc_5",
-        "label": "general case \u2013 descending list",
+        "label": "general case – descending list",
         "input": "1\n5\n5 2\n50 40 30 20 10",
         "expectedOutput": "50 40 5 30 20 10",
         "weight": 2
@@ -104,7 +104,7 @@
     ]
   },
   "solution": {
-    "approach": "For each test case we build a singly linked list from the given values. To insert after the k\u2011th node we traverse the list k\u20111 steps (starting from the head) to reach the k\u2011th node, then adjust pointers: newNode->next = current->next; current->next = newNode. Finally we traverse the list once more to print all values. The algorithm is linear in the size of the list.\nTime Complexity per test case: O(n) \u2013 one pass to build the list, one pass to reach the k\u2011th node, and one pass to output.\nSpace Complexity per test case: O(n) for the linked list nodes.",
+    "approach": "For each test case we build a singly linked list from the given values. To insert after the k‑th node we traverse the list k‑1 steps (starting from the head) to reach the k‑th node, then adjust pointers: newNode->next = current->next; current->next = newNode. Finally we traverse the list once more to print all values. The algorithm is linear in the size of the list.\nTime Complexity per test case: O(n) – one pass to build the list, one pass to reach the k‑th node, and one pass to output.\nSpace Complexity per test case: O(n) for the linked list nodes.",
     "timeComplexity": "O(T * n)",
     "spaceComplexity": "O(n) per test case (the linked list)",
     "code": {
@@ -114,5 +114,6 @@
       "Python3": "#!/usr/bin/env python3\nimport sys\n\ndef create_node(val):\n    return [val, None]  # [data, next]\n\ndef insert_after_k(head, value, k):\n    new_node = create_node(value)\n    cur = head\n    for _ in range(k-1):\n        if cur is None:\n            break\n        cur = cur[1]\n    if cur is None:\n        return head\n    new_node[1] = cur[1]\n    cur[1] = new_node\n    return head\n\ndef list_to_values(head):\n    vals = []\n    while head:\n        vals.append(str(head[0]))\n        head = head[1]\n    return ' '.join(vals)\n\ndef main():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out_lines = []\n    for _ in range(T):\n        n = int(next(it))\n        x = int(next(it))\n        k = int(next(it))\n        head = None\n        tail = None\n        for _ in range(n):\n            val = int(next(it))\n            node = create_node(val)\n            if head is None:\n                head = tail = node\n            else:\n                tail[1] = node\n                tail = node\n        head = insert_after_k(head, x, k)\n        out_lines.append(list_to_values(head))\n    sys.stdout.write('\\n'.join(out_lines))\n\nif __name__ == \"__main__\":\n    main()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet outputs = [];\nfunction createNode(val) { return {data: val, next: null}; }\nfunction insertAfterK(head, value, k) {\n    let newNode = createNode(value);\n    let cur = head;\n    for (let i = 1; i < k && cur !== null; i++) {\n        cur = cur.next;\n    }\n    if (cur === null) return head; // safety\n    newNode.next = cur.next;\n    cur.next = newNode;\n    return head;\n}\nfor (let t = 0; t < T; t++) {\n    const n = Number(input[idx++]);\n    const x = Number(input[idx++]);\n    const k = Number(input[idx++]);\n    let head = null, tail = null;\n    for (let i = 0; i < n; i++) {\n        const val = Number(input[idx++]);\n        const node = createNode(val);\n        if (!head) head = tail = node;\n        else { tail.next = node; tail = node; }\n    }\n    head = insertAfterK(head, x, k);\n    let line = [];\n    for (let cur = head; cur !== null; cur = cur.next) line.push(cur.data);\n    outputs.push(line.join(' '));\n}\nconsole.log(outputs.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

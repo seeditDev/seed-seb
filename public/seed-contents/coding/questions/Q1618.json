@@ -21,14 +21,14 @@
     ]
   },
   "content": {
-    "problemStatement": "An interval is a pair of positive integers [a, b] with a \u2264 b. It is meant to denote the set of integers that lie between the values a and b. For example [3,5] denotes the set {3,4,5} while the interval [3, 3] denotes the set {3}.\n\n\n\nWe say that an interval [a, b] is covered by an integer i, if i belongs to the set defined by [a, b]. For example interval [3, 5] is covered by 3 and so is the interval [3, 3].\n\n\nGiven a set of intervals I, and a set of integers S we say that I is covered by S if for each interval [a, b] in I there is an integer i in S such that [a, b] is covered by i. For example, the set {[3, 5], [3, 3]} is covered by the set {3}. The set of intervals {[6, 9], [3, 5], [4, 8]} is covered by the set {4, 5, 8}. It is also covered by the set {4, 7}.\n\n\nWe would like to compute, for any set of intervals I, the size of the smallest set S that covers it. You can check that for the set of intervals {[6, 9], [3, 5], [4, 8]} the answer is 2 while for the set of intervals {[3, 5], [3, 3]} the answer is 1.\n\n\nYour program should take the set of intervals as input and output the size of the smallest set that covers it as the answer.",
+    "problemStatement": "An interval is a pair of positive integers [a, b] with a ≤ b. It is meant to denote the set of integers that lie between the values a and b. For example [3,5] denotes the set {3,4,5} while the interval [3, 3] denotes the set {3}.\n\n\n\nWe say that an interval [a, b] is covered by an integer i, if i belongs to the set defined by [a, b]. For example interval [3, 5] is covered by 3 and so is the interval [3, 3].\n\n\nGiven a set of intervals I, and a set of integers S we say that I is covered by S if for each interval [a, b] in I there is an integer i in S such that [a, b] is covered by i. For example, the set {[3, 5], [3, 3]} is covered by the set {3}. The set of intervals {[6, 9], [3, 5], [4, 8]} is covered by the set {4, 5, 8}. It is also covered by the set {4, 7}.\n\n\nWe would like to compute, for any set of intervals I, the size of the smallest set S that covers it. You can check that for the set of intervals {[6, 9], [3, 5], [4, 8]} the answer is 2 while for the set of intervals {[3, 5], [3, 3]} the answer is 1.\n\n\nYour program should take the set of intervals as input and output the size of the smallest set that covers it as the answer.",
     "constraints": [
-      "1 \u2264 T \u2264 10",
-      "1 \u2264 N \u2264 5000 per test case",
-      "1 \u2264 a \u2264 b \u2264 10^8"
+      "1 ≤ T ≤ 10",
+      "1 ≤ N ≤ 5000 per test case",
+      "1 ≤ a ≤ b ≤ 10^8"
     ],
-    "inputFormat": "The first line contains an integer T (1 \u2264 T \u2264 10), the number of test cases. Each test case starts with an integer N (1 \u2264 N \u2264 5000) \u2013 the number of intervals. The next N lines each contain two integers a and b (1 \u2264 a \u2264 b \u2264 10^8) describing an interval [a, b].",
-    "outputFormat": "For each test case output a single line containing one integer \u2013 the size of the smallest set of integers that covers all given intervals.",
+    "inputFormat": "The first line contains an integer T (1 ≤ T ≤ 10), the number of test cases. Each test case starts with an integer N (1 ≤ N ≤ 5000) – the number of intervals. The next N lines each contain two integers a and b (1 ≤ a ≤ b ≤ 10^8) describing an interval [a, b].",
+    "outputFormat": "For each test case output a single line containing one integer – the size of the smallest set of integers that covers all given intervals.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -114,7 +114,7 @@
     ]
   },
   "solution": {
-    "approach": "The problem is the classic minimum hitting set for intervals on the integer line. A greedy algorithm works: sort all intervals by their right endpoint (b) in non\u2011decreasing order. Scan the sorted list, keeping the last chosen point (initially -1). For each interval [a, b], if a is greater than the last chosen point, the current interval is not covered; we must select a new point. The optimal choice is the right endpoint b of this interval, because it is the farthest to the right while still covering the interval, thus maximising the chance to cover subsequent intervals. Increment the answer and update the last chosen point to b. This yields the minimum possible number of points.\n\nCorrectness follows from the exchange argument: any optimal solution can be transformed to the greedy one without increasing its size by repeatedly replacing the first point that covers the first uncovered interval with the right endpoint of that interval.\n\nComplexities: sorting takes O(N log N) time, the scan is O(N). Memory usage is O(N) to store the intervals.",
+    "approach": "The problem is the classic minimum hitting set for intervals on the integer line. A greedy algorithm works: sort all intervals by their right endpoint (b) in non‑decreasing order. Scan the sorted list, keeping the last chosen point (initially -1). For each interval [a, b], if a is greater than the last chosen point, the current interval is not covered; we must select a new point. The optimal choice is the right endpoint b of this interval, because it is the farthest to the right while still covering the interval, thus maximising the chance to cover subsequent intervals. Increment the answer and update the last chosen point to b. This yields the minimum possible number of points.\n\nCorrectness follows from the exchange argument: any optimal solution can be transformed to the greedy one without increasing its size by repeatedly replacing the first point that covers the first uncovered interval with the right endpoint of that interval.\n\nComplexities: sorting takes O(N log N) time, the scan is O(N). Memory usage is O(N) to store the intervals.",
     "timeComplexity": "O(N log N) per test case due to sorting; overall O(T * N log N).",
     "spaceComplexity": "O(N) for storing intervals.",
     "code": {
@@ -124,5 +124,6 @@
       "Python3": "import sys\n\ndef solve_one(it):\n    n = int(next(it))\n    intervals = []\n    for _ in range(n):\n        a = int(next(it))\n        b = int(next(it))\n        intervals.append((a, b))\n    intervals.sort(key=lambda x: x[1])\n    last = -1\n    ans = 0\n    for a, b in intervals:\n        if a > last:\n            last = b\n            ans += 1\n    return str(ans)\n\ndef main():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    t = int(next(it))\n    out = []\n    for _ in range(t):\n        out.append(solve_one(it))\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    main()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nfunction nextInt(){return Number(input[idx++]);}\nconst T = nextInt();\nlet results = [];\nfor(let tc = 0; tc < T; ++tc){\n    const N = nextInt();\n    let intervals = new Array(N);\n    for(let i = 0; i < N; ++i){\n        const a = nextInt();\n        const b = nextInt();\n        intervals[i] = [a, b];\n    }\n    intervals.sort((x, y) => x[1] - y[1]);\n    let last = -1, ans = 0;\n    for(const [a, b] of intervals){\n        if(a > last){\n            last = b;\n            ++ans;\n        }\n    }\n    results.push(String(ans));\n}\nconsole.log(results.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

@@ -21,12 +21,12 @@
     ]
   },
   "content": {
-    "problemStatement": "A forest is an undirected acyclic graph. Let us define the strength of a forest as the sum of squares of sizes of its connected components. (Clearly, a tree with **n** nodes has strength **n2**.)\n\n\nChef has found a tree with **N** nodes on day 0. On each of the next **N-1** days, he's going to remove one edge. Let's denote the forest that remains after **i** days by **Fi**, for each 1 \u2264 **i** \u2264 **N-1**; also, let's denote the original tree by **F0**. On day **i**, **Fi** is created by randomly uniformly choosing one edge from **Fi-1** and removing it.\n\n\n\nLet **Ei** be the expected value of strength of the forest **Fi**, for each 0 \u2264 **i** \u2264 **N-1**. It can be proven that this number can be written in the form **Pi** / **Qi**, where **gcd**(**Pi**, **Qi**) = 1 and **gcd**(**Qi**, 109 + 7) = 1. Let **Ri** = **Pi** \u00b7 **Qi-1** mod 109 + 7, where **Qi-1** denotes the modular inverse of **Qi** modulo 109 + 7.\n\n\n\nFind the values of **R0, R1, ..., RN-1**.",
+    "problemStatement": "A forest is an undirected acyclic graph. Let us define the strength of a forest as the sum of squares of sizes of its connected components. (Clearly, a tree with **n** nodes has strength **n2**.)\n\n\nChef has found a tree with **N** nodes on day 0. On each of the next **N-1** days, he's going to remove one edge. Let's denote the forest that remains after **i** days by **Fi**, for each 1 ≤ **i** ≤ **N-1**; also, let's denote the original tree by **F0**. On day **i**, **Fi** is created by randomly uniformly choosing one edge from **Fi-1** and removing it.\n\n\n\nLet **Ei** be the expected value of strength of the forest **Fi**, for each 0 ≤ **i** ≤ **N-1**. It can be proven that this number can be written in the form **Pi** / **Qi**, where **gcd**(**Pi**, **Qi**) = 1 and **gcd**(**Qi**, 109 + 7) = 1. Let **Ri** = **Pi** · **Qi-1** mod 109 + 7, where **Qi-1** denotes the modular inverse of **Qi** modulo 109 + 7.\n\n\n\nFind the values of **R0, R1, ..., RN-1**.",
     "constraints": [
       "1 <= N <= 10^5",
       "1 <= u, v <= N"
     ],
-    "inputFormat": "The first line of the input contains a single integer N \u2014 the number of nodes in the tree. N-1 lines follow. Each of these lines contains two space-separated integers u and v denoting an edge between nodes u and v in the tree.",
+    "inputFormat": "The first line of the input contains a single integer N — the number of nodes in the tree. N-1 lines follow. Each of these lines contains two space-separated integers u and v denoting an edge between nodes u and v in the tree.",
     "outputFormat": "Print a single line containing N space-separated integers R0, R1, ..., RN-1.",
     "sampleTestCases": [
       {
@@ -102,8 +102,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can use the concept of expected value and modular arithmetic. We start with the initial tree and calculate its strength. Then, for each day, we calculate the expected strength of the forest after removing an edge. We use the formula for expected value and modular arithmetic to avoid overflow.",
-    "timeComplexity": "O(N) \u2014 we iterate over the edges of the tree and calculate the expected strength for each day.",
-    "spaceComplexity": "O(N) \u2014 we need to store the edges of the tree and the expected strengths for each day.",
+    "timeComplexity": "O(N) — we iterate over the edges of the tree and calculate the expected strength for each day.",
+    "spaceComplexity": "O(N) — we need to store the edges of the tree and the expected strengths for each day.",
     "code": {
       "C": "// COMPLETE, COMPILABLE C code\n#include <stdio.h>\n#include <stdlib.h>\n#define MOD 1000000007\n\nlong long powmod(long long a, long long b) {\n    long long res = 1;\n    while (b) {\n        if (b & 1) res = (res * a) % MOD;\n        a = (a * a) % MOD;\n        b >>= 1;\n    }\n    return res;\n}\n\nlong long inv(long long a) {\n    return powmod(a, MOD - 2);\n}\n\nint main() {\n    int N;\n    scanf(\"%d\", &N);\n    int u, v;\n    long long strength = (long long)N * N;\n    printf(\"%lld\", strength);\n    for (int i = 1; i < N; i++) {\n        scanf(\"%d %d\", &u, &v);\n        strength = (strength * (N - i) + (long long)i * i) % MOD;\n        strength = (strength * inv(N - i + 1)) % MOD;\n        printf(\" %lld\", strength);\n    }\n    printf(\"\\n\");\n    return 0;\n}",
       "C++": "// COMPLETE, COMPILABLE C++ code\n#include <iostream>\n#include <vector>\n#define MOD 1000000007\nusing namespace std;\n\nlong long powmod(long long a, long long b) {\n    long long res = 1;\n    while (b) {\n        if (b & 1) res = (res * a) % MOD;\n        a = (a * a) % MOD;\n        b >>= 1;\n    }\n    return res;\n}\n\nlong long inv(long long a) {\n    return powmod(a, MOD - 2);\n}\n\nint main() {\n    int N;\n    cin >> N;\n    int u, v;\n    long long strength = (long long)N * N;\n    cout << strength;\n    for (int i = 1; i < N; i++) {\n        cin >> u >> v;\n        strength = (strength * (N - i) + (long long)i * i) % MOD;\n        strength = (strength * inv(N - i + 1)) % MOD;\n        cout << \" \" << strength;\n    }\n    cout << endl;\n    return 0;\n}",
@@ -111,5 +111,6 @@
       "Python3": "# COMPLETE, RUNNABLE Python3 code\nimport sys\nMOD = 1000000007\n\ndef powmod(a, b):\n    res = 1\n    while b > 0:\n        if b & 1: res = (res * a) % MOD\n        a = (a * a) % MOD\n        b >>= 1\n    return res\n\ndef inv(a):\n    return powmod(a, MOD - 2)\n\nN = int(sys.stdin.readline())\nstrength = N * N\nprint(strength, end=' ')\nfor i in range(1, N):\n    u, v = map(int, sys.stdin.readline().split())\n    strength = (strength * (N - i) + i * i) % MOD\n    strength = (strength * inv(N - i + 1)) % MOD\n    print(strength, end=' ')\nprint()",
       "JavaScript": "// COMPLETE, RUNNABLE JavaScript code\nconst fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nconst MOD = 1000000007;\nlet idx = 0;\n\nfunction powmod(a, b) {\n    let res = 1;\n    while (b > 0) {\n        if (b & 1) res = (res * a) % MOD;\n        a = (a * a) % MOD;\n        b >>= 1;\n    }\n    return res;\n}\n\nfunction inv(a) {\n    return powmod(a, MOD - 2);\n}\n\nlet N = parseInt(input[idx++]);\nlet strength = N * N;\nprocess.stdout.write(strength + ' ');\nfor (let i = 1; i < N; i++) {\n    let [u, v] = input[idx++].split(' ').map(x => parseInt(x));\n    strength = (strength * (N - i) + i * i) % MOD;\n    strength = (strength * inv(N - i + 1)) % MOD;\n    process.stdout.write(strength + ' ');\n}\nprocess.stdout.write('\\n');"
     }
-  }
+  },
+  "verified": false
 }

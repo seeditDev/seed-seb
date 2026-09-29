@@ -20,14 +20,14 @@
     ]
   },
   "content": {
-    "problemStatement": "Let's try to solve the Fractional Knapsack Problem.\n\nYou have a knapsack that can take upto WmaxW_{max}Wmax\u200b weight. \n\nGiven NNN items, ithi^{th}ith of them having the weight WiW_iWi\u200b and value ViV_iVi\u200b. You can pick some or all the items completely or fractionally so that their weight does not exceed WmaxW_{max}Wmax\u200b. \n\nYour task is to maximise the total value of the items you will carry in your bag.\n\n**Note -** If you take ab\\frac{a}{b}ba\u200b fraction of an item (b&gt;a)(b &gt; a)(b&gt;a), it's weight will be aWib\\frac{a W_i}{b}baWi\u200b\u200b and it's value will be aVib\\frac{a V_i}{b}baVi\u200b\u200b.\n\nPrint the maximum value with relative error upto 10\u2212210^{-2}10\u22122.\n\n\nInput Format\n\nThe first line contains a two integer NNN and WmaxW_{max}Wmax\u200b, denoting the length of array AAA and the maximum weight you can carry.\nNext NNN lines contains the description of the items.\n\nithi^{th}ith line contains two integers WiW_iWi\u200b and ViV_iVi\u200b, denoting the Weight and Value of the ithi^{th}ith item\n\n\n\n\nOutput Format\nOutput the maximum value you can carry while not exceeding the weight limit of the knapsack.",
+    "problemStatement": "Let's try to solve the Fractional Knapsack Problem.\n\nYou have a knapsack that can take upto WmaxW_{max}Wmax​ weight. \n\nGiven NNN items, ithi^{th}ith of them having the weight WiW_iWi​ and value ViV_iVi​. You can pick some or all the items completely or fractionally so that their weight does not exceed WmaxW_{max}Wmax​. \n\nYour task is to maximise the total value of the items you will carry in your bag.\n\n**Note -** If you take ab\\frac{a}{b}ba​ fraction of an item (b&gt;a)(b &gt; a)(b&gt;a), it's weight will be aWib\\frac{a W_i}{b}baWi​​ and it's value will be aVib\\frac{a V_i}{b}baVi​​.\n\nPrint the maximum value with relative error upto 10−210^{-2}10−2.\n\n\nInput Format\n\nThe first line contains a two integer NNN and WmaxW_{max}Wmax​, denoting the length of array AAA and the maximum weight you can carry.\nNext NNN lines contains the description of the items.\n\nithi^{th}ith line contains two integers WiW_iWi​ and ViV_iVi​, denoting the Weight and Value of the ithi^{th}ith item\n\n\n\n\nOutput Format\nOutput the maximum value you can carry while not exceeding the weight limit of the knapsack.",
     "constraints": [
       "1 <= T <= 10",
       "1 <= N <= 100000",
       "1 <= Wmax <= 10^9",
       "1 <= Wi, Vi <= 10^9"
     ],
-    "inputFormat": "First line contains an integer T, the number of test cases. For each test case, the first line contains two integers N and Wmax \u2014 the number of items and the maximum weight the knapsack can carry. Then N lines follow, each containing two integers Wi and Vi \u2014 the weight and value of the i\u2011th item.",
+    "inputFormat": "First line contains an integer T, the number of test cases. For each test case, the first line contains two integers N and Wmax — the number of items and the maximum weight the knapsack can carry. Then N lines follow, each containing two integers Wi and Vi — the weight and value of the i‑th item.",
     "outputFormat": "For each test case output a single line with the maximum total value that can be carried, printed with exactly two digits after the decimal point.",
     "sampleTestCases": [
       {
@@ -114,7 +114,7 @@
     ]
   },
   "solution": {
-    "approach": "The fractional knapsack problem is solved greedily. Compute the value\u2011to\u2011weight ratio for each item. Sort items in decreasing order of this ratio. Then iterate over the sorted list, taking each whole item while the remaining capacity allows; when an item does not fit completely, take the exact fraction that fills the knapsack and stop. This yields the optimal total value because any other selection would replace a taken fraction with a lower\u2011ratio item, decreasing the total value.",
+    "approach": "The fractional knapsack problem is solved greedily. Compute the value‑to‑weight ratio for each item. Sort items in decreasing order of this ratio. Then iterate over the sorted list, taking each whole item while the remaining capacity allows; when an item does not fit completely, take the exact fraction that fills the knapsack and stop. This yields the optimal total value because any other selection would replace a taken fraction with a lower‑ratio item, decreasing the total value.",
     "timeComplexity": "O(N log N) per test case for sorting; the subsequent scan is O(N).",
     "spaceComplexity": "O(N) to store the items and their ratios.",
     "code": {
@@ -124,5 +124,6 @@
       "Python3": "import sys\n\ndef solve():\n    data = sys.stdin.buffer.read().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out_lines = []\n    for _ in range(T):\n        N = int(next(it))\n        Wmax = int(next(it))\n        items = []\n        for _ in range(N):\n            w = int(next(it))\n            v = int(next(it))\n            items.append((w, v, v / w))\n        items.sort(key=lambda x: x[2], reverse=True)\n        total = 0.0\n        remaining = Wmax\n        for w, v, r in items:\n            if w <= remaining:\n                total += v\n                remaining -= w\n            else:\n                total += v * (remaining / w)\n                break\n        out_lines.append(f\"{total:.2f}\")\n    sys.stdout.write(\"\\n\".join(out_lines))\n\nif __name__ == \"__main__\":\n    solve()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet results = [];\nfor (let t = 0; t < T; ++t) {\n  const N = Number(input[idx++]);\n  let Wmax = Number(input[idx++]);\n  let items = [];\n  for (let i = 0; i < N; ++i) {\n    const w = Number(input[idx++]);\n    const v = Number(input[idx++]);\n    items.push({w, v, r: v / w});\n  }\n  items.sort((a, b) => b.r - a.r);\n  let total = 0;\n  for (const it of items) {\n    if (it.w <= Wmax) {\n      total += it.v;\n      Wmax -= it.w;\n    } else {\n      total += it.v * (Wmax / it.w);\n      break;\n    }\n  }\n  results.push(total.toFixed(2));\n}\nconsole.log(results.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

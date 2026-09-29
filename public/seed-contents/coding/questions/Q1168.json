@@ -28,26 +28,26 @@
       "1 <= length of each city name <= 50",
       "1 <= Ci <= 1000"
     ],
-    "inputFormat": "First line contains an integer T, the number of test cases. For each test case, the first line contains an integer N \u2013 the number of cities Sridhar will visit. The next N\u20111 lines each contain a card in the form \"Ai Bi Ci\" where Ai and Bi are distinct city names (strings without spaces) and Ci is an integer cost of travelling directly from Ai to Bi. The cards are given in arbitrary order.",
-    "outputFormat": "For each test case output N lines. The first N\u20111 lines must be the cards arranged in the exact order of Sridhar's original itinerary (from the first city to the last city). The N\u2011th line must be the total cost of the whole journey in the exact format: \"TotalCost:X Total Cost: X TotalCost:X$\" where X is the sum of all Ci for that test case.",
+    "inputFormat": "First line contains an integer T, the number of test cases. For each test case, the first line contains an integer N – the number of cities Sridhar will visit. The next N‑1 lines each contain a card in the form \"Ai Bi Ci\" where Ai and Bi are distinct city names (strings without spaces) and Ci is an integer cost of travelling directly from Ai to Bi. The cards are given in arbitrary order.",
+    "outputFormat": "For each test case output N lines. The first N‑1 lines must be the cards arranged in the exact order of Sridhar's original itinerary (from the first city to the last city). The N‑th line must be the total cost of the whole journey in the exact format: \"TotalCost:X Total Cost: X TotalCost:X$\" where X is the sum of all Ci for that test case.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "1\\n5\\nWarsaw Kiev 120\\nMadrid Paris 100\\nMunich Warsaw 150\\nParis Munich 200",
         "output": "Madrid Paris 100\\nParis Munich 200\\nMunich Warsaw 150\\nWarsaw Kiev 120\\nTotalCost:570 Total Cost: 570 TotalCost:570$",
-        "explanation": "The cards are reordered to form the path Madrid \u2192 Paris \u2192 Munich \u2192 Warsaw \u2192 Kiev. The sum of the costs is 100+200+150+120=570."
+        "explanation": "The cards are reordered to form the path Madrid → Paris → Munich → Warsaw → Kiev. The sum of the costs is 100+200+150+120=570."
       },
       {
         "id": "sample_2",
         "input": "1\\n3\\nA B 100\\nB C 200",
         "output": "A B 100\\nB C 200\\nTotalCost:300 Total Cost: 300 TotalCost:300$",
-        "explanation": "Path A \u2192 B \u2192 C with total cost 100+200=300."
+        "explanation": "Path A → B → C with total cost 100+200=300."
       },
       {
         "id": "sample_3",
         "input": "1\\n4\\nA B 100\\nB C 200\\nC D 300",
         "output": "A B 100\\nB C 200\\nC D 300\\nTotalCost:600 Total Cost: 600 TotalCost:600$",
-        "explanation": "Path A \u2192 B \u2192 C \u2192 D with total cost 600."
+        "explanation": "Path A → B → C → D with total cost 600."
       }
     ]
   },
@@ -115,7 +115,7 @@
     ]
   },
   "solution": {
-    "approach": "Each card represents a directed edge of a simple path that visits every city exactly once. In such a path the start city appears only as a source and never as a destination, while the end city appears only as a destination. By storing all source\u2011to\u2011destination pairs in a hash map and keeping a set of all destinations we can identify the unique start city (source not present in the destination set). Starting from this city we repeatedly look up the next edge in the map, output it and move to its destination. While reading the input we also accumulate the total cost. The algorithm runs in O(N) time per test case and uses O(N) additional memory for the maps.",
+    "approach": "Each card represents a directed edge of a simple path that visits every city exactly once. In such a path the start city appears only as a source and never as a destination, while the end city appears only as a destination. By storing all source‑to‑destination pairs in a hash map and keeping a set of all destinations we can identify the unique start city (source not present in the destination set). Starting from this city we repeatedly look up the next edge in the map, output it and move to its destination. While reading the input we also accumulate the total cost. The algorithm runs in O(N) time per test case and uses O(N) additional memory for the maps.",
     "timeComplexity": "O(N) per test case",
     "spaceComplexity": "O(N) for storing the edges and the destination set",
     "code": {
@@ -125,5 +125,6 @@
       "Python3": "import sys\n\ndef solve():\n    data = sys.stdin.read().strip().splitlines()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out = []\n    for _ in range(T):\n        N = int(next(it))\n        m = N - 1\n        src = []\n        dst = []\n        cost = []\n        total = 0\n        for _ in range(m):\n            a, b, c = next(it).split()\n            src.append(a)\n            dst.append(b)\n            c = int(c)\n            cost.append(c)\n            total += c\n        dest_set = set(dst)\n        start = ''\n        for s in src:\n            if s not in dest_set:\n                start = s\n                break\n        cur = start\n        for _ in range(m):\n            for i in range(m):\n                if src[i] == cur:\n                    out.append(f\"{src[i]} {dst[i]} {cost[i]}\")\n                    cur = dst[i]\n                    break\n        out.append(f\"TotalCost:{total} Total Cost: {total} TotalCost:{total}$\")\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    solve()",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst T = parseInt(lines[idx++]);\nlet out = [];\nfor (let t = 0; t < T; t++) {\n  const N = parseInt(lines[idx++]);\n  const m = N - 1;\n  const src = [];\n  const dst = [];\n  const cost = [];\n  let total = 0;\n  for (let i = 0; i < m; i++) {\n    const [a, b, c] = lines[idx++].trim().split(/\\s+/);\n    src.push(a);\n    dst.push(b);\n    const val = parseInt(c);\n    cost.push(val);\n    total += val;\n  }\n  const destSet = new Set(dst);\n  let start = '';\n  for (const s of src) if (!destSet.has(s)) { start = s; break; }\n  let cur = start;\n  for (let step = 0; step < m; step++) {\n    for (let i = 0; i < m; i++) {\n      if (src[i] === cur) {\n        out.push(`${src[i]} ${dst[i]} ${cost[i]}`);\n        cur = dst[i];\n        break;\n      }\n    }\n  }\n  out.push(`TotalCost:${total} Total Cost: ${total} TotalCost:${total}$`);\n}\nconsole.log(out.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

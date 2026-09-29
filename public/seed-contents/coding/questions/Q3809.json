@@ -20,13 +20,13 @@
     ]
   },
   "content": {
-    "problemStatement": "You are given **N** horizontal segments each of length **R**. You are given the x-coordinates of their left end-points: the i-th segment has the left end point at **xix_ixi\u200b**. You can see that the right end point will be at **xi+Rx_i + Rxi\u200b+R**.\n\nYou want to move the segments such that they lie entirely in the range **[0, L]**. After the movements, no two segments should overlap, however, they are allowed to touch each other.\n\nFind out the minimum number of segments that you need to move to achieve this. In other words, you want to maximize the number of segments that are left untouched. It's guaranteed that the sum of the lengths of the segments is such that they all can fit in **[0, L]**.\n\n\nInput Format\n\nThe first line of the input contains a single integer **T** denoting the number of test cases. The description of **T** test cases follows.\nThe first line of each test case contains three space-separated integers **N, L, R**.\nThe second line of each test case contains **N** space-separated integers. The i-th integer denotes the coordinate of the left end point of i-th segment, i.e. **xix_ixi\u200b**.\n\n\nOutput Format\nFor each test case, output a single integer corresponding to the minimum number of segments that you need to move.",
+    "problemStatement": "You are given **N** horizontal segments each of length **R**. You are given the x-coordinates of their left end-points: the i-th segment has the left end point at **xix_ixi​**. You can see that the right end point will be at **xi+Rx_i + Rxi​+R**.\n\nYou want to move the segments such that they lie entirely in the range **[0, L]**. After the movements, no two segments should overlap, however, they are allowed to touch each other.\n\nFind out the minimum number of segments that you need to move to achieve this. In other words, you want to maximize the number of segments that are left untouched. It's guaranteed that the sum of the lengths of the segments is such that they all can fit in **[0, L]**.\n\n\nInput Format\n\nThe first line of the input contains a single integer **T** denoting the number of test cases. The description of **T** test cases follows.\nThe first line of each test case contains three space-separated integers **N, L, R**.\nThe second line of each test case contains **N** space-separated integers. The i-th integer denotes the coordinate of the left end point of i-th segment, i.e. **xix_ixi​**.\n\n\nOutput Format\nFor each test case, output a single integer corresponding to the minimum number of segments that you need to move.",
     "constraints": [
-      "1 \u2264 T \u2264 2500",
-      "1 \u2264 N \u2264 500",
-      "1 \u2264 L, R \u2264 10^9",
-      "-10^9 \u2264 xi \u2264 10^9",
-      "L \u2265 R \u00d7 N"
+      "1 ≤ T ≤ 2500",
+      "1 ≤ N ≤ 500",
+      "1 ≤ L, R ≤ 10^9",
+      "-10^9 ≤ xi ≤ 10^9",
+      "L ≥ R × N"
     ],
     "inputFormat": "The first line contains a single integer T denoting the number of test cases. The first line of each test case contains three space-separated integers N, L, R. The second line of each test case contains N space-separated integers. The i-th integer denotes the coordinate of the left end point of i-th segment, i.e. xi.",
     "outputFormat": "For each test case, output a single integer corresponding to the minimum number of segments that you need to move.",
@@ -104,8 +104,8 @@
   },
   "solution": {
     "approach": "First, sort the segments based on their end points. Then, initialize the end point of the last non-overlapping segment and the count of moved segments. Iterate over the sorted segments. If the current segment overlaps with the last non-overlapping segment, increment the count of moved segments. Otherwise, update the end point of the last non-overlapping segment.",
-    "timeComplexity": "O(T * N log N) \u2014 due to sorting the segments for each test case",
-    "spaceComplexity": "O(N) \u2014 for storing the segments",
+    "timeComplexity": "O(T * N log N) — due to sorting the segments for each test case",
+    "spaceComplexity": "O(N) — for storing the segments",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n\nint compare(const void *a, const void *b) {\n    int *x = (int *)a;\n    int *y = (int *)b;\n    return (*x + R) - (*y + R);\n}\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, L, R;\n        scanf(\"%d %d %d\", &N, &L, &R);\n        int x[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &x[i]);\n        }\n        qsort(x, N, sizeof(int), compare);\n        int last_end = -1;\n        int moved = 0;\n        for (int i = 0; i < N; i++) {\n            if (x[i] < 0 || x[i] + R > L) {\n                moved++;\n            } else if (last_end != -1 && x[i] < last_end) {\n                moved++;\n            } else {\n                last_end = x[i] + R;\n            }\n        }\n        printf(\"%d\\n\", moved);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, L, R;\n        cin >> N >> L >> R;\n        int x[N];\n        for (int i = 0; i < N; i++) {\n            cin >> x[i];\n        }\n        sort(x, x + N, [](int a, int b) { return (a + R) < (b + R); });\n        int last_end = -1;\n        int moved = 0;\n        for (int i = 0; i < N; i++) {\n            if (x[i] < 0 || x[i] + R > L) {\n                moved++;\n            } else if (last_end != -1 && x[i] < last_end) {\n                moved++;\n            } else {\n                last_end = x[i] + R;\n            }\n        }\n        cout << moved << endl;\n    }\n    return 0;\n}",
@@ -113,5 +113,6 @@
       "Python3": "import sys\n\nT = int(input())\nfor _ in range(T):\n    N, L, R = map(int, input().split())\n    x = list(map(int, input().split()))\n    x.sort(key=lambda a: a + R)\n    last_end = -1\n    moved = 0\n    for i in range(N):\n        if x[i] < 0 or x[i] + R > L:\n            moved += 1\n        elif last_end != -1 and x[i] < last_end:\n            moved += 1\n        else:\n            last_end = x[i] + R\n    print(moved)",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\n\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [N, L, R] = readline().split(' ').map(Number);\n    const x = readline().split(' ').map(Number);\n    x.sort((a, b) => (a + R) - (b + R));\n    let last_end = -1;\n    let moved = 0;\n    for (let j = 0; j < N; j++) {\n        if (x[j] < 0 || x[j] + R > L) {\n            moved++;\n        } else if (last_end !== -1 && x[j] < last_end) {\n            moved++;\n        } else {\n            last_end = x[j] + R;\n        }\n    }\n    console.log(moved);\n}"
     }
-  }
+  },
+  "verified": false
 }

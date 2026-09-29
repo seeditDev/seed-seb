@@ -27,7 +27,7 @@
       "13 <= N <= 100",
       "1 <= Ai <= 7"
     ],
-    "inputFormat": "First line contains an integer T, the number of test cases. Then for each test case: first line contains an integer N, the length of the array. Second line contains N space\u2011separated integers A1 \u2026 AN.",
+    "inputFormat": "First line contains an integer T, the number of test cases. Then for each test case: first line contains an integer N, the length of the array. Second line contains N space‑separated integers A1 … AN.",
     "outputFormat": "For each test case output a single line containing \"yes\" if the array is a Rainbow Array, otherwise \"no\".",
     "sampleTestCases": [
       {
@@ -114,7 +114,7 @@
     ]
   },
   "solution": {
-    "approach": "The array must be symmetric and contain the numbers 1 through 7 in order, each appearing a positive number of times. Using two pointers l (starting at 0) and r (starting at N\u20111) we walk towards the centre. For the current expected value v (starting at 1) we check that a[l] and a[r] are both v, then we consume the whole block of v on both sides, counting its length on the left (cntL) and on the right (cntR). The two counts must be equal; otherwise the left and right blocks differ in size and the array is not rainbow. After a block is processed we increment v and continue. After processing v=7 we must have consumed the whole array (l>r). If any check fails we answer \"no\", otherwise \"yes\". The algorithm runs in O(N) time per test case and O(1) extra space.",
+    "approach": "The array must be symmetric and contain the numbers 1 through 7 in order, each appearing a positive number of times. Using two pointers l (starting at 0) and r (starting at N‑1) we walk towards the centre. For the current expected value v (starting at 1) we check that a[l] and a[r] are both v, then we consume the whole block of v on both sides, counting its length on the left (cntL) and on the right (cntR). The two counts must be equal; otherwise the left and right blocks differ in size and the array is not rainbow. After a block is processed we increment v and continue. After processing v=7 we must have consumed the whole array (l>r). If any check fails we answer \"no\", otherwise \"yes\". The algorithm runs in O(N) time per test case and O(1) extra space.",
     "timeComplexity": "O(N) per test case, O(total N) for the whole input.",
     "spaceComplexity": "O(1) auxiliary space.",
     "code": {
@@ -124,5 +124,6 @@
       "Python3": "import sys\ndef is_rainbow(arr):\n    l, r = 0, len(arr) - 1\n    val = 1\n    while val <= 7:\n        if l>r or arr[l] != val or arr[r] != val:\n            return False\n        cntL = cntR = 0\n        while l < len(arr) and arr[l] == val:\n            cntL += 1\n            l += 1\n        while r >= 0 and arr[r] == val:\n            cntR += 1\n            r -= 1\n        if cntL != cntR:\n            return False\n        val += 1\n    return l > r\n\ndata = sys.stdin.read().strip().split()\nif not data:\n    sys.exit()\nit = iter(data)\nT = int(next(it))\nout = []\nfor _ in range(T):\n    n = int(next(it))\n    arr = [int(next(it)) for _ in range(n)]\n    out.append('yes' if is_rainbow(arr) else 'no')\nprint('\\n'.join(out))\n",
       "JavaScript": "const fs = require('fs');\nconst data = fs.readFileSync(0,'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(data[idx++]);\nlet out = [];\nfor(let t=0; t<T; ++t){\n  const n = Number(data[idx++]);\n  const arr = [];\n  for(let i=0;i<n;++i) arr.push(Number(data[idx++]));\n  let l=0, r=n-1, val=1;\n  let ok=true;\n  while(val<=7 && ok){\n    if(l>r || arr[l]!==val || arr[r]!==val){ ok=false; break; }\n    let cntL=0, cntR=0;\n    while(l<n && arr[l]===val){ cntL++; l++; }\n    while(r>=0 && arr[r]===val){ cntR++; r--; }\n    if(cntL!==cntR){ ok=false; break; }\n    ++val;\n  }\n  if(ok && l<=r) ok=false;\n  out.push(ok?'yes':'no');\n}\nconsole.log(out.join('\\n'));\n"
     }
-  }
+  },
+  "verified": false
 }

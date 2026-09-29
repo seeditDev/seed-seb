@@ -21,13 +21,13 @@
   "content": {
     "problemStatement": "There are **N** hills in a row numbered 1 through **N** from left to right. Each hill has a height; for each valid **i**, the height of the **i**-th hill is **Hi**. Chef is initially on the leftmost hill (hill number 1). He can make an arbitrary number of jumps (including zero) as long as the following conditions are satisfied:\n\n\n\nChef can only jump from each hill to the next hill, i.e. from the **i**-th hill, he can jump to the **i+1**-th hill (if it exists).\nIt's always possible to jump to a hill with the same height as the current hill.\nIt's possible to jump to a taller hill if it's higher than the current hill by no more than **U**.\nIt's possible to jump to a lower hill if it's lower than the current hill by no more than **D**.\nChef can use a parachute and jump to a **lower** hill regardless of its height (as long as it's lower than the current hill). This jump can only be performed at most once.\n\n\nChef would like to move as far right as possible. Determine the index of the rightmost hill Chef can reach.",
     "constraints": [
-      "1 \u2264 T \u2264 100",
-      "1 \u2264 N \u2264 100",
-      "1 \u2264 U, D \u2264 1,000,000",
-      "1 \u2264 Hi \u2264 1,000,000 for each valid i"
+      "1 ≤ T ≤ 100",
+      "1 ≤ N ≤ 100",
+      "1 ≤ U, D ≤ 1,000,000",
+      "1 ≤ Hi ≤ 1,000,000 for each valid i"
     ],
     "inputFormat": "The first line of the input contains a single integer T denoting the number of test cases. The description of T test cases follows. The first line of each test case contains three space-separated integers N, U and D. The second line contains N space-separated integers H1, H2, ..., HN.",
-    "outputFormat": "For each test case, print a single line containing one integer \u2014 the index of the rightmost reachable hill.",
+    "outputFormat": "For each test case, print a single line containing one integer — the index of the rightmost reachable hill.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -102,8 +102,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can use a greedy approach combined with dynamic programming. We start from the first hill and try to jump to the next hill. If the next hill is higher than the current hill by no more than U, we can jump to it. If the next hill is lower than the current hill by no more than D, we can also jump to it. If the next hill is lower than the current hill by more than D, we can use a parachute to jump to it, but we can only use the parachute once. We keep track of the maximum index we can reach and update it whenever we can jump to a new hill.",
-    "timeComplexity": "O(T * N) \u2014 where T is the number of test cases and N is the number of hills in each test case.",
-    "spaceComplexity": "O(N) \u2014 where N is the number of hills in each test case.",
+    "timeComplexity": "O(T * N) — where T is the number of test cases and N is the number of hills in each test case.",
+    "spaceComplexity": "O(N) — where N is the number of hills in each test case.",
     "code": {
       "C": "#include <stdio.h>\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, U, D;\n        scanf(\"%d %d %d\", &N, &U, &D);\n        int H[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &H[i]);\n        }\n        int maxIndex = 0;\n        int usedParachute = 0;\n        for (int i = 0; i < N - 1; i++) {\n            if (H[i + 1] - H[i] <= U) {\n                maxIndex = i + 1;\n            } else if (H[i] - H[i + 1] <= D) {\n                maxIndex = i + 1;\n            } else if (!usedParachute && H[i] > H[i + 1]) {\n                maxIndex = i + 1;\n                usedParachute = 1;\n            }\n        }\n        printf(\"%d\\n\", maxIndex + 1);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\nusing namespace std;\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, U, D;\n        cin >> N >> U >> D;\n        int H[N];\n        for (int i = 0; i < N; i++) {\n            cin >> H[i];\n        }\n        int maxIndex = 0;\n        int usedParachute = 0;\n        for (int i = 0; i < N - 1; i++) {\n            if (H[i + 1] - H[i] <= U) {\n                maxIndex = i + 1;\n            } else if (H[i] - H[i + 1] <= D) {\n                maxIndex = i + 1;\n            } else if (!usedParachute && H[i] > H[i + 1]) {\n                maxIndex = i + 1;\n                usedParachute = 1;\n            }\n        }\n        cout << maxIndex + 1 << endl;\n    }\n    return 0;\n}",
@@ -111,5 +111,6 @@
       "Python3": "import sys\ninput = sys.stdin.readline\nT = int(input())\nfor _ in range(T):\n    N, U, D = map(int, input().split())\n    H = list(map(int, input().split()))\n    maxIndex = 0\n    usedParachute = 0\n    for i in range(N - 1):\n        if H[i + 1] - H[i] <= U:\n            maxIndex = i + 1\n        elif H[i] - H[i + 1] <= D:\n            maxIndex = i + 1\n        elif not usedParachute and H[i] > H[i + 1]:\n            maxIndex = i + 1\n            usedParachute = 1\n    print(maxIndex + 1)",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst input = () => lines[idx++];\nconst T = parseInt(input());\nfor (let i = 0; i < T; i++) {\n    const [N, U, D] = input().split(' ').map(Number);\n    const H = input().split(' ').map(Number);\n    let maxIndex = 0;\n    let usedParachute = 0;\n    for (let j = 0; j < N - 1; j++) {\n        if (H[j + 1] - H[j] <= U) {\n            maxIndex = j + 1;\n        } else if (H[j] - H[j + 1] <= D) {\n            maxIndex = j + 1;\n        } else if (!usedParachute && H[j] > H[j + 1]) {\n            maxIndex = j + 1;\n            usedParachute = 1;\n        }\n    }\n    console.log(maxIndex + 1);\n}"
     }
-  }
+  },
+  "verified": false
 }

@@ -21,21 +21,21 @@
     ]
   },
   "content": {
-    "problemStatement": "Chef has an integer array numsnumsnums sorted in **non-decreasing order**.\n\nChef wants to remove all **duplicate elements** from the array **in-place** such that each unique element appears **only once**.\n\nThe **relative order** of the elements should remain the same.\n\nAfter removing the duplicates, let the number of unique elements be KKK.\n\nThe first KKK elements of the array should contain the unique elements in their original order.\n\nThe values beyond the first KKK elements do not matter.\n\nYour task is to help Chef find KKK and print the first KKK elements of the modified array.\n\n**Function Declaration****Function Name**removeDuplicatesremoveDuplicatesremoveDuplicates \u2013 Removes duplicate elements from a sorted array in-place.\n\n**Parameters**\nnumsnumsnums : A list/array of integers sorted in non-decreasing order.\n**Return Value**\nReturns an **integer K** \u2014 the number of unique elements. \n\nThe first KKK positions of numsnumsnums must contain these unique values.\nConstraints:\n1\u2264N\u22643\u00d71041 \\leq N \\leq 3 \u00d7 10^41\u2264N\u22643\u00d7104\n\u2013100\u2264nums[i]\u2264100\u2013100 \\leq nums[i] \u2264 100\u2013100\u2264nums[i]\u2264100\nnumsnumsnums is sorted in **non-decreasing** order.\n\nInput Format\n\nNNN \u2192 size of array\nNext line \u2192 **N sorted integers**\n\n\nOutput Format\n\nPrint KKK\nPrint the **first K unique elements** of the modified array",
+    "problemStatement": "Chef has an integer array numsnumsnums sorted in **non-decreasing order**.\n\nChef wants to remove all **duplicate elements** from the array **in-place** such that each unique element appears **only once**.\n\nThe **relative order** of the elements should remain the same.\n\nAfter removing the duplicates, let the number of unique elements be KKK.\n\nThe first KKK elements of the array should contain the unique elements in their original order.\n\nThe values beyond the first KKK elements do not matter.\n\nYour task is to help Chef find KKK and print the first KKK elements of the modified array.\n\n**Function Declaration****Function Name**removeDuplicatesremoveDuplicatesremoveDuplicates – Removes duplicate elements from a sorted array in-place.\n\n**Parameters**\nnumsnumsnums : A list/array of integers sorted in non-decreasing order.\n**Return Value**\nReturns an **integer K** — the number of unique elements. \n\nThe first KKK positions of numsnumsnums must contain these unique values.\nConstraints:\n1≤N≤3×1041 \\leq N \\leq 3 × 10^41≤N≤3×104\n–100≤nums[i]≤100–100 \\leq nums[i] ≤ 100–100≤nums[i]≤100\nnumsnumsnums is sorted in **non-decreasing** order.\n\nInput Format\n\nNNN → size of array\nNext line → **N sorted integers**\n\n\nOutput Format\n\nPrint KKK\nPrint the **first K unique elements** of the modified array",
     "constraints": [
       "1 <= T <= 10",
       "1 <= N <= 30000",
       "-100 <= nums[i] <= 100",
-      "The array is sorted in non\u2011decreasing order."
+      "The array is sorted in non‑decreasing order."
     ],
-    "inputFormat": "The first line contains an integer T, the number of test cases.\nFor each test case:\n- The first line contains an integer N, the size of the array.\n- The second line contains N integers sorted in non\u2011decreasing order, separated by single spaces.",
+    "inputFormat": "The first line contains an integer T, the number of test cases.\nFor each test case:\n- The first line contains an integer N, the size of the array.\n- The second line contains N integers sorted in non‑decreasing order, separated by single spaces.",
     "outputFormat": "For each test case output two lines:\n- The first line contains K, the number of unique elements.\n- The second line contains the first K elements of the array after removing duplicates, separated by a single space.",
     "sampleTestCases": [
       {
         "id": "sample_1",
         "input": "1\n6\n1 1 2 2 3 3",
         "output": "3\n1 2 3",
-        "explanation": "The array contains three distinct values 1, 2 and 3. After the in\u2011place removal the first three positions hold these values, so K = 3."
+        "explanation": "The array contains three distinct values 1, 2 and 3. After the in‑place removal the first three positions hold these values, so K = 3."
       },
       {
         "id": "sample_2",
@@ -115,9 +115,9 @@
     ]
   },
   "solution": {
-    "approach": "Because the array is already sorted, equal values appear consecutively. Use a two\u2011pointer technique: keep a write pointer `k` at the last unique element (initially 0). Scan the array with a read pointer `i` from 1 to N\u20111. Whenever `nums[i]` differs from `nums[k]`, increment `k` and copy `nums[i]` to `nums[k]`. After the scan, `k+1` is the count K of distinct values and the first K positions hold the required result. This works in O(N) time and O(1) extra space.",
+    "approach": "Because the array is already sorted, equal values appear consecutively. Use a two‑pointer technique: keep a write pointer `k` at the last unique element (initially 0). Scan the array with a read pointer `i` from 1 to N‑1. Whenever `nums[i]` differs from `nums[k]`, increment `k` and copy `nums[i]` to `nums[k]`. After the scan, `k+1` is the count K of distinct values and the first K positions hold the required result. This works in O(N) time and O(1) extra space.",
     "timeComplexity": "O(N) per test case, where N is the length of the current array. Overall O(T * N_max).",
-    "spaceComplexity": "O(1) additional space (the array is modified in\u2011place).",
+    "spaceComplexity": "O(1) additional space (the array is modified in‑place).",
     "code": {
       "C": "#include <stdio.h>\n\nint removeDuplicates(int *nums, int n) {\n    if (n == 0) return 0;\n    int k = 0; // index of last unique element\n    for (int i = 1; i < n; ++i) {\n        if (nums[i] != nums[k]) {\n            ++k;\n            nums[k] = nums[i];\n        }\n    }\n    return k + 1; // number of unique elements\n}\n\nint main() {\n    int T;\n    if (scanf(\"%d\", &T) != 1) return 0;\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        int nums[30000]; // maximum possible N\n        for (int i = 0; i < N; ++i) scanf(\"%d\", &nums[i]);\n        int K = removeDuplicates(nums, N);\n        printf(\"%d\\n\", K);\n        for (int i = 0; i < K; ++i) {\n            printf(\"%d\", nums[i]);\n            if (i + 1 < K) printf(\" \");\n        }\n        printf(\"\\n\");\n    }\n    return 0;\n}",
       "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nint removeDuplicates(vector<int>& a) {\n    if (a.empty()) return 0;\n    int k = 0;\n    for (size_t i = 1; i < a.size(); ++i) {\n        if (a[i] != a[k]) {\n            ++k;\n            a[k] = a[i];\n        }\n    }\n    return k + 1;\n}\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int T;\n    if (!(cin >> T)) return 0;\n    while (T--) {\n        int N; cin >> N;\n        vector<int> nums(N);\n        for (int i = 0; i < N; ++i) cin >> nums[i];\n        int K = removeDuplicates(nums);\n        cout << K << '\\n';\n        for (int i = 0; i < K; ++i) {\n            if (i) cout << ' ';\n            cout << nums[i];\n        }\n        cout << '\\n';\n    }\n    return 0;\n}",
@@ -125,5 +125,6 @@
       "Python3": "import sys\n\ndef remove_duplicates(arr):\n    if not arr:\n        return 0\n    k = 0\n    for i in range(1, len(arr)):\n        if arr[i] != arr[k]:\n            k += 1\n            arr[k] = arr[i]\n    return k + 1\n\ndef main():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out_lines = []\n    for _ in range(T):\n        N = int(next(it))\n        nums = [int(next(it)) for _ in range(N)]\n        K = remove_duplicates(nums)\n        out_lines.append(str(K))\n        out_lines.append(' '.join(str(nums[i]) for i in range(K)))\n    sys.stdout.write('\\n'.join(out_lines))\n\nif __name__ == \"__main__\":\n    main()",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nfunction nextInt() { return parseInt(input[idx++], 10); }\n\nfunction removeDuplicates(arr) {\n    if (arr.length === 0) return 0;\n    let k = 0;\n    for (let i = 1; i < arr.length; ++i) {\n        if (arr[i] !== arr[k]) {\n            ++k;\n            arr[k] = arr[i];\n        }\n    }\n    return k + 1;\n}\n\nconst T = nextInt();\nlet out = [];\nfor (let t = 0; t < T; ++t) {\n    const N = nextInt();\n    const nums = [];\n    for (let i = 0; i < N; ++i) nums.push(nextInt());\n    const K = removeDuplicates(nums);\n    out.push(String(K));\n    out.push(nums.slice(0, K).join(' '));\n}\nconsole.log(out.join('\\n'));\n"
     }
-  }
+  },
+  "verified": false
 }

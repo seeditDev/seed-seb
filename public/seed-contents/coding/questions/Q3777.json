@@ -22,12 +22,12 @@
   "content": {
     "problemStatement": "Chef has a set of integers **A1**, **A2**, ..., **AN**. Define the Chef's number for the set as a minimal sum of penalties of the connections between numbers from this set(each number must be connected with at least one other number), if size of the set more or equal than **2**, and **0** otherwise. The connection between numbers **x** and **y** has a penalty equal the absolute value |**x**-**y**|. Chef can add elements in the set and remove elements from it, after every such operation he wants to know the Chef's number for his set. Please help him to solve this complicated task.",
     "constraints": [
-      "1 \u2264 T \u2264 1000",
-      "1 \u2264 N, Q \u2264 10^5",
-      "1 \u2264 Ai, x \u2264 10^9",
-      "1 \u2264 type \u2264 2",
-      "Sum of N over all test cases \u2264 2*10^5",
-      "Sum of Q over all test cases \u2264 2*10^5"
+      "1 ≤ T ≤ 1000",
+      "1 ≤ N, Q ≤ 10^5",
+      "1 ≤ Ai, x ≤ 10^9",
+      "1 ≤ type ≤ 2",
+      "Sum of N over all test cases ≤ 2*10^5",
+      "Sum of Q over all test cases ≤ 2*10^5"
     ],
     "inputFormat": "The first line of the input contains an integer T denoting the number of test cases. The description of T test cases follows. The first line of each test case contains two positive integers N denoting the number of elements in the set and Q denoting the number of operations performed by Chef. The second line contains N space-separated integers A1, A2, ..., AN denoting the set A, all numbers in A are pairwise distinct. Next Q lines contains two integers - type and x. type = 1 x denoting that Chef adding the number x in the set, it's guaranteed that x not in the set. type = 2 x denoting that Chef erases element x from it, it's guaranteed that x exists there.",
     "outputFormat": "The output for each test case should be the Chef's number for the set after each operation.",
@@ -105,8 +105,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can use a greedy algorithm. We first sort the set A. Then, for each operation, we either add or remove an element from the set. After each operation, we calculate the Chef's number by finding the minimum sum of penalties of the connections between numbers from the set. We can do this by iterating over the set and finding the minimum difference between each pair of adjacent numbers.",
-    "timeComplexity": "O(T*(N+Q)*log(N+Q)) \u2014 because we are sorting the set after each operation and iterating over it to calculate the Chef's number.",
-    "spaceComplexity": "O(N+Q) \u2014 because we are storing the set A and the operations.",
+    "timeComplexity": "O(T*(N+Q)*log(N+Q)) — because we are sorting the set after each operation and iterating over it to calculate the Chef's number.",
+    "spaceComplexity": "O(N+Q) — because we are storing the set A and the operations.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\nint compare(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N, Q;\n        scanf(\"%d %d\", &N, &Q);\n        int *A = (int*)malloc(N*sizeof(int));\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &A[i]);\n        }\n        qsort(A, N, sizeof(int), compare);\n        while (Q--) {\n            int type, x;\n            scanf(\"%d %d\", &type, &x);\n            if (type == 1) {\n                N++;\n                A = (int*)realloc(A, N*sizeof(int));\n                A[N-1] = x;\n                qsort(A, N, sizeof(int), compare);\n            } else {\n                for (int i = 0; i < N; i++) {\n                    if (A[i] == x) {\n                        for (int j = i; j < N-1; j++) {\n                            A[j] = A[j+1];\n                        }\n                        N--;\n                        A = (int*)realloc(A, N*sizeof(int));\n                        break;\n                    }\n                }\n            }\n            if (N < 2) {\n                printf(\"0\\n\");\n            } else {\n                int sum = 0;\n                for (int i = 0; i < N-1; i++) {\n                    sum += abs(A[i] - A[i+1]);\n                }\n                printf(\"%d\\n\", sum);\n            }\n        }\n        free(A);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <algorithm>\nusing namespace std;\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N, Q;\n        cin >> N >> Q;\n        int *A = new int[N];\n        for (int i = 0; i < N; i++) {\n            cin >> A[i];\n        }\n        sort(A, A+N);\n        while (Q--) {\n            int type, x;\n            cin >> type >> x;\n            if (type == 1) {\n                N++;\n                int *temp = new int[N];\n                for (int i = 0; i < N-1; i++) {\n                    temp[i] = A[i];\n                }\n                temp[N-1] = x;\n                delete[] A;\n                A = temp;\n                sort(A, A+N);\n            } else {\n                for (int i = 0; i < N; i++) {\n                    if (A[i] == x) {\n                        for (int j = i; j < N-1; j++) {\n                            A[j] = A[j+1];\n                        }\n                        N--;\n                        int *temp = new int[N];\n                        for (int j = 0; j < N; j++) {\n                            temp[j] = A[j];\n                        }\n                        delete[] A;\n                        A = temp;\n                        break;\n                    }\n                }\n            }\n            if (N < 2) {\n                cout << 0 << endl;\n            } else {\n                int sum = 0;\n                for (int i = 0; i < N-1; i++) {\n                    sum += abs(A[i] - A[i+1]);\n                }\n                cout << sum << endl;\n            }\n        }\n        delete[] A;\n    }\n    return 0;\n}",
@@ -114,5 +114,6 @@
       "Python3": "import sys\nT = int(input())\nfor _ in range(T):\n    N, Q = map(int, input().split())\n    A = list(map(int, input().split()))\n    A.sort()\n    for _ in range(Q):\n        type, x = map(int, input().split())\n        if type == 1:\n            A.append(x)\n            A.sort()\n        else:\n            A.remove(x)\n        if len(A) < 2:\n            print(0)\n        else:\n            sum = 0\n            for i in range(len(A)-1):\n                sum += abs(A[i] - A[i+1])\n            print(sum)",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [N, Q] = readline().split(' ').map(Number);\n    const A = readline().split(' ').map(Number).sort((a, b) => a - b);\n    for (let j = 0; j < Q; j++) {\n        const [type, x] = readline().split(' ').map(Number);\n        if (type === 1) {\n            A.push(x);\n            A.sort((a, b) => a - b);\n        } else {\n            const index = A.indexOf(x);\n            A.splice(index, 1);\n        }\n        if (A.length < 2) {\n            console.log(0);\n        } else {\n            let sum = 0;\n            for (let k = 0; k < A.length - 1; k++) {\n                sum += Math.abs(A[k] - A[k + 1]);\n            }\n            console.log(sum);\n        }\n    }\n}"
     }
-  }
+  },
+  "verified": false
 }

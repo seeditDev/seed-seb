@@ -24,11 +24,11 @@
   "content": {
     "problemStatement": "Problem Statement**Levy's conjecture**, named after **Hyman Levy**, states that all odd integers greater than **5** can be represented as the sum of an odd prime number and an even semiprime. To put it algebraically, **2n + 1 = p + 2q** always has a solution in primes **p** and **q** (not necessary to be distinct) for **n &gt; 2**. (Source: Wikipedia)\n\nIn this problem, given a positive integer **N** (not necessary to be odd integer greater than **5**). Your task is to calculate how many distinct ordered pairs **(p, q)** such that **N = p + 2q**, where **p** and **q** are primes.",
     "constraints": [
-      "1 \u2264 T \u2264 100000",
-      "1 \u2264 N \u2264 10000"
+      "1 ≤ T ≤ 100000",
+      "1 ≤ N ≤ 10000"
     ],
-    "inputFormat": "The first line contains an integer T (1 \u2264 T \u2264 100000), the number of test cases. Each of the next T lines contains a single integer N (1 \u2264 N \u2264 10000).",
-    "outputFormat": "For each test case output a single line containing the number of ordered pairs (p, q) of prime numbers such that N = p + 2\u00b7q.",
+    "inputFormat": "The first line contains an integer T (1 ≤ T ≤ 100000), the number of test cases. Each of the next T lines contains a single integer N (1 ≤ N ≤ 10000).",
+    "outputFormat": "For each test case output a single line containing the number of ordered pairs (p, q) of prime numbers such that N = p + 2·q.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -114,8 +114,8 @@
     ]
   },
   "solution": {
-    "approach": "1. Use the Sieve of Eratosthenes to generate all prime numbers up to 10000. 2. Store the primes in a list. 3. Pre\u2011compute an answer array ans[0\u202610000] where ans[x] is the number of ordered pairs (p, q) with p and q prime and p + 2\u00b7q = x.   For every prime p and for every prime q (in increasing order) compute sum = p + 2*q; if sum exceeds 10000 break the inner loop because larger q only increase the sum. Increment ans[sum]. 4. After the pre\u2011computation each query is answered in O(1) by printing ans[N].",
-    "timeComplexity": "Sieve: O(MAXN log log MAXN). Double loop over primes: O(P\u00b2) where P \u2248 1229 (\u22481.5\u00b710\u2076 operations). Answering each test case: O(1). Overall O(MAXN log log MAXN + P\u00b2 + T).",
+    "approach": "1. Use the Sieve of Eratosthenes to generate all prime numbers up to 10000. 2. Store the primes in a list. 3. Pre‑compute an answer array ans[0…10000] where ans[x] is the number of ordered pairs (p, q) with p and q prime and p + 2·q = x.   For every prime p and for every prime q (in increasing order) compute sum = p + 2*q; if sum exceeds 10000 break the inner loop because larger q only increase the sum. Increment ans[sum]. 4. After the pre‑computation each query is answered in O(1) by printing ans[N].",
+    "timeComplexity": "Sieve: O(MAXN log log MAXN). Double loop over primes: O(P²) where P ≈ 1229 (≈1.5·10⁶ operations). Answering each test case: O(1). Overall O(MAXN log log MAXN + P² + T).",
     "spaceComplexity": "O(MAXN) for the sieve array and the answer array.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdbool.h>\n\n#define MAXN 10000\n\nint main() {\n    bool isPrime[MAXN + 1];\n    for (int i = 0; i <= MAXN; ++i) isPrime[i] = true;\n    isPrime[0] = isPrime[1] = false;\n    for (int i = 2; i * i <= MAXN; ++i) {\n        if (isPrime[i]) {\n            for (int j = i * i; j <= MAXN; j += i) isPrime[j] = false;\n        }\n    }\n    int primes[1300];\n    int pcnt = 0;\n    for (int i = 2; i <= MAXN; ++i) if (isPrime[i]) primes[pcnt++] = i;\n\n    int ans[MAXN + 1] = {0};\n    for (int i = 0; i < pcnt; ++i) {\n        for (int j = 0; j < pcnt; ++j) {\n            int sum = primes[i] + 2 * primes[j];\n            if (sum > MAXN) break;\n            ++ans[sum];\n        }\n    }\n\n    int T;\n    if (scanf(\"%d\", &T) != 1) return 0;\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        printf(\"%d\\n\", ans[N]);\n    }\n    return 0;\n}",
@@ -124,5 +124,6 @@
       "Python3": "#!/usr/bin/env python3\nimport sys\nMAXN = 10000\nis_prime = [True] * (MAXN + 1)\nis_prime[0] = is_prime[1] = False\nfor i in range(2, int(MAXN ** 0.5) + 1):\n    if is_prime[i]:\n        step = i\n        start = i * i\n        is_prime[start:MAXN+1:step] = [False] * ((MAXN - start) // step + 1)\nprimes = [i for i, v in enumerate(is_prime) if v]\nans = [0] * (MAXN + 1)\nfor p in primes:\n    for q in primes:\n        s = p + 2 * q\n        if s > MAXN:\n            break\n        ans[s] += 1\n\ndata = sys.stdin.read().strip().split()\nif not data:\n    sys.exit()\nit = iter(data)\nT = int(next(it))\nout = []\nfor _ in range(T):\n    N = int(next(it))\n    out.append(str(ans[N]))\nsys.stdout.write('\\n'.join(out))\n",
       "JavaScript": "const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst MAXN = 10000;\nconst isPrime = new Array(MAXN + 1).fill(true);\nisPrime[0] = isPrime[1] = false;\nfor (let i = 2; i * i <= MAXN; i++) {\n  if (isPrime[i]) {\n    for (let j = i * i; j <= MAXN; j += i) isPrime[j] = false;\n  }\n}\nconst primes = [];\nfor (let i = 2; i <= MAXN; i++) if (isPrime[i]) primes.push(i);\nconst ans = new Array(MAXN + 1).fill(0);\nfor (let pi = 0; pi < primes.length; pi++) {\n  const p = primes[pi];\n  for (let qi = 0; qi < primes.length; qi++) {\n    const q = primes[qi];\n    const sum = p + 2 * q;\n    if (sum > MAXN) break;\n    ans[sum]++;\n  }\n}\nconst T = Number(input[idx++]);\nlet out = [];\nfor (let t = 0; t < T; t++) {\n  const N = Number(input[idx++]);\n  out.push(String(ans[N]));\n}\nconsole.log(out.join('\\n'));\n"
     }
-  }
+  },
+  "verified": false
 }

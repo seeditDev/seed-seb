@@ -21,14 +21,14 @@
     ]
   },
   "content": {
-    "problemStatement": "Chef has a sequence **A** containing **N** integers **A1, A2, ..., AN** and an integer **K**.\n\nFor each pair (**l**, **r**) such that 1 \u2264 **l** \u2264 **r** \u2264 **N**, Chef defines functions **MIN**(**l**, **r**) = **min**(**al**, **al+1**, ..., **ar**) and **XOR**(**l**, **r**) = **al xor al+1 xor ... xor ar**. Then, Chef defines a function **f**(**l**, **r**) = **MIN**(**l**, **r**) \u2219 **XOR**(**l**, **r**).\n\nChef wants to know the **K**-th smallest possible value of **f**(**l**, **r**). Formally, consider a sorted array of all **N(N+1)/2** possible values of **f**(**l**, **r**) for all possible pairs (**l**, **r**); Chef wants to know the **K**-th element of this array after it's sorted.\n\nHelp Chef!",
+    "problemStatement": "Chef has a sequence **A** containing **N** integers **A1, A2, ..., AN** and an integer **K**.\n\nFor each pair (**l**, **r**) such that 1 ≤ **l** ≤ **r** ≤ **N**, Chef defines functions **MIN**(**l**, **r**) = **min**(**al**, **al+1**, ..., **ar**) and **XOR**(**l**, **r**) = **al xor al+1 xor ... xor ar**. Then, Chef defines a function **f**(**l**, **r**) = **MIN**(**l**, **r**) ∙ **XOR**(**l**, **r**).\n\nChef wants to know the **K**-th smallest possible value of **f**(**l**, **r**). Formally, consider a sorted array of all **N(N+1)/2** possible values of **f**(**l**, **r**) for all possible pairs (**l**, **r**); Chef wants to know the **K**-th element of this array after it's sorted.\n\nHelp Chef!",
     "constraints": [
       "1 <= N <= 50,000",
       "1 <= K <= N * (N+1) / 2",
       "1 <= Ai <= 50,000 for each valid i"
     ],
     "inputFormat": "The first line of each test case contains two space-separated integers N and K. The second line contains N space-separated integers A1, A2, ..., AN.",
-    "outputFormat": "For each test case, print a single line containing one integer \u2014 the K-th smallest value of f(l, r).",
+    "outputFormat": "For each test case, print a single line containing one integer — the K-th smallest value of f(l, r).",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -115,8 +115,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can use a brute force approach by calculating the value of f(l, r) for all possible pairs (l, r) and then sorting these values to find the K-th smallest one. We can use two nested loops to generate all possible pairs (l, r) and calculate the corresponding values of f(l, r). We can use a sorting algorithm like quicksort or mergesort to sort the values of f(l, r). The time complexity of this approach is O(N^2 log N) due to the sorting step.",
-    "timeComplexity": "O(N^2 log N) \u2014 per test case is O(N^2 log N), total is O(T * N^2 log N)",
-    "spaceComplexity": "O(N^2) \u2014 we need to store the values of f(l, r) for all possible pairs (l, r)",
+    "timeComplexity": "O(N^2 log N) — per test case is O(N^2 log N), total is O(T * N^2 log N)",
+    "spaceComplexity": "O(N^2) — we need to store the values of f(l, r) for all possible pairs (l, r)",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n#define MAXN 50000\nint compare(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\nint main() {\n    int T, N, K;\n    scanf(\"%d\", &T);\n    while (T--) {\n        scanf(\"%d %d\", &N, &K);\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d\", &A[i]);\n        }\n        int f[N * (N + 1) / 2];\n        int idx = 0;\n        for (int l = 0; l < N; l++) {\n            for (int r = l; r < N; r++) {\n                int min_val = A[l];\n                int xor_val = 0;\n                for (int i = l; i <= r; i++) {\n                    min_val = (min_val < A[i]) ? min_val : A[i];\n                    xor_val ^= A[i];\n                }\n                f[idx++] = min_val * xor_val;\n            }\n        }\n        qsort(f, N * (N + 1) / 2, sizeof(int), compare);\n        printf(\"%d\\n\", f[K - 1]);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <algorithm>\nusing namespace std;\n#define MAXN 50000\nint main() {\n    int T, N, K;\n    cin >> T;\n    while (T--) {\n        cin >> N >> K;\n        int A[N];\n        for (int i = 0; i < N; i++) {\n            cin >> A[i];\n        }\n        int f[N * (N + 1) / 2];\n        int idx = 0;\n        for (int l = 0; l < N; l++) {\n            for (int r = l; r < N; r++) {\n                int min_val = A[l];\n                int xor_val = 0;\n                for (int i = l; i <= r; i++) {\n                    min_val = min(min_val, A[i]);\n                    xor_val ^= A[i];\n                }\n                f[idx++] = min_val * xor_val;\n            }\n        }\n        sort(f, f + N * (N + 1) / 2);\n        cout << f[K - 1] << endl;\n    }\n    return 0;\n}",
@@ -124,5 +124,6 @@
       "Python3": "import sys\nT = int(input())\nfor _ in range(T):\n    N, K = map(int, input().split())\n    A = list(map(int, input().split()))\n    f = []\n    for l in range(N):\n        for r in range(l, N):\n            min_val = min(A[l:r+1])\n            xor_val = 0\n            for i in range(l, r+1):\n                xor_val ^= A[i]\n            f.append(min_val * xor_val)\n    f.sort()\n    print(f[K-1])",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const [N, K] = readline().split(' ').map(Number);\n    const A = readline().split(' ').map(Number);\n    const f = [];\n    for (let l = 0; l < N; l++) {\n        for (let r = l; r < N; r++) {\n            let min_val = A[l];\n            let xor_val = 0;\n            for (let j = l; j <= r; j++) {\n                min_val = Math.min(min_val, A[j]);\n                xor_val ^= A[j];\n            }\n            f.push(min_val * xor_val);\n        }\n    }\n    f.sort((a, b) => a - b);\n    console.log(f[K - 1]);\n}"
     }
-  }
+  },
+  "verified": false
 }

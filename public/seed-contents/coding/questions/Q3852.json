@@ -21,16 +21,16 @@
     ]
   },
   "content": {
-    "problemStatement": "You are given a convex polygon with **N** vertices.\n\nYou have to find any \u230a**N**/10\u230b distinct points with integer coordinates that lie **strictly inside** the polygon, or determine that such a set of points doesn't exist.\n\nNote: \u230a\u230b denotes the floor function, typically used in integer division.",
+    "problemStatement": "You are given a convex polygon with **N** vertices.\n\nYou have to find any ⌊**N**/10⌋ distinct points with integer coordinates that lie **strictly inside** the polygon, or determine that such a set of points doesn't exist.\n\nNote: ⌊⌋ denotes the floor function, typically used in integer division.",
     "constraints": [
-      "1 \u2264 T \u2264 10^5",
-      "10 \u2264 N \u2264 10^5",
-      "sum of N over all test cases \u2264 5 * 10^5",
-      "|x|, |y| \u2264 10^9",
+      "1 ≤ T ≤ 10^5",
+      "10 ≤ N ≤ 10^5",
+      "sum of N over all test cases ≤ 5 * 10^5",
+      "|x|, |y| ≤ 10^9",
       "no three vertices of the polygon will be collinear"
     ],
     "inputFormat": "The first line of the input contains a single integer T denoting the number of test cases. The description of T test cases follows. The first line of each test case contains a single integer N denoting the number of vertices of the polygon. The following N lines describe the vertices of the polygon in anticlockwise order. Each of these lines contains two space-separated integers x and y denoting the coordinates of one vertex.",
-    "outputFormat": "For each test case, if a valid set of points doesn't exist, print a single line containing the integer -1. Otherwise, print \u230aN/10\u230b lines. Each of these line should contain two space-separated integers denoting the coordinates of one point.",
+    "outputFormat": "For each test case, if a valid set of points doesn't exist, print a single line containing the integer -1. Otherwise, print ⌊N/10⌋ lines. Each of these line should contain two space-separated integers denoting the coordinates of one point.",
     "sampleTestCases": [
       {
         "id": "sample_1",
@@ -116,9 +116,9 @@
     ]
   },
   "solution": {
-    "approach": "To solve this problem, we can use the concept of convex polygons and integer coordinates. We need to find \u230aN/10\u230b distinct points with integer coordinates that lie strictly inside the polygon. We can start by finding the centroid of the polygon, which is the average of the x-coordinates and the y-coordinates of the vertices. Then, we can find the points that lie inside the polygon by checking if the point is on the same side of each edge as the centroid. If the point is on the same side of each edge, it lies inside the polygon.",
-    "timeComplexity": "O(T * N) \u2014 where T is the number of test cases and N is the number of vertices of the polygon. The time complexity is linear with respect to the input size.",
-    "spaceComplexity": "O(N) \u2014 where N is the number of vertices of the polygon. The space complexity is linear with respect to the input size.",
+    "approach": "To solve this problem, we can use the concept of convex polygons and integer coordinates. We need to find ⌊N/10⌋ distinct points with integer coordinates that lie strictly inside the polygon. We can start by finding the centroid of the polygon, which is the average of the x-coordinates and the y-coordinates of the vertices. Then, we can find the points that lie inside the polygon by checking if the point is on the same side of each edge as the centroid. If the point is on the same side of each edge, it lies inside the polygon.",
+    "timeComplexity": "O(T * N) — where T is the number of test cases and N is the number of vertices of the polygon. The time complexity is linear with respect to the input size.",
+    "spaceComplexity": "O(N) — where N is the number of vertices of the polygon. The space complexity is linear with respect to the input size.",
     "code": {
       "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <math.h>\n\nint main() {\n    int T;\n    scanf(\"%d\", &T);\n    while (T--) {\n        int N;\n        scanf(\"%d\", &N);\n        int x[N], y[N];\n        for (int i = 0; i < N; i++) {\n            scanf(\"%d %d\", &x[i], &y[i]);\n        }\n        int points = N / 10;\n        if (points == 0) {\n            printf(\"-1\\n\");\n        } else {\n            double centroid_x = 0, centroid_y = 0;\n            for (int i = 0; i < N; i++) {\n                centroid_x += x[i];\n                centroid_y += y[i];\n            }\n            centroid_x /= N;\n            centroid_y /= N;\n            for (int i = 0; i < points; i++) {\n                double point_x = centroid_x + (i % 2 == 0 ? 1 : -1) * (i + 1);\n                double point_y = centroid_y + (i % 2 == 0 ? 1 : -1) * (i + 1);\n                printf(\"%.0f %.0f\\n\", point_x, point_y);\n            }\n        }\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <vector>\nusing namespace std;\n\nint main() {\n    int T;\n    cin >> T;\n    while (T--) {\n        int N;\n        cin >> N;\n        vector<int> x(N), y(N);\n        for (int i = 0; i < N; i++) {\n            cin >> x[i] >> y[i];\n        }\n        int points = N / 10;\n        if (points == 0) {\n            cout << -1 << endl;\n        } else {\n            double centroid_x = 0, centroid_y = 0;\n            for (int i = 0; i < N; i++) {\n                centroid_x += x[i];\n                centroid_y += y[i];\n            }\n            centroid_x /= N;\n            centroid_y /= N;\n            for (int i = 0; i < points; i++) {\n                double point_x = centroid_x + (i % 2 == 0 ? 1 : -1) * (i + 1);\n                double point_y = centroid_y + (i % 2 == 0 ? 1 : -1) * (i + 1);\n                cout << (int)point_x << \" \" << (int)point_y << endl;\n            }\n        }\n    }\n    return 0;\n}",
@@ -126,5 +126,6 @@
       "Python3": "import sys\nT = int(input())\nfor _ in range(T):\n    N = int(input())\n    x = [0] * N\n    y = [0] * N\n    for i in range(N):\n        x[i], y[i] = map(int, input().split())\n    points = N // 10\n    if points == 0:\n        print(-1)\n    else:\n        centroid_x = sum(x) / N\n        centroid_y = sum(y) / N\n        for i in range(points):\n            point_x = centroid_x + (1 if i % 2 == 0 else -1) * (i + 1)\n            point_y = centroid_y + (1 if i % 2 == 0 else -1) * (i + 1)\n            print(int(point_x), int(point_y))",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\nconst readline = () => lines[idx++];\nconst T = parseInt(readline());\nfor (let i = 0; i < T; i++) {\n    const N = parseInt(readline());\n    const x = new Array(N);\n    const y = new Array(N);\n    for (let j = 0; j < N; j++) {\n        const [xi, yi] = readline().split(' ').map(Number);\n        x[j] = xi;\n        y[j] = yi;\n    }\n    const points = Math.floor(N / 10);\n    if (points === 0) {\n        console.log(-1);\n    } else {\n        let centroid_x = 0;\n        let centroid_y = 0;\n        for (let j = 0; j < N; j++) {\n            centroid_x += x[j];\n            centroid_y += y[j];\n        }\n        centroid_x /= N;\n        centroid_y /= N;\n        for (let j = 0; j < points; j++) {\n            const point_x = centroid_x + (j % 2 === 0 ? 1 : -1) * (j + 1);\n            const point_y = centroid_y + (j % 2 === 0 ? 1 : -1) * (j + 1);\n            console.log(Math.floor(point_x), Math.floor(point_y));\n        }\n    }\n}"
     }
-  }
+  },
+  "verified": false
 }

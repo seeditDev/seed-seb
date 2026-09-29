@@ -34,7 +34,7 @@
         "id": "sample_1",
         "input": "4\na)b(c)d\n))((\n(a(b(c)d)\n()",
         "output": "ab(c)d\n-1\na(b(c)d)\n()",
-        "explanation": "Test case 1: remove the first ')' \u2192 ab(c)d.\\nTest case 2: all parentheses are unmatched \u2192 -1.\\nTest case 3: remove the first '(' \u2192 a(b(c)d).\\nTest case 4: already valid."
+        "explanation": "Test case 1: remove the first ')' → ab(c)d.\\nTest case 2: all parentheses are unmatched → -1.\\nTest case 3: remove the first '(' → a(b(c)d).\\nTest case 4: already valid."
       },
       {
         "id": "sample_2",
@@ -46,7 +46,7 @@
         "id": "sample_3",
         "input": "2\n)))(((\n()",
         "output": "-1\n()",
-        "explanation": "First string: every parenthesis is unmatched, result is empty \u2192 -1. Second string is already a correct pair."
+        "explanation": "First string: every parenthesis is unmatched, result is empty → -1. Second string is already a correct pair."
       }
     ]
   },
@@ -114,7 +114,7 @@
     ]
   },
   "solution": {
-    "approach": "We scan the string from left to right using a stack that stores indices of unmatched '(' characters. When we encounter a ')', if the stack is non\u2011empty we pop one '(' (they form a matched pair); otherwise the ')' is unmatched and we mark it for deletion. After the scan, any indices left in the stack correspond to unmatched '(' and are also marked for deletion. Finally we build the answer by skipping all marked characters. If the resulting string is empty we output -1. This greedy removal deletes the minimum possible number of parentheses because every deletion is forced by an unmatched parenthesis; all matched pairs are kept.",
+    "approach": "We scan the string from left to right using a stack that stores indices of unmatched '(' characters. When we encounter a ')', if the stack is non‑empty we pop one '(' (they form a matched pair); otherwise the ')' is unmatched and we mark it for deletion. After the scan, any indices left in the stack correspond to unmatched '(' and are also marked for deletion. Finally we build the answer by skipping all marked characters. If the resulting string is empty we output -1. This greedy removal deletes the minimum possible number of parentheses because every deletion is forced by an unmatched parenthesis; all matched pairs are kept.",
     "timeComplexity": "O(|S|) per test case, O(total length of input) overall.",
     "spaceComplexity": "O(|S|) for the stack and the output string (both linear in the length of the input string).",
     "code": {
@@ -124,5 +124,6 @@
       "Python3": "import sys\ndef make_valid(s):\n    stack=[]\n    s_list=list(s)\n    for i,ch in enumerate(s_list):\n        if ch=='(':\n            stack.append(i)\n        elif ch==')':\n            if not stack:\n                s_list[i]='#'\n            else:\n                stack.pop()\n    while stack:\n        idx=stack.pop()\n        s_list[idx]='#'\n    res=''.join(c for c in s_list if c!='#')\n    return res if res else '-1'\n\ndata=sys.stdin.read().splitlines()\nif not data:\n    sys.exit()\nT=int(data[0])\nout=[]\nfor i in range(1,T+1):\n    out.append(make_valid(data[i].rstrip('\\n')))\nprint('\\n'.join(out))",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0,'utf-8').trim().split('\\n');\nlet idx=0;\nfunction makeValid(s){\n  const arr = s.split('');\n  const stack=[];\n  for(let i=0;i<arr.length;i++){\n    if(arr[i]==='(') stack.push(i);\n    else if(arr[i]===')'){\n      if(stack.length===0) arr[i]='#';\n      else stack.pop();\n    }\n  }\n  while(stack.length){\n    const pos=stack.pop();\n    arr[pos]='#';\n  }\n  const res = arr.filter(ch=>ch!=='#').join('');\n  return res.length===0?'-1':res;\n}\nconst T = parseInt(lines[idx++]);\nlet out=[];\nfor(let t=0;t<T;t++){\n  const s = lines[idx++]||'';\n  out.push(makeValid(s));\n}\nconsole.log(out.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }

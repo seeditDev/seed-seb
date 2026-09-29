@@ -22,12 +22,12 @@
   "content": {
     "problemStatement": "Chef decided to open a new restaurant in the town. The town already has **N** restaurants, each of which operates in an area of circular shape with its center at **xi, yi** and radius **ri**. For any point, there is at most one restaurant operating there.\n\nChef wants to build his restaurant in a strategic place. That's why he asks you some questions - find the total area covered by restaurants in the rectangle defined by the points **x1, y1, x2, y2** where **(x1, y1)** is the lower left corner and **(x2, y2)** is the upper right corner. Chef is not that good in answering these questions, so he asked you to help him in this.",
     "constraints": [
-      "1 \u2264 N \u2264 50,000",
-      "1 \u2264 Q \u2264 100,000",
-      "0 \u2264 xi, yi \u2264 50,000",
-      "1 \u2264 ri \u2264 50",
-      "0 \u2264 xi1 < xi2 \u2264 50,000",
-      "0 \u2264 yi1 < yi2 \u2264 50,000",
+      "1 ≤ N ≤ 50,000",
+      "1 ≤ Q ≤ 100,000",
+      "0 ≤ xi, yi ≤ 50,000",
+      "1 ≤ ri ≤ 50",
+      "0 ≤ xi1 < xi2 ≤ 50,000",
+      "0 ≤ yi1 < yi2 ≤ 50,000",
       "No two circles touch or intersect each other."
     ],
     "inputFormat": "The first line contains two integers N and Q, denoting the number of restaurants and the number of questions. Each of the next N lines contains three space-separated integers x, y, and r, denoting the x and y coordinates of the center and the radius of the restaurant, respectively. Each of the next Q lines contains four space-separated integers x1, y1, x2, and y2, denoting a question as defined in the statement.",
@@ -106,8 +106,8 @@
   },
   "solution": {
     "approach": "To solve this problem, we can iterate over each query and calculate the area of the intersection between the rectangle and each circle. We can use the formula for the area of a circle segment to calculate the area of the intersection.",
-    "timeComplexity": "O(Q * N) \u2014 for each query, we iterate over all circles to calculate the intersection area.",
-    "spaceComplexity": "O(1) \u2014 we only use a constant amount of space to store the input and the current query.",
+    "timeComplexity": "O(Q * N) — for each query, we iterate over all circles to calculate the intersection area.",
+    "spaceComplexity": "O(1) — we only use a constant amount of space to store the input and the current query.",
     "code": {
       "C": "#include <stdio.h>\n#include <math.h>\n\nint main() {\n    int N, Q;\n    scanf(\"%d %d\", &N, &Q);\n    int x[N], y[N], r[N];\n    for (int i = 0; i < N; i++) {\n        scanf(\"%d %d %d\", &x[i], &y[i], &r[i]);\n    }\n    for (int i = 0; i < Q; i++) {\n        int x1, y1, x2, y2;\n        scanf(\"%d %d %d %d\", &x1, &y1, &x2, &y2);\n        double area = 0;\n        for (int j = 0; j < N; j++) {\n            double dx = x[j] - x1;\n            double dy = y[j] - y1;\n            double distance = sqrt(dx * dx + dy * dy);\n            if (distance <= r[j]) {\n                // calculate the area of the intersection\n                double angle = acos(distance / r[j]);\n                area += 0.5 * r[j] * r[j] * (2 * angle - sin(2 * angle));\n            }\n        }\n        printf(\"%.10f\\n\", area);\n    }\n    return 0;\n}",
       "C++": "#include <iostream>\n#include <cmath>\nusing namespace std;\n\nint main() {\n    int N, Q;\n    cin >> N >> Q;\n    int x[N], y[N], r[N];\n    for (int i = 0; i < N; i++) {\n        cin >> x[i] >> y[i] >> r[i];\n    }\n    for (int i = 0; i < Q; i++) {\n        int x1, y1, x2, y2;\n        cin >> x1 >> y1 >> x2 >> y2;\n        double area = 0;\n        for (int j = 0; j < N; j++) {\n            double dx = x[j] - x1;\n            double dy = y[j] - y1;\n            double distance = sqrt(dx * dx + dy * dy);\n            if (distance <= r[j]) {\n                // calculate the area of the intersection\n                double angle = acos(distance / r[j]);\n                area += 0.5 * r[j] * r[j] * (2 * angle - sin(2 * angle));\n            }\n        }\n        cout << fixed << setprecision(10) << area << endl;\n    }\n    return 0;\n}",
@@ -115,5 +115,6 @@
       "Python3": "import math\n\nN, Q = map(int, input().split())\n\nx = [0] * N\ny = [0] * N\nr = [0] * N\n\nfor i in range(N):\n    x[i], y[i], r[i] = map(int, input().split())\n\nfor i in range(Q):\n    x1, y1, x2, y2 = map(int, input().split())\n    area = 0\n    for j in range(N):\n        dx = x[j] - x1\n        dy = y[j] - y1\n        distance = math.sqrt(dx * dx + dy * dy)\n        if distance <= r[j]:\n            # calculate the area of the intersection\n            angle = math.acos(distance / r[j])\n            area += 0.5 * r[j] * r[j] * (2 * angle - math.sin(2 * angle))\n    print(\"%.10f\" % area)",
       "JavaScript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nlet idx = 0;\n\nfunction nextLine() {\n    return lines[idx++];\n}\n\nfunction nextInt() {\n    return parseInt(nextLine());\n}\n\nfunction nextInts() {\n    return nextLine().split(' ').map(x => parseInt(x));\n}\n\nlet [N, Q] = nextInts();\nlet x = new Array(N);\nlet y = new Array(N);\nlet r = new Array(N);\n\nfor (let i = 0; i < N; i++) {\n    [x[i], y[i], r[i]] = nextInts();\n}\n\nfor (let i = 0; i < Q; i++) {\n    let [x1, y1, x2, y2] = nextInts();\n    let area = 0;\n    for (let j = 0; j < N; j++) {\n        let dx = x[j] - x1;\n        let dy = y[j] - y1;\n        let distance = Math.sqrt(dx * dx + dy * dy);\n        if (distance <= r[j]) {\n            // calculate the area of the intersection\n            let angle = Math.acos(distance / r[j]);\n            area += 0.5 * r[j] * r[j] * (2 * angle - Math.sin(2 * angle));\n        }\n    }\n    console.log(area.toFixed(10));\n}"
     }
-  }
+  },
+  "verified": false
 }

@@ -1,33 +1,18 @@
 {
-  "questionId": "Q1311",
-  "title": "Get Watched Videos by Your Friends Problem",
   "slug": "get-watched-videos-by-your-friends",
-  "version": 1,
-  "createdAt": "2026-07-10",
-  "updatedAt": "2026-07-10",
-  "metadata": {
-    "category": "Arrays",
-    "difficulty": "Medium",
-    "isPremium": false,
-    "tags": [
-      "array",
-      "hash-table",
-      "breadth-first-search",
-      "graph",
-      "sorting"
-    ],
-    "companyTags": [],
-    "topicTags": [
-      "array",
-      "hash-table",
-      "breadth-first-search",
-      "graph",
-      "sorting"
-    ],
-    "QBCategory": "LCD"
-  },
+  "hints": [
+    "Model people and friendships as an undirected graph and use BFS from id.",
+    "Stop or separate the traversal by BFS levels so only shortest distance exactly equal to level is selected.",
+    "Count videos with a hash map and sort by frequency first, then by video name.",
+    "Remember that multiple paths to the same person must not cause that person to be counted more than once."
+  ],
+  "title": "Get Watched Videos by Your Friends Problem",
   "content": {
-    "problemStatement": "There are `n` people, each person has a unique *id* between `0` and `n-1`. With the arrays `watchedVideos` and `friends`, where `watchedVideos[i]` and `friends[i]` contain the list of watched videos and the list of friends respectively for the person with `id = i`.\n\nLevel **1** of videos are all watched videos by your friends, level **2** of videos are all watched videos by the friends of your friends and so on. In general, the level `k` of videos are all watched videos by people with the shortest path **exactly** equal to `k` with you. With your `id` and the `level` of videos, output the list of videos ordered by their frequencies (increasing). For videos with the same frequency order them alphabetically from least to greatest.\n\n**Example 1:**\n\n**![](https://assets.leetcode.com/uploads/2020/01/02/leetcode_friends_1.png)**\n\n```\nInput: watchedVideos = [[\"A\",\"B\"],[\"C\"],[\"B\",\"C\"],[\"D\"]], friends = [[1,2],[0,3],[0,3],[1,2]], id = 0, level = 1\nOutput: [\"B\",\"C\"] \nExplanation: \nYou have id = 0 (green color in the figure) and your friends are (yellow color in the figure):\nPerson with id = 1 -> watchedVideos = [\"C\"] \nPerson with id = 2 -> watchedVideos = [\"B\",\"C\"] \nThe frequencies of watchedVideos by your friends are: \nB -> 1 \nC -> 2\n```\n\n**Example 2:**\n\n**![](https://assets.leetcode.com/uploads/2020/01/02/leetcode_friends_2.png)**\n\n```\nInput: watchedVideos = [[\"A\",\"B\"],[\"C\"],[\"B\",\"C\"],[\"D\"]], friends = [[1,2],[0,3],[0,3],[1,2]], id = 0, level = 2\nOutput: [\"D\"]\nExplanation: \nYou have id = 0 (green color in the figure) and the only friend of your friends is the person with id = 3 (yellow color in the figure).\n```\n\n**Constraints:**\n\n* `n == watchedVideos.length == friends.length`\n* `2 <= n <= 100`\n* `1 <= watchedVideos[i].length <= 100`\n* `1 <= watchedVideos[i][j].length <= 8`\n* `0 <= friends[i].length < n`\n* `0 <= friends[i][j] < n`\n* `0 <= id < n`\n* `1 <= level < n`\n* if `friends[i]` includes `j`, then `friends[j]` includes `i`",
+    "notes": [
+      "Use BFS because the required level is defined by the shortest-path distance from id.",
+      "Collect videos only from people whose shortest-path distance is exactly level; do not include smaller levels.",
+      "For each video, count how many target-level people watched it. Sort by increasing frequency, then lexicographically for ties."
+    ],
     "constraints": [
       "n == watchedVideos.length == friends.length",
       "2 <= n <= 100",
@@ -47,279 +32,47 @@
         "type": "reg",
         "input": "[[[\"A\",\"B\"],[\"C\"],[\"B\",\"C\"],[\"D\"]],[[1,2],[0,3],[0,3],[1,2]],0,1]",
         "output": "[\"B\",\"C\"]",
-        "explanation": "You have id = 0 (green color in the figure) and your friends are (yellow color in the figure):\nPerson with id = 1 -> watchedVideos = [\"C\"] \nPerson with id = 2 -> watchedVideos = [\"B\",\"C\"] \nThe frequencies of watchedVideos by your friends are: \nB -> 1 \nC -> 2"
+        "explanation": "At level 1, people 1 and 2 are reached. Video B is watched by 1 friend and C by 2 friends, so the order is B, C."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "[[[\"A\",\"B\"],[\"C\"],[\"B\",\"C\"],[\"D\"]],[[1,2],[0,3],[0,3],[1,2]],0,2]",
         "output": "[\"D\"]",
-        "explanation": "You have id = 0 (green color in the figure) and the only friend of your friends is the person with id = 3 (yellow color in the figure)."
+        "explanation": "At level 2, only person 3 is reached, and that person watched video D."
       }
     ],
-    "notes": []
+    "problemStatement": "There are `n` people, each person has a unique *id* between `0` and `n-1`. With the arrays `watchedVideos` and `friends`, where `watchedVideos[i]` and `friends[i]` contain the list of watched videos and the list of friends respectively for the person with `id = i`.\n\nLevel **1** of videos are all watched videos by your friends, level **2** of videos are all watched videos by the friends of your friends and so on. In general, the level `k` of videos are all watched videos by people with the shortest path **exactly** equal to `k` with you. With your `id` and the `level` of videos, output the list of videos ordered by their frequencies (increasing). For videos with the same frequency order them alphabetically from least to greatest.\n\n**Example 1:**\n\n**![](https://assets.leetcode.com/uploads/2020/01/02/leetcode_friends_1.png)**\n\n```\nInput: watchedVideos = [[\"A\",\"B\"],[\"C\"],[\"B\",\"C\"],[\"D\"]], friends = [[1,2],[0,3],[0,3],[1,2]], id = 0, level = 1\nOutput: [\"B\",\"C\"] \nExplanation: \nYou have id = 0 (green color in the figure) and your friends are (yellow color in the figure):\nPerson with id = 1 -> watchedVideos = [\"C\"] \nPerson with id = 2 -> watchedVideos = [\"B\",\"C\"] \nThe frequencies of watchedVideos by your friends are: \nB -> 1 \nC -> 2\n```\n\n**Example 2:**\n\n**![](https://assets.leetcode.com/uploads/2020/01/02/leetcode_friends_2.png)**\n\n```\nInput: watchedVideos = [[\"A\",\"B\"],[\"C\"],[\"B\",\"C\"],[\"D\"]], friends = [[1,2],[0,3],[0,3],[1,2]], id = 0, level = 2\nOutput: [\"D\"]\nExplanation: \nYou have id = 0 (green color in the figure) and the only friend of your friends is the person with id = 3 (yellow color in the figure).\n```\n\n**Constraints:**\n\n* `n == watchedVideos.length == friends.length`\n* `2 <= n <= 100`\n* `1 <= watchedVideos[i].length <= 100`\n* `1 <= watchedVideos[i][j].length <= 8`\n* `0 <= friends[i].length < n`\n* `0 <= friends[i][j] < n`\n* `0 <= id < n`\n* `1 <= level < n`\n* if `friends[i]` includes `j`, then `friends[j]` includes `i`"
   },
-  "testCases": {
-    "hidden": [
-      {
-        "id": "tc_01",
-        "type": "reg",
-        "label": "Minimum array size",
-        "input": "[[[\"A\"], [\"B\"]], [[1, 0]], 0, 1]",
-        "expectedOutput": "[\"B\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_02",
-        "type": "reg",
-        "label": "Maximum array size",
-        "input": "[[[\"A1\", \"A2\", \"A3\", \"A4\", \"A5\", \"A6\", \"A7\", \"A8\", \"A9\", \"A10\", \"A11\", \"A12\", \"A13\", \"A14\", \"A15\", \"A16\", \"A17\", \"A18\", \"A19\", \"A20\", \"A21\", \"A22\", \"A23\", \"A24\", \"A25\", \"A26\", \"A27\", \"A28\", \"A29\", \"A30\", \"A31\", \"A32\", \"A33\", \"A34\", \"A35\", \"A36\", \"A37\", \"A38\", \"A39\", \"A40\", \"A41\", \"A42\", \"A43\", \"A44\", \"A45\", \"A46\", \"A47\", \"A48\", \"A49\", \"A50\", \"A51\", \"A52\", \"A53\", \"A54\", \"A55\", \"A56\", \"A57\", \"A58\", \"A59\", \"A60\", \"A61\", \"A62\", \"A63\", \"A64\", \"A65\", \"A66\", \"A67\", \"A68\", \"A69\", \"A70\", \"A71\", \"A72\", \"A73\", \"A74\", \"A75\", \"A76\", \"A77\", \"A78\", \"A79\", \"A80\", \"A81\", \"A82\", \"A83\", \"A84\", \"A85\", \"A86\", \"A87\", \"A88\", \"A89\", \"A90\", \"A91\", \"A92\", \"A93\", \"A94\", \"A95\", \"A96\", \"A97\", \"A98\", \"A99\", \"A100\"], [\"B1\", \"B2\", \"B3\", \"B4\", \"B5\", \"B6\", \"B7\", \"B8\", \"B9\", \"B10\", \"B11\", \"B12\", \"B13\", \"B14\", \"B15\", \"B16\", \"B17\", \"B18\", \"B19\", \"B20\", \"B21\", \"B22\", \"B23\", \"B24\", \"B25\", \"B26\", \"B27\", \"B28\", \"B29\", \"B30\", \"B31\", \"B32\", \"B33\", \"B34\", \"B35\", \"B36\", \"B37\", \"B38\", \"B39\", \"B40\", \"B41\", \"B42\", \"B43\", \"B44\", \"B45\", \"B46\", \"B47\", \"B48\", \"B49\", \"B50\", \"B51\", \"B52\", \"B53\", \"B54\", \"B55\", \"B56\", \"B57\", \"B58\", \"B59\", \"B60\", \"B61\", \"B62\", \"B63\", \"B64\", \"B65\", \"B66\", \"B67\", \"B68\", \"B69\", \"B70\", \"B71\", \"B72\", \"B73\", \"B74\", \"B75\", \"B76\", \"B77\", \"B78\", \"B79\", \"B80\", \"B81\", \"B82\", \"B83\", \"B84\", \"B85\", \"B86\", \"B87\", \"B88\", \"B89\", \"B90\", \"B91\", \"B92\", \"B93\", \"B94\", \"B95\", \"B96\", \"B97\", \"B98\", \"B99\", \"B100\"]], [[1, 0]], 0, 1]",
-        "expectedOutput": "[\"B1\", \"B10\", \"B100\", \"B11\", \"B12\", \"B13\", \"B14\", \"B15\", \"B16\", \"B17\", \"B18\", \"B19\", \"B2\", \"B20\", \"B21\", \"B22\", \"B23\", \"B24\", \"B25\", \"B26\", \"B27\", \"B28\", \"B29\", \"B3\", \"B30\", \"B31\", \"B32\", \"B33\", \"B34\", \"B35\", \"B36\", \"B37\", \"B38\", \"B39\", \"B4\", \"B40\", \"B41\", \"B42\", \"B43\", \"B44\", \"B45\", \"B46\", \"B47\", \"B48\", \"B49\", \"B5\", \"B50\", \"B51\", \"B52\", \"B53\", \"B54\", \"B55\", \"B56\", \"B57\", \"B58\", \"B59\", \"B6\", \"B60\", \"B61\", \"B62\", \"B63\", \"B64\", \"B65\", \"B66\", \"B67\", \"B68\", \"B69\", \"B7\", \"B70\", \"B71\", \"B72\", \"B73\", \"B74\", \"B75\", \"B76\", \"B77\", \"B78\", \"B79\", \"B8\", \"B80\", \"B81\", \"B82\", \"B83\", \"B84\", \"B85\", \"B86\", \"B87\", \"B88\", \"B89\", \"B9\", \"B90\", \"B91\", \"B92\", \"B93\", \"B94\", \"B95\", \"B96\", \"B97\", \"B98\", \"B99\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_03",
-        "type": "reg",
-        "label": "All elements same",
-        "input": "[[[\"A\"], [\"A\"]], [[1, 0]], 0, 1]",
-        "expectedOutput": "[\"A\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_04",
-        "type": "reg",
-        "label": "Strictly increasing",
-        "input": "[[[\"A1\"], [\"A2\"]], [[1, 0]], 0, 1]",
-        "expectedOutput": "[\"A2\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_05",
-        "type": "reg",
-        "label": "Strictly decreasing",
-        "input": "[[[\"A2\"], [\"A1\"]], [[1, 0]], 0, 1]",
-        "expectedOutput": "[\"A1\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_06",
-        "type": "reg",
-        "label": "Random order",
-        "input": "[[[\"A3\"], [\"A1\"]], [[1, 0]], 0, 1]",
-        "expectedOutput": "[\"A1\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_07",
-        "type": "reg",
-        "label": "Large negative values",
-        "input": "[[[\"A\"], [\"B\"]], [[-1, -2]], 0, 1]",
-        "expectedOutput": "[\"A\", \"B\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_08",
-        "type": "reg",
-        "label": "Duplicate values",
-        "input": "[[[\"A\", \"A\"], [\"B\", \"B\"], [\"C\", \"C\"], [\"D\", \"D\"]], [[1, 2], [0, 3], [0, 3], [1, 2]], 0, 1]",
-        "expectedOutput": "[\"B\", \"C\"]",
-        "weight": 4
-      },
-      {
-        "id": "tc_09",
-        "type": "reg",
-        "label": "Mixed positive/negative",
-        "input": "[[[\"A\"], [\"B\"], [\"C\"], [\"D\"]], [[1, 2], [0, 3], [0, 3], [1, 2]], 0, 1]",
-        "expectedOutput": "[\"B\", \"C\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_10",
-        "type": "reg",
-        "label": "Answer at beginning",
-        "input": "[[[\"A\", \"B\"], [\"C\"], [\"B\", \"C\"], [\"D\"]], [[1, 2], [0, 3], [0, 3], [1, 2]], 0, 1]",
-        "expectedOutput": "[\"B\", \"C\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_11",
-        "type": "reg",
-        "label": "Answer at middle",
-        "input": "[[[\"A\", \"B\"], [\"C\"], [\"B\", \"C\"], [\"D\"]], [[1, 2], [0, 3], [0, 3], [1, 2]], 1, 1]",
-        "expectedOutput": "[\"A\", \"B\", \"D\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_12",
-        "type": "reg",
-        "label": "Answer at end",
-        "input": "[[[\"A\", \"B\"], [\"C\"], [\"B\", \"C\"], [\"D\"]], [[1, 2], [0, 3], [0, 3], [1, 2]], 3, 1]",
-        "expectedOutput": "[\"B\", \"C\"]",
-        "weight": 2
-      },
-      {
-        "id": "tc_13",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_14",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_15",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_16",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_17",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_18",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_19",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_20",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      }
+  "judging": {
+    "notes": [
+      "Use BFS to find exactly-level people, count their videos, and sort by (frequency, videoName)."
     ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    "timeLimitMs": 2000,
+    "memoryLimitMb": 256,
+    "supportedLanguages": [
+      "C",
+      "C++",
+      "Java",
+      "Python3",
+      "JavaScript"
+    ]
   },
   "scoring": {
-    "defaultScoringType": "PARTIAL_SCORE",
+    "maxScore": 100,
     "testCaseWeights": [
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
       4,
-      2,
-      2,
-      2,
-      2,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      3,
+      3,
       3,
       3,
       3,
@@ -339,57 +92,351 @@
       3,
       3
     ],
-    "maxScore": 100
+    "defaultScoringType": "PARTIAL_SCORE"
   },
-  "judging": {
-    "timeLimitMs": 2000,
-    "memoryLimitMb": 256,
-    "supportedLanguages": [
-      "C",
-      "C++",
-      "Java",
-      "Python3",
-      "JavaScript"
+  "version": 1,
+  "metadata": {
+    "tags": [
+      "array",
+      "hash-table",
+      "breadth-first-search",
+      "graph",
+      "sorting"
     ],
-    "notes": []
+    "category": "Graph",
+    "isPremium": false,
+    "topicTags": [
+      "graph",
+      "breadth-first-search",
+      "hash-table",
+      "sorting"
+    ],
+    "QBCategory": "LCD",
+    "difficulty": "Medium",
+    "companyTags": []
   },
   "solution": {
-    "approach": "The approach uses a breadth-first search (BFS) to find people at the given level, then counts the frequency of watched videos and sorts them.",
-    "timeComplexity": "O(n + vlogv)",
-    "spaceComplexity": "O(n + v)",
-    "code": {
-      "Python3": "# Time:  O(n + vlogv), v is the number of the level videos\n# Space: O(w)\n\nimport collections\n\n\nclass Solution(object):\n    def watchedVideosByFriends(self, watchedVideos, friends, id, level):\n        \"\"\"\n        :type watchedVideos: List[List[str]]\n        :type friends: List[List[int]]\n        :type id: int\n        :type level: int\n        :rtype: List[str]\n        \"\"\"\n        curr_level, lookup = set([id]), set([id])\n        for _ in range(level):\n            curr_level = set(j for i in curr_level for j in friends[i] if j not in lookup)\n            lookup |= curr_level\n        count = collections.Counter([v for i in curr_level for v in watchedVideos[i]])\n        return sorted(count.keys(), key=lambda x: (count[x], x))"
-    },
-    "notes": [],
+    "notes": [
+      "n is the number of people, E is the number of friendship edges, M is the total number of watched-video entries among people at the target level, and U is the number of distinct target-level videos.",
+      "A visited/dist array is required so cycles and multiple paths do not duplicate people.",
+      "Only shortest distance exactly equal to level contributes videos."
+    ],
+    "approach": "Run BFS from id to compute shortest-path distances. Collect exactly the people at the requested level, count each video they watched, and sort videos by increasing frequency and then lexicographically.",
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
       "better": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(n + E + M + U log U) time, O(n + U) auxiliary space.",
+        "description": "Use BFS to compute the shortest distance from id to every person, then scan the people with distance exactly level, count their videos with a hash map, and sort the result."
       },
       "optimal": {
-        "description": "",
-        "complexity": ""
+        "complexity": "O(n + E + M + U log U) time, O(n + U) auxiliary space.",
+        "description": "Use a level-by-level BFS and stop when the requested level is reached. Count videos only from that frontier and sort using frequency first and lexicographic order second."
+      },
+      "bruteForce": {
+        "complexity": "Exponential in the worst case without memoization.",
+        "description": "Enumerate paths from id up to the requested level, keep track of the shortest distance reached for each person, and then count and sort videos. Explicit path enumeration can grow exponentially in cyclic graphs."
       }
+    },
+    "timeComplexity": "O(n + E + M + U log U)",
+    "spaceComplexity": "O(n + U)",
+    "code": {
+      "Python3": "from typing import List\nfrom collections import Counter, deque\n\nclass Solution:\n    def watchedVideosByFriends(self, watchedVideos: List[List[str]], friends: List[List[int]], id: int, level: int) -> List[str]:\n        n = len(friends)\n        dist = [-1] * n\n        q = deque([id])\n        dist[id] = 0\n        while q:\n            u = q.popleft()\n            if dist[u] == level:\n                continue\n            for v in friends[u]:\n                if dist[v] == -1:\n                    dist[v] = dist[u] + 1\n                    q.append(v)\n        count = Counter()\n        for i in range(n):\n            if dist[i] == level:\n                count.update(watchedVideos[i])\n        return sorted(count, key=lambda s: (count[s], s))",
+      "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public List<String> watchedVideosByFriends(List<List<String>> watchedVideos, int[][] friends, int id, int level) {\n        int n = friends.length;\n        int[] dist = new int[n];\n        Arrays.fill(dist, -1);\n        ArrayDeque<Integer> q = new ArrayDeque<>();\n        q.add(id);\n        dist[id] = 0;\n\n        while (!q.isEmpty()) {\n            int u = q.poll();\n            if (dist[u] == level) continue;\n            for (int v : friends[u]) {\n                if (dist[v] == -1) {\n                    dist[v] = dist[u] + 1;\n                    q.add(v);\n                }\n            }\n        }\n\n        Map<String, Integer> count = new HashMap<>();\n        for (int i = 0; i < n; ++i) {\n            if (dist[i] != level) continue;\n            for (String video : watchedVideos.get(i)) {\n                count.put(video, count.getOrDefault(video, 0) + 1);\n            }\n        }\n\n        List<String> result = new ArrayList<>(count.keySet());\n        result.sort((a, b) -> {\n            int byFreq = Integer.compare(count.get(a), count.get(b));\n            return byFreq != 0 ? byFreq : a.compareTo(b);\n        });\n        return result;\n    }\n}",
+      "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstatic void skipWs(const string& s, size_t& p) {\n    while (p < s.size() && isspace(static_cast<unsigned char>(s[p]))) ++p;\n}\n\nstatic void expectChar(const string& s, size_t& p, char c) {\n    skipWs(s, p);\n    if (p >= s.size() || s[p] != c) throw runtime_error(\"bad json\");\n    ++p;\n}\n\nstatic string parseString(const string& s, size_t& p) {\n    skipWs(s, p);\n    expectChar(s, p, '\"');\n    string out;\n    while (p < s.size()) {\n        char c = s[p++];\n        if (c == '\"') break;\n        if (c == '\\\\') {\n            if (p >= s.size()) throw runtime_error(\"bad escape\");\n            char e = s[p++];\n            if (e == '\"' || e == '\\\\' || e == '/') out.push_back(e);\n            else if (e == 'n') out.push_back('\\n');\n            else if (e == 'r') out.push_back('\\r');\n            else if (e == 't') out.push_back('\\t');\n            else throw runtime_error(\"unsupported escape\");\n        } else out.push_back(c);\n    }\n    return out;\n}\n\nstatic int parseInt(const string& s, size_t& p) {\n    skipWs(s, p);\n    int sign = 1;\n    if (s[p] == '-') { sign = -1; ++p; }\n    int v = 0;\n    while (p < s.size() && isdigit(static_cast<unsigned char>(s[p]))) v = v * 10 + (s[p++] - '0');\n    return sign * v;\n}\n\nstatic vector<string> parseStringArray(const string& s, size_t& p) {\n    vector<string> a;\n    expectChar(s, p, '[');\n    skipWs(s, p);\n    if (p < s.size() && s[p] == ']') { ++p; return a; }\n    while (true) {\n        a.push_back(parseString(s, p));\n        skipWs(s, p);\n        if (s[p] == ']') { ++p; break; }\n        expectChar(s, p, ',');\n    }\n    return a;\n}\n\nstatic vector<vector<string>> parseString2D(const string& s, size_t& p) {\n    vector<vector<string>> a;\n    expectChar(s, p, '[');\n    skipWs(s, p);\n    if (p < s.size() && s[p] == ']') { ++p; return a; }\n    while (true) {\n        a.push_back(parseStringArray(s, p));\n        skipWs(s, p);\n        if (s[p] == ']') { ++p; break; }\n        expectChar(s, p, ',');\n    }\n    return a;\n}\n\nstatic vector<int> parseIntArray(const string& s, size_t& p) {\n    vector<int> a;\n    expectChar(s, p, '[');\n    skipWs(s, p);\n    if (p < s.size() && s[p] == ']') { ++p; return a; }\n    while (true) {\n        a.push_back(parseInt(s, p));\n        skipWs(s, p);\n        if (s[p] == ']') { ++p; break; }\n        expectChar(s, p, ',');\n    }\n    return a;\n}\n\nstatic vector<vector<int>> parseInt2D(const string& s, size_t& p) {\n    vector<vector<int>> a;\n    expectChar(s, p, '[');\n    skipWs(s, p);\n    if (p < s.size() && s[p] == ']') { ++p; return a; }\n    while (true) {\n        a.push_back(parseIntArray(s, p));\n        skipWs(s, p);\n        if (s[p] == ']') { ++p; break; }\n        expectChar(s, p, ',');\n    }\n    return a;\n}\n\nclass Solution {\npublic:\n    vector<string> watchedVideosByFriends(vector<vector<string>>& watchedVideos, vector<vector<int>>& friends, int id, int level) {\n        const int n = static_cast<int>(friends.size());\n        vector<int> dist(n, -1), q;\n        q.push_back(id);\n        dist[id] = 0;\n        for (size_t head = 0; head < q.size(); ++head) {\n            int u = q[head];\n            if (dist[u] == level) continue;\n            for (int v : friends[u]) {\n                if (dist[v] == -1) {\n                    dist[v] = dist[u] + 1;\n                    q.push_back(v);\n                }\n            }\n        }\n\n        unordered_map<string, int> cnt;\n        for (int i = 0; i < n; ++i) {\n            if (dist[i] != level) continue;\n            for (const string& v : watchedVideos[i]) ++cnt[v];\n        }\n\n        vector<string> result;\n        for (const auto& [name, freq] : cnt) result.push_back(name);\n        sort(result.begin(), result.end(), [&](const string& a, const string& b) {\n            if (cnt[a] != cnt[b]) return cnt[a] < cnt[b];\n            return a < b;\n        });\n        return result;\n    }\n};\n\nstatic void printJsonString(const string& s) {\n    cout << '\"';\n    for (char c : s) {\n        if (c == '\"' || c == '\\\\') cout << '\\\\' << c;\n        else if (c == '\\n') cout << \"\\\\n\";\n        else if (c == '\\r') cout << \"\\\\r\";\n        else if (c == '\\t') cout << \"\\\\t\";\n        else cout << c;\n    }\n    cout << '\"';\n}",
+      "JavaScript": "function watchedVideosByFriends(watchedVideos, friends, id, level) {\n    const n = friends.length;\n    const dist = Array(n).fill(-1);\n    const queue = [id];\n    let head = 0;\n    dist[id] = 0;\n\n    while (head < queue.length) {\n        const u = queue[head++];\n        if (dist[u] === level) continue;\n        for (const v of friends[u]) {\n            if (dist[v] === -1) {\n                dist[v] = dist[u] + 1;\n                queue.push(v);\n            }\n        }\n    }\n\n    const count = new Map();\n    for (let i = 0; i < n; ++i) {\n        if (dist[i] !== level) continue;\n        for (const video of watchedVideos[i]) {\n            count.set(video, (count.get(video) || 0) + 1);\n        }\n    }\n\n    return [...count.keys()].sort((a, b) => {\n        const byFreq = count.get(a) - count.get(b);\n        return byFreq !== 0 ? byFreq : a.localeCompare(b);\n    });\n}",
+      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <ctype.h>\n\nstatic void ws(const char* s, int* p) { while (s[*p] && isspace((unsigned char)s[*p])) (*p)++; }\nstatic void expect_char(const char* s, int* p, char c) { ws(s,p); if (s[*p] != c) exit(2); (*p)++; }\n\nstatic char* parse_string(const char* s, int* p) {\n    ws(s,p); expect_char(s,p,'\"');\n    int cap=32,len=0; char* out=(char*)malloc(cap);\n    while (s[*p]) {\n        char c=s[(*p)++];\n        if (c=='\"') break;\n        if (c=='\\\\') {\n            char e=s[(*p)++];\n            if (e=='\"'||e=='\\\\'||e=='/') c=e;\n            else if (e=='n') c='\\n';\n            else if (e=='r') c='\\r';\n            else if (e=='t') c='\\t';\n            else exit(2);\n        }\n        if (len+1>=cap) { cap*=2; out=(char*)realloc(out,cap); }\n        out[len++]=c;\n    }\n    out[len]='\\0';\n    return out;\n}\nstatic int parse_int(const char* s, int* p) {\n    ws(s,p); int sign=1; if(s[*p]=='-'){sign=-1;(*p)++;} int v=0; while(isdigit((unsigned char)s[*p])){v=v*10+(s[*p]-'0');(*p)++;} return sign*v;\n}\nstatic char** parse_string_array(const char* s,int* p,int* sz){\n    expect_char(s,p,'['); ws(s,p); if(s[*p]==']'){(*p)++;*sz=0;return NULL;}\n    int cap=8,cnt=0; char** a=(char**)malloc(cap*sizeof(char*));\n    while(1){ if(cnt==cap){cap*=2;a=(char**)realloc(a,cap*sizeof(char*));} a[cnt++]=parse_string(s,p); ws(s,p); if(s[*p]==']'){(*p)++;break;} expect_char(s,p,','); }\n    *sz=cnt; return a;\n}\nstatic char*** parse_string_2d(const char* s,int* p,int* rows,int** cols){\n    expect_char(s,p,'['); ws(s,p); if(s[*p]==']'){(*p)++;*rows=0;*cols=NULL;return NULL;}\n    int cap=8,cnt=0; char*** mat=(char***)malloc(cap*sizeof(char**)); int* cs=(int*)malloc(cap*sizeof(int));\n    while(1){ if(cnt==cap){cap*=2;mat=(char***)realloc(mat,cap*sizeof(char**));cs=(int*)realloc(cs,cap*sizeof(int));} mat[cnt]=parse_string_array(s,p,&cs[cnt]); cnt++; ws(s,p); if(s[*p]==']'){(*p)++;break;} expect_char(s,p,','); }\n    *rows=cnt; *cols=cs; return mat;\n}\nstatic int* parse_int_array(const char* s,int* p,int* sz){\n    expect_char(s,p,'['); ws(s,p); if(s[*p]==']'){(*p)++;*sz=0;return NULL;}\n    int cap=8,cnt=0; int* a=(int*)malloc(cap*sizeof(int));\n    while(1){ if(cnt==cap){cap*=2;a=(int*)realloc(a,cap*sizeof(int));} a[cnt++]=parse_int(s,p); ws(s,p); if(s[*p]==']'){(*p)++;break;} expect_char(s,p,','); }\n    *sz=cnt; return a;\n}\nstatic int** parse_int_2d(const char* s,int* p,int* rows,int** cols){\n    expect_char(s,p,'['); ws(s,p); if(s[*p]==']'){(*p)++;*rows=0;*cols=NULL;return NULL;}\n    int cap=8,cnt=0; int** mat=(int**)malloc(cap*sizeof(int*)); int* cs=(int*)malloc(cap*sizeof(int));\n    while(1){ if(cnt==cap){cap*=2;mat=(int**)realloc(mat,cap*sizeof(int*));cs=(int*)realloc(cs,cap*sizeof(int));} mat[cnt]=parse_int_array(s,p,&cs[cnt]); cnt++; ws(s,p); if(s[*p]==']'){(*p)++;break;} expect_char(s,p,','); }\n    *rows=cnt; *cols=cs; return mat;\n}\n\nstatic int find_name(char** names,int count,const char* s){ for(int i=0;i<count;i++) if(strcmp(names[i],s)==0) return i; return -1; }\n\nchar** watchedVideosByFriends(char*** watchedVideos, int watchedVideosSize, int* watchedVideosColSize, int** friends, int friendsSize, int* friendsColSize, int id, int level, int* returnSize){\n    (void)friendsSize;\n    int n=watchedVideosSize;\n    int* dist=(int*)malloc(n*sizeof(int)); int* q=(int*)malloc(n*sizeof(int));\n    for(int i=0;i<n;i++) dist[i]=-1; int head=0,tail=0; q[tail++]=id; dist[id]=0;\n    while(head<tail){ int u=q[head++]; if(dist[u]==level) continue; for(int k=0;k<friendsColSize[u];k++){ int v=friends[u][k]; if(dist[v]==-1){dist[v]=dist[u]+1;q[tail++]=v;} } }\n    int cap=32,count=0; char** names=(char**)malloc(cap*sizeof(char*)); int* freq=(int*)malloc(cap*sizeof(int));\n    for(int i=0;i<n;i++) if(dist[i]==level){ for(int j=0;j<watchedVideosColSize[i];j++){ char* v=watchedVideos[i][j]; int idx=find_name(names,count,v); if(idx<0){ if(count==cap){cap*=2;names=(char**)realloc(names,cap*sizeof(char*));freq=(int*)realloc(freq,cap*sizeof(int));} names[count]=v;freq[count]=1;count++; } else freq[idx]++; } }\n    for(int i=0;i<count;i++) for(int j=i+1;j<count;j++){ if(freq[j]<freq[i] || (freq[j]==freq[i] && strcmp(names[j],names[i])<0)){ int tf=freq[i];freq[i]=freq[j];freq[j]=tf; char* ts=names[i];names[i]=names[j];names[j]=ts; } }\n    char** out=(char**)malloc(count*sizeof(char*)); for(int i=0;i<count;i++){ out[i]=strdup(names[i]); }\n    *returnSize=count; free(dist);free(q);free(names);free(freq); return out;\n}\n\nstatic void free_input(char*** watched,int rows,int* wcols,int** friends,int frows,int* fcols){\n    for(int i=0;i<rows;i++){for(int j=0;j<wcols[i];j++) free(watched[i][j]); free(watched[i]);}\n    free(watched); free(wcols); for(int i=0;i<frows;i++) free(friends[i]); free(friends); free(fcols);\n}"
     }
   },
-  "hints": [],
-  "followUps": [],
-  "learningObjectives": [],
-  "similarProblems": [],
-  "acceptanceRate": null,
-  "estimatedSolveTime": "",
-  "recommendedAfter": [],
-  "boilerPlates": {
-    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n// Helper JSON parser/tokenizer in C\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        int idx = token_len - 1;\n        while (idx >= 0 && token[idx] == ' ') {\n            token[idx] = '\\0';\n            idx--;\n        }\n        return token;\n    }\n}\n\nstatic int parse_int(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0;\n    int val = atoi(tok);\n    free(tok);\n    return val;\n}\n\nstatic bool parse_bool(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return false;\n    bool val = (strcmp(tok, \"true\") == 0);\n    free(tok);\n    return val;\n}\n\nstatic double parse_double(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return 0.0;\n    double val = atof(tok);\n    free(tok);\n    return val;\n}\n\nstatic char* parse_string(Tok* t) {\n    char* tok = nextToken(t);\n    if (!tok) return NULL;\n    if (tok[0] == '\"') {\n        int len = strlen(tok);\n        char* res = (char*)malloc(len - 1);\n        strncpy(res, tok + 1, len - 2);\n        res[len - 2] = '\\0';\n        free(tok);\n        return res;\n    }\n    return tok;\n}\n\nstatic int* parse_int_array(Tok* t, int* out_size) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_size = 0;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int size = 1;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == ',') size++;\n    }\n    int* arr = (int*)malloc(size * sizeof(int));\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < size; i++) {\n        arr[i] = parse_int(&t2);\n    }\n    free(inner);\n    *out_size = size;\n    return arr;\n}\n\nstatic int** parse_int_2d(Tok* t, int* out_rows, int** out_cols) {\n    char* tok = nextToken(t);\n    if (!tok || strcmp(tok, \"[]\") == 0) {\n        if (tok) free(tok);\n        *out_rows = 0;\n        *out_cols = NULL;\n        return NULL;\n    }\n    int len = strlen(tok);\n    char* inner = (char*)malloc(len - 1);\n    strncpy(inner, tok + 1, len - 2);\n    inner[len - 2] = '\\0';\n    free(tok);\n\n    int rows = 0;\n    int depth = 0;\n    for (int i = 0; inner[i]; i++) {\n        if (inner[i] == '[') {\n            if (depth == 0) rows++;\n            depth++;\n        } else if (inner[i] == ']') {\n            depth--;\n        }\n    }\n    int** mat = (int**)malloc(rows * sizeof(int*));\n    int* cols = (int*)malloc(rows * sizeof(int));\n\n    Tok t2 = { inner, 0, (int)strlen(inner) };\n    for (int i = 0; i < rows; i++) {\n        mat[i] = parse_int_array(&t2, &cols[i]);\n    }\n    free(inner);\n    *out_rows = rows;\n    *out_cols = cols;\n    return mat;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nchar** watchedVideosByFriends(char*** watchedVideos, int watchedVideosSize, int* watchedVideosColSize, int** friends, int friendsSize, int* friendsColSize, int id, int level, int* returnSize) {\n    \n    *returnSize = 0;\n    return NULL;\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    char line[1000000];\n    if (fgets(line, sizeof(line), stdin)) {\n        // Strip outer [ ]\n        int len = strlen(line);\n        while (len > 0 && (line[len - 1] == '\\n' || line[len - 1] == '\\r')) {\n            line[len - 1] = '\\0';\n            len--;\n        }\n        char* raw = (char*)malloc(len - 1);\n        strncpy(raw, line + 1, len - 2);\n        raw[len - 2] = '\\0';\n        Tok tok = { raw, 0, (int)strlen(raw) };\n        \n        // TODO: unpack logic for list<list<string>> watchedVideos\n        int friendsSize = 0;\n        int* friendsColSize = NULL;\n        int** friends = parse_int_2d(&tok, &friendsSize, &friendsColSize);\n        int id = parse_int(&tok);\n        int level = parse_int(&tok);\n        int returnSize = 0;\n        int* result = watchedVideosByFriends(watchedVideos, friends, friendsSize, friendsColSize, id, level, &returnSize);\n        printf(\"[\");\n        for (int i = 0; i < returnSize; i++) {\n            printf(\"%d\", result[i]);\n            if (i < returnSize - 1) printf(\",\");\n        }\n        printf(\"]\\n\");\n        free(raw);\n    }\n    return 0;\n}",
-    "Python3": "import sys, json\nfrom typing import List\n\n#  HELPER CLASSES  (do not modify)\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def watchedVideosByFriends(self, watchedVideos: List[List[str]], friends: List[List[int]], id: int, level: int) -> List[str]:\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    _args = json.loads(sys.stdin.readline())\n    _watchedVideos = _args[0]\n    _friends = _args[1]\n    _id = _args[2]\n    _level = _args[3]\n    _result = Solution().watchedVideosByFriends(_watchedVideos, _friends, _id, _level)\n\n    print(json.dumps(_result))",
-    "JavaScript": "'use strict';\nconst readline = require('readline');\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {string[][]} watchedVideos\n * @param {number[][]} friends\n * @param {number} id\n * @param {number} level\n * @return {string[]}\n */\nvar watchedVideosByFriends = function(watchedVideos, friends, id, level) {\n    \n    return null;\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const _args = JSON.parse(line.trim());\n    const _result = watchedVideosByFriends(_args[0], _args[1], _args[2], _args[3]);\n    console.log(JSON.stringify(_result));\n    rl.close();\n});",
-    "Java": "import java.util.*;\nimport java.io.*;\n\n// -\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n// -\nclass Solution {\n    public List<String> watchedVideosByFriends(List<List<String>> watchedVideos, int[][] friends, int id, int level) {\n        \n        return new ArrayList<>();\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n\n    static java.util.ArrayDeque<String> tokenize(String s) {\n        java.util.ArrayDeque<String> q = new java.util.ArrayDeque<>();\n        int i = 0, n = s.length();\n        while (i < n) {\n            char c = s.charAt(i);\n            if (c == '[' || c == ']' || c == ',') { i++; continue; }\n            if (c == '\"') {\n                int j = s.indexOf('\"', i+1); q.add(s.substring(i, j+1)); i = j+1;\n            } else if (c != ' ') {\n                int j = i;\n                while (j < n && s.charAt(j) != ',' && s.charAt(j) != ']' && s.charAt(j) != '[') j++;\n                String tok = s.substring(i, j).trim();\n                if (!tok.isEmpty()) q.add(tok);\n                i = j;\n            } else { i++; }\n        }\n        return q;\n    }\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\")) return new String[0];\n        s = s.substring(1, s.length()-1);\n        java.util.List<String> parts = new java.util.ArrayList<>();\n        int depth=0, start=0;\n        for (int i=0; i<s.length(); i++) {\n            char c=s.charAt(i);\n            if (c=='[') depth++; else if (c==']') depth--;\n            else if (c==',' && depth==0) { parts.add(s.substring(start,i).trim()); start=i+1; }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i=0; i<rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i=0; i<parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i=0; i<parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\",\"\").charAt(0);\n        return arr;\n    }\n    // Reads next top-level token from outer JSON array\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos)==',' || _raw.charAt(_pos)==' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth=0, start=_pos;\n            while (_pos < _raw.length()) {\n                char x=_raw.charAt(_pos); if(x=='[') depth++; else if(x==']') { depth--; if(depth==0){_pos++;break;} } _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start=_pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start=_pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] a) throws IOException {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        // Strip outer [ ]\n        _raw = line.substring(1, line.length()-1);\n        _pos = 0;\n        // TODO: parse List<List<String>> for watchedVideos\n        int[][] friends = toInt2D(nextToken());\n        int id = Integer.parseInt(nextToken());\n        int level = Integer.parseInt(nextToken());\n        List<String> result = new Solution().watchedVideosByFriends(watchedVideos, friends, id, level);\n        System.out.println(result.toString().replace(\", \", \",\").replace(\" \", \"\"));\n    }\n}",
-    "C++": "\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            return s.substr(st,++pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstring innerArr(const string& s){return s.substr(1,s.size()-2);}\nvector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    parts.push_back(s.substr(start)); return parts;\n}\nvector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts)v.push_back(stoi(p)); return v;\n}\nvector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nvector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\")return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nvector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv)v.push_back(s[0]); return v;\n}\nint readInt(Tok& tok){ return stoi(tok.nextToken()); }\nstring readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nbool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\ndouble readDouble(Tok& tok){ return stod(tok.nextToken()); }\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    vector<string> watchedVideosByFriends(vector<vector<string>>& watchedVideos, vector<vector<int>>& friends, int id, int level) {\n        \n        return {};\n    }\n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    string line; getline(cin, line);\n    // Strip outer [ ]\n    Tok tok; tok.s = line.substr(1, line.size()-2); tok.pos = 0;\n    int watchedVideos = readInt(tok);\n    auto friends = readInt2D(tok);\n    int id = readInt(tok);\n    int level = readInt(tok);\n    auto result = Solution().watchedVideosByFriends(watchedVideos, friends, id, level);\n    cout << \"[\";\n    for(int i=0;i<(int)result.size();i++){\n        cout << \"\\\"\" << result[i] << \"\\\"\";\n        if(i+1<(int)result.size()) cout << \",\";\n    }\n    cout << \"]\" << endl;\n    return 0;\n}"
+  "verified": true,
+  "_internal": {
+    "params": [
+      {
+        "name": "watchedVideos",
+        "type": "string[][]"
+      },
+      {
+        "name": "friends",
+        "type": "int[][]"
+      },
+      {
+        "name": "id",
+        "type": "int"
+      },
+      {
+        "name": "level",
+        "type": "int"
+      }
+    ],
+    "methodName": "watchedVideosByFriends"
   },
-  "_internal": {},
-  "verified": false
+  "createdAt": "2026-07-10",
+  "followUps": [
+    "How would you return videos for several levels in one traversal?",
+    "How would the approach change if friendship edges were directed?",
+    "How could repeated queries for the same id be accelerated?"
+  ],
+  "testCases": {
+    "hidden": [
+      {
+        "id": "tc_01",
+        "type": "reg",
+        "input": "[[[\"A\"],[\"B\"]],[[1],[0]],0,1]",
+        "label": "Minimum graph with one direct friend",
+        "weight": 4,
+        "expectedOutput": "[\"B\"]"
+      },
+      {
+        "id": "tc_02",
+        "type": "reg",
+        "input": "[[[\"A\"],[\"B\"],[\"C\"]],[[1],[0,2],[1]],0,2]",
+        "label": "Two-hop chain requires exact level",
+        "weight": 4,
+        "expectedOutput": "[\"C\"]"
+      },
+      {
+        "id": "tc_03",
+        "type": "reg",
+        "input": "[[[\"A\"],[\"B\"],[\"C\"],[\"D\"]],[[1],[0],[3],[2]],0,2]",
+        "label": "Disconnected component has no person at requested level",
+        "weight": 4,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_04",
+        "type": "reg",
+        "input": "[[[\"Root\"],[\"Zoo\",\"Movie\"],[\"Alpha\",\"Movie\"],[\"Beta\"]],[[1,2],[0,3],[0,3],[1,2]],0,1]",
+        "label": "Frequency order followed by alphabetical tie-breaking",
+        "weight": 4,
+        "expectedOutput": "[\"Alpha\",\"Zoo\",\"Movie\"]"
+      },
+      {
+        "id": "tc_05",
+        "type": "reg",
+        "input": "[[[\"Root\"],[\"Movie\",\"Alpha\"],[\"Movie\",\"Beta\"],[\"Movie\",\"Gamma\"]],[[1,2,3],[0],[0],[0]],0,1]",
+        "label": "Higher video frequency comes before lower frequency",
+        "weight": 4,
+        "expectedOutput": "[\"Alpha\",\"Beta\",\"Gamma\",\"Movie\"]"
+      },
+      {
+        "id": "tc_06",
+        "type": "reg",
+        "input": "[[[\"R\"],[\"A2\",\"A10\"],[\"A10\"]],[[1,2],[0],[0]],0,1]",
+        "label": "Lexicographic ordering handles numeric suffixes",
+        "weight": 4,
+        "expectedOutput": "[\"A2\",\"A10\"]"
+      },
+      {
+        "id": "tc_07",
+        "type": "reg",
+        "input": "[[[\"Root\"],[\"B\"],[\"A\"]],[[1,2],[0],[0]],0,1]",
+        "label": "Two direct friends with an alphabetical tie",
+        "weight": 4,
+        "expectedOutput": "[\"A\",\"B\"]"
+      },
+      {
+        "id": "tc_08",
+        "type": "reg",
+        "input": "[[[\"A\"],[\"B\"],[\"C\"]],[[1,2],[0,2],[0,1]],0,2]",
+        "label": "Cyclic graph uses shortest-distance BFS without revisits",
+        "weight": 4,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_09",
+        "type": "reg",
+        "input": "[[[\"A\"],[\"B\"],[\"C\"],[\"Target\"]],[[1,2],[0,3],[0,3],[1,2]],0,2]",
+        "label": "Multiple shortest paths reach the same level",
+        "weight": 4,
+        "expectedOutput": "[\"Target\"]"
+      },
+      {
+        "id": "tc_10",
+        "type": "reg",
+        "input": "[[[\"A\"],[\"B\"],[\"C\"],[\"D\"]],[[1,2],[0,3],[0,3],[1,2]],2,1]",
+        "label": "Canonical level-one ordering",
+        "weight": 4,
+        "expectedOutput": "[\"A\",\"D\"]"
+      },
+      {
+        "id": "tc_11",
+        "type": "reg",
+        "input": "[[[\"Root\"],[\"B\"],[\"C\"],[\"D\"],[\"E\"]],[[1,2,3,4],[0],[0],[0],[0]],0,1]",
+        "label": "Level-one videos from a nonzero starting id",
+        "weight": 3,
+        "expectedOutput": "[\"B\",\"C\",\"D\",\"E\"]"
+      },
+      {
+        "id": "tc_12",
+        "type": "reg",
+        "input": "[[[\"Root\"],[\"B\"],[\"C\"],[\"D\"]],[[1,2,3],[0],[0],[0]],0,2]",
+        "label": "Level-one videos from the final starting id",
+        "weight": 3,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_13",
+        "type": "reg",
+        "input": "[[[\"P0\"],[\"P1\"],[\"P2\"],[\"P3\"],[\"P4\"]],[[1,2,3,4],[0,2,3,4],[0,1,3,4],[0,1,2,4],[0,1,2,3]],0,1]",
+        "label": "Complete graph places all other people at level one",
+        "weight": 3,
+        "expectedOutput": "[\"P1\",\"P2\",\"P3\",\"P4\"]"
+      },
+      {
+        "id": "tc_14",
+        "type": "reg",
+        "input": "[[[\"P0\"],[\"P1\"],[\"P2\"],[\"P3\"],[\"P4\"]],[[1,2,3,4],[0,2,3,4],[0,1,3,4],[0,1,2,4],[0,1,2,3]],0,2]",
+        "label": "Complete graph has no level-two vertices",
+        "weight": 3,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_15",
+        "type": "reg",
+        "input": "[[[\"V0\"],[\"V1\"],[\"V2\"],[\"V3\"],[\"V4\"],[\"V5\"]],[[1],[0,2],[1,3],[2,4],[3,5],[4]],0,3]",
+        "label": "Longer chain reaches a precise third level",
+        "weight": 3,
+        "expectedOutput": "[\"V3\"]"
+      },
+      {
+        "id": "tc_16",
+        "type": "reg",
+        "input": "[[[\"V0\"],[\"V1\"],[\"V2\"],[\"V3\"],[\"V4\"],[\"V5\"]],[[1],[0,2],[1,3],[2,4],[3,5],[4]],5,3]",
+        "label": "Reverse traversal from a nonzero id",
+        "weight": 3,
+        "expectedOutput": "[\"V2\"]"
+      },
+      {
+        "id": "tc_17",
+        "type": "reg",
+        "input": "[[[\"Root\"],[\"X\",\"Y\"],[\"Y\",\"Z\"],[\"X\",\"Y\"],[\"X\",\"Y\",\"Z\",\"W\"],[\"Z\"]],[[1,2],[0,3,4],[0,4,5],[1],[1,2,5],[2,4]],0,2]",
+        "label": "Repeated video frequencies across multiple target-level friends",
+        "weight": 3,
+        "expectedOutput": "[\"W\",\"X\",\"Y\",\"Z\"]"
+      },
+      {
+        "id": "tc_18",
+        "type": "reg",
+        "input": "[[[\"Root\"],[\"Near\"],[\"Far\"],[\"Far\",\"Near\"]],[[1,2],[0,3],[0,3],[1,2]],0,2]",
+        "label": "Intermediate-level videos are excluded",
+        "weight": 3,
+        "expectedOutput": "[\"Far\",\"Near\"]"
+      },
+      {
+        "id": "tc_19",
+        "type": "reg",
+        "input": "[[[\"V0\"],[\"V1\"],[\"V2\"],[\"V3\"],[\"V4\"]],[[1],[0,2],[1,3],[2,4],[3]],0,4]",
+        "label": "Maximum reachable level in a chain",
+        "weight": 3,
+        "expectedOutput": "[\"V4\"]"
+      },
+      {
+        "id": "tc_20",
+        "type": "reg",
+        "input": "[[[\"A\"],[\"B\"],[\"C\"],[\"D\"],[\"E\"],[\"F\"]],[[1],[0],[3],[2,4],[3],[]],0,3]",
+        "label": "Requested level beyond the starting component",
+        "weight": 3,
+        "expectedOutput": "[]"
+      },
+      {
+        "id": "tc_21",
+        "type": "reg",
+        "input": "[[[\"A\"],[\"C\"],[\"B\"],[\"A\",\"C\"],[\"B\",\"C\"]],[[1,2],[0,3],[0,4],[1,4],[2,3]],0,2]",
+        "label": "Frequency ties across several target-level videos",
+        "weight": 3,
+        "expectedOutput": "[\"A\",\"B\",\"C\"]"
+      },
+      {
+        "id": "tc_22",
+        "type": "reg",
+        "input": "[[[\"Root\"],[\"B001\",\"B002\",\"B003\",\"B004\",\"B005\",\"B006\",\"B007\",\"B008\",\"B009\",\"B010\",\"B011\",\"B012\",\"B013\",\"B014\",\"B015\",\"B016\",\"B017\",\"B018\",\"B019\",\"B020\",\"B021\",\"B022\",\"B023\",\"B024\",\"B025\",\"B026\",\"B027\",\"B028\",\"B029\",\"B030\",\"B031\",\"B032\",\"B033\",\"B034\",\"B035\",\"B036\",\"B037\",\"B038\",\"B039\",\"B040\",\"B041\",\"B042\",\"B043\",\"B044\",\"B045\",\"B046\",\"B047\",\"B048\",\"B049\",\"B050\",\"B051\",\"B052\",\"B053\",\"B054\",\"B055\",\"B056\",\"B057\",\"B058\",\"B059\",\"B060\",\"B061\",\"B062\",\"B063\",\"B064\",\"B065\",\"B066\",\"B067\",\"B068\",\"B069\",\"B070\",\"B071\",\"B072\",\"B073\",\"B074\",\"B075\",\"B076\",\"B077\",\"B078\",\"B079\",\"B080\",\"B081\",\"B082\",\"B083\",\"B084\",\"B085\",\"B086\",\"B087\",\"B088\",\"B089\",\"B090\",\"B091\",\"B092\",\"B093\",\"B094\",\"B095\",\"B096\",\"B097\",\"B098\",\"B099\",\"B100\"]],[[1],[0]],0,1]",
+        "label": "Maximum watched-video list length",
+        "weight": 3,
+        "expectedOutput": "[\"B001\",\"B002\",\"B003\",\"B004\",\"B005\",\"B006\",\"B007\",\"B008\",\"B009\",\"B010\",\"B011\",\"B012\",\"B013\",\"B014\",\"B015\",\"B016\",\"B017\",\"B018\",\"B019\",\"B020\",\"B021\",\"B022\",\"B023\",\"B024\",\"B025\",\"B026\",\"B027\",\"B028\",\"B029\",\"B030\",\"B031\",\"B032\",\"B033\",\"B034\",\"B035\",\"B036\",\"B037\",\"B038\",\"B039\",\"B040\",\"B041\",\"B042\",\"B043\",\"B044\",\"B045\",\"B046\",\"B047\",\"B048\",\"B049\",\"B050\",\"B051\",\"B052\",\"B053\",\"B054\",\"B055\",\"B056\",\"B057\",\"B058\",\"B059\",\"B060\",\"B061\",\"B062\",\"B063\",\"B064\",\"B065\",\"B066\",\"B067\",\"B068\",\"B069\",\"B070\",\"B071\",\"B072\",\"B073\",\"B074\",\"B075\",\"B076\",\"B077\",\"B078\",\"B079\",\"B080\",\"B081\",\"B082\",\"B083\",\"B084\",\"B085\",\"B086\",\"B087\",\"B088\",\"B089\",\"B090\",\"B091\",\"B092\",\"B093\",\"B094\",\"B095\",\"B096\",\"B097\",\"B098\",\"B099\",\"B100\"]"
+      },
+      {
+        "id": "tc_23",
+        "type": "reg",
+        "input": "[[[\"ROOT\"],[\"ABCDEFGH\",\"ABCDEFGG\",\"A\"],[\"ABCDEFGH\",\"B\"],[\"A\"]],[[1,2],[0,3],[0,3],[1,2]],0,1]",
+        "label": "Maximum video-title length and lexical ordering",
+        "weight": 3,
+        "expectedOutput": "[\"A\",\"ABCDEFGG\",\"B\",\"ABCDEFGH\"]"
+      },
+      {
+        "id": "tc_24",
+        "type": "reg",
+        "input": "[[[\"V000\"],[\"V001\"],[\"V002\"],[\"V003\"],[\"V004\"],[\"V005\"],[\"V006\"],[\"V007\"],[\"V008\"],[\"V009\"],[\"V010\"],[\"V011\"],[\"V012\"],[\"V013\"],[\"V014\"],[\"V015\"],[\"V016\"],[\"V017\"],[\"V018\"],[\"V019\"],[\"V020\"],[\"V021\"],[\"V022\"],[\"V023\"],[\"V024\"],[\"V025\"],[\"V026\"],[\"V027\"],[\"V028\"],[\"V029\"],[\"V030\"],[\"V031\"],[\"V032\"],[\"V033\"],[\"V034\"],[\"V035\"],[\"V036\"],[\"V037\"],[\"V038\"],[\"V039\"],[\"V040\"],[\"V041\"],[\"V042\"],[\"V043\"],[\"V044\"],[\"V045\"],[\"V046\"],[\"V047\"],[\"V048\"],[\"V049\"],[\"V050\"],[\"V051\"],[\"V052\"],[\"V053\"],[\"V054\"],[\"V055\"],[\"V056\"],[\"V057\"],[\"V058\"],[\"V059\"],[\"V060\"],[\"V061\"],[\"V062\"],[\"V063\"],[\"V064\"],[\"V065\"],[\"V066\"],[\"V067\"],[\"V068\"],[\"V069\"],[\"V070\"],[\"V071\"],[\"V072\"],[\"V073\"],[\"V074\"],[\"V075\"],[\"V076\"],[\"V077\"],[\"V078\"],[\"V079\"],[\"V080\"],[\"V081\"],[\"V082\"],[\"V083\"],[\"V084\"],[\"V085\"],[\"V086\"],[\"V087\"],[\"V088\"],[\"V089\"],[\"V090\"],[\"V091\"],[\"V092\"],[\"V093\"],[\"V094\"],[\"V095\"],[\"V096\"],[\"V097\"],[\"V098\"],[\"V099\"]],[[1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8,10],[9,11],[10,12],[11,13],[12,14],[13,15],[14,16],[15,17],[16,18],[17,19],[18,20],[19,21],[20,22],[21,23],[22,24],[23,25],[24,26],[25,27],[26,28],[27,29],[28,30],[29,31],[30,32],[31,33],[32,34],[33,35],[34,36],[35,37],[36,38],[37,39],[38,40],[39,41],[40,42],[41,43],[42,44],[43,45],[44,46],[45,47],[46,48],[47,49],[48,50],[49,51],[50,52],[51,53],[52,54],[53,55],[54,56],[55,57],[56,58],[57,59],[58,60],[59,61],[60,62],[61,63],[62,64],[63,65],[64,66],[65,67],[66,68],[67,69],[68,70],[69,71],[70,72],[71,73],[72,74],[73,75],[74,76],[75,77],[76,78],[77,79],[78,80],[79,81],[80,82],[81,83],[82,84],[83,85],[84,86],[85,87],[86,88],[87,89],[88,90],[89,91],[90,92],[91,93],[92,94],[93,95],[94,96],[95,97],[96,98],[97,99],[98]],0,50]",
+        "label": "Maximum n with a level-50 chain",
+        "weight": 3,
+        "expectedOutput": "[\"V050\"]"
+      },
+      {
+        "id": "tc_25",
+        "type": "reg",
+        "input": "[[[\"ROOT\"],[\"V01\"],[\"V02\"],[\"V03\"],[\"V04\"],[\"V05\"],[\"V06\"],[\"V07\"],[\"V08\"],[\"V09\"],[\"V10\"],[\"V11\"],[\"V12\"],[\"V13\"],[\"V14\"],[\"V15\"],[\"V16\"],[\"V17\"],[\"V18\"],[\"V19\"],[\"V20\"],[\"V21\"],[\"V22\"],[\"V23\"],[\"V24\"],[\"V25\"],[\"V26\"],[\"V27\"],[\"V28\"],[\"V29\"],[\"V30\"],[\"V31\"],[\"V32\"],[\"V33\"],[\"V34\"],[\"V35\"],[\"V36\"],[\"V37\"],[\"V38\"],[\"V39\"],[\"V40\"],[\"V41\"],[\"V42\"],[\"V43\"],[\"V44\"],[\"V45\"],[\"V46\"],[\"V47\"],[\"V48\"],[\"V49\"],[\"V50\"],[\"V51\"],[\"V52\"],[\"V53\"],[\"V54\"],[\"V55\"],[\"V56\"],[\"V57\"],[\"V58\"],[\"V59\"],[\"V60\"],[\"V61\"],[\"V62\"],[\"V63\"],[\"V64\"],[\"V65\"],[\"V66\"],[\"V67\"],[\"V68\"],[\"V69\"],[\"V70\"],[\"V71\"],[\"V72\"],[\"V73\"],[\"V74\"],[\"V75\"],[\"V76\"],[\"V77\"],[\"V78\"],[\"V79\"],[\"V80\"],[\"V81\"],[\"V82\"],[\"V83\"],[\"V84\"],[\"V85\"],[\"V86\"],[\"V87\"],[\"V88\"],[\"V89\"],[\"V90\"],[\"V91\"],[\"V92\"],[\"V93\"],[\"V94\"],[\"V95\"],[\"V96\"],[\"V97\"],[\"V98\"],[\"V99\"]],[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[0]],0,1]",
+        "label": "Maximum n with maximum-size direct friend list",
+        "weight": 3,
+        "expectedOutput": "[\"V01\",\"V02\",\"V03\",\"V04\",\"V05\",\"V06\",\"V07\",\"V08\",\"V09\",\"V10\",\"V11\",\"V12\",\"V13\",\"V14\",\"V15\",\"V16\",\"V17\",\"V18\",\"V19\",\"V20\",\"V21\",\"V22\",\"V23\",\"V24\",\"V25\",\"V26\",\"V27\",\"V28\",\"V29\",\"V30\",\"V31\",\"V32\",\"V33\",\"V34\",\"V35\",\"V36\",\"V37\",\"V38\",\"V39\",\"V40\",\"V41\",\"V42\",\"V43\",\"V44\",\"V45\",\"V46\",\"V47\",\"V48\",\"V49\",\"V50\",\"V51\",\"V52\",\"V53\",\"V54\",\"V55\",\"V56\",\"V57\",\"V58\",\"V59\",\"V60\",\"V61\",\"V62\",\"V63\",\"V64\",\"V65\",\"V66\",\"V67\",\"V68\",\"V69\",\"V70\",\"V71\",\"V72\",\"V73\",\"V74\",\"V75\",\"V76\",\"V77\",\"V78\",\"V79\",\"V80\",\"V81\",\"V82\",\"V83\",\"V84\",\"V85\",\"V86\",\"V87\",\"V88\",\"V89\",\"V90\",\"V91\",\"V92\",\"V93\",\"V94\",\"V95\",\"V96\",\"V97\",\"V98\",\"V99\"]"
+      },
+      {
+        "id": "tc_26",
+        "type": "reg",
+        "input": "[[[\"R\"],[\"L\"],[\"R1\",\"Shared\"],[\"R2\"],[\"L1\",\"Shared\"],[\"L2\"]],[[1,2],[0,4,5],[0,3],[2],[1],[1]],0,2]",
+        "label": "Branching tree counts only shortest-distance two nodes",
+        "weight": 3,
+        "expectedOutput": "[\"L1\",\"L2\",\"R2\",\"Shared\"]"
+      },
+      {
+        "id": "tc_27",
+        "type": "reg",
+        "input": "[[[\"R\"],[\"L1\"],[\"S\",\"Short\"],[\"Long\"],[\"Target\"]],[[1,2],[0,3],[0,4],[1,4],[2,3]],0,2]",
+        "label": "Shortest path determines exact video level",
+        "weight": 3,
+        "expectedOutput": "[\"Long\",\"Target\"]"
+      },
+      {
+        "id": "tc_28",
+        "type": "reg",
+        "input": "[[[\"R\"],[\"L1\"],[\"L2\"],[\"B\",\"C\"],[\"A\",\"C\"],[\"B\"]],[[1,2],[0,3,4],[0,3,5],[1,2],[1],[2]],0,2]",
+        "label": "Frequency sort with alphabetical tie across several target-level people",
+        "weight": 3,
+        "expectedOutput": "[\"A\",\"B\",\"C\"]"
+      },
+      {
+        "id": "tc_29",
+        "type": "reg",
+        "input": "[[[\"V0\"],[\"V1\"],[\"V2\"],[\"V3\"],[\"V4\"],[\"V5\"],[\"V6\"],[\"V7\"],[\"V8\"],[\"V9\"]],[[1],[0,2],[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9],[8]],0,9]",
+        "label": "Maximum level in a ten-person chain",
+        "weight": 3,
+        "expectedOutput": "[\"V9\"]"
+      },
+      {
+        "id": "tc_30",
+        "type": "reg",
+        "input": "[[[\"A\"],[\"B\"],[\"C\"],[\"D\"],[\"E\"],[\"F\"]],[[1],[0],[3],[2,4],[3],[]],4,3]",
+        "label": "Chosen component has no person at the requested level",
+        "weight": 3,
+        "expectedOutput": "[]"
+      }
+    ],
+    "totalWeight": 100,
+    "totalTestCases": 30
+  },
+  "updatedAt": "2026-09-18",
+  "questionId": "Q1311",
+  "boilerPlates": {
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <ctype.h>\n\nstatic void ws(const char* s, int* p) { while (s[*p] && isspace((unsigned char)s[*p])) (*p)++; }\nstatic void expect_char(const char* s, int* p, char c) { ws(s,p); if (s[*p] != c) exit(2); (*p)++; }\n\nstatic char* parse_string(const char* s, int* p) {\n    ws(s,p); expect_char(s,p,'\"');\n    int cap=32,len=0; char* out=(char*)malloc(cap);\n    while (s[*p]) {\n        char c=s[(*p)++];\n        if (c=='\"') break;\n        if (c=='\\\\') {\n            char e=s[(*p)++];\n            if (e=='\"'||e=='\\\\'||e=='/') c=e;\n            else if (e=='n') c='\\n';\n            else if (e=='r') c='\\r';\n            else if (e=='t') c='\\t';\n            else exit(2);\n        }\n        if (len+1>=cap) { cap*=2; out=(char*)realloc(out,cap); }\n        out[len++]=c;\n    }\n    out[len]='\\0';\n    return out;\n}\nstatic int parse_int(const char* s, int* p) {\n    ws(s,p); int sign=1; if(s[*p]=='-'){sign=-1;(*p)++;} int v=0; while(isdigit((unsigned char)s[*p])){v=v*10+(s[*p]-'0');(*p)++;} return sign*v;\n}\nstatic char** parse_string_array(const char* s,int* p,int* sz){\n    expect_char(s,p,'['); ws(s,p); if(s[*p]==']'){(*p)++;*sz=0;return NULL;}\n    int cap=8,cnt=0; char** a=(char**)malloc(cap*sizeof(char*));\n    while(1){ if(cnt==cap){cap*=2;a=(char**)realloc(a,cap*sizeof(char*));} a[cnt++]=parse_string(s,p); ws(s,p); if(s[*p]==']'){(*p)++;break;} expect_char(s,p,','); }\n    *sz=cnt; return a;\n}\nstatic char*** parse_string_2d(const char* s,int* p,int* rows,int** cols){\n    expect_char(s,p,'['); ws(s,p); if(s[*p]==']'){(*p)++;*rows=0;*cols=NULL;return NULL;}\n    int cap=8,cnt=0; char*** mat=(char***)malloc(cap*sizeof(char**)); int* cs=(int*)malloc(cap*sizeof(int));\n    while(1){ if(cnt==cap){cap*=2;mat=(char***)realloc(mat,cap*sizeof(char**));cs=(int*)realloc(cs,cap*sizeof(int));} mat[cnt]=parse_string_array(s,p,&cs[cnt]); cnt++; ws(s,p); if(s[*p]==']'){(*p)++;break;} expect_char(s,p,','); }\n    *rows=cnt; *cols=cs; return mat;\n}\nstatic int* parse_int_array(const char* s,int* p,int* sz){\n    expect_char(s,p,'['); ws(s,p); if(s[*p]==']'){(*p)++;*sz=0;return NULL;}\n    int cap=8,cnt=0; int* a=(int*)malloc(cap*sizeof(int));\n    while(1){ if(cnt==cap){cap*=2;a=(int*)realloc(a,cap*sizeof(int));} a[cnt++]=parse_int(s,p); ws(s,p); if(s[*p]==']'){(*p)++;break;} expect_char(s,p,','); }\n    *sz=cnt; return a;\n}\nstatic int** parse_int_2d(const char* s,int* p,int* rows,int** cols){\n    expect_char(s,p,'['); ws(s,p); if(s[*p]==']'){(*p)++;*rows=0;*cols=NULL;return NULL;}\n    int cap=8,cnt=0; int** mat=(int**)malloc(cap*sizeof(int*)); int* cs=(int*)malloc(cap*sizeof(int));\n    while(1){ if(cnt==cap){cap*=2;mat=(int**)realloc(mat,cap*sizeof(int*));cs=(int*)realloc(cs,cap*sizeof(int));} mat[cnt]=parse_int_array(s,p,&cs[cnt]); cnt++; ws(s,p); if(s[*p]==']'){(*p)++;break;} expect_char(s,p,','); }\n    *rows=cnt; *cols=cs; return mat;\n}\n\nstatic int find_name(char** names,int count,const char* s){ for(int i=0;i<count;i++) if(strcmp(names[i],s)==0) return i; return -1; }\n\nchar** watchedVideosByFriends(char*** watchedVideos, int watchedVideosSize, int* watchedVideosColSize, int** friends, int friendsSize, int* friendsColSize, int id, int level, int* returnSize){\n    return NULL;\n}\n\nstatic void free_input(char*** watched,int rows,int* wcols,int** friends,int frows,int* fcols){\n    for(int i=0;i<rows;i++){for(int j=0;j<wcols[i];j++) free(watched[i][j]); free(watched[i]);}\n    free(watched); free(wcols); for(int i=0;i<frows;i++) free(friends[i]); free(friends); free(fcols);\n}\n\nint main(){\n    static char line[2000000]; if(!fgets(line,sizeof(line),stdin)) return 0; int p=0; expect_char(line,&p,'[');\n    int wrows=0,frows=0; int* wcols=NULL; int* fcols=NULL; char*** watched=parse_string_2d(line,&p,&wrows,&wcols); expect_char(line,&p,','); int** friends=parse_int_2d(line,&p,&frows,&fcols); expect_char(line,&p,','); int id=parse_int(line,&p); expect_char(line,&p,','); int level=parse_int(line,&p); expect_char(line,&p,']');\n    int returnSize=0; char** result=watchedVideosByFriends(watched,wrows,wcols,friends,frows,fcols,id,level,&returnSize);\n    printf(\"[\"); for(int i=0;i<returnSize;i++){ if(i) printf(\",\"); printf(\"\\\"\"); for(char* c=result[i];*c;c++){ if(*c=='\"'||*c=='\\\\') printf(\"\\\\%c\",*c); else if(*c=='\\n') printf(\"\\\\n\"); else printf(\"%c\",*c);} printf(\"\\\"\"); } printf(\"]\\n\");\n    for(int i=0;i<returnSize;i++) free(result[i]); free(result); free_input(watched,wrows,wcols,friends,frows,fcols); return 0;\n}\n",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstatic void skipWs(const string& s, size_t& p) {\n    while (p < s.size() && isspace(static_cast<unsigned char>(s[p]))) ++p;\n}\n\nstatic void expectChar(const string& s, size_t& p, char c) {\n    skipWs(s, p);\n    if (p >= s.size() || s[p] != c) throw runtime_error(\"bad json\");\n    ++p;\n}\n\nstatic string parseString(const string& s, size_t& p) {\n    skipWs(s, p);\n    expectChar(s, p, '\"');\n    string out;\n    while (p < s.size()) {\n        char c = s[p++];\n        if (c == '\"') break;\n        if (c == '\\\\') {\n            if (p >= s.size()) throw runtime_error(\"bad escape\");\n            char e = s[p++];\n            if (e == '\"' || e == '\\\\' || e == '/') out.push_back(e);\n            else if (e == 'n') out.push_back('\\n');\n            else if (e == 'r') out.push_back('\\r');\n            else if (e == 't') out.push_back('\\t');\n            else throw runtime_error(\"unsupported escape\");\n        } else out.push_back(c);\n    }\n    return out;\n}\n\nstatic int parseInt(const string& s, size_t& p) {\n    skipWs(s, p);\n    int sign = 1;\n    if (s[p] == '-') { sign = -1; ++p; }\n    int v = 0;\n    while (p < s.size() && isdigit(static_cast<unsigned char>(s[p]))) v = v * 10 + (s[p++] - '0');\n    return sign * v;\n}\n\nstatic vector<string> parseStringArray(const string& s, size_t& p) {\n    vector<string> a;\n    expectChar(s, p, '[');\n    skipWs(s, p);\n    if (p < s.size() && s[p] == ']') { ++p; return a; }\n    while (true) {\n        a.push_back(parseString(s, p));\n        skipWs(s, p);\n        if (s[p] == ']') { ++p; break; }\n        expectChar(s, p, ',');\n    }\n    return a;\n}\n\nstatic vector<vector<string>> parseString2D(const string& s, size_t& p) {\n    vector<vector<string>> a;\n    expectChar(s, p, '[');\n    skipWs(s, p);\n    if (p < s.size() && s[p] == ']') { ++p; return a; }\n    while (true) {\n        a.push_back(parseStringArray(s, p));\n        skipWs(s, p);\n        if (s[p] == ']') { ++p; break; }\n        expectChar(s, p, ',');\n    }\n    return a;\n}\n\nstatic vector<int> parseIntArray(const string& s, size_t& p) {\n    vector<int> a;\n    expectChar(s, p, '[');\n    skipWs(s, p);\n    if (p < s.size() && s[p] == ']') { ++p; return a; }\n    while (true) {\n        a.push_back(parseInt(s, p));\n        skipWs(s, p);\n        if (s[p] == ']') { ++p; break; }\n        expectChar(s, p, ',');\n    }\n    return a;\n}\n\nstatic vector<vector<int>> parseInt2D(const string& s, size_t& p) {\n    vector<vector<int>> a;\n    expectChar(s, p, '[');\n    skipWs(s, p);\n    if (p < s.size() && s[p] == ']') { ++p; return a; }\n    while (true) {\n        a.push_back(parseIntArray(s, p));\n        skipWs(s, p);\n        if (s[p] == ']') { ++p; break; }\n        expectChar(s, p, ',');\n    }\n    return a;\n}\n\nclass Solution {\npublic:\n    vector<string> watchedVideosByFriends(vector<vector<string>>& watchedVideos, vector<vector<int>>& friends, int id, int level) {\n        return {};\n    }\n};\n\nstatic void printJsonString(const string& s) {\n    cout << '\"';\n    for (char c : s) {\n        if (c == '\"' || c == '\\\\') cout << '\\\\' << c;\n        else if (c == '\\n') cout << \"\\\\n\";\n        else if (c == '\\r') cout << \"\\\\r\";\n        else if (c == '\\t') cout << \"\\\\t\";\n        else cout << c;\n    }\n    cout << '\"';\n}\n\nint main() {\n    string line;\n    getline(cin, line);\n    size_t p = 0;\n    expectChar(line, p, '[');\n    auto watchedVideos = parseString2D(line, p);\n    expectChar(line, p, ',');\n    auto friends = parseInt2D(line, p);\n    expectChar(line, p, ',');\n    int id = parseInt(line, p);\n    expectChar(line, p, ',');\n    int level = parseInt(line, p);\n    expectChar(line, p, ']');\n\n    auto result = Solution().watchedVideosByFriends(watchedVideos, friends, id, level);\n    cout << '[';\n    for (size_t i = 0; i < result.size(); ++i) {\n        if (i) cout << ',';\n        printJsonString(result[i]);\n    }\n    cout << \"]\\n\";\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\nclass Solution {\n    public List<String> watchedVideosByFriends(List<List<String>> watchedVideos, int[][] friends, int id, int level) {\n        return null;\n    }\n}\n\npublic class Main {\n    static class Parser {\n        final String s; int p = 0;\n        Parser(String s) { this.s = s; }\n        void ws() { while (p < s.length() && Character.isWhitespace(s.charAt(p))) ++p; }\n        void expect(char c) { ws(); if (p >= s.length() || s.charAt(p) != c) throw new RuntimeException(\"bad json\"); ++p; }\n        String str() {\n            ws(); expect('\"');\n            StringBuilder out = new StringBuilder();\n            while (p < s.length()) {\n                char c = s.charAt(p++);\n                if (c == '\"') break;\n                if (c == '\\\\') {\n                    char e = s.charAt(p++);\n                    if (e == '\"' || e == '\\\\' || e == '/') out.append(e);\n                    else if (e == 'n') out.append('\\n');\n                    else if (e == 'r') out.append('\\r');\n                    else if (e == 't') out.append('\\t');\n                    else throw new RuntimeException(\"unsupported escape\");\n                } else out.append(c);\n            }\n            return out.toString();\n        }\n        int integer() {\n            ws(); int sign = 1; if (s.charAt(p) == '-') { sign = -1; ++p; }\n            int v = 0; while (p < s.length() && Character.isDigit(s.charAt(p))) v = v * 10 + (s.charAt(p++) - '0');\n            return sign * v;\n        }\n        List<String> stringArray() {\n            List<String> a = new ArrayList<>(); expect('['); ws();\n            if (s.charAt(p) == ']') { ++p; return a; }\n            while (true) {\n                a.add(str()); ws();\n                if (s.charAt(p) == ']') { ++p; break; }\n                expect(',');\n            }\n            return a;\n        }\n        List<List<String>> string2D() {\n            List<List<String>> a = new ArrayList<>(); expect('['); ws();\n            if (s.charAt(p) == ']') { ++p; return a; }\n            while (true) {\n                a.add(stringArray()); ws();\n                if (s.charAt(p) == ']') { ++p; break; }\n                expect(',');\n            }\n            return a;\n        }\n        int[] intArray() {\n            ArrayList<Integer> tmp = new ArrayList<>(); expect('['); ws();\n            if (s.charAt(p) == ']') { ++p; return new int[0]; }\n            while (true) {\n                tmp.add(integer()); ws();\n                if (s.charAt(p) == ']') { ++p; break; }\n                expect(',');\n            }\n            int[] a = new int[tmp.size()]; for (int i = 0; i < a.length; ++i) a[i] = tmp.get(i); return a;\n        }\n        int[][] int2D() {\n            List<int[]> rows = new ArrayList<>(); expect('['); ws();\n            if (s.charAt(p) == ']') { ++p; return new int[0][]; }\n            while (true) {\n                rows.add(intArray()); ws();\n                if (s.charAt(p) == ']') { ++p; break; }\n                expect(',');\n            }\n            return rows.toArray(new int[0][]);\n        }\n    }\n\n    static String jsonArray(List<String> a) {\n        StringBuilder sb = new StringBuilder(\"[\");\n        for (int i = 0; i < a.size(); ++i) {\n            if (i > 0) sb.append(',');\n            sb.append('\"').append(a.get(i).replace(\"\\\\\", \"\\\\\\\\\").replace(\"\\\"\", \"\\\\\\\"\")).append('\"');\n        }\n        return sb.append(']').toString();\n    }\n\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine().trim();\n        Parser p = new Parser(line);\n        p.expect('[');\n        List<List<String>> watchedVideos = p.string2D();\n        p.expect(',');\n        int[][] friends = p.int2D();\n        p.expect(',');\n        int id = p.integer();\n        p.expect(',');\n        int level = p.integer();\n        p.expect(']');\n        List<String> ans = new Solution().watchedVideosByFriends(watchedVideos, friends, id, level);\n        System.out.println(jsonArray(ans));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List\nfrom collections import Counter, deque\n\nclass Solution:\n    def watchedVideosByFriends(self, watchedVideos: List[List[str]], friends: List[List[int]], id: int, level: int) -> List[str]:\n        pass\n\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    ans = Solution().watchedVideosByFriends(args[0], args[1], args[2], args[3])\n    print(json.dumps(ans, separators=(',', ':')))\n",
+    "JavaScript": "const readline = require('readline');\n\nfunction watchedVideosByFriends(watchedVideos, friends, id, level) {\n    return 0;\n}\n\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    const args = JSON.parse(line.trim());\n    console.log(JSON.stringify(watchedVideosByFriends(args[0], args[1], args[2], args[3])));\n    rl.close();\n});\n"
+  },
+  "acceptanceRate": null,
+  "similarProblems": [],
+  "recommendedAfter": [],
+  "estimatedSolveTime": "-2-5---4-0- -m-i-n-",
+  "learningObjectives": [
+    "Use BFS to compute shortest-path levels in an undirected graph.",
+    "Separate exact-distance results from all vertices discovered up to that distance.",
+    "Count categorical frequencies with a hash map and apply a compound sort key.",
+    "Handle cycles, disconnected components, and multiple shortest paths correctly."
+  ]
 }

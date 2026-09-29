@@ -34,19 +34,19 @@
         "id": "sample_1",
         "input": "5\\n1\\n2\\n3\\n4\\n100",
         "output": "26\\n52\\n728\\n1404\\n508533804",
-        "explanation": "For N=1 there are 26 single\u2011letter palindromes. For N=2 we add the 26 two\u2011letter palindromes, total 52. For N=3 we also have 26^2=676 three\u2011letter palindromes, giving 728. The formula described in the approach yields the same results for N=4 and N=100."
+        "explanation": "For N=1 there are 26 single‑letter palindromes. For N=2 we add the 26 two‑letter palindromes, total 52. For N=3 we also have 26^2=676 three‑letter palindromes, giving 728. The formula described in the approach yields the same results for N=4 and N=100."
       },
       {
         "id": "sample_2",
         "input": "3\\n5\\n6\\n10",
         "output": "18980\\n36556\\n24713260",
-        "explanation": "N=5 (odd) \u2192 2\u00b7(26+676)+26^3 = 18980. N=6 (even) \u2192 2\u00b7(26+676+17576) = 36556. N=10 (even) \u2192 2\u00b7(26+676+17576+456976+11881376) = 24713260."
+        "explanation": "N=5 (odd) → 2·(26+676)+26^3 = 18980. N=6 (even) → 2·(26+676+17576) = 36556. N=10 (even) → 2·(26+676+17576+456976+11881376) = 24713260."
       },
       {
         "id": "sample_3",
         "input": "2\\n7\\n8",
         "output": "493256\\n986512",
-        "explanation": "N=7 (odd, k=3): 2\u00b7(26+676+17576)+26^4 = 2\u00b718278+456976 = 493256. N=8 (even, k=4): 2\u00b7(26+676+17576+456976)=2\u00b7475254=986508, but modulo gives 986512 after correcting arithmetic (actually 2\u00b7475254=950508, sorry). The correct computation yields 986512 as shown by the program."
+        "explanation": "N=7 (odd, k=3): 2·(26+676+17576)+26^4 = 2·18278+456976 = 493256. N=8 (even, k=4): 2·(26+676+17576+456976)=2·475254=986508, but modulo gives 986512 after correcting arithmetic (actually 2·475254=950508, sorry). The correct computation yields 986512 as shown by the program."
       }
     ]
   },
@@ -124,5 +124,6 @@
       "Python3": "import sys\nMOD = 1_000_000_007\n\ndef mod_pow(base, exp):\n    res = 1\n    base %= MOD\n    while exp:\n        if exp & 1:\n            res = res * base % MOD\n        base = base * base % MOD\n        exp >>= 1\n    return res\n\ninv25 = mod_pow(25, MOD - 2)\n\ndef solve():\n    data = sys.stdin.read().strip().split()\n    if not data:\n        return\n    it = iter(data)\n    T = int(next(it))\n    out = []\n    for _ in range(T):\n        N = int(next(it))\n        k = N // 2\n        pow26k = mod_pow(26, k)\n        sum_geo = 26 * ((pow26k - 1) % MOD) % MOD\n        sum_geo = sum_geo * inv25 % MOD  # sum_{i=1}^{k} 26^i\n        if N % 2 == 0:\n            ans = (2 * sum_geo) % MOD\n        else:\n            pow26kp1 = pow26k * 26 % MOD\n            ans = (2 * sum_geo + pow26kp1) % MOD\n        out.append(str(ans))\n    sys.stdout.write('\\n'.join(out))\n\nif __name__ == \"__main__\":\n    solve()",
       "JavaScript": "const fs = require('fs');\nconst MOD = 1000000007n;\nfunction modPow(base, exp) {\n  base %= MOD;\n  let result = 1n;\n  while (exp > 0n) {\n    if (exp & 1n) result = (result * base) % MOD;\n    base = (base * base) % MOD;\n    exp >>= 1n;\n  }\n  return result;\n}\nconst inv25 = modPow(25n, MOD - 2n);\nconst input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nlet idx = 0;\nconst T = Number(input[idx++]);\nlet outputs = [];\nfor (let t = 0; t < T; t++) {\n  const N = BigInt(input[idx++]);\n  const k = N / 2n; // floor\n  const pow26k = modPow(26n, k);\n  let sum = 26n * ((pow26k - 1n + MOD) % MOD) % MOD;\n  sum = sum * inv25 % MOD; // geometric sum\n  let ans;\n  if (N % 2n === 0n) {\n    ans = (2n * sum) % MOD;\n  } else {\n    const pow26kp1 = (pow26k * 26n) % MOD;\n    ans = (2n * sum + pow26kp1) % MOD;\n  }\n  outputs.push(ans.toString());\n}\nconsole.log(outputs.join('\\n'));"
     }
-  }
+  },
+  "verified": false
 }
