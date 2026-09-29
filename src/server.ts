@@ -48,8 +48,33 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      let response = await handler.fetch(request, env, ctx);
+      response = await normalizeCatastrophicSsrResponse(response);
+
+      // Edge caching optimization: Cache static question JSONs, seed-contents & assets
+      // s-maxage=2592000 (30 days on Cloudflare Edge CDN) prevents burning Worker requests
+      // max-age=604800 (7 days on student's browser) gives instant 0ms load times
+      // stale-while-revalidate=86400 revalidates in the background if questions are updated
+      const url = new URL(request.url);
+      if (
+        (url.pathname.startsWith("/seed-contents/") ||
+          url.pathname.endsWith(".json") ||
+          url.pathname.startsWith("/assets/")) &&
+        response.status === 200
+      ) {
+        const newHeaders = new Headers(response.headers);
+        newHeaders.set(
+          "Cache-Control",
+          "public, max-age=604800, s-maxage=2592000, stale-while-revalidate=86400",
+        );
+        return new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: newHeaders,
+        });
+      }
+
+      return response;
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {
