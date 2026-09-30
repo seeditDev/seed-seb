@@ -1,6 +1,6 @@
 {
   "questionId": "Q162",
-  "title": "Determine Peak Element",
+  "title": "Find Peak Element",
   "slug": "find-peak-element",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -21,9 +21,11 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "A peak element is an element that is strictly greater than its neighbors.\n\nWith a **0-indexed** integer array `nums`, find a peak element, and output its index. If the array includes multiple peaks, output the index to **any of the peaks**.\n\nYou may imagine that `nums[-1] = nums[n] = -∞`. In other words, an element is always considered to be strictly greater than a neighbor that is outside the array.\n\nYou must write an algorithm that runs in `O(log n)` time.\n\n**Example 1:**\n\n```\nInput: nums = [1,2,3,1]\nOutput: 2\nExplanation: 3 is a peak element and your function should return the index number 2.\n```\n\n**Example 2:**\n\n```\nInput: nums = [1,2,1,3,5,6,4]\nOutput: 5\nExplanation: Your function can return either index number 1 where the peak element is 2, or index number 5 where the peak element is 6.\n```\n\n**Constraints:**\n\n* `1 <= nums.length <= 1000`\n* `-231 <= nums[i] <= 231 - 1`\n* `nums[i] != nums[i + 1]` for all valid `i`.",
+    "problemStatement": "You're given an array of integers where no two adjacent elements are\nequal. A peak element is one that is strictly greater than its\nneighbors, treating the positions just off the left and right ends of\nthe array as negative infinity, so an end element only needs to beat its\none real neighbor.\n\n**Return the index of any peak element.**\n\nIf there are multiple peaks, returning the index of any one of them is accepted. You must do this faster than a plain linear scan.",
     "constraints": [
-      "None"
+      "1 <= nums.length <= 1000",
+      "-2^31 <= nums[i] <= 2^31 - 1",
+      "nums[i] != nums[i + 1] for all valid i"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -31,16 +33,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "nums = [1,2,3,1]",
+        "input": "nums = [1, 2, 3, 1]",
         "output": "2",
-        "explanation": ""
+        "explanation": "3 is greater than both of its neighbors, 2 and 1"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "nums = [1,2,1,3,5,6,4]",
-        "output": "5",
-        "explanation": ""
+        "input": "nums = [1, 2, 3, 4, 3, 2, 1]",
+        "output": "3",
+        "explanation": "4 is the single peak, greater than both 3 (on the left) and 3 (on the right)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 1, 3, 5, 6, 4]",
+        "output": "5 (or 1)",
+        "explanation": "there are two peaks here, index 1 (value 2) and index 5 (value 6) - either is a valid answer"
       }
     ],
     "notes": []
@@ -50,246 +59,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[1,2,3,1]]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[1,2,3,4,3,2,1]]",
+        "expectedOutput": "3",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[1]]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[1,2]]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[2,1]]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "expectedOutput": "9",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[1,3,2]]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[3,2,1]]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[1,3,6,10,15,21,28,20,10,5,1]]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[5,10,20,15,8,3,1]]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[-5,-3,-1,0,-2,-4]]",
+        "expectedOutput": "3",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[1,2,3,10,9,8,7,6,5,4]]",
+        "expectedOutput": "3",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,9,8,7,6,5,4,3,2,1]]",
+        "expectedOutput": "9",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[0,1,0]]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[0,-1,-2]]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[7]]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[3,9]]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[9,3]]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[100,50,25,12,6,3,1]]",
+        "expectedOutput": "0",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -362,7 +289,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -370,11 +301,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    int findPeakElement(vector<int>& nums) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public int findPeakElement(int[] nums) {\n        \n    }\n}",
-    "Python3": "# Time:  O(logn)\n# Space: O(1)\n\nclass Solution(object):\n    def findPeakElement(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        left, right = 0, len(nums) - 1\n\n        while left < right:\n            mid = left + (right - left) / 2\n            if nums[mid] > nums[mid + 1]:\n                right = mid\n            else:\n                left = mid + 1\n\n        return left",
+    "C++": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findPeakElement(vector<int>& nums) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int findPeakElement(int[] nums) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def findPeakElement(self, nums):\n        pass\n",
     "Python": "class Solution(object):\n    def findPeakElement(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: int\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {number[]} nums\n * @return {number}\n */\nvar findPeakElement = function(nums) {\n    \n};",
+    "JavaScript": "class Solution {\n    findPeakElement(nums) {\n\n    }\n}\n",
     "TypeScript": "function findPeakElement(nums: number[]): number {\n    \n};",
     "C#": "public class Solution {\n    public int FindPeakElement(int[] nums) {\n        \n    }\n}",
     "C": "int findPeakElement(int* nums, int numsSize) {\n    \n}",
@@ -395,9 +326,10 @@
     "params": [
       {
         "name": "nums",
-        "type": "integer[]"
+        "type": "int[]"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }

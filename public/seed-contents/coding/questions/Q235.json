@@ -1,6 +1,6 @@
 {
   "questionId": "Q235",
-  "title": "Lowest Common Ancestor of a Binary Search Tree Problem",
+  "title": "Lowest Common Ancestor of a Binary Search Tree",
   "slug": "lowest-common-ancestor-of-a-binary-search-tree",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -25,9 +25,13 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "With a binary search tree (BST), find the lowest common ancestor (LCA) node of two given nodes in the BST.\n\nAccording to the [definition of LCA on Wikipedia](https://en.wikipedia.org/wiki/Lowest_common_ancestor): “The lowest common ancestor is defined between two nodes `p` and `q` as the lowest node in `T` that has both `p` and `q` as descendants (where we allow **a node to be a descendant of itself**).”\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2018/12/14/binarysearchtree_improved.png)\n\n```\nInput: root = [6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 8\nOutput: 6\nExplanation: The LCA of nodes 2 and 8 is 6.\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2018/12/14/binarysearchtree_improved.png)\n\n```\nInput: root = [6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 4\nOutput: 2\nExplanation: The LCA of nodes 2 and 4 is 2, since a node can be a descendant of itself according to the LCA definition.\n```\n\n**Example 3:**\n\n```\nInput: root = [2,1], p = 2, q = 1\nOutput: 2\n```\n\n**Constraints:**\n\n* The number of nodes in the tree is in the range `[2, 105]`.\n* `-109 <= Node.val <= 109`\n* All `Node.val` are **unique**.\n* `p != q`\n* `p` and `q` will exist in the BST.",
+    "problemStatement": "Binary trees are encoded as flat arrays using complete-binary-tree (heap)\nindexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node there\"\n\nThe given tree is guaranteed to be a valid binary search tree with all\ndistinct values, and you're given two values `p` and `q`, both\nguaranteed to exist somewhere in the tree. For example, `[6, 2, 8, 0, 4,\n7, 9, -101, -101, 3, 5]` encodes this tree:\n\n```\n            6\n          /   \\\n         2     8\n        / \\   / \\\n       0   4 7   9\n          / \\\n         3   5\n```\n\nHere, the lowest common ancestor of `p = 3` and `q = 5` is `4` (their\ndirect parent), while the lowest common ancestor of `p = 2` and `q = 8`\nis the root, `6`.\n\n**Return the value of the lowest common ancestor of `p` and `q`: the deepest node that has both somewhere in its subtree.**\n\nA node counts as its own ancestor, so if `p` is an ancestor of `q`, the\nanswer is `p` itself.",
     "constraints": [
-      "None"
+      "2 <= number of real nodes <= 10^4",
+      "-100 <= tree[i] <= 100 for every real node",
+      "all real node values in the tree are unique",
+      "p != q, and both p and q are values that exist in the tree",
+      "the sentinel value -101 marks a missing node and never appears as a real value"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -35,23 +39,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "root = [6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 8",
+        "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 2, q = 8",
         "output": "6",
-        "explanation": ""
+        "explanation": "2 is in the left subtree of 6 and 8 is in the right subtree of 6, so 6 is the deepest node containing both"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "root = [6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 4",
+        "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 2, q = 4",
         "output": "2",
-        "explanation": ""
+        "explanation": "4 is inside 2's own subtree (2's right child), so 2 is an ancestor of itself and of 4 - the lowest common ancestor is 2"
       },
       {
         "id": "sample_3",
         "type": "reg",
-        "input": "root = [2,1], p = 2, q = 1",
-        "output": "2",
-        "explanation": ""
+        "input": "tree = [6, 2, 8, 0, 4, 7, 9, -101, -101, 3, 5], p = 3, q = 5",
+        "output": "4",
+        "explanation": "3 and 5 are 4's left and right children respectively, so 4 is their lowest common ancestor"
       }
     ],
     "notes": []
@@ -61,246 +65,172 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],2,8]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],2,4]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],0,5]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[6,2,8,0,4,7,9,-101,-101,3,5],7,9]",
+        "expectedOutput": "8",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[1],1,1]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-33,47]",
+        "expectedOutput": "-22",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],19,-61]",
+        "expectedOutput": "-22",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-89,70]",
+        "expectedOutput": "-22",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],23,70]",
+        "expectedOutput": "47",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-89,-15]",
+        "expectedOutput": "-22",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[-22,-28,47,-61,-101,23,70,-90,-33,-101,-101,19,-101,-101,-101,-101,-77,-42,-101,-101,-101,-101,-101,-15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-89,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1],-22,-33]",
+        "expectedOutput": "-22",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-61,-55]",
+        "expectedOutput": "-61",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-70,-55]",
+        "expectedOutput": "-70",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-61,-78]",
+        "expectedOutput": "-78",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[-27,-78,-15,-92,-70,-101,-101,-101,-79,-101,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-61,-35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],-41,-78]",
+        "expectedOutput": "-78",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[21,-69],21,-69]",
+        "expectedOutput": "21",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],31,11]",
+        "expectedOutput": "31",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],-33,-82]",
+        "expectedOutput": "-44",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],19,11]",
+        "expectedOutput": "13",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[6,-27,31,-44,-14,13,35,-82,-43,-101,-101,11,17,-101,41,-101,-50,-101,-33,-101,-101,-101,-101,-101,-101,-101,19,-101,-101,-101,63,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,21,-101,-101,-101,-101,-101,-101,43,67,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,59],-43,43]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_21",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 21",
+        "input": "[[-70,-101,-25,-101,-101,-66,79,-101,-101,-101,-101,-101,-101,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,15,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-18],-70,79]",
+        "expectedOutput": "-70",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -373,7 +303,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Identify the search space and verify that the condition is monotonic (true...true...false...false).",
+    "Be mindful of integer overflow when computing mid: use mid = left + (right - left) // 2.",
+    "Ensure the termination condition (left <= right vs left < right) correctly handles boundary elements."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -381,11 +315,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     TreeNode *left;\n *     TreeNode *right;\n *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}\n * };\n */\n\nclass Solution {\npublic:\n    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {\n        \n    }\n};",
-    "Java": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     int val;\n *     TreeNode left;\n *     TreeNode right;\n *     TreeNode(int x) { val = x; }\n * }\n */\n\nclass Solution {\n    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n)\n# Space: O(1)\n\nclass Solution(object):\n    # @param {TreeNode} root\n    # @param {TreeNode} p\n    # @param {TreeNode} q\n    # @return {TreeNode}\n    def lowestCommonAncestor(self, root, p, q):\n        s, b = sorted([p.val, q.val])\n        while not s <= root.val <= b:\n            # Keep searching since root is outside of [s, b].\n            root = root.left if s <= root.val else root.right\n        # s <= root.val <= b.\n        return root",
+    "C++": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int lowestCommonAncestor(vector<int>& tree, int p, int q) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int lowestCommonAncestor(int[] tree, int p, int q) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def lowestCommonAncestor(self, tree, p, q):\n        pass\n",
     "Python": "# Definition for a binary tree node.\n# class TreeNode(object):\n#     def __init__(self, x):\n#         self.val = x\n#         self.left = None\n#         self.right = None\n\nclass Solution(object):\n    def lowestCommonAncestor(self, root, p, q):\n        \"\"\"\n        :type root: TreeNode\n        :type p: TreeNode\n        :type q: TreeNode\n        :rtype: TreeNode\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * Definition for a binary tree node.\n * function TreeNode(val) {\n *     this.val = val;\n *     this.left = this.right = null;\n * }\n */\n\n/**\n * @param {TreeNode} root\n * @param {TreeNode} p\n * @param {TreeNode} q\n * @return {TreeNode}\n */\nvar lowestCommonAncestor = function(root, p, q) {\n    \n};",
+    "JavaScript": "class Solution {\n    lowestCommonAncestor(tree, p, q) {\n\n    }\n}\n",
     "TypeScript": "/**\n * Definition for a binary tree node.\n * class TreeNode {\n *     val: number\n *     left: TreeNode | null\n *     right: TreeNode | null\n *     constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {\n *         this.val = (val===undefined ? 0 : val)\n *         this.left = (left===undefined ? null : left)\n *         this.right = (right===undefined ? null : right)\n *     }\n * }\n */\n\nfunction lowestCommonAncestor(root: TreeNode | null, p: TreeNode | null, q: TreeNode | null): TreeNode | null {\n\t\n};",
     "C#": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     public int val;\n *     public TreeNode left;\n *     public TreeNode right;\n *     public TreeNode(int x) { val = x; }\n * }\n */\n\npublic class Solution {\n    public TreeNode LowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {\n        \n    }\n}",
     "C": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     struct TreeNode *left;\n *     struct TreeNode *right;\n * };\n */\n\nstruct TreeNode* lowestCommonAncestor(struct TreeNode* root, struct TreeNode* p, struct TreeNode* q) {\n    \n}",
@@ -401,18 +335,19 @@
     "methodName": "lowestCommonAncestor",
     "params": [
       {
-        "name": "root",
-        "type": "TreeNode"
+        "name": "tree",
+        "type": "int[]"
       },
       {
         "name": "p",
-        "type": "integer"
+        "type": "int"
       },
       {
         "name": "q",
-        "type": "integer"
+        "type": "int"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 21
 }

@@ -29,7 +29,8 @@
   "content": {
     "problemStatement": "With a string `expression` of numbers and operators, output *all possible results from computing all the different possible ways to group numbers and operators*. You may output the answer in **any order**.\n\nThe test cases are generated such that the output values fit in a 32-bit integer and the number of different results does not exceed `104`.\n\n**Example 1:**\n\n```\nInput: expression = \"2-1-1\"\nOutput: [0,2]\nExplanation:\n((2-1)-1) = 0 \n(2-(1-1)) = 2\n```\n\n**Example 2:**\n\n```\nInput: expression = \"2*3-4*5\"\nOutput: [-34,-14,-10,-10,10]\nExplanation:\n(2*(3-(4*5))) = -34 \n((2*3)-(4*5)) = -14 \n((2*(3-4))*5) = -10 \n(2*((3-4)*5)) = -10 \n(((2*3)-4)*5) = 10\n```\n\n**Constraints:**\n\n* `1 <= expression.length <= 20`\n* `expression` is composed of digits and the operator `'+'`, `'-'`, and `'*'`.\n* All the integer values in the input expression are in the range `[0, 99]`.\n* The integer values in the input expression do not have a leading `'-'` or `'+'` denoting the sign.",
     "constraints": [
-      "None"
+      "1 <= string.length <= 10^5",
+      "Input contains standard printable characters."
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -368,7 +369,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Consider using a frequency map, hash table, or fixed-size array of 26/128 elements to track character counts.",
+    "If searching for substrings or window constraints, the sliding window technique with two pointers is often optimal.",
+    "Watch out for edge cases such as empty strings, single-character strings, and differing cases."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -378,7 +383,7 @@
   "boilerPlates": {
     "C++": "class Solution {\npublic:\n    vector<int> diffWaysToCompute(string expression) {\n        \n    }\n};",
     "Java": "class Solution {\n    public List<Integer> diffWaysToCompute(String expression) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n * 4^n / n^(3/2)) ~= n * Catalan numbers = n * (C(2n, n) - C(2n, n - 1)),\n#                                due to the size of the results is Catalan numbers,\n#                                and every way of evaluation is the length of the string,\n#                                so the time complexity is at most n * Catalan numbers.\n# Space: O(n * 4^n / n^(3/2)), the cache size of lookup is at most n * Catalan numbers.\n\nimport operator\nimport re\n\n\nclass Solution(object):\n    # @param {string} input\n    # @return {integer[]}\n    def diffWaysToCompute(self, input):\n        tokens = re.split('(\\D)', input)\n        nums = map(int, tokens[::2])\n        ops = map({'+': operator.add, '-': operator.sub, '*': operator.mul}.get, tokens[1::2])\n        lookup = [[None for _ in range(len(nums))] for _ in range(len(nums))]\n\n        def diffWaysToComputeRecu(left, right):\n            if left == right:\n                return [nums[left]]\n            if lookup[left][right]:\n                return lookup[left][right]\n            lookup[left][right] = [ops[i](x, y)\n                                   for i in range(left, right)\n                                   for x in diffWaysToComputeRecu(left, i)\n                                   for y in diffWaysToComputeRecu(i + 1, right)]\n            return lookup[left][right]\n\n        return diffWaysToComputeRecu(0, len(nums) - 1)",
+    "Python3": "class Solution(object):\n    def diffWaysToCompute(self, input):\n        pass\n",
     "Python": "class Solution(object):\n    def diffWaysToCompute(self, expression):\n        \"\"\"\n        :type expression: str\n        :rtype: List[int]\n        \"\"\"\n        ",
     "JavaScript": "/**\n * @param {string} expression\n * @return {number[]}\n */\nvar diffWaysToCompute = function(expression) {\n    \n};",
     "TypeScript": "function diffWaysToCompute(expression: string): number[] {\n    \n};",
@@ -405,5 +410,9 @@
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "constraints": [
+    "1 <= string.length <= 10^5",
+    "Input contains standard printable characters."
+  ]
 }

@@ -1,6 +1,6 @@
 {
   "questionId": "Q228",
-  "title": "Summary Ranges Problem",
+  "title": "Summary Ranges",
   "slug": "summary-ranges",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -19,9 +19,12 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You receive a **sorted unique** integer array `nums`.\n\nA **range** `[a,b]` is the set of all integers from `a` to `b` (inclusive).\n\nOutput *the **smallest sorted** list of ranges that **cover all the numbers in the array exactly***. That is, each element of `nums` is covered by exactly one of the ranges, and there is no integer `x` such that `x` is in one of the ranges but not in `nums`.\n\nEach range `[a,b]` in the list should be output as:\n\n* `\"a->b\"` if `a != b`\n* `\"a\"` if `a == b`\n\n**Example 1:**\n\n```\nInput: nums = [0,1,2,4,5,7]\nOutput: [\"0->2\",\"4->5\",\"7\"]\nExplanation: The ranges are:\n[0,2] --> \"0->2\"\n[4,5] --> \"4->5\"\n[7,7] --> \"7\"\n```\n\n**Example 2:**\n\n```\nInput: nums = [0,2,3,4,6,8,9]\nOutput: [\"0\",\"2->4\",\"6\",\"8->9\"]\nExplanation: The ranges are:\n[0,0] --> \"0\"\n[2,4] --> \"2->4\"\n[6,6] --> \"6\"\n[8,9] --> \"8->9\"\n```\n\n**Constraints:**\n\n* `0 <= nums.length <= 20`\n* `-231 <= nums[i] <= 231 - 1`\n* All the values of `nums` are **unique**.\n* `nums` is sorted in ascending order.",
+    "problemStatement": "You're given a sorted array of unique integers `nums`.\n\n**Return the smallest sorted list of ranges that exactly covers every number in `nums`, where each range is represented as [start, end].**\n\nIf a range covers only a single number, still represent it as [start, start].",
     "constraints": [
-      "None"
+      "0 <= nums.length <= 25",
+      "-2^31 <= nums[i] <= 2^31 - 1",
+      "all values in nums are unique",
+      "nums is sorted in strictly increasing order"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -30,14 +33,21 @@
         "id": "sample_1",
         "type": "reg",
         "input": "nums = [0,1,2,4,5,7]",
-        "output": "[\"0->2\",\"4->5\",\"7\"]",
-        "explanation": ""
+        "output": "[[0,2],[4,5],[7,7]]",
+        "explanation": "0,1,2 are consecutive; 4,5 are consecutive; 7 stands alone"
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "nums = [0,2,3,4,6,8,9]",
-        "output": "[\"0\",\"2->4\",\"6\",\"8->9\"]",
+        "output": "[[0,0],[2,4],[6,6],[8,9]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[[1,1]]",
         "explanation": ""
       }
     ],
@@ -48,246 +58,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[0,1,2,4,5,7]]",
+        "expectedOutput": "[[0,2],[4,5],[7,7]]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[0,2,3,4,6,8,9]]",
+        "expectedOutput": "[[0,0],[2,4],[6,6],[8,9]]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[1]]",
+        "expectedOutput": "[[1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[]]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[-3,-2,-1,1,2]]",
+        "expectedOutput": "[[-3,-1],[1,2]]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[5]]",
+        "expectedOutput": "[[5,5]]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[1,2,3]]",
+        "expectedOutput": "[[1,3]]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[1,3,5,7]]",
+        "expectedOutput": "[[1,1],[3,3],[5,5],[7,7]]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[-5,-4,-3,-1,0,1,5]]",
+        "expectedOutput": "[[-5,-3],[-1,1],[5,5]]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "expectedOutput": "[[0,19]]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[0,1,3,4,5,7,8,9,11]]",
+        "expectedOutput": "[[0,1],[3,5],[7,9],[11,11]]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[-10,-9,-8,-7,0,1,2,10]]",
+        "expectedOutput": "[[-10,-7],[0,2],[10,10]]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[2]]",
+        "expectedOutput": "[[2,2]]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[1,2,4,5,7,8,10]]",
+        "expectedOutput": "[[1,2],[4,5],[7,8],[10,10]]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[-3,-1,0,1,3]]",
+        "expectedOutput": "[[-3,-3],[-1,1],[3,3]]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[0]]",
+        "expectedOutput": "[[0,0]]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[-1]]",
+        "expectedOutput": "[[-1,-1]]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]]",
+        "expectedOutput": "[[-10,10]]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[1,2,3,10,11,12,13,20,30,31,32]]",
+        "expectedOutput": "[[1,3],[10,13],[20,20],[30,32]]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[100]]",
+        "expectedOutput": "[[100,100]]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -360,7 +288,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -368,11 +300,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    vector<string> summaryRanges(vector<int>& nums) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public List<String> summaryRanges(int[] nums) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n)\n# Space: O(1)\n\nimport itertools\nimport re\n\n\nclass Solution(object):\n    # @param {integer[]} nums\n    # @return {string[]}\n    def summaryRanges(self, nums):\n        ranges = []\n        if not nums:\n            return ranges\n\n        start, end = nums[0], nums[0]\n        for i in range(1, len(nums) + 1):\n            if i < len(nums) and nums[i] == end + 1:\n                end = nums[i]\n            else:\n                interval = str(start)\n                if start != end:\n                    interval += \"->\" + str(end)\n                ranges.append(interval)\n                if i < len(nums):\n                    start = end = nums[i]\n\n        return ranges",
+    "C++": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> summaryRanges(vector<int>& nums) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int[][] summaryRanges(int[] nums) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def summaryRanges(self, nums):\n        pass\n",
     "Python": "class Solution(object):\n    def summaryRanges(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: List[str]\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {number[]} nums\n * @return {string[]}\n */\nvar summaryRanges = function(nums) {\n    \n};",
+    "JavaScript": "class Solution {\n    summaryRanges(nums) {\n\n    }\n}\n",
     "TypeScript": "function summaryRanges(nums: number[]): string[] {\n    \n};",
     "C#": "public class Solution {\n    public IList<string> SummaryRanges(int[] nums) {\n        \n    }\n}",
     "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nchar** summaryRanges(int* nums, int numsSize, int* returnSize) {\n    \n}",
@@ -393,9 +325,10 @@
     "params": [
       {
         "name": "nums",
-        "type": "integer[]"
+        "type": "int[]"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }

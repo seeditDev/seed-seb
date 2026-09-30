@@ -1,6 +1,6 @@
 {
   "questionId": "Q113",
-  "title": "Path Sum II Problem",
+  "title": "Path Sum II",
   "slug": "path-sum-ii",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -25,9 +25,13 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "With the `root` of a binary tree and an integer `targetSum`, output *all **root-to-leaf** paths where the sum of the node values in the path equals* `targetSum`*. Each path should be returned as a list of the node **values**, not node references*.\n\nA **root-to-leaf** path is a path starting from the root and ending at any leaf node. A **leaf** is a node with no children.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/01/18/pathsumii1.jpg)\n\n```\nInput: root = [5,4,8,11,null,13,4,7,2,null,null,5,1], targetSum = 22\nOutput: [[5,4,11,2],[5,8,4,5]]\nExplanation: There are two paths whose sum equals targetSum:\n5 + 4 + 11 + 2 = 22\n5 + 8 + 4 + 5 = 22\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2021/01/18/pathsum2.jpg)\n\n```\nInput: root = [1,2,3], targetSum = 5\nOutput: []\n```\n\n**Example 3:**\n\n```\nInput: root = [1,2], targetSum = 0\nOutput: []\n```\n\n**Constraints:**\n\n* The number of nodes in the tree is in the range `[0, 5000]`.\n* `-1000 <= Node.val <= 1000`\n* `-1000 <= targetSum <= 1000`",
+    "problemStatement": "Binary trees are encoded as flat arrays using complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array's bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node there\" - real node values always fall between -100 and 100, so -101 never collides with a genuine value\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2's left child is missing (sentinel) but its right child is 4.\n\nYou're also given a target sum, `targetSum`.\n\n**Find every root-to-leaf path (a leaf is a node with no children) whose values add up exactly to `targetSum`, and return all such paths, each as a list of values in root-to-leaf order.**\n\nIf no path qualifies, return an empty list.",
     "constraints": [
-      "None"
+      "0 <= number of real nodes <= 5000",
+      "every real node value is between -100 and 100 inclusive",
+      "targetSum fits in a normal int range",
+      "the sentinel value -101 marks a missing node and never appears as a real value",
+      "each returned path lists values in root-to-leaf order; if no path matches, return an empty outer list"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -35,23 +39,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "root = [5,4,8,11,null,13,4,7,2,null,null,5,1], targetSum = 22",
-        "output": "[[5,4,11,2],[5,8,4,5]]",
-        "explanation": ""
+        "input": "tree = [5, 4, 8, 11, -101, 13, 4, 7, 2, -101, -101, -101, -101, 5, 1], targetSum = 22",
+        "output": "[[5, 4, 11, 2], [5, 8, 4, 5]]",
+        "explanation": "root 5 branches into 4 (with children 11, missing; 11 has children 7, 2) and 8 (with children 13, 4; that 4 has children 5, 1). two root-to-leaf paths sum to 22: 5+4+11+2=22 and 5+8+4+5=22"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "root = [1,2,3], targetSum = 5",
-        "output": "[]",
-        "explanation": ""
+        "input": "tree = [5, 4, 8, 11, -101, 13, 4, 7, 2, -101, -101, -101, -101, 5, 1], targetSum = 26",
+        "output": "[[5, 8, 13]]",
+        "explanation": "5+8+13=26, and 13 is a leaf since it has no children in this tree"
       },
       {
         "id": "sample_3",
         "type": "reg",
-        "input": "root = [1,2], targetSum = 0",
-        "output": "[]",
-        "explanation": ""
+        "input": "tree = [1], targetSum = 1",
+        "output": "[[1]]",
+        "explanation": "a single node is both the root and a leaf at once, so the path is just [1]"
       }
     ],
     "notes": []
@@ -61,246 +65,204 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[5,4,8,11,-101,13,4,7,2,-101,-101,-101,-101,5,1],22]",
+        "expectedOutput": "[[5,4,11,2],[5,8,4,5]]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[5,4,8,11,-101,13,4,7,2,-101,-101,-101,-101,5,1],26]",
+        "expectedOutput": "[[5,8,13]]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[5,4,8,11,-101,13,4,7,2,-101,-101,-101,-101,5,1],100]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[1],1]",
+        "expectedOutput": "[[1]]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[-101],0]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],99]",
+        "expectedOutput": "[[47,-61,57,57,-1]]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],100]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],107]",
+        "expectedOutput": "[[47,13,47]]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[47,-61,13,57,93,-69,47,57,61,-101,-101,-101,-101,-101,-101,-1],9999]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],124]",
+        "expectedOutput": "[[99,-53,78]]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],125]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],166]",
+        "expectedOutput": "[[99,83,-16]]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[99,-53,83,-101,78,-2,-16,-101,-101,-101,-101,97,-41,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66,14,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-38,14],9999]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],6]",
+        "expectedOutput": "[[-63,96,25,29,-26,-55]]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],7]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[-63,96,-101,25,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-26,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-55],9999]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],-198]",
+        "expectedOutput": "[[27,17,-78,-68,-4,-92]]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],-197]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[27,-101,17,-101,-101,-101,-78,-101,-101,-101,-101,-101,-101,-101,-68,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-4,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-92],9999]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],37]",
+        "expectedOutput": "[[87,-28,-91,69]]",
+        "weight": 5
       },
       {
         "id": "tc_21",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 21",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],38]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_22",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 22",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],307]",
+        "expectedOutput": "[[87,98,33,89]]",
+        "weight": 5
       },
       {
         "id": "tc_23",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 23",
+        "input": "[[87,-28,98,-91,25,-99,33,69,-19,-50,17,27,41,93,89],9999]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_24",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 24",
+        "input": "[[37,21,5,-41,49,-101,-101,10,-101,-101,-101,-101,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,37],42]",
+        "expectedOutput": "[[37,5]]",
+        "weight": 5
       },
       {
         "id": "tc_25",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 25",
+        "input": "[[37,21,5,-41,49,-101,-101,10,-101,-101,-101,-101,-101,-101,-101,29,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,7,37],63]",
+        "expectedOutput": "[[37,21,-41,10,29,7]]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -373,7 +335,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Identify the search space and verify that the condition is monotonic (true...true...false...false).",
+    "Be mindful of integer overflow when computing mid: use mid = left + (right - left) // 2.",
+    "Ensure the termination condition (left <= right vs left < right) correctly handles boundary elements."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -381,11 +347,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     TreeNode *left;\n *     TreeNode *right;\n *     TreeNode() : val(0), left(nullptr), right(nullptr) {}\n *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}\n *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}\n * };\n */\nclass Solution {\npublic:\n    vector<vector<int>> pathSum(TreeNode* root, int targetSum) {\n        \n    }\n};",
-    "Java": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     int val;\n *     TreeNode left;\n *     TreeNode right;\n *     TreeNode() {}\n *     TreeNode(int val) { this.val = val; }\n *     TreeNode(int val, TreeNode left, TreeNode right) {\n *         this.val = val;\n *         this.left = left;\n *         this.right = right;\n *     }\n * }\n */\nclass Solution {\n    public List<List<Integer>> pathSum(TreeNode root, int targetSum) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n)\n# Space: O(h), h is height of binary tree\n\nclass TreeNode(object):\n    def __init__(self, x):\n        self.val = x\n        self.left = None\n        self.right = None\n\nclass Solution(object):\n    # @param root, a tree node\n    # @param sum, an integer\n    # @return a list of lists of integers\n    def pathSum(self, root, sum):\n        return self.pathSumRecu([], [], root, sum)\n\n\n    def pathSumRecu(self, result, cur, root, sum):\n        if root is None:\n            return result\n\n        if root.left is None and root.right is None and root.val == sum:\n            result.append(cur + [root.val])\n            return result\n\n        cur.append(root.val)\n        self.pathSumRecu(result, cur, root.left, sum - root.val)\n        self.pathSumRecu(result, cur,root.right, sum - root.val)\n        cur.pop()\n        return result",
+    "C++": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> pathSumAll(vector<int>& tree, int targetSum) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int[][] pathSumAll(int[] tree, int targetSum) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def pathSumAll(self, tree, targetSum):\n        pass\n",
     "Python": "# Definition for a binary tree node.\n# class TreeNode(object):\n#     def __init__(self, val=0, left=None, right=None):\n#         self.val = val\n#         self.left = left\n#         self.right = right\nclass Solution(object):\n    def pathSum(self, root, targetSum):\n        \"\"\"\n        :type root: Optional[TreeNode]\n        :type targetSum: int\n        :rtype: List[List[int]]\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * Definition for a binary tree node.\n * function TreeNode(val, left, right) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.left = (left===undefined ? null : left)\n *     this.right = (right===undefined ? null : right)\n * }\n */\n/**\n * @param {TreeNode} root\n * @param {number} targetSum\n * @return {number[][]}\n */\nvar pathSum = function(root, targetSum) {\n    \n};",
+    "JavaScript": "class Solution {\n    pathSumAll(tree, targetSum) {\n\n    }\n}\n",
     "TypeScript": "/**\n * Definition for a binary tree node.\n * class TreeNode {\n *     val: number\n *     left: TreeNode | null\n *     right: TreeNode | null\n *     constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {\n *         this.val = (val===undefined ? 0 : val)\n *         this.left = (left===undefined ? null : left)\n *         this.right = (right===undefined ? null : right)\n *     }\n * }\n */\n\nfunction pathSum(root: TreeNode | null, targetSum: number): number[][] {\n    \n};",
     "C#": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     public int val;\n *     public TreeNode left;\n *     public TreeNode right;\n *     public TreeNode(int val=0, TreeNode left=null, TreeNode right=null) {\n *         this.val = val;\n *         this.left = left;\n *         this.right = right;\n *     }\n * }\n */\npublic class Solution {\n    public IList<IList<int>> PathSum(TreeNode root, int targetSum) {\n        \n    }\n}",
     "C": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     struct TreeNode *left;\n *     struct TreeNode *right;\n * };\n */\n/**\n * Return an array of arrays of size *returnSize.\n * The sizes of the arrays are returned as *returnColumnSizes array.\n * Note: Both returned array and *columnSizes array must be malloced, assume caller calls free().\n */\nint** pathSum(struct TreeNode* root, int targetSum, int* returnSize, int** returnColumnSizes) {\n    \n}",
@@ -402,17 +368,18 @@
     "Racket": "; Definition for a binary tree node.\n#|\n\n; val : integer?\n; left : (or/c tree-node? #f)\n; right : (or/c tree-node? #f)\n(struct tree-node\n  (val left right) #:mutable #:transparent)\n\n; constructor\n(define (make-tree-node [val 0])\n  (tree-node val #f #f))\n\n|#\n\n(define/contract (path-sum root targetSum)\n  (-> (or/c tree-node? #f) exact-integer? (listof (listof exact-integer?)))\n  )"
   },
   "_internal": {
-    "methodName": "pathSum",
+    "methodName": "pathSumAll",
     "params": [
       {
-        "name": "root",
-        "type": "TreeNode"
+        "name": "tree",
+        "type": "int[]"
       },
       {
         "name": "targetSum",
-        "type": "integer"
+        "type": "int"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 25
 }

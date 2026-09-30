@@ -1,6 +1,6 @@
 {
   "questionId": "Q448",
-  "title": "Determine All Numbers Disappeared in an Array",
+  "title": "Find All Numbers Disappeared in an Array",
   "slug": "find-all-numbers-disappeared-in-an-array",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -21,9 +21,11 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "With an array `nums` of `n` integers where `nums[i]` is in the range `[1, n]`, output *an array of all the integers in the range* `[1, n]` *that do not appear in* `nums`.\n\n**Example 1:**\n\n```\nInput: nums = [4,3,2,7,8,2,3,1]\nOutput: [5,6]\n```\n\n**Example 2:**\n\n```\nInput: nums = [1,1]\nOutput: [2]\n```\n\n**Constraints:**\n\n* `n == nums.length`\n* `1 <= n <= 105`\n* `1 <= nums[i] <= n`\n\n**Follow up:** Could you do it without extra space and in `O(n)` runtime? You may assume the returned list does not count as extra space.",
+    "problemStatement": "You're given an array `nums` of length `n` where every value is in the\nrange `[1, n]`. Some values appear twice and others don't appear at all.\n\n**Return a list of all the numbers in `[1, n]` that are missing from the array, in ascending order.**",
     "constraints": [
-      "None"
+      "array length is n, every value is in range [1, n]",
+      "some values may appear twice, some may be missing entirely",
+      "return missing numbers in ascending order"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -31,16 +33,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "nums = [4,3,2,7,8,2,3,1]",
-        "output": "[5,6]",
-        "explanation": ""
+        "input": "nums = [4, 3, 2, 7, 8, 2, 3, 1]",
+        "output": "[5, 6]",
+        "explanation": "n = 8, and 5 and 6 never appear in the array"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "nums = [1,1]",
+        "input": "nums = [1, 1]",
         "output": "[2]",
-        "explanation": ""
+        "explanation": "n = 2, 1 appears twice, 2 never appears"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "[]",
+        "explanation": "every number from 1 to 3 is present, nothing is missing"
       }
     ],
     "notes": []
@@ -50,246 +59,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[4,3,2,7,8,2,3,1]]",
+        "expectedOutput": "[5,6]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[1,1]]",
+        "expectedOutput": "[2]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[1,2,3]]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[2,2,2]]",
+        "expectedOutput": "[1,3]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[1]]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[2,2]]",
+        "expectedOutput": "[1]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[3,3,3]]",
+        "expectedOutput": "[1,2]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[1,2,3,4,5]]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[5,5,5,5,5]]",
+        "expectedOutput": "[1,2,3,4]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[2,1,4,3]]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[1,3,3,5,5]]",
+        "expectedOutput": "[2,4]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[1,2,1,4,5,1,7,8,1,10,11,1,13,14,1,16,17,1,19,20]]",
+        "expectedOutput": "[3,6,9,12,15,18]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[27,23,16,20,8,26,7,13,2,19,3,29,5,17,12,1,15,6,14,10,28,11,21,9,25,18,30,4,24,22]]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[1,1,2,2,3,3,4,4,5,5]]",
+        "expectedOutput": "[6,7,8,9,10]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[4,3,2,7,8,2,3,1,4,4]]",
+        "expectedOutput": "[5,6,9,10]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,10,10,10,10,10,10,10,10,10,10]]",
+        "expectedOutput": "[11,12,13,14,15,16,17,18,19,20]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[2,3,4,5,6,7,8,9,10,1]]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[1,1,1,1,1,6,7,8,9,10]]",
+        "expectedOutput": "[2,3,4,5]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[6,5,4,3,2,1,1]]",
+        "expectedOutput": "[7]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -362,7 +289,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -370,11 +301,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    vector<int> findDisappearedNumbers(vector<int>& nums) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public List<Integer> findDisappearedNumbers(int[] nums) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n)\n# Space: O(1)\n\nclass Solution(object):\n    def findDisappearedNumbers(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: List[int]\n        \"\"\"\n        for i in range(len(nums)):\n            if nums[abs(nums[i]) - 1] > 0:\n                nums[abs(nums[i]) - 1] *= -1\n\n        result = []\n        for i in range(len(nums)):\n            if nums[i] > 0:\n                result.append(i+1)\n            else:\n                nums[i] *= -1\n        return result\n\n    def findDisappearedNumbers2(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: List[int]\n        \"\"\"\n        return list(set(range(1, len(nums) + 1)) - set(nums))\n\n    def findDisappearedNumbers3(self, nums):\n        for i in range(len(nums)):\n            index = abs(nums[i]) - 1\n            nums[index] = - abs(nums[index])\n\n        return [i + 1 for i in range(len(nums)) if nums[i] > 0]",
+    "C++": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findDisappearedNumbers(vector<int>& nums) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int[] findDisappearedNumbers(int[] nums) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def findDisappearedNumbers(self, nums):\n        pass\n",
     "Python": "class Solution(object):\n    def findDisappearedNumbers(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: List[int]\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {number[]} nums\n * @return {number[]}\n */\nvar findDisappearedNumbers = function(nums) {\n    \n};",
+    "JavaScript": "class Solution {\n    findDisappearedNumbers(nums) {\n\n    }\n}\n",
     "TypeScript": "function findDisappearedNumbers(nums: number[]): number[] {\n    \n};",
     "C#": "public class Solution {\n    public IList<int> FindDisappearedNumbers(int[] nums) {\n        \n    }\n}",
     "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* findDisappearedNumbers(int* nums, int numsSize, int* returnSize) {\n    \n}",
@@ -395,9 +326,10 @@
     "params": [
       {
         "name": "nums",
-        "type": "integer[]"
+        "type": "int[]"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }

@@ -21,7 +21,8 @@
   "content": {
     "problemStatement": "With two integers `n` and `k`, output *the* `kth` *lexicographically smallest integer in the range* `[1, n]`.\n\n**Example 1:**\n\n```\nInput: n = 13, k = 2\nOutput: 10\nExplanation: The lexicographical order is [1, 10, 11, 12, 13, 2, 3, 4, 5, 6, 7, 8, 9], so the second smallest number is 10.\n```\n\n**Example 2:**\n\n```\nInput: n = 1, k = 1\nOutput: 1\n```\n\n**Constraints:**\n\n* `1 <= k <= n <= 109`",
     "constraints": [
-      "None"
+      "1 <= N <= 10^5",
+      "Standard 32-bit signed integer range applies."
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -360,7 +361,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Model the problem as an adjacency list to allow efficient traversal of neighbors.",
+    "Use BFS for finding the shortest path in unweighted graphs, or DFS for cycle detection / topological ordering.",
+    "Maintain a 'visited' set or array to prevent visiting the same vertex multiple times and avoid infinite loops."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -370,7 +375,7 @@
   "boilerPlates": {
     "C++": "class Solution {\npublic:\n    int findKthNumber(int n, int k) {\n        \n    }\n};",
     "Java": "class Solution {\n    public int findKthNumber(int n, int k) {\n        \n    }\n}",
-    "Python3": "# Time:  O(logn)\n# Space: O(logn)\n\nclass Solution(object):\n    def findKthNumber(self, n, k):\n        \"\"\"\n        :type n: int\n        :type k: int\n        :rtype: int\n        \"\"\"\n        result = 0\n\n        cnts = [0] * 10\n        for i in range(1, 10):\n            cnts[i] = cnts[i - 1] * 10 + 1\n\n        nums = []\n        i = n\n        while i:\n            nums.append(i % 10)\n            i /= 10\n\n        total, target = n, 0\n        i = len(nums) - 1\n        while i >= 0 and k > 0:\n            target = target*10 + nums[i]\n            start = int(i == len(nums)-1)\n            for j in range(start, 10):\n                candidate = result*10 + j\n                if candidate < target:\n                    num = cnts[i+1]\n                elif candidate > target:\n                    num = cnts[i]\n                else:\n                    num = total - cnts[i + 1]*(j-start) - cnts[i]*(9-j)\n                if k > num:\n                    k -= num\n                else:\n                    result = candidate\n                    k -= 1\n                    total = num-1\n                    break\n            i -= 1\n\n        return result",
+    "Python3": "class Solution(object):\n    def findKthNumber(self, n, k):\n        pass\n",
     "Python": "class Solution(object):\n    def findKthNumber(self, n, k):\n        \"\"\"\n        :type n: int\n        :type k: int\n        :rtype: int\n        \"\"\"\n        ",
     "JavaScript": "/**\n * @param {number} n\n * @param {number} k\n * @return {number}\n */\nvar findKthNumber = function(n, k) {\n    \n};",
     "TypeScript": "function findKthNumber(n: number, k: number): number {\n    \n};",
@@ -401,5 +406,9 @@
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "constraints": [
+    "1 <= N <= 10^5",
+    "Standard 32-bit signed integer range applies."
+  ]
 }

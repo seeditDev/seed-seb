@@ -1,6 +1,6 @@
 {
   "questionId": "Q222",
-  "title": "Calculate the Count of Complete Tree Nodes",
+  "title": "Count Complete Tree Nodes",
   "slug": "count-complete-tree-nodes",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -25,9 +25,11 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "With the `root` of a **complete** binary tree, output the number of the nodes in the tree.\n\nAccording to **[Wikipedia](http://en.wikipedia.org/wiki/Binary_tree#Types_of_binary_trees)**, every level, except possibly the last, is completely filled in a complete binary tree, and all nodes in the last level are as far left as possible. It can have between `1` and `2h` nodes inclusive at the last level `h`.\n\nDesign an algorithm that runs in less than `O(n)` time complexity.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/01/14/complete.jpg)\n\n```\nInput: root = [1,2,3,4,5,6]\nOutput: 6\n```\n\n**Example 2:**\n\n```\nInput: root = []\nOutput: 0\n```\n\n**Example 3:**\n\n```\nInput: root = [1]\nOutput: 1\n```\n\n**Constraints:**\n\n* The number of nodes in the tree is in the range `[0, 5 * 104]`.\n* `0 <= Node.val <= 5 * 104`\n* The tree is guaranteed to be **complete**.",
+    "problemStatement": "A binary tree is given as a plain integer array named `tree`, using a\ncomplete-binary-tree (heap) index layout:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node here\" - real node values always fall between -100 and 100, so -101 can never be a genuine value\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2 has no left child (sentinel) but does have a right child, 4.\n\nThe input is guaranteed to describe a complete binary tree: every level is\ncompletely full except possibly the last one, and any real nodes on that\nlast level are packed as far to the left as possible with no gaps.\n\n**Return the total number of real nodes in the tree.**\n\nA plain traversal that visits every node is always correct here, but because the tree is complete, you can do meaningfully better than counting every node one by one.",
     "constraints": [
-      "None"
+      "1 <= tree.length <= 2000",
+      "-100 <= tree[i] <= 100 for every real node value",
+      "tree[i] == -101 marks a missing node and never appears as a real value"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -35,23 +37,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "root = [1,2,3,4,5,6]",
+        "input": "tree = [1, 2, 3, 4, 5, 6]",
         "output": "6",
-        "explanation": ""
+        "explanation": "level 0 has 1 node, level 1 has 2, and the last level has 3 nodes packed to the left - 1+2+3 = 6"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "root = []",
-        "output": "0",
-        "explanation": ""
+        "input": "tree = [1, 2, 3, 4, 5, 6, 7]",
+        "output": "7",
+        "explanation": "a perfectly full 3-level tree has 2^3 - 1 = 7 nodes"
       },
       {
         "id": "sample_3",
         "type": "reg",
-        "input": "root = [1]",
+        "input": "tree = [1]",
         "output": "1",
-        "explanation": ""
+        "explanation": "a single node is a complete tree of one node"
       }
     ],
     "notes": []
@@ -61,246 +63,180 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[1,2,3,4,5,6]]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "expectedOutput": "7",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[1]]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[1,2,3,4]]",
+        "expectedOutput": "4",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[7]]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[1,2]]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[1,2,3]]",
+        "expectedOutput": "3",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[1,2,3,4]]",
+        "expectedOutput": "4",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[1,2,3,4,5]]",
+        "expectedOutput": "5",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[1,2,3,4,5,6]]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "expectedOutput": "7",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[1,2,3,4,5,6,7,8]]",
+        "expectedOutput": "8",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "expectedOutput": "10",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11]]",
+        "expectedOutput": "11",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12]]",
+        "expectedOutput": "12",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13]]",
+        "expectedOutput": "13",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14]]",
+        "expectedOutput": "14",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "expectedOutput": "15",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]]",
+        "expectedOutput": "16",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "expectedOutput": "20",
+        "weight": 5
       },
       {
         "id": "tc_21",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 21",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]]",
+        "expectedOutput": "21",
+        "weight": 5
       },
       {
         "id": "tc_22",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 22",
+        "input": "[[-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "expectedOutput": "31",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -373,7 +309,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Identify the search space and verify that the condition is monotonic (true...true...false...false).",
+    "Be mindful of integer overflow when computing mid: use mid = left + (right - left) // 2.",
+    "Ensure the termination condition (left <= right vs left < right) correctly handles boundary elements."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -381,11 +321,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     TreeNode *left;\n *     TreeNode *right;\n *     TreeNode() : val(0), left(nullptr), right(nullptr) {}\n *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}\n *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}\n * };\n */\nclass Solution {\npublic:\n    int countNodes(TreeNode* root) {\n        \n    }\n};",
-    "Java": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     int val;\n *     TreeNode left;\n *     TreeNode right;\n *     TreeNode() {}\n *     TreeNode(int val) { this.val = val; }\n *     TreeNode(int val, TreeNode left, TreeNode right) {\n *         this.val = val;\n *         this.left = left;\n *         this.right = right;\n *     }\n * }\n */\nclass Solution {\n    public int countNodes(TreeNode root) {\n        \n    }\n}",
-    "Python3": "# Time:  O(h * h) = O((logn)^2)\n# Space: O(1)\n\n# Definition for a binary tree node.\nclass TreeNode(object):\n    def __init__(self, val=0, left=None, right=None):\n        pass\n\n\nclass Solution(object):\n    def countNodes(self, root):\n        \"\"\"\n        :type root: TreeNode\n        :rtype: int\n        \"\"\"\n        def height(root):\n            h = -1\n            while root:\n                h += 1\n                root = root.left\n            return h\n\n        result, h = 0, height(root)\n        while root:\n            if height(root.right) == h-1:\n                result += 2**h\n                root = root.right\n            else:\n                result += 2**(h-1)\n                root = root.left\n            h -= 1\n        return result",
+    "C++": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countNodes(vector<int>& tree) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int countNodes(int[] tree) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def countNodes(self, tree):\n        pass\n",
     "Python": "# Definition for a binary tree node.\n# class TreeNode(object):\n#     def __init__(self, val=0, left=None, right=None):\n#         self.val = val\n#         self.left = left\n#         self.right = right\nclass Solution(object):\n    def countNodes(self, root):\n        \"\"\"\n        :type root: Optional[TreeNode]\n        :rtype: int\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * Definition for a binary tree node.\n * function TreeNode(val, left, right) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.left = (left===undefined ? null : left)\n *     this.right = (right===undefined ? null : right)\n * }\n */\n/**\n * @param {TreeNode} root\n * @return {number}\n */\nvar countNodes = function(root) {\n    \n};",
+    "JavaScript": "class Solution {\n    countNodes(tree) {\n\n    }\n}\n",
     "TypeScript": "/**\n * Definition for a binary tree node.\n * class TreeNode {\n *     val: number\n *     left: TreeNode | null\n *     right: TreeNode | null\n *     constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {\n *         this.val = (val===undefined ? 0 : val)\n *         this.left = (left===undefined ? null : left)\n *         this.right = (right===undefined ? null : right)\n *     }\n * }\n */\n\nfunction countNodes(root: TreeNode | null): number {\n    \n};",
     "C#": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     public int val;\n *     public TreeNode left;\n *     public TreeNode right;\n *     public TreeNode(int val=0, TreeNode left=null, TreeNode right=null) {\n *         this.val = val;\n *         this.left = left;\n *         this.right = right;\n *     }\n * }\n */\npublic class Solution {\n    public int CountNodes(TreeNode root) {\n        \n    }\n}",
     "C": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     struct TreeNode *left;\n *     struct TreeNode *right;\n * };\n */\nint countNodes(struct TreeNode* root) {\n    \n}",
@@ -405,10 +345,11 @@
     "methodName": "countNodes",
     "params": [
       {
-        "name": "root",
-        "type": "TreeNode"
+        "name": "tree",
+        "type": "int[]"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 22
 }

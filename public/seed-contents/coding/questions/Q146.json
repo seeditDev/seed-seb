@@ -1,6 +1,6 @@
 {
   "questionId": "Q146",
-  "title": "LRU Cache Problem",
+  "title": "LRU Cache",
   "slug": "lru-cache",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -25,13 +25,37 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Design a data structure that follows the constraints of a **[Least Recently Used (LRU) cache](https://en.wikipedia.org/wiki/Cache_replacement_policies#LRU)**.\n\nCreate an implementation of the `LRUCache` class:\n\n* `LRUCache(int capacity)` Initialize the LRU cache with **positive** size `capacity`.\n* `int get(int key)` Output the value of the `key` if the key exists, otherwise output `-1`.\n* `void put(int key, int value)` Update the value of the `key` if the `key` exists. Otherwise, add the `key-value` pair to the cache. If the number of keys exceeds the `capacity` from this operation, **evict** the least recently used key.\n\nThe functions `get` and `put` must each run in `O(1)` average time complexity.\n\n**Example 1:**\n\n```\nInput\n[\"LRUCache\", \"put\", \"put\", \"get\", \"put\", \"get\", \"put\", \"get\", \"get\", \"get\"]\n[[2], [1, 1], [2, 2], [1], [3, 3], [2], [4, 4], [1], [3], [4]]\nOutput\n[null, null, null, 1, null, -1, null, -1, 3, 4]\n\nExplanation\nLRUCache lRUCache = new LRUCache(2);\nlRUCache.put(1, 1); // cache is {1=1}\nlRUCache.put(2, 2); // cache is {1=1, 2=2}\nlRUCache.get(1);    // return 1\nlRUCache.put(3, 3); // LRU key was 2, evicts key 2, cache is {1=1, 3=3}\nlRUCache.get(2);    // returns -1 (not found)\nlRUCache.put(4, 4); // LRU key was 1, evicts key 1, cache is {4=4, 3=3}\nlRUCache.get(1);    // return -1 (not found)\nlRUCache.get(3);    // return 3\nlRUCache.get(4);    // return 4\n```\n\n**Constraints:**\n\n* `1 <= capacity <= 3000`\n* `0 <= key <= 104`\n* `0 <= value <= 105`\n* At most `2 * 105` calls will be made to `get` and `put`.",
+    "problemStatement": "You're given a fixed `capacity` and a space-delimited sequence of `ops` to\nrun against an initially empty Least Recently Used (LRU) cache. Each token\nis one of:\n\n- `\"put_<key>_<value>\"` - insert or update the value for `key`, marking it most recently used, evicting the least recently used entry first if this exceeds capacity\n- `\"get_<key>\"` - return the value for `key` if present, marking it most recently used, or `-1` if absent\n\n**Simulate the operations in order and return a list containing the result of every \"get\" operation, in the order they occurred.**\n\nAccessing a key with either `get` or `put` always counts as using it.",
     "constraints": [
-      "None"
+      "1 <= capacity <= 3000",
+      "0 <= number of operations <= 2 * 10^4",
+      "-10^4 <= key, value <= 10^4"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "capacity = 2, ops = \"put_1_1 put_2_2 get_1 put_3_3 get_2 put_4_4 get_1 get_3 get_4\"",
+        "output": "[1, -1, -1, 3, 4]",
+        "explanation": "get_1 returns 1 and makes 1 most recent; put_3_3 evicts 2 (least recently used); put_4_4 evicts 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "capacity = 1, ops = \"put_1_1 get_1 put_2_2 get_1 get_2\"",
+        "output": "[1, -1, 2]",
+        "explanation": "with capacity 1, put_2_2 immediately evicts the only entry, key 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "capacity = 2, ops = \"put_1_1 put_2_2 put_1_10 get_1 get_2\"",
+        "output": "[10, 2]",
+        "explanation": "put_1_10 updates the existing key 1 to value 10 and marks it most recently used, it does not count as a new insert"
+      }
+    ],
     "notes": []
   },
   "testCases": {
@@ -39,246 +63,172 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[2,\"put_1_1 put_2_2 get_1 put_3_3 get_2 put_4_4 get_1 get_3 get_4\"]",
+        "expectedOutput": "[1,-1,-1,3,4]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[1,\"put_1_1 get_1 put_2_2 get_1 get_2\"]",
+        "expectedOutput": "[1,-1,2]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[2,\"get_1 put_1_1 get_1\"]",
+        "expectedOutput": "[-1,1]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[2,\"put_1_1 put_2_2 put_1_10 get_1 get_2\"]",
+        "expectedOutput": "[10,2]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[3,\"put_1_1 put_2_2 put_3_3 get_1 put_4_4 get_2 get_3 get_4\"]",
+        "expectedOutput": "[1,-1,3,4]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[2,\"put_1_1 put_1_2 get_1\"]",
+        "expectedOutput": "[2]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[2,\"put_1_1 put_2_2 get_3\"]",
+        "expectedOutput": "[-1]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[1,\"put_1_1 put_1_2 put_1_3 get_1\"]",
+        "expectedOutput": "[3]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[2,\"put_1_1 put_2_2 get_1 get_2 put_3_3 get_1 get_2 get_3\"]",
+        "expectedOutput": "[1,2,-1,2,3]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[4,\"put_1_1 put_2_2 put_3_3 put_4_4 put_5_5 get_1 get_2 get_5\"]",
+        "expectedOutput": "[-1,2,5]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[2,\"put_1_100 get_1\"]",
+        "expectedOutput": "[100]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[2,\"put_-1_-5 get_-1\"]",
+        "expectedOutput": "[-5]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[2,\"put_1_1 put_2_2 put_3_3 get_1 get_2 get_3\"]",
+        "expectedOutput": "[-1,2,3]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[3,\"put_1_1 put_2_2 get_1 put_3_3 put_4_4 get_2 get_1 get_3 get_4\"]",
+        "expectedOutput": "[1,-1,1,3,4]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[2,\"get_5 get_6\"]",
+        "expectedOutput": "[-1,-1]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[1,\"put_1_1 get_1 get_1 get_1\"]",
+        "expectedOutput": "[1,1,1]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[5,\"put_1_1 put_2_2 put_3_3 put_4_4 put_5_5 put_6_6 get_1 get_6\"]",
+        "expectedOutput": "[-1,6]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[2,\"put_7_70 put_8_80 get_7 put_9_90 get_8 get_9 get_7\"]",
+        "expectedOutput": "[70,-1,90,70]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[2,\"put_1_1 put_2_2 put_1_1 put_3_3 get_2 get_1 get_3\"]",
+        "expectedOutput": "[-1,1,3]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[2,\"put_0_0 get_0\"]",
+        "expectedOutput": "[0]",
+        "weight": 5
       },
       {
         "id": "tc_21",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 21",
+        "input": "[3,\"put_1_1 put_2_2 put_3_3 get_2 put_4_4 put_5_5 get_1 get_2 get_3 get_4 get_5\"]",
+        "expectedOutput": "[2,-1,2,-1,4,5]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -351,7 +301,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Using a dummy head node can simplify edge cases when modifying the head of the list.",
+    "Fast and slow pointers (Floyd's cycle-finding algorithm) can help detect cycles or find the middle element in a single pass.",
+    "Always update next pointers carefully to avoid creating accidental cycles or losing references to the rest of the list."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -359,11 +313,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class LRUCache {\npublic:\n    LRUCache(int capacity) {\n        \n    }\n    \n    int get(int key) {\n        \n    }\n    \n    void put(int key, int value) {\n        \n    }\n};\n\n/**\n * Your LRUCache object will be instantiated and called as such:\n * LRUCache* obj = new LRUCache(capacity);\n * int param_1 = obj->get(key);\n * obj->put(key,value);\n */",
-    "Java": "class LRUCache {\n\n    public LRUCache(int capacity) {\n        \n    }\n    \n    public int get(int key) {\n        \n    }\n    \n    public void put(int key, int value) {\n        \n    }\n}\n\n/**\n * Your LRUCache object will be instantiated and called as such:\n * LRUCache obj = new LRUCache(capacity);\n * int param_1 = obj.get(key);\n * obj.put(key,value);\n */",
-    "Python3": "# Time:  O(1), per operation.\n# Space: O(k), k is the capacity of cache.\n\nimport collections\n\n\n# using OrderedDict\nclass LRUCache(object):\n    def __init__(self, capacity):\n        self.cache = collections.OrderedDict()\n        self.capacity = capacity\n\n    def get(self, key):\n        if key not in self.cache:\n            return -1\n        val = self.cache[key]\n        self.__update(key, val)\n        return val\n\n    def put(self, key, val):\n        if key not in self.cache and len(self.cache) == self.capacity:\n            self.cache.popitem(last=False)\n        self.__update(key, val)\n    \n    def __update(self, key, val):\n        if key in self.cache:\n            del self.cache[key]\n        self.cache[key] = val\n\n\n# Time:  O(1), per operation.\n# Space: O(k), k is the capacity of cache.\n\n\nclass ListNode(object):\n    def __init__(self, key, val):\n        self.val = val\n        self.key = key\n        self.next = None\n        self.prev = None\n\nclass LinkedList(object):\n    def __init__(self):\n        self.head = None\n        self.tail = None\n\n    def insert(self, node):\n        node.next, node.prev = None, None  # avoid dirty node\n        if self.head is None:\n            self.head = node\n        else:\n            self.tail.next = node\n            node.prev = self.tail\n        self.tail = node\n\n    def delete(self, node):\n        if node.prev:\n            node.prev.next = node.next\n        else:\n            self.head = node.next\n        if node.next:\n            node.next.prev = node.prev\n        else:\n            self.tail = node.prev\n        node.next, node.prev = None, None  # make node clean\n\nclass LRUCache2(object):\n\n    def __init__(self, capacity):\n        self.list = LinkedList()\n        self.dict = {}\n        self.capacity = capacity\n\n    def get(self, key):\n        if key not in self.dict:\n            return -1\n        val = self.dict[key].val\n        self.__update(key, val)\n        return val\n\n    def put(self, key, val):\n        if key not in self.dict and len(self.dict) == self.capacity:\n            del self.dict[self.list.head.key]\n            self.list.delete(self.list.head)\n        self.__update(key, val)\n\n    def __update(self, key, val):\n        if key in self.dict:\n            self.list.delete(self.dict[key])\n        node = ListNode(key, val)\n        self.list.insert(node)\n        self.dict[key] = node",
+    "C++": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\n#include <list>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> lruCacheResults(int capacity, string ops) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int[] lruCacheResults(int capacity, String ops) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def lruCacheResults(self, capacity, ops):\n        pass\n",
     "Python": "class LRUCache(object):\n\n    def __init__(self, capacity):\n        \"\"\"\n        :type capacity: int\n        \"\"\"\n        \n\n    def get(self, key):\n        \"\"\"\n        :type key: int\n        :rtype: int\n        \"\"\"\n        \n\n    def put(self, key, value):\n        \"\"\"\n        :type key: int\n        :type value: int\n        :rtype: None\n        \"\"\"\n        \n\n\n# Your LRUCache object will be instantiated and called as such:\n# obj = LRUCache(capacity)\n# param_1 = obj.get(key)\n# obj.put(key,value)",
-    "JavaScript": "/**\n * @param {number} capacity\n */\nvar LRUCache = function(capacity) {\n    \n};\n\n/** \n * @param {number} key\n * @return {number}\n */\nLRUCache.prototype.get = function(key) {\n    \n};\n\n/** \n * @param {number} key \n * @param {number} value\n * @return {void}\n */\nLRUCache.prototype.put = function(key, value) {\n    \n};\n\n/** \n * Your LRUCache object will be instantiated and called as such:\n * var obj = new LRUCache(capacity)\n * var param_1 = obj.get(key)\n * obj.put(key,value)\n */",
+    "JavaScript": "class Solution {\n    lruCacheResults(capacity, ops) {\n\n    }\n}\n",
     "TypeScript": "class LRUCache {\n    constructor(capacity: number) {\n        \n    }\n\n    get(key: number): number {\n        \n    }\n\n    put(key: number, value: number): void {\n        \n    }\n}\n\n/**\n * Your LRUCache object will be instantiated and called as such:\n * var obj = new LRUCache(capacity)\n * var param_1 = obj.get(key)\n * obj.put(key,value)\n */",
     "C#": "public class LRUCache {\n\n    public LRUCache(int capacity) {\n        \n    }\n    \n    public int Get(int key) {\n        \n    }\n    \n    public void Put(int key, int value) {\n        \n    }\n}\n\n/**\n * Your LRUCache object will be instantiated and called as such:\n * LRUCache obj = new LRUCache(capacity);\n * int param_1 = obj.Get(key);\n * obj.Put(key,value);\n */",
     "C": "\n\n\ntypedef struct {\n    \n} LRUCache;\n\n\nLRUCache* lRUCacheCreate(int capacity) {\n    \n}\n\nint lRUCacheGet(LRUCache* obj, int key) {\n    \n}\n\nvoid lRUCachePut(LRUCache* obj, int key, int value) {\n    \n}\n\nvoid lRUCacheFree(LRUCache* obj) {\n    \n}\n\n/**\n * Your LRUCache struct will be instantiated and called as such:\n * LRUCache* obj = lRUCacheCreate(capacity);\n * int param_1 = lRUCacheGet(obj, key);\n \n * lRUCachePut(obj, key, value);\n \n * lRUCacheFree(obj);\n*/",
@@ -380,17 +334,18 @@
     "Racket": "(define lru-cache%\n  (class object%\n    (super-new)\n    \n    ; capacity : exact-integer?\n    (init-field\n      capacity)\n    \n    ; get : exact-integer? -> exact-integer?\n    (define/public (get key)\n      )\n    ; put : exact-integer? exact-integer? -> void?\n    (define/public (put key value)\n      )))\n\n;; Your lru-cache% object will be instantiated and called as such:\n;; (define obj (new lru-cache% [capacity capacity]))\n;; (define param_1 (send obj get key))\n;; (send obj put key value)"
   },
   "_internal": {
-    "methodName": "",
+    "methodName": "lruCacheResults",
     "params": [
       {
-        "name": "inputs",
-        "type": "integer[]"
+        "name": "capacity",
+        "type": "int"
       },
       {
-        "name": "inputs",
-        "type": "integer[]"
+        "name": "ops",
+        "type": "string"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 21
 }

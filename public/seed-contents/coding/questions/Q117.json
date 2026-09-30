@@ -1,6 +1,6 @@
 {
   "questionId": "Q117",
-  "title": "Populating Next Right Pointers in Each Node II Problem",
+  "title": "Populating Next Right Pointers in Each Node II",
   "slug": "populating-next-right-pointers-in-each-node-ii",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -27,9 +27,12 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "With a binary tree\n\n```\nstruct Node {\n  int val;\n  Node *left;\n  Node *right;\n  Node *next;\n}\n```\n\nPopulate each next pointer to point to its next right node. If there is no next right node, the next pointer should be set to `NULL`.\n\nAt the beginning, all next pointers are set to `NULL`.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2019/02/15/117_sample.png)\n\n```\nInput: root = [1,2,3,4,5,null,7]\nOutput: [1,#,2,3,#,4,5,7,#]\nExplanation: Given the above binary tree (Figure A), your function should populate each next pointer to point to its next right node, just like in Figure B. The serialized output is in level order as connected by the next pointers, with '#' signifying the end of each level.\n```\n\n**Example 2:**\n\n```\nInput: root = []\nOutput: []\n```\n\n**Constraints:**\n\n* The number of nodes in the tree is in the range `[0, 6000]`.\n* `-100 <= Node.val <= 100`\n\n**Follow-up:**\n\n* You may only use constant extra space.\n* The recursive approach is fine. You may assume implicit stack space does not count as extra space for this problem.",
+    "problemStatement": "A binary tree is given as a flat integer array named `tree`, using complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node here\" - real node values always fall between -100 and 100, so -101 can never be a genuine value\n- unlike a perfect binary tree, any node may be missing either child, both children, or neither - the shape is arbitrary\n\n**Connect every node to the nearest node to its right on the same level (there might be gaps between them, since some nodes on a level can be missing children), and build and return a new array with the exact same shape (same length, same positions) as `tree`, where each position that held a real node now holds the value of the nearest node to its right on the same level, or -1 if no such node exists.**\n\nPositions that were sentinel or missing in the input should stay exactly -101 in the output.",
     "constraints": [
-      "None"
+      "1 <= length of tree <= 2000",
+      "every real node value is in the range -100 to 100",
+      "the sentinel value -101 marks a missing node and never appears as a real value",
+      "the tree may be of any shape, not just a perfect binary tree"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -37,16 +40,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "root = [1,2,3,4,5,null,7]",
-        "output": "[1,#,2,3,#,4,5,7,#]",
-        "explanation": ""
+        "input": "tree = [1, 2, 3, 4, -101, -101, 5]",
+        "output": "[-1, 3, -1, 5, -101, -101, -1]",
+        "explanation": "1 is alone on level 0; 2's nearest right neighbor on level 1 is 3; 4's nearest right neighbor on level 2 is 5 (skipping the missing children of node 3)"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "root = []",
-        "output": "[]",
-        "explanation": ""
+        "input": "tree = [3, 9, 20, -101, -101, 15, 7]",
+        "output": "[-1, 20, -1, -101, -101, 7, -1]",
+        "explanation": "9's nearest right neighbor is 20; 15's nearest right neighbor is 7; the two sentinel positions stay -101"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1]",
+        "output": "[-1]",
+        "explanation": "the only node is alone on its level"
       }
     ],
     "notes": []
@@ -56,246 +66,180 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[3,9,20,-101,-101,15,7]]",
+        "expectedOutput": "[-1,20,-1,-101,-101,7,-1]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[1]]",
+        "expectedOutput": "[-1]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[-101]]",
+        "expectedOutput": "[-101]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[1,2,-101,-101,3]]",
+        "expectedOutput": "[-1,-1,-101,-101,-1]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[5,3,8,1,4,7,9]]",
+        "expectedOutput": "[-1,8,-1,4,7,9,-1]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[1,2,3,4,-101,-101,5]]",
+        "expectedOutput": "[-1,3,-1,5,-101,-101,-1]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[10,20,-101,30,40]]",
+        "expectedOutput": "[-1,-1,-101,40,-1]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "expectedOutput": "[-1,0,-1,0,0,0,-1]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[-5,-3,-8,-101,-101,-101,-101]]",
+        "expectedOutput": "[-1,-8,-1,-101,-101,-101,-101]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[7]]",
+        "expectedOutput": "[-1]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[-100,100]]",
+        "expectedOutput": "[-1,-1]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[1,-101,2,-101,-101,-101,3]]",
+        "expectedOutput": "[-1,-101,-1,-101,-101,-101,-1]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[1,2,3,-101,-101,-101,-101,4,-101,-101,-101,-101,-101,-101,5]]",
+        "expectedOutput": "[-1,3,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-1]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "expectedOutput": "[-1,3,-1,5,6,7,-1,9,10,11,12,13,14,15,-1]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[4,2,6,1,3,5,7]]",
+        "expectedOutput": "[-1,6,-1,3,5,7,-1]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[1,2,-101,3,-101,-101,-101]]",
+        "expectedOutput": "[-1,-1,-101,-1,-101,-101,-101]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[1,-101,2,-101,-101,3,-101]]",
+        "expectedOutput": "[-1,-101,-1,-101,-101,-1,-101]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[50]]",
+        "expectedOutput": "[-1]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[1,2,3,4,5,-101,6]]",
+        "expectedOutput": "[-1,3,-1,5,6,-101,-1]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[9,8,7,6,-101,-101,5,4,-101,-101,-101,-101,-101,-101,-101]]",
+        "expectedOutput": "[-1,7,-1,5,-101,-101,-1,-1,-101,-101,-101,-101,-101,-101,-101]",
+        "weight": 5
       },
       {
         "id": "tc_21",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 21",
+        "input": "[[2,1,3,-101,-101,-101,-101]]",
+        "expectedOutput": "[-1,3,-1,-101,-101,-101,-101]",
+        "weight": 5
       },
       {
         "id": "tc_22",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 22",
+        "input": "[[1,2,3,4,5,6,7,-101,-101,-101,-101,-101,-101,-101,8]]",
+        "expectedOutput": "[-1,3,-1,5,6,7,-1,-101,-101,-101,-101,-101,-101,-101,-1]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -368,7 +312,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Identify the search space and verify that the condition is monotonic (true...true...false...false).",
+    "Be mindful of integer overflow when computing mid: use mid = left + (right - left) // 2.",
+    "Ensure the termination condition (left <= right vs left < right) correctly handles boundary elements."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -376,11 +324,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "/*\n// Definition for a Node.\nclass Node {\npublic:\n    int val;\n    Node* left;\n    Node* right;\n    Node* next;\n\n    Node() : val(0), left(NULL), right(NULL), next(NULL) {}\n\n    Node(int _val) : val(_val), left(NULL), right(NULL), next(NULL) {}\n\n    Node(int _val, Node* _left, Node* _right, Node* _next)\n        : val(_val), left(_left), right(_right), next(_next) {}\n};\n*/\n\nclass Solution {\npublic:\n    Node* connect(Node* root) {\n        \n    }\n};",
-    "Java": "/*\n// Definition for a Node.\nclass Node {\n    public int val;\n    public Node left;\n    public Node right;\n    public Node next;\n\n    public Node() {}\n    \n    public Node(int _val) {\n        val = _val;\n    }\n\n    public Node(int _val, Node _left, Node _right, Node _next) {\n        val = _val;\n        left = _left;\n        right = _right;\n        next = _next;\n    }\n};\n*/\n\nclass Solution {\n    public Node connect(Node root) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n)\n# Space: O(1)\n\n# Definition for a Node.\nclass Node(object):\n    def __init__(self, val=0, left=None, right=None, next=None):\n        self.val = val\n        self.left = left\n        self.right = right\n        self.next = next\n\n\nclass Solution(object):\n    # @param root, a tree node\n    # @return nothing\n    def connect(self, root):\n        head = root\n        pre = Node(0)\n        cur = pre\n        while root:\n            while root:\n                if root.left:\n                    cur.next = root.left\n                    cur = cur.next\n                if root.right:\n                    cur.next = root.right\n                    cur = cur.next\n                root = root.next\n            root, cur = pre.next, pre\n            cur.next = None\n        return head",
+    "C++": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> populateNextValuesII(vector<int>& tree) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int[] populateNextValuesII(int[] tree) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def populateNextValuesII(self, tree):\n        pass\n",
     "Python": "\"\"\"\n# Definition for a Node.\nclass Node(object):\n    def __init__(self, val=0, left=None, right=None, next=None):\n        self.val = val\n        self.left = left\n        self.right = right\n        self.next = next\n\"\"\"\n\nclass Solution(object):\n    def connect(self, root):\n        \"\"\"\n        :type root: Node\n        :rtype: Node\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * // Definition for a _Node.\n * function _Node(val, left, right, next) {\n *    this.val = val === undefined ? null : val;\n *    this.left = left === undefined ? null : left;\n *    this.right = right === undefined ? null : right;\n *    this.next = next === undefined ? null : next;\n * };\n */\n\n/**\n * @param {_Node} root\n * @return {_Node}\n */\nvar connect = function(root) {\n    \n};",
+    "JavaScript": "class Solution {\n    populateNextValuesII(tree) {\n\n    }\n}\n",
     "TypeScript": "/**\n * Definition for _Node.\n * class _Node {\n *     val: number\n *     left: _Node | null\n *     right: _Node | null\n *     next: _Node | null\n * \n *     constructor(val?: number, left?: _Node, right?: _Node, next?: _Node) {\n *         this.val = (val===undefined ? 0 : val)\n *         this.left = (left===undefined ? null : left)\n *         this.right = (right===undefined ? null : right)\n *         this.next = (next===undefined ? null : next)\n *     }\n * }\n */\n\n\nfunction connect(root: _Node | null): _Node | null {\n    \n};",
     "C#": "/*\n// Definition for a Node.\npublic class Node {\n    public int val;\n    public Node left;\n    public Node right;\n    public Node next;\n\n    public Node() {}\n\n    public Node(int _val) {\n        val = _val;\n    }\n\n    public Node(int _val, Node _left, Node _right, Node _next) {\n        val = _val;\n        left = _left;\n        right = _right;\n        next = _next;\n    }\n}\n*/\n\npublic class Solution {\n    public Node Connect(Node root) {\n        \n    }\n}",
     "C": "/**\n * Definition for a Node.\n * struct Node {\n *     int val;\n *     struct Node *left;\n *     struct Node *right;\n *     struct Node *next;\n * };\n */\n\nstruct Node* connect(struct Node* root) {\n\t\n}",
@@ -392,13 +340,14 @@
     "Scala": "/**\n * Definition for a Node.\n * class Node(var _value: Int) {\n *   var value: Int = _value\n *   var left: Node = null\n *   var right: Node = null\n *   var next: Node = null\n * }\n */\n\nobject Solution {\n    def connect(root: Node): Node = {\n        \n    }\n}"
   },
   "_internal": {
-    "methodName": "connect",
+    "methodName": "populateNextValuesII",
     "params": [
       {
-        "name": "root",
-        "type": "TreeNode"
+        "name": "tree",
+        "type": "int[]"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 22
 }

@@ -1,6 +1,6 @@
 {
   "questionId": "Q212",
-  "title": "Word Search II Problem",
+  "title": "Word Search II",
   "slug": "word-search-ii",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -27,9 +27,12 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "With an `m x n` `board` of characters and a list of strings `words`, output *all words on the board*.\n\nEach word must be constructed from letters of sequentially adjacent cells, where **adjacent cells** are horizontally or vertically neighboring. The same letter cell may not be used more than once in a word.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2020/11/07/search1.jpg)\n\n```\nInput: board = [[\"o\",\"a\",\"a\",\"n\"],[\"e\",\"t\",\"a\",\"e\"],[\"i\",\"h\",\"k\",\"r\"],[\"i\",\"f\",\"l\",\"v\"]], words = [\"oath\",\"pea\",\"eat\",\"rain\"]\nOutput: [\"eat\",\"oath\"]\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2020/11/07/search2.jpg)\n\n```\nInput: board = [[\"a\",\"b\"],[\"c\",\"d\"]], words = [\"abcb\"]\nOutput: []\n```\n\n**Constraints:**\n\n* `m == board.length`\n* `n == board[i].length`\n* `1 <= m, n <= 12`\n* `board[i][j]` is a lowercase English letter.\n* `1 <= words.length <= 3 * 104`\n* `1 <= words[i].length <= 10`\n* `words[i]` is composed of lowercase English letters.\n* All the strings of `words` are unique.",
+    "problemStatement": "You're given a grid of lowercase letters, encoded as a string where each row is a run of letters and rows are separated by \"|\". For example, `\"oaan|etae|ihkr|iflv\"` is this 4x4 grid:\n\n```\no a a n\ne t a e\ni h k r\ni f l v\n```\n\nYou're also given a space-delimited list of candidate `words`. For each candidate word, it can be traced out by moving from cell to cell in the grid, where each step must move to a horizontally or vertically adjacent cell, and no cell may be reused within a single word's trace. A fresh trace, with all cells available again, is allowed for each new word.\n\n**Return the candidate words that can be found, space-delimited, in the same order they appeared in the input word list.**",
     "constraints": [
-      "None"
+      "1 <= rows, cols <= 6 for the decoded board",
+      "1 <= number of candidate words <= 8",
+      "1 <= word length <= 10",
+      "the board and all words consist of lowercase English letters only"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -37,16 +40,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "board = [[\"o\",\"a\",\"a\",\"n\"],[\"e\",\"t\",\"a\",\"e\"],[\"i\",\"h\",\"k\",\"r\"],[\"i\",\"f\",\"l\",\"v\"]], words = [\"oath\",\"pea\",\"eat\",\"rain\"]",
-        "output": "[\"eat\",\"oath\"]",
-        "explanation": ""
+        "input": "board = \"oaan|etae|ihkr|iflv\", words = \"oath pea eat rain\"",
+        "output": "\"oath eat\"",
+        "explanation": "oath traces (0,0)o -> (0,1)a -> (1,1)t -> (2,1)h; eat traces (1,3)e -> (1,2)a -> (1,1)t; pea and rain cannot be traced"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "board = [[\"a\",\"b\"],[\"c\",\"d\"]], words = [\"abcb\"]",
-        "output": "[]",
-        "explanation": ""
+        "input": "board = \"ab|cd\", words = \"a ab ac ad\"",
+        "output": "\"a ab ac\"",
+        "explanation": "(0,0) and (1,1) are diagonal, not adjacent, so \"ad\" cannot be traced"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "board = \"xy|zw\", words = \"xy yz wz\"",
+        "output": "\"xy wz\"",
+        "explanation": "\"yz\" would need y at (0,1) adjacent to z, but z is at (1,0), a diagonal, so it fails"
       }
     ],
     "notes": []
@@ -56,246 +66,172 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[\"oaan|etae|ihkr|iflv\",\"oath pea eat rain\"]",
+        "expectedOutput": "\"oath eat\"",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[\"ab|cd\",\"a ab ac ad ba cd dc abcd\"]",
+        "expectedOutput": "\"a ab ac ba cd dc\"",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[\"a\",\"a b\"]",
+        "expectedOutput": "\"a\"",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[\"xy|zw\",\"xy yz wz\"]",
+        "expectedOutput": "\"xy wz\"",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[\"abcde\",\"abc cde edcba ace\"]",
+        "expectedOutput": "\"abc cde edcba\"",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[\"ab|ba\",\"aba abab baa\"]",
+        "expectedOutput": "\"aba abab\"",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[\"ab|cd|ef\",\"abdf ace bdf aceg\"]",
+        "expectedOutput": "\"abdf ace bdf\"",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[\"aa|aa\",\"aaa aaaaa\"]",
+        "expectedOutput": "\"aaa\"",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[\"ab|dc\",\"abcd adcb abdc\"]",
+        "expectedOutput": "\"abcd adcb\"",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[\"xyz\",\"xyz zyx xy yz xz\"]",
+        "expectedOutput": "\"xyz zyx xy yz\"",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[\"pqr|stu|vwx\",\"pst psv pqrux qrs\"]",
+        "expectedOutput": "\"pst psv pqrux\"",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[\"m\",\"m n\"]",
+        "expectedOutput": "\"m\"",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[\"ab\",\"a b ab ba\"]",
+        "expectedOutput": "\"a b ab ba\"",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[\"ab|cd\",\"abc abd acd bcd\"]",
+        "expectedOutput": "\"abd acd\"",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[\"aab|abb\",\"aaa aab aba baa abb\"]",
+        "expectedOutput": "\"aab aba baa abb\"",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[\"a|a|a|a\",\"aaaa aaaaaaaaaaaaaaaaa\"]",
+        "expectedOutput": "\"aaaa\"",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[\"hello|world\",\"hello world hold lord ow\"]",
+        "expectedOutput": "\"hello world ow\"",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[\"xy|yx\",\"xy yx xx yy xyx\"]",
+        "expectedOutput": "\"xy yx xyx\"",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[\"abcd|efgh|ijkl|mnop\",\"af be im dh helo abcdefgh\"]",
+        "expectedOutput": "\"im dh abcdefgh\"",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[\"z\",\"z zz za\"]",
+        "expectedOutput": "\"z\"",
+        "weight": 5
       },
       {
         "id": "tc_21",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 21",
+        "input": "[\"no|on\",\"no on noon nono\"]",
+        "expectedOutput": "\"no on nono\"",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -368,7 +304,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -376,11 +316,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    vector<string> findWords(vector<vector<char>>& board, vector<string>& words) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public List<String> findWords(char[][] board, String[] words) {\n        \n    }\n}",
-    "Python3": "# Time:  O(m * n * 4 * 3^(h - 1)) ~= O(m * n * 3^h), h is the height of trie\n# Space: O(t), t is the number of nodes in trie\n\nclass TrieNode(object):\n    # Initialize your data structure here.\n    def __init__(self):\n        self.is_string = False\n        self.leaves = {}\n\n    # Inserts a word into the trie.\n    def insert(self, word):\n        cur = self\n        for c in word:\n            if not c in cur.leaves:\n                cur.leaves[c] = TrieNode()\n            cur = cur.leaves[c]\n        cur.is_string = True\n\n\nclass Solution(object):\n    def findWords(self, board, words):\n        \"\"\"\n        :type board: List[List[str]]\n        :type words: List[str]\n        :rtype: List[str]\n        \"\"\"\n        visited = [[False for j in range(len(board[0]))] for i in range(len(board))]\n        result = {}\n        trie = TrieNode()\n        for word in words:\n            trie.insert(word)\n\n        for i in range(len(board)):\n            for j in range(len(board[0])):\n                self.findWordsRecu(board, trie, 0, i, j, visited, [], result)\n\n        return result.keys()\n\n    def findWordsRecu(self, board, trie, cur, i, j, visited, cur_word, result):\n        if not trie or i < 0 or i >= len(board) or j < 0 or j >= len(board[0]) or visited[i][j]:\n            return\n\n        if board[i][j] not in trie.leaves:\n            return\n\n        cur_word.append(board[i][j])\n        next_node = trie.leaves[board[i][j]]\n        if next_node.is_string:\n            result[\"\".join(cur_word)] = True\n\n        visited[i][j] = True\n        self.findWordsRecu(board, next_node, cur + 1, i + 1, j, visited, cur_word, result)\n        self.findWordsRecu(board, next_node, cur + 1, i - 1, j, visited, cur_word, result)\n        self.findWordsRecu(board, next_node, cur + 1, i, j + 1, visited, cur_word, result)\n        self.findWordsRecu(board, next_node, cur + 1, i, j - 1, visited, cur_word, result)\n        visited[i][j] = False\n        cur_word.pop()",
+    "C++": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string findWords(string board, string words) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public String findWords(String board, String words) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def findWords(self, board, words):\n        pass\n",
     "Python": "class Solution(object):\n    def findWords(self, board, words):\n        \"\"\"\n        :type board: List[List[str]]\n        :type words: List[str]\n        :rtype: List[str]\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {character[][]} board\n * @param {string[]} words\n * @return {string[]}\n */\nvar findWords = function(board, words) {\n    \n};",
+    "JavaScript": "class Solution {\n    findWords(board, words) {\n\n    }\n}\n",
     "TypeScript": "function findWords(board: string[][], words: string[]): string[] {\n    \n};",
     "C#": "public class Solution {\n    public IList<string> FindWords(char[][] board, string[] words) {\n        \n    }\n}",
     "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nchar** findWords(char** board, int boardSize, int* boardColSize, char** words, int wordsSize, int* returnSize) {\n    \n}",
@@ -401,13 +341,14 @@
     "params": [
       {
         "name": "board",
-        "type": "character[][]"
+        "type": "string"
       },
       {
         "name": "words",
-        "type": "string[]"
+        "type": "string"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 21
 }

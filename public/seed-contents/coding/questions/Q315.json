@@ -33,7 +33,8 @@
   "content": {
     "problemStatement": "With an integer array `nums`, output *an integer array* `counts` *where* `counts[i]` *is the number of smaller elements to the right of* `nums[i]`.\n\n**Example 1:**\n\n```\nInput: nums = [5,2,6,1]\nOutput: [2,1,1,0]\nExplanation:\nTo the right of 5 there are 2 smaller elements (2 and 1).\nTo the right of 2 there is only 1 smaller element (1).\nTo the right of 6 there is 1 smaller element (1).\nTo the right of 1 there is 0 smaller element.\n```\n\n**Example 2:**\n\n```\nInput: nums = [-1]\nOutput: [0]\n```\n\n**Example 3:**\n\n```\nInput: nums = [-1,-1]\nOutput: [0,0]\n```\n\n**Constraints:**\n\n* `1 <= nums.length <= 105`\n* `-104 <= nums[i] <= 104`",
     "constraints": [
-      "None"
+      "1 <= nums.length <= 10^5",
+      "-10^4 <= nums[i] <= 10^4"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -379,7 +380,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -389,7 +394,7 @@
   "boilerPlates": {
     "C++": "class Solution {\npublic:\n    vector<int> countSmaller(vector<int>& nums) {\n        \n    }\n};",
     "Java": "class Solution {\n    public List<Integer> countSmaller(int[] nums) {\n        \n    }\n}",
-    "Python3": "# Time:  O(nlogn)\n# Space: O(n)\n\nclass Solution(object):\n    def countSmaller(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: List[int]\n        \"\"\"\n        def countAndMergeSort(num_idxs, start, end, counts):\n            if end - start <= 0:  # The size of range [start, end] less than 2 is always with count 0.\n                return\n\n            mid = start + (end - start) // 2\n            countAndMergeSort(num_idxs, start, mid, counts)\n            countAndMergeSort(num_idxs, mid + 1, end, counts)\n            r = mid + 1\n            tmp = []\n            for i in range(start, mid + 1):\n                # Merge the two sorted arrays into tmp.\n                while r <= end and num_idxs[r][0] < num_idxs[i][0]:\n                    tmp.append(num_idxs[r])\n                    r += 1\n                tmp.append(num_idxs[i])\n                counts[num_idxs[i][1]] += r - (mid + 1)\n\n            # Copy tmp back to num_idxs\n            num_idxs[start:start+len(tmp)] = tmp\n\n        num_idxs = []\n        counts = [0] * len(nums)\n        for i, num in enumerate(nums):\n            num_idxs.append((num, i))\n        countAndMergeSort(num_idxs, 0, len(num_idxs) - 1, counts)\n        return counts",
+    "Python3": "class Solution(object):\n    def countSmaller(self, nums):\n        pass\n",
     "Python": "class Solution(object):\n    def countSmaller(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: List[int]\n        \"\"\"\n        ",
     "JavaScript": "/**\n * @param {number[]} nums\n * @return {number[]}\n */\nvar countSmaller = function(nums) {\n    \n};",
     "TypeScript": "function countSmaller(nums: number[]): number[] {\n    \n};",
@@ -416,5 +421,9 @@
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "constraints": [
+    "1 <= nums.length <= 10^5",
+    "-10^4 <= nums[i] <= 10^4"
+  ]
 }

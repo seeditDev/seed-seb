@@ -1,6 +1,6 @@
 {
   "questionId": "Q232",
-  "title": "Implement Queue using Stacks Problem",
+  "title": "Implement Queue using Stacks",
   "slug": "implement-queue-using-stacks",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -23,13 +23,38 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Create an implementation of a first in first out (FIFO) queue using only two stacks. The implemented queue should support all the functions of a normal queue (`push`, `peek`, `pop`, and `empty`).\n\nCreate an implementation of the `MyQueue` class:\n\n* `void push(int x)` Pushes element x to the back of the queue.\n* `int pop()` Removes the element from the front of the queue and returns it.\n* `int peek()` Returns the element at the front of the queue.\n* `boolean empty()` Returns `true` if the queue is empty, `false` otherwise.\n\n**Notes:**\n\n* You must use **only** standard operations of a stack, which means only `push to top`, `peek/pop from top`, `size`, and `is empty` operations are valid.\n* Depending on your language, the stack may not be supported natively. You may simulate a stack using a list or deque (double-ended queue) as long as you use only a stack's standard operations.\n\n**Example 1:**\n\n```\nInput\n[\"MyQueue\", \"push\", \"push\", \"peek\", \"pop\", \"empty\"]\n[[], [1], [2], [], [], []]\nOutput\n[null, null, null, 1, 1, false]\n\nExplanation\nMyQueue myQueue = new MyQueue();\nmyQueue.push(1); // queue is: [1]\nmyQueue.push(2); // queue is: [1, 2] (leftmost is front of the queue)\nmyQueue.peek(); // return 1\nmyQueue.pop(); // return 1, queue is [2]\nmyQueue.empty(); // return false\n```\n\n**Constraints:**\n\n* `1 <= x <= 9`\n* At most `100` calls will be made to `push`, `pop`, `peek`, and `empty`.\n* All the calls to `pop` and `peek` are valid.\n\n**Follow-up:** Can you implement the queue such that each operation is **[amortized](https://en.wikipedia.org/wiki/Amortized_analysis)** `O(1)` time complexity? In other words, performing `n` operations will take overall `O(n)` time even if one of those operations may take longer.",
+    "problemStatement": "You need to implement a first-in-first-out (FIFO) queue, but the only\nbuilding block available to you internally is a stack, which is\nlast-in-first-out. You're given a space-delimited sequence of operations\nto run against this queue, starting from an empty queue. Each token is\none of:\n\n- `\"push_<value>\"` - add value to the back of the queue\n- `\"pop\"` - remove and report the value at the front\n- `\"peek\"` - report the value at the front without removing it\n- `\"empty\"` - report 1 if the queue is currently empty, 0 otherwise\n\n**Simulate the operations in order, and return a list containing the result of every \"pop\", \"peek\", and \"empty\" operation, in the order they occurred.**\n\nYou can assume \"pop\" and \"peek\" are never called on an empty queue.",
     "constraints": [
-      "None"
+      "tokens are separated by single spaces, and push tokens join the operation and value with an underscore",
+      "push values fit in a standard 32-bit integer and may be negative",
+      "pop and peek are never called while the queue is empty",
+      "1 <= number of operations <= 100"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"push_1 push_2 peek pop empty\"",
+        "output": "[1, 1, 0]",
+        "explanation": "queue holds [1,2] front-to-back; peek reports 1; pop removes and reports 1, leaving [2]; empty reports 0 since [2] remains"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"push_5 pop empty\"",
+        "output": "[5, 1]",
+        "explanation": "pop removes and reports the only element, 5; empty then reports 1 since the queue is now empty"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"push_3 push_4 pop push_5 peek pop pop empty\"",
+        "output": "[3, 4, 4, 5, 1]",
+        "explanation": "FIFO order is preserved even though push_5 happens after the first pop: pop->3, peek/pop see 4 then 5, then the queue is empty"
+      }
+    ],
     "notes": []
   },
   "testCases": {
@@ -37,246 +62,180 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[\"push_1 push_2 peek pop empty\"]",
+        "expectedOutput": "[1,1,0]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[\"push_5 pop empty\"]",
+        "expectedOutput": "[5,1]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[\"push_3 push_4 pop push_5 peek pop pop empty\"]",
+        "expectedOutput": "[3,4,4,5,1]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[\"push_7 peek pop empty\"]",
+        "expectedOutput": "[7,7,1]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[\"push_1 push_2 push_3 pop pop pop empty\"]",
+        "expectedOutput": "[1,2,3,1]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[\"push_-1 push_-2 pop peek\"]",
+        "expectedOutput": "[-1,-2]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[\"push_0 push_0 pop pop empty\"]",
+        "expectedOutput": "[0,0,1]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[\"empty\"]",
+        "expectedOutput": "[1]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[\"push_10 empty pop empty\"]",
+        "expectedOutput": "[0,10,1]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[\"push_1 push_2 push_3 push_4 pop pop peek\"]",
+        "expectedOutput": "[1,2,3]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[\"push_100 push_200 push_300 pop push_400 pop pop empty\"]",
+        "expectedOutput": "[100,200,300,0]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[\"push_5 push_5 push_5 pop pop pop empty\"]",
+        "expectedOutput": "[5,5,5,1]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[\"push_1 pop push_2 pop push_3 pop empty\"]",
+        "expectedOutput": "[1,2,3,1]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[\"push_9 push_8 peek pop peek pop empty\"]",
+        "expectedOutput": "[9,9,8,8,1]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[\"push_2 push_4 push_6 push_8 pop pop pop pop empty\"]",
+        "expectedOutput": "[2,4,6,8,1]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[\"push_1000000 pop empty\"]",
+        "expectedOutput": "[1000000,1]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[\"push_-1000000 pop empty\"]",
+        "expectedOutput": "[-1000000,1]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[\"push_1 push_2 empty pop empty pop empty\"]",
+        "expectedOutput": "[0,1,0,2,1]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[\"push_42 peek peek peek pop empty\"]",
+        "expectedOutput": "[42,42,42,42,1]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[\"push_1 push_2 push_3 push_4 push_5 pop pop pop pop pop empty\"]",
+        "expectedOutput": "[1,2,3,4,5,1]",
+        "weight": 5
       },
       {
         "id": "tc_21",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 21",
+        "input": "[\"push_3 push_1 push_4 push_1 push_5 pop pop pop pop pop empty\"]",
+        "expectedOutput": "[3,1,4,1,5,1]",
+        "weight": 5
       },
       {
         "id": "tc_22",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 22",
+        "input": "[\"push_6 push_7 pop push_8 push_9 pop pop pop empty\"]",
+        "expectedOutput": "[6,7,8,9,1]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -349,7 +308,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "A monotonic stack is ideal for finding the next greater or smaller element in linear time.",
+    "Remember LIFO (last-in, first-out) order: check if processing from left to right or right to left is needed.",
+    "Handle edge cases where elements remain on the stack after iterating through the input."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -357,11 +320,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class MyQueue {\npublic:\n    MyQueue() {\n        \n    }\n    \n    void push(int x) {\n        \n    }\n    \n    int pop() {\n        \n    }\n    \n    int peek() {\n        \n    }\n    \n    bool empty() {\n        \n    }\n};\n\n/**\n * Your MyQueue object will be instantiated and called as such:\n * MyQueue* obj = new MyQueue();\n * obj->push(x);\n * int param_2 = obj->pop();\n * int param_3 = obj->peek();\n * bool param_4 = obj->empty();\n */",
-    "Java": "class MyQueue {\n\n    public MyQueue() {\n        \n    }\n    \n    public void push(int x) {\n        \n    }\n    \n    public int pop() {\n        \n    }\n    \n    public int peek() {\n        \n    }\n    \n    public boolean empty() {\n        \n    }\n}\n\n/**\n * Your MyQueue object will be instantiated and called as such:\n * MyQueue obj = new MyQueue();\n * obj.push(x);\n * int param_2 = obj.pop();\n * int param_3 = obj.peek();\n * boolean param_4 = obj.empty();\n */",
-    "Python3": "# Time:  O(1), amortized\n# Space: O(n)\n\nclass MyQueue(object):\n\n    def __init__(self):\n        self.A, self.B = [], []\n\n    def push(self, x):\n        \"\"\"\n        :type x: int\n        :rtype: None\n        \"\"\"\n        self.A.append(x)\n\n    def pop(self):\n        \"\"\"\n        :rtype: int\n        \"\"\"\n        self.peek()\n        return self.B.pop()\n\n    def peek(self):\n        \"\"\"\n        :rtype: int\n        \"\"\"\n        if not self.B:\n            while self.A:\n                self.B.append(self.A.pop())\n        return self.B[-1]\n\n    def empty(self):\n        \"\"\"\n        :rtype: bool\n        \"\"\"\n        return not self.A and not self.B",
+    "C++": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> queueOperations(string ops) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int[] queueOperations(String ops) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def queueOperations(self, ops):\n        pass\n",
     "Python": "class MyQueue(object):\n\n    def __init__(self):\n        \n\n    def push(self, x):\n        \"\"\"\n        :type x: int\n        :rtype: None\n        \"\"\"\n        \n\n    def pop(self):\n        \"\"\"\n        :rtype: int\n        \"\"\"\n        \n\n    def peek(self):\n        \"\"\"\n        :rtype: int\n        \"\"\"\n        \n\n    def empty(self):\n        \"\"\"\n        :rtype: bool\n        \"\"\"\n        \n\n\n# Your MyQueue object will be instantiated and called as such:\n# obj = MyQueue()\n# obj.push(x)\n# param_2 = obj.pop()\n# param_3 = obj.peek()\n# param_4 = obj.empty()",
-    "JavaScript": "\nvar MyQueue = function() {\n    \n};\n\n/** \n * @param {number} x\n * @return {void}\n */\nMyQueue.prototype.push = function(x) {\n    \n};\n\n/**\n * @return {number}\n */\nMyQueue.prototype.pop = function() {\n    \n};\n\n/**\n * @return {number}\n */\nMyQueue.prototype.peek = function() {\n    \n};\n\n/**\n * @return {boolean}\n */\nMyQueue.prototype.empty = function() {\n    \n};\n\n/** \n * Your MyQueue object will be instantiated and called as such:\n * var obj = new MyQueue()\n * obj.push(x)\n * var param_2 = obj.pop()\n * var param_3 = obj.peek()\n * var param_4 = obj.empty()\n */",
+    "JavaScript": "class Solution {\n    queueOperations(ops) {\n\n    }\n}\n",
     "TypeScript": "class MyQueue {\n    constructor() {\n        \n    }\n\n    push(x: number): void {\n        \n    }\n\n    pop(): number {\n        \n    }\n\n    peek(): number {\n        \n    }\n\n    empty(): boolean {\n        \n    }\n}\n\n/**\n * Your MyQueue object will be instantiated and called as such:\n * var obj = new MyQueue()\n * obj.push(x)\n * var param_2 = obj.pop()\n * var param_3 = obj.peek()\n * var param_4 = obj.empty()\n */",
     "C#": "public class MyQueue {\n\n    public MyQueue() {\n        \n    }\n    \n    public void Push(int x) {\n        \n    }\n    \n    public int Pop() {\n        \n    }\n    \n    public int Peek() {\n        \n    }\n    \n    public bool Empty() {\n        \n    }\n}\n\n/**\n * Your MyQueue object will be instantiated and called as such:\n * MyQueue obj = new MyQueue();\n * obj.Push(x);\n * int param_2 = obj.Pop();\n * int param_3 = obj.Peek();\n * bool param_4 = obj.Empty();\n */",
     "C": "\n\n\ntypedef struct {\n    \n} MyQueue;\n\n\nMyQueue* myQueueCreate() {\n    \n}\n\nvoid myQueuePush(MyQueue* obj, int x) {\n    \n}\n\nint myQueuePop(MyQueue* obj) {\n    \n}\n\nint myQueuePeek(MyQueue* obj) {\n    \n}\n\nbool myQueueEmpty(MyQueue* obj) {\n    \n}\n\nvoid myQueueFree(MyQueue* obj) {\n    \n}\n\n/**\n * Your MyQueue struct will be instantiated and called as such:\n * MyQueue* obj = myQueueCreate();\n * myQueuePush(obj, x);\n \n * int param_2 = myQueuePop(obj);\n \n * int param_3 = myQueuePeek(obj);\n \n * bool param_4 = myQueueEmpty(obj);\n \n * myQueueFree(obj);\n*/",
@@ -378,8 +341,14 @@
     "Racket": "(define my-queue%\n  (class object%\n    (super-new)\n    \n    (init-field)\n    \n    ; push : exact-integer? -> void?\n    (define/public (push x)\n      )\n    ; pop : -> exact-integer?\n    (define/public (pop)\n      )\n    ; peek : -> exact-integer?\n    (define/public (peek)\n      )\n    ; empty : -> boolean?\n    (define/public (empty)\n      )))\n\n;; Your my-queue% object will be instantiated and called as such:\n;; (define obj (new my-queue%))\n;; (send obj push x)\n;; (define param_2 (send obj pop))\n;; (define param_3 (send obj peek))\n;; (define param_4 (send obj empty))"
   },
   "_internal": {
-    "methodName": "",
-    "params": []
+    "methodName": "queueOperations",
+    "params": [
+      {
+        "name": "ops",
+        "type": "string"
+      }
+    ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 22
 }

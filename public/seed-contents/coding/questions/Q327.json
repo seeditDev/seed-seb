@@ -1,6 +1,6 @@
 {
   "questionId": "Q327",
-  "title": "Calculate the Count of of Range Sum",
+  "title": "Count of Range Sum",
   "slug": "count-of-range-sum",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -31,9 +31,10 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "With an integer array `nums` and two integers `lower` and `upper`, output *the number of range sums that lie in* `[lower, upper]` *inclusive*.\n\nRange sum `S(i, j)` is defined as the sum of the elements in `nums` between indices `i` and `j` inclusive, where `i <= j`.\n\n**Example 1:**\n\n```\nInput: nums = [-2,5,-1], lower = -2, upper = 2\nOutput: 3\nExplanation: The three ranges are: [0,0], [2,2], and [0,2] and their respective sums are: -2, -1, 2.\n```\n\n**Example 2:**\n\n```\nInput: nums = [0], lower = 0, upper = 0\nOutput: 1\n```\n\n**Constraints:**\n\n* `1 <= nums.length <= 105`\n* `-231 <= nums[i] <= 231 - 1`\n* `-105 <= lower <= upper <= 105`\n* The answer is **guaranteed** to fit in a **32-bit** integer.",
+    "problemStatement": "You're given an array of integers, `nums`, and two integers `lower` and\n`upper`.\n\n**Return the number of contiguous subarrays of `nums` whose sum falls within [`lower`, `upper`], inclusive on both ends.**",
     "constraints": [
-      "None"
+      "lower <= upper",
+      "the array may contain negative numbers"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -41,9 +42,9 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "nums = [-2,5,-1], lower = -2, upper = 2",
+        "input": "nums = [-2, 5, -1], lower = -2, upper = 2",
         "output": "3",
-        "explanation": ""
+        "explanation": "the subarrays [0,0], [2,2], and [0,2] have sums -2, -1, and 2, all within range"
       },
       {
         "id": "sample_2",
@@ -60,246 +61,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[-2,5,-1],-2,2]",
+        "expectedOutput": "3",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[0],0,0]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[1,2,3],100,200]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[1],-1,1]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[-1],-1,-1]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[0,0,0],0,0]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[1,2,3,4,5],3,8]",
+        "expectedOutput": "7",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[-5,-4,-3,-2,-1],-10,-1]",
+        "expectedOutput": "12",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[2,-1,2,-1,2],0,3]",
+        "expectedOutput": "12",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[1,-1,1,-1,1,-1,1,-1],-1,1]",
+        "expectedOutput": "36",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[0,-3,1,5,-5,-4,3,-4,0,4,-5,3,-2,-5,-4],-3,3]",
+        "expectedOutput": "46",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[3,3,-8,-3,-8,7,3,-9,8,-7,-3,10,10,8,-9,8,8,2],0,5]",
+        "expectedOutput": "17",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[5,-2,3,-1,4,-6,2,1],-3,4]",
+        "expectedOutput": "27",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[10,-10,10,-10,10,-10],-5,5]",
+        "expectedOutput": "9",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[1,1,1,1,1,1,1,1,1,1],5,10]",
+        "expectedOutput": "21",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],-10,-5]",
+        "expectedOutput": "21",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[-3,-2,-3,1,3,-2,-1,0,-2,1,-3,1,-1,1,3,2,-2,-3,1,1],-2,2]",
+        "expectedOutput": "101",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[100,-200,50,-50,100],-100,100]",
+        "expectedOutput": "12",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[0],-5,5]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[3,-2,1,-4,5,-1,2,-3,4],-2,2]",
+        "expectedOutput": "27",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -372,7 +291,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -380,11 +303,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    int countRangeSum(vector<int>& nums, int lower, int upper) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public int countRangeSum(int[] nums, int lower, int upper) {\n        \n    }\n}",
-    "Python3": "# Time:  O(nlogn)\n# Space: O(n)\n\nclass Solution(object):\n    def countRangeSum(self, nums, lower, upper):\n        \"\"\"\n        :type nums: List[int]\n        :type lower: int\n        :type upper: int\n        :rtype: int\n        \"\"\"\n        def countAndMergeSort(sums, start, end, lower, upper):\n            if end - start <= 1:  # The size of range [start, end) less than 2 is always with count 0.\n                return 0\n            mid = start + (end - start) / 2\n            count = countAndMergeSort(sums, start, mid, lower, upper) + \\\n                    countAndMergeSort(sums, mid, end, lower, upper)\n            j, k, r = mid, mid, mid\n            tmp = []\n            for i in range(start, mid):\n                # Count the number of range sums that lie in [lower, upper].\n                while k < end and sums[k] - sums[i] < lower:\n                    k += 1\n                while j < end and sums[j] - sums[i] <= upper:\n                    j += 1\n                count += j - k\n\n                # Merge the two sorted arrays into tmp.\n                while r < end and sums[r] < sums[i]:\n                    tmp.append(sums[r])\n                    r += 1\n                tmp.append(sums[i])\n            # Copy tmp back to sums.\n            sums[start:start+len(tmp)] = tmp\n            return count\n\n        sums = [0] * (len(nums) + 1)\n        for i in range(len(nums)):\n            sums[i + 1] = sums[i] + nums[i]\n        return countAndMergeSort(sums, 0, len(sums), lower, upper)",
+    "C++": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int countRangeSum(vector<int>& nums, int lower, int upper) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int countRangeSum(int[] nums, int lower, int upper) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def countRangeSum(self, nums, lower, upper):\n        pass\n",
     "Python": "class Solution(object):\n    def countRangeSum(self, nums, lower, upper):\n        \"\"\"\n        :type nums: List[int]\n        :type lower: int\n        :type upper: int\n        :rtype: int\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {number[]} nums\n * @param {number} lower\n * @param {number} upper\n * @return {number}\n */\nvar countRangeSum = function(nums, lower, upper) {\n    \n};",
+    "JavaScript": "class Solution {\n    countRangeSum(nums, lower, upper) {\n\n    }\n}\n",
     "TypeScript": "function countRangeSum(nums: number[], lower: number, upper: number): number {\n    \n};",
     "C#": "public class Solution {\n    public int CountRangeSum(int[] nums, int lower, int upper) {\n        \n    }\n}",
     "C": "int countRangeSum(int* nums, int numsSize, int lower, int upper) {\n    \n}",
@@ -405,17 +328,18 @@
     "params": [
       {
         "name": "nums",
-        "type": "integer[]"
+        "type": "int[]"
       },
       {
         "name": "lower",
-        "type": "integer"
+        "type": "int"
       },
       {
         "name": "upper",
-        "type": "integer"
+        "type": "int"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }

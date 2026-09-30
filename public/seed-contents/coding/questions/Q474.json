@@ -1,6 +1,6 @@
 {
   "questionId": "Q474",
-  "title": "Ones and Zeroes Problem",
+  "title": "Ones and Zeroes",
   "slug": "ones-and-zeroes",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -23,9 +23,12 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You receive an array of binary strings `strs` and two integers `m` and `n`.\n\nOutput *the size of the largest subset of `strs` such that there are **no more than*** `m``0`*'s and* `n``1`*'s in the subset*.\n\nA set `x` is a **subset** of a set `y` if all elements of `x` are also elements of `y`.\n\n**Example 1:**\n\n```\nInput: strs = [\"10\",\"0001\",\"111001\",\"1\",\"0\"], m = 5, n = 3\nOutput: 4\nExplanation: The largest subset with at most 5 0's and 3 1's is {\"10\", \"0001\", \"1\", \"0\"}, so the answer is 4.\nOther valid but smaller subsets include {\"0001\", \"1\"} and {\"10\", \"1\", \"0\"}.\n{\"111001\"} is an invalid subset because it contains 4 1's, greater than the maximum of 3.\n```\n\n**Example 2:**\n\n```\nInput: strs = [\"10\",\"0\",\"1\"], m = 1, n = 1\nOutput: 2\nExplanation: The largest subset is {\"0\", \"1\"}, so the answer is 2.\n```\n\n**Constraints:**\n\n* `1 <= strs.length <= 600`\n* `1 <= strs[i].length <= 100`\n* `strs[i]` consists only of digits `'0'` and `'1'`.\n* `1 <= m, n <= 100`",
+    "problemStatement": "You're given a space-delimited string of binary strings, each made only of '0' and '1' characters, along with two limits `m` and `n`.\n\n**Return the size of the largest possible subset of these binary strings such that, across all the chosen strings combined, the total number of '0' characters does not exceed m and the total number of '1' characters does not exceed n.**",
     "constraints": [
-      "None"
+      "1 <= number of strings in strs <= 600",
+      "1 <= length of each string <= 100",
+      "each string consists only of the characters '0' and '1'",
+      "0 <= m, n <= 100"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -33,16 +36,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "strs = [\"10\",\"0001\",\"111001\",\"1\",\"0\"], m = 5, n = 3",
+        "input": "strs = \"10 0001 111001 1 0\", m = 5, n = 3",
         "output": "4",
-        "explanation": ""
+        "explanation": "the subset {\"10\", \"0001\", \"1\", \"0\"} uses 5 zeros and 3 ones total, fitting exactly within both limits, for a subset of size 4"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "strs = [\"10\",\"0\",\"1\"], m = 1, n = 1",
+        "input": "strs = \"10 0 1\", m = 1, n = 1",
         "output": "2",
-        "explanation": ""
+        "explanation": "the subset {\"0\", \"1\"} uses 1 zero and 1 one; adding \"10\" would push the zero count to 2, exceeding m"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "strs = \"0 0 1 1\", m = 2, n = 2",
+        "output": "4",
+        "explanation": "all four strings together use exactly 2 zeros and 2 ones, so the entire list can be taken"
       }
     ],
     "notes": []
@@ -52,246 +62,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[\"10 0001 111001 1 0\",5,3]",
+        "expectedOutput": "4",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[\"10 0 1\",1,1]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[\"0 0 1 1\",2,2]",
+        "expectedOutput": "4",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[\"00 11\",1,1]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[\"0\",1,0]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[\"1\",0,1]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[\"0\",0,0]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[\"1111 0000\",4,4]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[\"10 0 1 111001 1\",5,3]",
+        "expectedOutput": "4",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[\"00 01 10 11\",2,2]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[\"1 0 001 11 0000\",3,2]",
+        "expectedOutput": "3",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[\"101 010 111 000\",4,4]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[\"0 1\",0,0]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[\"11111\",0,4]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[\"111 0000\",0,3]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[\"10 10 10\",1,1]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[\"0001 1\",3,1]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[\"1010 0101 1100 0011\",2,2]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[\"0 0 0 1 1 1\",3,3]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[\"111 1111 11111\",0,6]",
+        "expectedOutput": "1",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -364,7 +292,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -372,11 +304,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    int findMaxForm(vector<string>& strs, int m, int n) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public int findMaxForm(String[] strs, int m, int n) {\n        \n    }\n}",
-    "Python3": "# Time:  O(s * m * n), s is the size of the array.\n# Space: O(m * n)\n\nclass Solution(object):\n    def findMaxForm(self, strs, m, n):\n        \"\"\"\n        :type strs: List[str]\n        :type m: int\n        :type n: int\n        :rtype: int\n        \"\"\"\n        dp = [[0 for _ in range(n+1)] for _ in range(m+1)]\n        for s in strs:\n            zero_count, one_count = 0, 0\n            for c in s:\n                if c == '0':\n                    zero_count += 1\n                elif c == '1':\n                    one_count += 1\n\n            for i in reversed(range(zero_count, m+1)):\n            \tfor j in reversed(range(one_count, n+1)):\n                    dp[i][j] = max(dp[i][j], dp[i-zero_count][j-one_count]+1)\n        return dp[m][n]",
+    "C++": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findMaxForm(string strs, int m, int n) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int findMaxForm(String strs, int m, int n) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def findMaxForm(self, strs, m, n):\n        pass\n",
     "Python": "class Solution(object):\n    def findMaxForm(self, strs, m, n):\n        \"\"\"\n        :type strs: List[str]\n        :type m: int\n        :type n: int\n        :rtype: int\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {string[]} strs\n * @param {number} m\n * @param {number} n\n * @return {number}\n */\nvar findMaxForm = function(strs, m, n) {\n    \n};",
+    "JavaScript": "class Solution {\n    findMaxForm(strs, m, n) {\n\n    }\n}\n",
     "TypeScript": "function findMaxForm(strs: string[], m: number, n: number): number {\n    \n};",
     "C#": "public class Solution {\n    public int FindMaxForm(string[] strs, int m, int n) {\n        \n    }\n}",
     "C": "int findMaxForm(char** strs, int strsSize, int m, int n) {\n    \n}",
@@ -397,17 +329,18 @@
     "params": [
       {
         "name": "strs",
-        "type": "string[]"
+        "type": "string"
       },
       {
         "name": "m",
-        "type": "integer"
+        "type": "int"
       },
       {
         "name": "n",
-        "type": "integer"
+        "type": "int"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }

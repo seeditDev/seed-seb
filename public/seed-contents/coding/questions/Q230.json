@@ -1,6 +1,6 @@
 {
   "questionId": "Q230",
-  "title": "K-th Smallest Element in a BST",
+  "title": "Kth Smallest Element in a BST",
   "slug": "kth-smallest-element-in-a-bst",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -25,9 +25,12 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "With the `root` of a binary search tree, and an integer `k`, output *the* `kth` *smallest value (**1-indexed**) of all the values of the nodes in the tree*.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/01/28/kthtree1.jpg)\n\n```\nInput: root = [3,1,4,null,2], k = 1\nOutput: 1\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2021/01/28/kthtree2.jpg)\n\n```\nInput: root = [5,3,6,2,4,null,null,1], k = 3\nOutput: 3\n```\n\n**Constraints:**\n\n* The number of nodes in the tree is `n`.\n* `1 <= k <= n <= 104`\n* `0 <= Node.val <= 104`\n\n**Follow up:** If the BST is modified often (i.e., we can do insert and delete operations) and you need to find the kth smallest frequently, how would you optimize?",
+    "problemStatement": "Binary trees in these problems are encoded as a flat array named `tree`\nusing complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node here\" - real node values always fall between -100 and 100, so -101 can never be a genuine value\n\nYou're given a valid binary search tree encoded this way, along with an\ninteger `k`.\n\n**Return the `k`th smallest value stored in the tree, using 1-indexing\n(k = 1 means the smallest value in the tree).**",
     "constraints": [
-      "None"
+      "1 <= number of nodes <= 10000",
+      "0 <= every real node value <= 100",
+      "1 <= k <= number of nodes in the tree",
+      "the sentinel value -101 marks a missing node and never appears as a real value"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -35,16 +38,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "root = [3,1,4,null,2], k = 1",
+        "input": "tree = [3, 1, 4, -101, 2], k = 1",
         "output": "1",
-        "explanation": ""
+        "explanation": "sorted, the values are 1, 2, 3, 4; the 1st smallest is 1"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "root = [5,3,6,2,4,null,null,1], k = 3",
+        "input": "tree = [5, 3, 6, 2, 4, -101, -101, 1], k = 3",
         "output": "3",
-        "explanation": ""
+        "explanation": "sorted, the values are 1, 2, 3, 4, 5, 6; the 3rd smallest is 3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [3, 1, 4, -101, 2], k = 4",
+        "output": "4",
+        "explanation": "sorted, the values are 1, 2, 3, 4; the 4th smallest (the largest, since there are only 4 nodes) is 4"
       }
     ],
     "notes": []
@@ -54,246 +64,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[3,1,4,-101,2],1]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[3,1,4,-101,2],2]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[3,1,4,-101,2],4]",
+        "expectedOutput": "4",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[5,3,6,2,4,-101,-101,1],3]",
+        "expectedOutput": "3",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[5,3,6,2,4,-101,-101,1],1]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[1],1]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[2,1,3],2]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[4,2,6,1,3,5,7],1]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[4,2,6,1,3,5,7],7]",
+        "expectedOutput": "7",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[4,2,6,1,3,5,7],4]",
+        "expectedOutput": "4",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[50,25,75,10,30,60,90,5,15,27,35,55,65,80,95],1]",
+        "expectedOutput": "5",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[50,25,75,10,30,60,90,5,15,27,35,55,65,80,95],15]",
+        "expectedOutput": "95",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[50,25,75,10,30,60,90,5,15,27,35,55,65,80,95],8]",
+        "expectedOutput": "50",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[10,5,15,3,7,13,18,1,4,6,9,11,14,16,20],5]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[10,5,15,3,7,13,18,1,4,6,9,11,14,16,20],15]",
+        "expectedOutput": "20",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[100,0],1]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[100,0],2]",
+        "expectedOutput": "100",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[8,3,10,1,6,-101,14,-101,-101,4,7,13,-101],6]",
+        "expectedOutput": "8",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[1,0,2],2]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[20,10,30,5,15,25,35],4]",
+        "expectedOutput": "20",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -366,7 +294,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Identify the search space and verify that the condition is monotonic (true...true...false...false).",
+    "Be mindful of integer overflow when computing mid: use mid = left + (right - left) // 2.",
+    "Ensure the termination condition (left <= right vs left < right) correctly handles boundary elements."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -374,11 +306,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     TreeNode *left;\n *     TreeNode *right;\n *     TreeNode() : val(0), left(nullptr), right(nullptr) {}\n *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}\n *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}\n * };\n */\nclass Solution {\npublic:\n    int kthSmallest(TreeNode* root, int k) {\n        \n    }\n};",
-    "Java": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     int val;\n *     TreeNode left;\n *     TreeNode right;\n *     TreeNode() {}\n *     TreeNode(int val) { this.val = val; }\n *     TreeNode(int val, TreeNode left, TreeNode right) {\n *         this.val = val;\n *         this.left = left;\n *         this.right = right;\n *     }\n * }\n */\nclass Solution {\n    public int kthSmallest(TreeNode root, int k) {\n        \n    }\n}",
-    "Python3": "# Time:  O(max(h, k))\n# Space: O(h)\n\nclass Solution(object):\n    # @param {TreeNode} root\n    # @param {integer} k\n    # @return {integer}\n    def kthSmallest(self, root, k):\n        s, cur, rank = [], root, 0\n\n        while s or cur:\n            if cur:\n                s.append(cur)\n                cur = cur.left\n            else:\n                cur = s.pop()\n                rank += 1\n                if rank == k:\n                    return cur.val\n                cur = cur.right\n\n        return float(\"-inf\")",
+    "C++": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int kthSmallest(vector<int>& tree, int k) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int kthSmallest(int[] tree, int k) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def kthSmallest(self, tree, k):\n        pass\n",
     "Python": "# Definition for a binary tree node.\n# class TreeNode(object):\n#     def __init__(self, val=0, left=None, right=None):\n#         self.val = val\n#         self.left = left\n#         self.right = right\nclass Solution(object):\n    def kthSmallest(self, root, k):\n        \"\"\"\n        :type root: Optional[TreeNode]\n        :type k: int\n        :rtype: int\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * Definition for a binary tree node.\n * function TreeNode(val, left, right) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.left = (left===undefined ? null : left)\n *     this.right = (right===undefined ? null : right)\n * }\n */\n/**\n * @param {TreeNode} root\n * @param {number} k\n * @return {number}\n */\nvar kthSmallest = function(root, k) {\n    \n};",
+    "JavaScript": "class Solution {\n    kthSmallest(tree, k) {\n\n    }\n}\n",
     "TypeScript": "/**\n * Definition for a binary tree node.\n * class TreeNode {\n *     val: number\n *     left: TreeNode | null\n *     right: TreeNode | null\n *     constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {\n *         this.val = (val===undefined ? 0 : val)\n *         this.left = (left===undefined ? null : left)\n *         this.right = (right===undefined ? null : right)\n *     }\n * }\n */\n\nfunction kthSmallest(root: TreeNode | null, k: number): number {\n    \n};",
     "C#": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     public int val;\n *     public TreeNode left;\n *     public TreeNode right;\n *     public TreeNode(int val=0, TreeNode left=null, TreeNode right=null) {\n *         this.val = val;\n *         this.left = left;\n *         this.right = right;\n *     }\n * }\n */\npublic class Solution {\n    public int KthSmallest(TreeNode root, int k) {\n        \n    }\n}",
     "C": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     struct TreeNode *left;\n *     struct TreeNode *right;\n * };\n */\nint kthSmallest(struct TreeNode* root, int k) {\n    \n}",
@@ -398,14 +330,15 @@
     "methodName": "kthSmallest",
     "params": [
       {
-        "name": "root",
-        "type": "TreeNode"
+        "name": "tree",
+        "type": "int[]"
       },
       {
         "name": "k",
-        "type": "integer"
+        "type": "int"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }

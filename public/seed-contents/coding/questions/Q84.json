@@ -1,6 +1,6 @@
 {
   "questionId": "Q84",
-  "title": "Largest Rectangle in Histogram Problem",
+  "title": "Largest Rectangle in Histogram",
   "slug": "largest-rectangle-in-histogram",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -23,9 +23,10 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You receive an array of integers `heights` representing the histogram's bar height where the width of each bar is `1`, output *the area of the largest rectangle in the histogram*.",
+    "problemStatement": "You're given an array of integers representing the heights of bars in a\nhistogram, each bar one unit wide and placed side by side.\n\n**Return the area of the largest rectangle that can be formed using\nonly contiguous bars, where the rectangle's height is limited by the\nshortest bar it spans.**",
     "constraints": [
-      "None"
+      "1 <= heights.length <= 10^5",
+      "0 <= heights[i] <= 10^4"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -33,16 +34,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "heights = [2,1,5,6,2,3]",
+        "input": "heights = [2, 1, 5, 6, 2, 3]",
         "output": "10",
-        "explanation": "For this input, applying the required rules of Largest Rectangle in Histogram produces 10."
+        "explanation": "bars at indices 2 and 3 (heights 5 and 6) form a rectangle of height 5 and width 2, area 10"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "heights = [2,4]",
+        "input": "heights = [2, 4]",
         "output": "4",
-        "explanation": "For this input, applying the required rules of Largest Rectangle in Histogram produces 4."
+        "explanation": "either a single bar of height 4 and width 1 (area 4), or both bars at height 2 and width 2 (also area 4)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "heights = [1, 1, 1, 1]",
+        "output": "4",
+        "explanation": "all four bars together form a rectangle of height 1 and width 4"
       }
     ],
     "notes": []
@@ -52,7 +60,7 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "Documented scenario 1",
+        "label": "Scenario 1",
         "input": "[[2,1,5,6,2,3]]",
         "expectedOutput": "10",
         "weight": 5
@@ -60,7 +68,7 @@
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "Documented scenario 2",
+        "label": "Scenario 2",
         "input": "[[2,4]]",
         "expectedOutput": "4",
         "weight": 5
@@ -68,230 +76,148 @@
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "Regression replay 1",
-        "input": "[[2,1,5,6,2,3]]",
-        "expectedOutput": "10",
+        "label": "Scenario 3",
+        "input": "[[1,1,1,1]]",
+        "expectedOutput": "4",
         "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "Regression replay 2",
-        "input": "[[2,4]]",
-        "expectedOutput": "4",
+        "label": "Scenario 4",
+        "input": "[[6,2,5,4,5,1,6]]",
+        "expectedOutput": "12",
         "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "Regression replay 3",
-        "input": "[[2,1,5,6,2,3]]",
-        "expectedOutput": "10",
+        "label": "Scenario 5",
+        "input": "[[5]]",
+        "expectedOutput": "5",
         "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "Regression replay 4",
-        "input": "[[2,4]]",
-        "expectedOutput": "4",
+        "label": "Scenario 6",
+        "input": "[[0]]",
+        "expectedOutput": "0",
         "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "Regression replay 5",
-        "input": "[[2,1,5,6,2,3]]",
-        "expectedOutput": "10",
+        "label": "Scenario 7",
+        "input": "[[0,0,0]]",
+        "expectedOutput": "0",
         "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "Regression replay 6",
-        "input": "[[2,4]]",
-        "expectedOutput": "4",
+        "label": "Scenario 8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "expectedOutput": "30",
         "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "Regression replay 7",
-        "input": "[[2,1,5,6,2,3]]",
-        "expectedOutput": "10",
+        "label": "Scenario 9",
+        "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+        "expectedOutput": "30",
         "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "Regression replay 8",
-        "input": "[[2,4]]",
-        "expectedOutput": "4",
+        "label": "Scenario 10",
+        "input": "[[3,3,3,3,3]]",
+        "expectedOutput": "15",
         "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "Regression replay 9",
-        "input": "[[2,1,5,6,2,3]]",
-        "expectedOutput": "10",
+        "label": "Scenario 11",
+        "input": "[[33,26,19,23,18,11,49,45,45,34,42,17,7,1,15,24,47,26,16,32,20,40,43,46,25]]",
+        "expectedOutput": "170",
         "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "Regression replay 10",
-        "input": "[[2,4]]",
-        "expectedOutput": "4",
+        "label": "Scenario 12",
+        "input": "[[2,0,2]]",
+        "expectedOutput": "2",
         "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "Regression replay 11",
-        "input": "[[2,1,5,6,2,3]]",
-        "expectedOutput": "10",
+        "label": "Scenario 13",
+        "input": "[[5,5,1,5,5,1,5,5,1,5,5]]",
+        "expectedOutput": "11",
         "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "Regression replay 12",
-        "input": "[[2,4]]",
-        "expectedOutput": "4",
+        "label": "Scenario 14",
+        "input": "[[4,2,0,3,2,5,1,6,3,2,4]]",
+        "expectedOutput": "8",
         "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "Regression replay 13",
-        "input": "[[2,1,5,6,2,3]]",
-        "expectedOutput": "10",
+        "label": "Scenario 15",
+        "input": "[[1]]",
+        "expectedOutput": "1",
         "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "Regression replay 14",
-        "input": "[[2,4]]",
-        "expectedOutput": "4",
+        "label": "Scenario 16",
+        "input": "[[1,0,1]]",
+        "expectedOutput": "1",
         "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "Regression replay 15",
-        "input": "[[2,1,5,6,2,3]]",
-        "expectedOutput": "10",
+        "label": "Scenario 17",
+        "input": "[[35,29,58,57,70,7,12,29,64,63,38,72,66,10,30,57,64,35,54,85,21,39,93,70,66,40,8,66,22,80,98,1,93,43,79]]",
+        "expectedOutput": "252",
         "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "Regression replay 16",
-        "input": "[[2,4]]",
-        "expectedOutput": "4",
+        "label": "Scenario 18",
+        "input": "[[1,2,2,1,3,3,1,4,4,1]]",
+        "expectedOutput": "10",
         "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "Regression replay 17",
-        "input": "[[2,1,5,6,2,3]]",
-        "expectedOutput": "10",
+        "label": "Scenario 19",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,0]]",
+        "expectedOutput": "56",
         "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "Regression replay 18",
-        "input": "[[2,4]]",
-        "expectedOutput": "4",
+        "label": "Scenario 20",
+        "input": "[[100,1,1,1,1,1,1,1,1,100]]",
+        "expectedOutput": "100",
         "weight": 5
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -364,7 +290,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -372,11 +302,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    int largestRectangleArea(vector<int>& heights) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public int largestRectangleArea(int[] heights) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n)\n# Space: O(n)\n\nclass Solution(object):\n    def largestRectangleArea(self, heights):\n        \"\"\"\n        :type heights: List[int]\n        :rtype: int\n        \"\"\"\n        stk, result = [-1], 0\n        for i in range(len(heights)+1):\n            while stk[-1] != -1 and (i == len(heights) or heights[stk[-1]] >= heights[i]):\n                result = max(result, heights[stk.pop()]*((i-1)-stk[-1]))\n            stk.append(i) \n        return result",
+    "C++": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int largestRectangleArea(vector<int>& heights) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int largestRectangleArea(int[] heights) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def largestRectangleArea(self, heights):\n        pass\n",
     "Python": "class Solution(object):\n    def largestRectangleArea(self, heights):\n        \"\"\"\n        :type heights: List[int]\n        :rtype: int\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {number[]} heights\n * @return {number}\n */\nvar largestRectangleArea = function(heights) {\n    \n};",
+    "JavaScript": "class Solution {\n    largestRectangleArea(heights) {\n\n    }\n}\n",
     "TypeScript": "function largestRectangleArea(heights: number[]): number {\n    \n};",
     "C#": "public class Solution {\n    public int LargestRectangleArea(int[] heights) {\n        \n    }\n}",
     "C": "int largestRectangleArea(int* heights, int heightsSize) {\n    \n}",
@@ -397,9 +327,10 @@
     "params": [
       {
         "name": "heights",
-        "type": "integer[]"
+        "type": "int[]"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }

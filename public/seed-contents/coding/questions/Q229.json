@@ -27,7 +27,8 @@
   "content": {
     "problemStatement": "With an integer array of size `n`, find all elements that appear more than `⌊n / 3⌋` times.\n\n**Example 1:**\n\n```\nInput: nums = [3,2,3]\nOutput: [3]\n```\n\n**Example 2:**\n\n```\nInput: nums = [1]\nOutput: [1]\n```\n\n**Example 3:**\n\n```\nInput: nums = [1,2]\nOutput: [1,2]\n```\n\n**Constraints:**\n\n* `1 <= nums.length <= 5 * 104`\n* `-109 <= nums[i] <= 109`\n\n**Follow up:** Could you solve the problem in linear time and in `O(1)` space?",
     "constraints": [
-      "None"
+      "1 <= nums.length <= 10^5",
+      "-10^9 <= nums[i] <= 10^9"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -373,7 +374,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -383,7 +388,7 @@
   "boilerPlates": {
     "C++": "class Solution {\npublic:\n    vector<int> majorityElement(vector<int>& nums) {\n        \n    }\n};",
     "Java": "class Solution {\n    public List<Integer> majorityElement(int[] nums) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n)\n# Space: O(1)\n\nimport collections\n\n\nclass Solution(object):\n    def majorityElement(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: List[int]\n        \"\"\"\n        k, n, cnts = 3, len(nums), collections.defaultdict(int)\n\n        for i in nums:\n            cnts[i] += 1\n            # Detecting k items in cnts, at least one of them must have exactly\n            # one in it. We will discard those k items by one for each.\n            # This action keeps the same mojority numbers in the remaining numbers.\n            # Because if x / n  > 1 / k is true, then (x - 1) / (n - k) > 1 / k is also true.\n            if len(cnts) == k:\n                for j in cnts.keys():\n                    cnts[j] -= 1\n                    if cnts[j] == 0:\n                        del cnts[j]\n\n        # Resets cnts for the following counting.\n        for i in cnts.keys():\n            cnts[i] = 0\n\n        # Counts the occurrence of each candidate integer.\n        for i in nums:\n            if i in cnts:\n                cnts[i] += 1\n\n        # Selects the integer which occurs > [n / k] times.\n        result = []\n        for i in cnts.keys():\n            if cnts[i] > n / k:\n                result.append(i)\n\n        return result\n\n    def majorityElement2(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: List[int]\n        \"\"\"\n        return [i[0] for i in collections.Counter(nums).items() if i[1] > len(nums) / 3]",
+    "Python3": "class Solution(object):\n    def majorityElement(self, nums):\n        pass\n",
     "Python": "class Solution(object):\n    def majorityElement(self, nums):\n        \"\"\"\n        :type nums: List[int]\n        :rtype: List[int]\n        \"\"\"\n        ",
     "JavaScript": "/**\n * @param {number[]} nums\n * @return {number[]}\n */\nvar majorityElement = function(nums) {\n    \n};",
     "TypeScript": "function majorityElement(nums: number[]): number[] {\n    \n};",
@@ -410,5 +415,9 @@
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "constraints": [
+    "1 <= nums.length <= 10^5",
+    "-10^9 <= nums[i] <= 10^9"
+  ]
 }

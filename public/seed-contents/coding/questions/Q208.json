@@ -1,7 +1,7 @@
 {
   "questionId": "Q208",
-  "title": "Implement Trie (Prefix Tree) Problem",
-  "slug": "implement-trie-prefix-tree",
+  "title": "Implement Trie (Prefix Tree)",
+  "slug": "implement-trie",
   "version": 1,
   "createdAt": "2026-07-15",
   "updatedAt": "2026-07-15",
@@ -25,13 +25,38 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "A [**trie**](https://en.wikipedia.org/wiki/Trie) (pronounced as \"try\") or **prefix tree** is a tree data structure used to efficiently store and retrieve keys in a dataset of strings. There are various applications of this data structure, such as autocomplete and spellchecker.\n\nCreate an implementation of the Trie class:\n\n* `Trie()` Initializes the trie object.\n* `void insert(String word)` Inserts the string `word` into the trie.\n* `boolean search(String word)` Returns `true` if the string `word` is in the trie (i.e., was inserted before), and `false` otherwise.\n* `boolean startsWith(String prefix)` Returns `true` if there is a previously inserted string `word` that has the prefix `prefix`, and `false` otherwise.\n\n**Example 1:**\n\n```\nInput\n[\"Trie\", \"insert\", \"search\", \"search\", \"startsWith\", \"insert\", \"search\"]\n[[], [\"apple\"], [\"apple\"], [\"app\"], [\"app\"], [\"app\"], [\"app\"]]\nOutput\n[null, null, true, false, true, null, true]\n\nExplanation\nTrie trie = new Trie();\ntrie.insert(\"apple\");\ntrie.search(\"apple\");   // return True\ntrie.search(\"app\");     // return False\ntrie.startsWith(\"app\"); // return True\ntrie.insert(\"app\");\ntrie.search(\"app\");     // return True\n```\n\n**Constraints:**\n\n* `1 <= word.length, prefix.length <= 2000`\n* `word` and `prefix` consist only of lowercase English letters.\n* At most `3 * 104` calls **in total** will be made to `insert`, `search`, and `startsWith`.",
+    "problemStatement": "You're given a single space-delimited sequence of operations to run\nagainst an initially empty trie (prefix tree). Each token has the form\n\"op:argument\":\n\n- `insert:word` - adds word to the trie\n- `search:word` - checks whether word was previously inserted exactly\n- `startsWith:prefix` - checks whether any inserted word starts with prefix\n\n**Simulate the tokens in order on the trie, and return a list containing\nthe result of every \"search\" and \"startsWith\" operation (1 for true, 0\nfor false), in the order they occurred.**\n\n\"insert\" tokens produce no output and should be skipped in the result\nlist.",
     "constraints": [
-      "None"
+      "1 <= word.length, prefix.length <= 2000",
+      "word and prefix consist only of lowercase English letters",
+      "1 <= number of operations <= 3 * 10^4",
+      "ops.length <= 3 * 10^5"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert:apple search:apple search:app startsWith:app insert:app search:app\"",
+        "output": "[1, 0, 1, 1]",
+        "explanation": "after inserting \"apple\": search:apple=1 (exact match), search:app=0 (not inserted as a full word yet), startsWith:app=1 (apple starts with app); after inserting \"app\": search:app=1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert:cat insert:car insert:card search:cat search:ca startsWith:ca startsWith:cars\"",
+        "output": "[1, 0, 1, 0]",
+        "explanation": "\"ca\" was never inserted as a full word (search:ca=0), but cat/car/card all start with \"ca\" (startsWith:ca=1); no word starts with \"cars\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"search:apple\"",
+        "output": "[0]",
+        "explanation": "the trie is empty, so nothing can be found"
+      }
+    ],
     "notes": []
   },
   "testCases": {
@@ -39,246 +64,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[\"insert:apple search:apple search:app startsWith:app insert:app search:app\"]",
+        "expectedOutput": "[1,0,1,1]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[\"insert:cat insert:car insert:card search:cat search:ca startsWith:ca startsWith:cars\"]",
+        "expectedOutput": "[1,0,1,0]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[\"search:apple\"]",
+        "expectedOutput": "[0]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[\"insert:a search:a startsWith:a\"]",
+        "expectedOutput": "[1,1]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[\"insert:hello insert:help search:hello search:help startsWith:hel startsWith:helz\"]",
+        "expectedOutput": "[1,1,1,0]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[\"insert:a insert:b insert:c search:a search:b search:c search:d\"]",
+        "expectedOutput": "[1,1,1,0]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[\"insert:ab insert:abc search:ab search:abc startsWith:a startsWith:ab startsWith:abc startsWith:abcd\"]",
+        "expectedOutput": "[1,1,1,1,1,0]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[\"startsWith:x search:x\"]",
+        "expectedOutput": "[0,0]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[\"insert:same insert:same insert:same search:same startsWith:sam\"]",
+        "expectedOutput": "[1,1]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[\"insert:go insert:going insert:gone search:go search:going search:gon startsWith:go startsWith:gon\"]",
+        "expectedOutput": "[1,1,0,1,1]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[\"insert:z search:z startsWith:z search:zz startsWith:zz\"]",
+        "expectedOutput": "[1,1,0,0]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[\"insert:trie insert:tree insert:trick search:trie search:tree search:trick startsWith:tri startsWith:tre\"]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[\"insert:a insert:ab insert:abc insert:abcd search:a search:ab search:abc search:abcd startsWith:abcde\"]",
+        "expectedOutput": "[1,1,1,1,0]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[\"insert:cat search:cats startsWith:ca startsWith:cats search:cat\"]",
+        "expectedOutput": "[0,1,0,1]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[\"insert:x insert:y insert:z startsWith:a startsWith:x startsWith:y startsWith:z\"]",
+        "expectedOutput": "[0,1,1,1]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[\"insert:pref insert:prefix insert:prefixes search:pref search:prefix startsWith:pre startsWith:prefi\"]",
+        "expectedOutput": "[1,1,1,1]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[\"insert:aaaa search:aaaa search:aaa startsWith:aaa startsWith:aaaaa\"]",
+        "expectedOutput": "[1,0,1,0]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[\"insert:hi insert:hey insert:hello startsWith:h search:hi search:hey search:hello startsWith:he\"]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[\"search:empty startsWith:empty\"]",
+        "expectedOutput": "[0,0]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[\"insert:duplicate insert:duplicate insert:duplicate startsWith:dup search:duplicate search:dup\"]",
+        "expectedOutput": "[1,1,0]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -351,7 +294,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Consider using a frequency map, hash table, or fixed-size array of 26/128 elements to track character counts.",
+    "If searching for substrings or window constraints, the sliding window technique with two pointers is often optimal.",
+    "Watch out for edge cases such as empty strings, single-character strings, and differing cases."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -359,11 +306,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Trie {\npublic:\n    Trie() {\n        \n    }\n    \n    void insert(string word) {\n        \n    }\n    \n    bool search(string word) {\n        \n    }\n    \n    bool startsWith(string prefix) {\n        \n    }\n};\n\n/**\n * Your Trie object will be instantiated and called as such:\n * Trie* obj = new Trie();\n * obj->insert(word);\n * bool param_2 = obj->search(word);\n * bool param_3 = obj->startsWith(prefix);\n */",
-    "Java": "class Trie {\n\n    public Trie() {\n        \n    }\n    \n    public void insert(String word) {\n        \n    }\n    \n    public boolean search(String word) {\n        \n    }\n    \n    public boolean startsWith(String prefix) {\n        \n    }\n}\n\n/**\n * Your Trie object will be instantiated and called as such:\n * Trie obj = new Trie();\n * obj.insert(word);\n * boolean param_2 = obj.search(word);\n * boolean param_3 = obj.startsWith(prefix);\n */",
-    "Python3": "# Time:  O(n), per operation\n# Space: O(1)\n\nclass TrieNode(object):\n    # Initialize your data structure here.\n    def __init__(self):\n        self.is_string = False\n        self.leaves = {}\n\n\nclass Trie(object):\n\n    def __init__(self):\n        self.root = TrieNode()\n\n    # @param {string} word\n    # @return {void}\n    # Inserts a word into the trie.\n    def insert(self, word):\n        cur = self.root\n        for c in word:\n            if not c in cur.leaves:\n                cur.leaves[c] = TrieNode()\n            cur = cur.leaves[c]\n        cur.is_string = True\n\n    # @param {string} word\n    # @return {boolean}\n    # Returns if the word is in the trie.\n    def search(self, word):\n        node = self.childSearch(word)\n        if node:\n            return node.is_string\n        return False\n\n    # @param {string} prefix\n    # @return {boolean}\n    # Returns if there is any word in the trie\n    # that starts with the given prefix.\n    def startsWith(self, prefix):\n        return self.childSearch(prefix) is not None\n\n    def childSearch(self, word):\n        cur = self.root\n        for c in word:\n            if c in cur.leaves:\n                cur = cur.leaves[c]\n            else:\n                return None\n        return cur",
+    "C++": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> trieOperations(string ops) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int[] trieOperations(String ops) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def trieOperations(self, ops):\n        pass\n",
     "Python": "class Trie(object):\n\n    def __init__(self):\n        \n\n    def insert(self, word):\n        \"\"\"\n        :type word: str\n        :rtype: None\n        \"\"\"\n        \n\n    def search(self, word):\n        \"\"\"\n        :type word: str\n        :rtype: bool\n        \"\"\"\n        \n\n    def startsWith(self, prefix):\n        \"\"\"\n        :type prefix: str\n        :rtype: bool\n        \"\"\"\n        \n\n\n# Your Trie object will be instantiated and called as such:\n# obj = Trie()\n# obj.insert(word)\n# param_2 = obj.search(word)\n# param_3 = obj.startsWith(prefix)",
-    "JavaScript": "\nvar Trie = function() {\n    \n};\n\n/** \n * @param {string} word\n * @return {void}\n */\nTrie.prototype.insert = function(word) {\n    \n};\n\n/** \n * @param {string} word\n * @return {boolean}\n */\nTrie.prototype.search = function(word) {\n    \n};\n\n/** \n * @param {string} prefix\n * @return {boolean}\n */\nTrie.prototype.startsWith = function(prefix) {\n    \n};\n\n/** \n * Your Trie object will be instantiated and called as such:\n * var obj = new Trie()\n * obj.insert(word)\n * var param_2 = obj.search(word)\n * var param_3 = obj.startsWith(prefix)\n */",
+    "JavaScript": "class Solution {\n    trieOperations(ops) {\n\n    }\n}\n",
     "TypeScript": "class Trie {\n    constructor() {\n        \n    }\n\n    insert(word: string): void {\n        \n    }\n\n    search(word: string): boolean {\n        \n    }\n\n    startsWith(prefix: string): boolean {\n        \n    }\n}\n\n/**\n * Your Trie object will be instantiated and called as such:\n * var obj = new Trie()\n * obj.insert(word)\n * var param_2 = obj.search(word)\n * var param_3 = obj.startsWith(prefix)\n */",
     "C#": "public class Trie {\n\n    public Trie() {\n        \n    }\n    \n    public void Insert(string word) {\n        \n    }\n    \n    public bool Search(string word) {\n        \n    }\n    \n    public bool StartsWith(string prefix) {\n        \n    }\n}\n\n/**\n * Your Trie object will be instantiated and called as such:\n * Trie obj = new Trie();\n * obj.Insert(word);\n * bool param_2 = obj.Search(word);\n * bool param_3 = obj.StartsWith(prefix);\n */",
     "C": "\n\n\ntypedef struct {\n    \n} Trie;\n\n\nTrie* trieCreate() {\n    \n}\n\nvoid trieInsert(Trie* obj, char* word) {\n    \n}\n\nbool trieSearch(Trie* obj, char* word) {\n    \n}\n\nbool trieStartsWith(Trie* obj, char* prefix) {\n    \n}\n\nvoid trieFree(Trie* obj) {\n    \n}\n\n/**\n * Your Trie struct will be instantiated and called as such:\n * Trie* obj = trieCreate();\n * trieInsert(obj, word);\n \n * bool param_2 = trieSearch(obj, word);\n \n * bool param_3 = trieStartsWith(obj, prefix);\n \n * trieFree(obj);\n*/",
@@ -380,8 +327,14 @@
     "Racket": "(define trie%\n  (class object%\n    (super-new)\n    \n    (init-field)\n    \n    ; insert : string? -> void?\n    (define/public (insert word)\n      )\n    ; search : string? -> boolean?\n    (define/public (search word)\n      )\n    ; starts-with : string? -> boolean?\n    (define/public (starts-with prefix)\n      )))\n\n;; Your trie% object will be instantiated and called as such:\n;; (define obj (new trie%))\n;; (send obj insert word)\n;; (define param_2 (send obj search word))\n;; (define param_3 (send obj starts-with prefix))"
   },
   "_internal": {
-    "methodName": "",
-    "params": []
+    "methodName": "trieOperations",
+    "params": [
+      {
+        "name": "ops",
+        "type": "string"
+      }
+    ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }

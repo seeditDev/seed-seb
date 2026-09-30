@@ -33,7 +33,12 @@
   "content": {
     "problemStatement": "You receive a list of airline `tickets` where `tickets[i] = [fromi, toi]` represent the departure and the arrival airports of one flight. Reconstruct the itinerary in order and output it.\n\nAll of the tickets belong to a man who departs from `\"JFK\"`, thus, the itinerary must begin with `\"JFK\"`. If there are multiple valid itineraries, you should output the itinerary that has the smallest lexical order when read as a single string.\n\n* As an example, the itinerary `[\"JFK\", \"LGA\"]` has a smaller lexical order than `[\"JFK\", \"LGB\"]`.\n\nYou may assume all tickets form no fewer than one valid itinerary. You must use all the tickets once and only once.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/03/14/itinerary1-graph.jpg)\n\n```\nInput: tickets = [[\"MUC\",\"LHR\"],[\"JFK\",\"MUC\"],[\"SFO\",\"SJC\"],[\"LHR\",\"SFO\"]]\nOutput: [\"JFK\",\"MUC\",\"LHR\",\"SFO\",\"SJC\"]\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2021/03/14/itinerary2-graph.jpg)\n\n```\nInput: tickets = [[\"JFK\",\"SFO\"],[\"JFK\",\"ATL\"],[\"SFO\",\"ATL\"],[\"ATL\",\"JFK\"],[\"ATL\",\"SFO\"]]\nOutput: [\"JFK\",\"ATL\",\"JFK\",\"SFO\",\"ATL\",\"SFO\"]\nExplanation: Another possible reconstruction is [\"JFK\",\"SFO\",\"ATL\",\"JFK\",\"ATL\",\"SFO\"] but it is larger in lexical order.\n```\n\n**Constraints:**\n\n* `1 <= tickets.length <= 300`\n* `tickets[i].length == 2`\n* `fromi.length == 3`\n* `toi.length == 3`\n* `fromi` and `toi` consist of uppercase English letters.\n* `fromi != toi`",
     "constraints": [
-      "None"
+      "1 <= tickets.length <= 300",
+      "tickets[i].length == 2",
+      "fromi.length == 3",
+      "toi.length == 3",
+      "fromi and toi consist of uppercase English letters.",
+      "fromi != toi"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -372,7 +377,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -382,7 +391,7 @@
   "boilerPlates": {
     "C++": "class Solution {\npublic:\n    vector<string> findItinerary(vector<vector<string>>& tickets) {\n        \n    }\n};",
     "Java": "class Solution {\n    public List<String> findItinerary(List<List<String>> tickets) {\n        \n    }\n}",
-    "Python3": "# Time:  O(|V| + |E|log|V|)\n# Space: O(|V| + |E|)\n\n# Hierholzer Algorithm\nimport collections\n\n\nclass Solution(object):\n    def findItinerary(self, tickets):\n        \"\"\"\n        :type tickets: List[List[str]]\n        :rtype: List[str]\n        \"\"\"\n        adj = collections.defaultdict(list)\n        for ticket in tickets:\n            adj[ticket[0]].append(ticket[1])\n        for x in adj.itervalues():\n            x.sort(reverse=True)\n        origin = \"JFK\"\n        result = []\n        stk = [origin]\n        while stk:\n            while adj[stk[-1]]: \n                stk.append(adj[stk[-1]].pop())\n            result.append(stk.pop())\n        result.reverse()\n        return result",
+    "Python3": "class Solution(object):\n    def findItinerary(self, tickets):\n        pass\n",
     "Python": "class Solution(object):\n    def findItinerary(self, tickets):\n        \"\"\"\n        :type tickets: List[List[str]]\n        :rtype: List[str]\n        \"\"\"\n        ",
     "JavaScript": "/**\n * @param {string[][]} tickets\n * @return {string[]}\n */\nvar findItinerary = function(tickets) {\n    \n};",
     "TypeScript": "function findItinerary(tickets: string[][]): string[] {\n    \n};",
@@ -409,5 +418,13 @@
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "constraints": [
+    "1 <= tickets.length <= 300",
+    "tickets[i].length == 2",
+    "fromi.length == 3",
+    "toi.length == 3",
+    "fromi and toi consist of uppercase English letters.",
+    "fromi != toi"
+  ]
 }

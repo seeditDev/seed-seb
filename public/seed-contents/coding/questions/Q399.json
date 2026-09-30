@@ -1,6 +1,6 @@
 {
   "questionId": "Q399",
-  "title": "Evaluate Division Problem",
+  "title": "Evaluate Division",
   "slug": "evaluate-division",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -31,9 +31,15 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You receive an array of variable pairs `equations` and an array of real numbers `values`, where `equations[i] = [Ai, Bi]` and `values[i]` represent the equation `Ai / Bi = values[i]`. Each `Ai` or `Bi` is a string that represents a single variable.\n\nYou are also given some `queries`, where `queries[j] = [Cj, Dj]` represents the `jth` query where you must find the answer for `Cj / Dj = ?`.\n\nOutput *the answers to all queries*. If a single answer cannot be determined, output `-1.0`.\n\n**Note:** The input is always valid. You may assume that evaluating the queries will not result in division by zero and that there is no contradiction.\n\n**Note:**The variables that do not occur in the list of equations are undefined, so the answer cannot be determined for them.\n\n**Example 1:**\n\n```\nInput: equations = [[\"a\",\"b\"],[\"b\",\"c\"]], values = [2.0,3.0], queries = [[\"a\",\"c\"],[\"b\",\"a\"],[\"a\",\"e\"],[\"a\",\"a\"],[\"x\",\"x\"]]\nOutput: [6.00000,0.50000,-1.00000,1.00000,-1.00000]\nExplanation: \nGiven: a / b = 2.0, b / c = 3.0\nqueries are: a / c = ?, b / a = ?, a / e = ?, a / a = ?, x / x = ? \nreturn: [6.0, 0.5, -1.0, 1.0, -1.0 ]\nnote: x is undefined => -1.0\n```\n\n**Example 2:**\n\n```\nInput: equations = [[\"a\",\"b\"],[\"b\",\"c\"],[\"bc\",\"cd\"]], values = [1.5,2.5,5.0], queries = [[\"a\",\"c\"],[\"c\",\"b\"],[\"bc\",\"cd\"],[\"cd\",\"bc\"]]\nOutput: [3.75000,0.40000,5.00000,0.20000]\n```\n\n**Example 3:**\n\n```\nInput: equations = [[\"a\",\"b\"]], values = [0.5], queries = [[\"a\",\"b\"],[\"b\",\"a\"],[\"a\",\"c\"],[\"x\",\"y\"]]\nOutput: [0.50000,2.00000,-1.00000,-1.00000]\n```\n\n**Constraints:**\n\n* `1 <= equations.length <= 20`\n* `equations[i].length == 2`\n* `1 <= Ai.length, Bi.length <= 5`\n* `values.length == equations.length`\n* `0.0 < values[i] <= 20.0`\n* `1 <= queries.length <= 20`\n* `queries[i].length == 2`\n* `1 <= Cj.length, Dj.length <= 5`\n* `Ai, Bi, Cj, Dj` consist of lower case English letters and digits.",
+    "problemStatement": "You're given a list of division equations and their results, plus a list\nof queries. Each equation is given as a pair of variable names, but to\nkeep things in our closed integer type system, variables are already\nrelabeled as small integers 0..n-1, so \"a/b\" becomes the pair `[a, b]`\nwhere `a` and `b` are integers. `equations[i] = [a, b]` paired with\n`values100[i]` means variable `a` divided by variable `b` equals\n`values100[i] / 100.0`, the true ratio scaled by 100 and rounded to a\nfixed-point integer.\n\n**For each query `[c, d]` in `queries`, compute `c / d` using the chain of known equations, and return the answer for every query as an integer scaled by 100 and rounded to the nearest integer, or -1 if the answer cannot be determined.**\n\nDivision is transitive: if `a/b` and `b/c` are known, then `a/c = (a/b) * (b/c)`. An answer is undetermined if either variable never appears in any equation, or there's no chain connecting them. Worked example: `a/b = 2.5` is stored as `values100 = 250`; a true ratio of 0.3333... scales to 33 (100/3 = 33.33..., rounds to 33).",
     "constraints": [
-      "None"
+      "1 <= equations.length <= 20",
+      "equations[i].length == 2",
+      "1 <= values100.length == equations.length <= 20",
+      "values100[i] is a positive integer, the true ratio (values100[i] / 100.0) is between 0.001 and 1000.0",
+      "1 <= queries.length <= 20",
+      "queries[i].length == 2",
+      "variable ids are non-negative integers, not necessarily contiguous or starting at 0"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -41,23 +47,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "equations = [[\"a\",\"b\"],[\"b\",\"c\"]], values = [2.0,3.0], queries = [[\"a\",\"c\"],[\"b\",\"a\"],[\"a\",\"e\"],[\"a\",\"a\"],[\"x\",\"x\"]]",
-        "output": "[6.00000,0.50000,-1.00000,1.00000,-1.00000]",
-        "explanation": ""
+        "input": "equations = [[0, 1], [1, 2]], values100 = [200, 300], queries = [[0, 2], [2, 0], [0, 3], [3, 3]]",
+        "output": "[600, 17, -1, -1]",
+        "explanation": "0/1 = 2.0 and 1/2 = 3.0, so 0/2 = 2.0 * 3.0 = 6.0 -> 600. 2/0 = 1/6.0 = 0.1666... -> 17. variable 3 never appears, so both queries touching it return -1."
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "equations = [[\"a\",\"b\"],[\"b\",\"c\"],[\"bc\",\"cd\"]], values = [1.5,2.5,5.0], queries = [[\"a\",\"c\"],[\"c\",\"b\"],[\"bc\",\"cd\"],[\"cd\",\"bc\"]]",
-        "output": "[3.75000,0.40000,5.00000,0.20000]",
-        "explanation": ""
+        "input": "equations = [[0, 1], [1, 2], [2, 3], [3, 4]], values100 = [150, 250, 500, 100], queries = [[0, 4], [4, 0], [0, 0]]",
+        "output": "[1875, 5, 100]",
+        "explanation": "0/4 = 1.5 * 2.5 * 5.0 * 1.0 = 18.75 -> 1875. 4/0 is the reciprocal, 1/18.75 = 0.0533... -> 5. 0/0 is always 1.0 -> 100."
       },
       {
         "id": "sample_3",
         "type": "reg",
-        "input": "equations = [[\"a\",\"b\"]], values = [0.5], queries = [[\"a\",\"b\"],[\"b\",\"a\"],[\"a\",\"c\"],[\"x\",\"y\"]]",
-        "output": "[0.50000,2.00000,-1.00000,-1.00000]",
-        "explanation": ""
+        "input": "equations = [[0, 1]], values100 = [200], queries = [[1, 0]]",
+        "output": "[50]",
+        "explanation": "0/1 = 2.0 so 1/0 = 0.5 -> 50"
       }
     ],
     "notes": []
@@ -67,246 +73,172 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[[0,1],[1,2]],[200,300],[[0,2],[2,0],[0,3],[3,3]]]",
+        "expectedOutput": "[600,17,-1,-1]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[[0,1],[1,2],[2,3],[3,4]],[150,250,500,100],[[0,4],[4,0],[0,0]]]",
+        "expectedOutput": "[1875,5,100]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[[0,1]],[200],[[1,0]]]",
+        "expectedOutput": "[50]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[[0,1]],[100],[[0,1],[1,0],[0,0],[1,1]]]",
+        "expectedOutput": "[100,100,100,100]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[[0,1],[2,3]],[200,300],[[0,3],[1,2]]]",
+        "expectedOutput": "[-1,-1]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[[0,1],[1,2],[3,4]],[200,300,400],[[0,2],[3,4],[0,4]]]",
+        "expectedOutput": "[600,400,-1]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[[0,1]],[500],[[5,5]]]",
+        "expectedOutput": "[-1]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[[0,1],[1,0]],[200,50],[[0,0]]]",
+        "expectedOutput": "[100]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[[0,1],[1,2],[2,0]],[200,300,17],[[0,0],[1,1],[2,2]]]",
+        "expectedOutput": "[100,100,100]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[[1,2],[2,3],[3,4],[4,5]],[100,100,100,100],[[1,5],[5,1]]]",
+        "expectedOutput": "[100,100]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[[0,1],[1,2]],[100,300],[[0,2]]]",
+        "expectedOutput": "[300]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[[0,1],[1,2],[2,3]],[200,200,150],[[0,3],[3,0]]]",
+        "expectedOutput": "[600,17]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[[6,7]],[400],[[7,6],[6,7],[6,6],[8,8]]]",
+        "expectedOutput": "[25,400,100,-1]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[[0,1],[2,3],[1,2]],[200,300,100],[[0,3]]]",
+        "expectedOutput": "[600]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[[0,1],[1,2],[3,0]],[200,50,400],[[3,2]]]",
+        "expectedOutput": "[400]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[[9,10]],[1],[[9,10],[10,9]]]",
+        "expectedOutput": "[1,10000]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[[0,1],[1,2],[2,3],[3,0]],[200,300,200,25],[[0,0]]]",
+        "expectedOutput": "[100]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[[0,1]],[300],[[2,2]]]",
+        "expectedOutput": "[-1]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[[0,1],[1,2],[1,3]],[200,300,400],[[0,2],[0,3],[2,3]]]",
+        "expectedOutput": "[600,800,133]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[[0,1],[1,2],[2,3],[4,5]],[200,200,200,200],[[0,3],[4,5],[0,5]]]",
+        "expectedOutput": "[800,200,-1]",
+        "weight": 5
       },
       {
         "id": "tc_21",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 21",
+        "input": "[[[0,1],[1,2],[2,3],[3,4],[4,5]],[100,100,100,100,100],[[0,5],[5,0],[2,4]]]",
+        "expectedOutput": "[100,100,100]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -379,7 +311,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -387,11 +323,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public double[] calcEquation(List<List<String>> equations, double[] values, List<List<String>> queries) {\n        \n    }\n}",
-    "Python3": "# Time:  O((e + q) * α(n)) ~= O(e + q), using either one of \"path compression\" and \"union by rank\" results in amortized O(logn)\n#                                     , using  both results in α(n) ~= O(1)\n# Space: O(n)\n\nimport collections\nimport itertools\n\n\nclass UnionFind(object):\n    def __init__(self):\n        self.set = {}\n        self.rank = collections.Counter()\n\n    def find_set(self, x):\n        xp, xr = self.set.setdefault(x, (x, 1.0))\n        if x != xp:\n            pp, pr = self.find_set(xp)  # path compression.\n            self.set[x] = (pp, xr*pr)  # x/pp = xr*pr\n        return self.set[x]\n\n    def union_set(self, x, y, r):\n        (xp, xr), (yp, yr) =  map(self.find_set, (x, y))\n        if xp == yp:\n            return False\n        if self.rank[xp] < self.rank[yp]:  # union by rank\n            # to make x/yp = r*yr and merge xp into yp\n            # => since x/xp = xr, we can merge with xp/yp = r*yr/xr \n            self.set[xp] = (yp, r*yr/xr)\n        elif self.rank[xp] > self.rank[yp]:\n            # to make y/xp = 1/r*xr and merge xp into yp\n            # => since y/yp = yr, we can merge with yp/xp = 1/r*xr/yr \n            self.set[yp] = (xp, 1.0/r*xr/yr)\n        else:\n            # to make y/xp = 1/r*xr and merge xp into yp\n            # => since y/yp = yr, we can merge with yp/xp = 1/r*xr/yr \n            self.set[yp] = (xp, 1.0/r*xr/yr)\n            self.rank[xp] += 1 \n        return True\n\n    def query_set(self, x, y):\n        if x not in self.set or y not in self.set:\n            return -1.0\n        (xp, xr), (yp, yr) = map(self.find_set, (x, y))\n        return xr/yr if xp == yp else -1.0\n\n\nclass UnionFindPathCompressionOnly(object):\n    def __init__(self):\n        self.set = {}\n\n    def find_set(self, x):\n        xp, xr = self.set.setdefault(x, (x, 1.0))\n        if x != xp:\n            pp, pr = self.find_set(xp)  # path compression.\n            self.set[x] = (pp, xr*pr)  # x/pp = xr*pr\n        return self.set[x]\n\n    def union_set(self, x, y, r):\n        (xp, xr), (yp, yr) =  map(self.find_set, (x, y))\n        if xp == yp:\n            return False\n        # to make x/yp = r*yr and merge xp into yp\n        # => since x/xp = xr, we can merge with xp/yp = r*yr/xr \n        self.set[xp] = (yp, r*yr/xr)\n        return True\n\n    def query_set(self, x, y):\n        if x not in self.set or y not in self.set:\n            return -1.0\n        (xp, xr), (yp, yr) = map(self.find_set, (x, y))\n        return xr/yr if xp == yp else -1.0\n\n\nclass Solution(object):\n    def calcEquation(self, equations, values, queries):\n        \"\"\"\n        :type equations: List[List[str]]\n        :type values: List[float]\n        :type queries: List[List[str]]\n        :rtype: List[float]\n        \"\"\"\n        union_find = UnionFind()\n        for (a, b), k in itertools.izip(equations, values):\n            union_find.union_set(a, b, k)\n        return [union_find.query_set(a, b) for a, b in queries]",
+    "C++": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> calcEquation(vector<vector<int>>& equations, vector<int>& values100, vector<vector<int>>& queries) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int[] calcEquation(int[][] equations, int[] values100, int[][] queries) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def calcEquation(self, equations, values100, queries):\n        pass\n",
     "Python": "class Solution(object):\n    def calcEquation(self, equations, values, queries):\n        \"\"\"\n        :type equations: List[List[str]]\n        :type values: List[float]\n        :type queries: List[List[str]]\n        :rtype: List[float]\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {string[][]} equations\n * @param {number[]} values\n * @param {string[][]} queries\n * @return {number[]}\n */\nvar calcEquation = function(equations, values, queries) {\n    \n};",
+    "JavaScript": "class Solution {\n    calcEquation(equations, values100, queries) {\n\n    }\n}\n",
     "TypeScript": "function calcEquation(equations: string[][], values: number[], queries: string[][]): number[] {\n    \n};",
     "C#": "public class Solution {\n    public double[] CalcEquation(IList<IList<string>> equations, double[] values, IList<IList<string>> queries) {\n        \n    }\n}",
     "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\ndouble* calcEquation(char*** equations, int equationsSize, int* equationsColSize, double* values, int valuesSize, char*** queries, int queriesSize, int* queriesColSize, int* returnSize) {\n    \n}",
@@ -412,17 +348,18 @@
     "params": [
       {
         "name": "equations",
-        "type": "list<list<string>>"
+        "type": "int[][]"
       },
       {
-        "name": "values",
-        "type": "double[]"
+        "name": "values100",
+        "type": "int[]"
       },
       {
         "name": "queries",
-        "type": "list<list<string>>"
+        "type": "int[][]"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 21
 }

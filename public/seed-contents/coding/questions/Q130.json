@@ -1,6 +1,6 @@
 {
   "questionId": "Q130",
-  "title": "Surrounded Regions Problem",
+  "title": "Surrounded Regions",
   "slug": "surrounded-regions",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -27,13 +27,37 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You receive an `m x n` matrix `board` containing **letters** `'X'` and `'O'`, **capture regions** that are **surrounded**:\n\n* **Connect**: A cell is connected to adjacent cells horizontally or vertically.\n* **Region**: To form a region **connect every** `'O'` cell.\n* **Surround**: A region is surrounded if none of the `'O'` cells in that region are on the edge of the board. Such regions are **completely enclosed** by `'X'` cells.\n\nTo capture a **surrounded region**, replace all `'O'`s with `'X'`s **in-place** within the original board. You do not need to output anything.\n\n**Example 1:**\n\n**Input:** board = [[\"X\",\"X\",\"X\",\"X\"],[\"X\",\"O\",\"O\",\"X\"],[\"X\",\"X\",\"O\",\"X\"],[\"X\",\"O\",\"X\",\"X\"]]\n\n**Output:** [[\"X\",\"X\",\"X\",\"X\"],[\"X\",\"X\",\"X\",\"X\"],[\"X\",\"X\",\"X\",\"X\"],[\"X\",\"O\",\"X\",\"X\"]]\n\n**Explanation:**\n\n![](https://assets.leetcode.com/uploads/2021/02/19/xogrid.jpg)\n\nIn the above diagram, the bottom region is not captured because it is on the edge of the board and cannot be surrounded.\n\n**Example 2:**\n\n**Input:** board = [[\"X\"]]\n\n**Output:** [[\"X\"]]\n\n**Constraints:**\n\n* `m == board.length`\n* `n == board[i].length`\n* `1 <= m, n <= 200`\n* `board[i][j]` is `'X'` or `'O'`.",
+    "problemStatement": "You're given a grid where each cell is 0 (open) or 1 (wall). Any group of connected open cells (connected horizontally or vertically) that touches the border of the grid is considered safe.\n\n**Capture every surrounded region, meaning every group of open cells that never touches the border gets changed to walls (1), and return the resulting grid.**",
     "constraints": [
-      "None"
+      "1 <= rows <= 200",
+      "1 <= cols <= 200",
+      "grid[i][j] is 0 or 1"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[1,1,1,1],[1,0,0,1],[1,1,0,1],[1,0,1,1]]",
+        "output": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+        "explanation": "the open cells at (1,1),(1,2),(2,2) form a region that never touches the border, so they get captured; the open cell at (3,1) is on the border, so it stays open"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[0,0],[0,0]]",
+        "output": "[[0,0],[0,0]]",
+        "explanation": "every open cell touches the border, so nothing is captured"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[1,1,1],[1,0,1],[1,1,1]]",
+        "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "explanation": "the single open cell in the center never touches the border, so it gets captured"
+      }
+    ],
     "notes": []
   },
   "testCases": {
@@ -41,246 +65,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[[1,1,1,1],[1,0,0,1],[1,1,0,1],[1,0,1,1]]]",
+        "expectedOutput": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[[0,0],[0,0]]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[[1,1,1],[1,0,1],[1,1,1]]]",
+        "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[[1,1,1,1,1],[1,0,1,0,1],[1,1,1,1,1],[1,0,1,0,1],[1,1,1,1,1]]]",
+        "expectedOutput": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[[1,1],[1,1]]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[[1,1,1,1,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,0,1],[1,1,1,1,1]]]",
+        "expectedOutput": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[[0,1,1],[0,0,1],[1,1,1]]]",
+        "expectedOutput": "[[0,1,1],[0,0,1],[1,1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[[0,0,1,0,0]]]",
+        "expectedOutput": "[[0,0,1,0,0]]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[[0],[1],[0]]]",
+        "expectedOutput": "[[0],[1],[0]]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,0,0,1,1,1,0],[0,1,1,1,0,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]]",
+        "expectedOutput": "[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[[1,1,1,1,1,1],[1,0,1,0,1,1],[1,1,1,0,1,1],[1,0,0,0,1,1],[1,1,1,1,1,1]]]",
+        "expectedOutput": "[[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[[0]]]",
+        "expectedOutput": "[[0]]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[[1]]]",
+        "expectedOutput": "[[1]]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[[1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1],[1,0,1,1,1,1,0,1],[1,0,1,0,0,1,0,1],[1,0,1,1,1,1,0,1],[1,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1]]]",
+        "expectedOutput": "[[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,0,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1]]]",
+        "expectedOutput": "[[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[[0,0,0,0,0]]]",
+        "expectedOutput": "[[0,0,0,0,0]]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[[0],[0],[0],[0]]]",
+        "expectedOutput": "[[0],[0],[0],[0]]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[[1,1,1,1,1,1,1],[1,0,1,0,1,0,1],[1,1,1,1,1,1,1]]]",
+        "expectedOutput": "[[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[[1,0,1,1,1],[1,0,1,0,1],[1,1,1,0,1],[1,0,0,0,1],[1,1,1,1,1]]]",
+        "expectedOutput": "[[1,0,1,1,1],[1,0,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -353,7 +295,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -361,11 +307,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    void solve(vector<vector<char>>& board) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public void solve(char[][] board) {\n        \n    }\n}",
-    "Python3": "# Time:  O(m * n)\n# Space: O(m + n)\n\nimport collections\n\n\nclass Solution(object):\n    def solve(self, board):\n        \"\"\"\n        :type board: List[List[str]]\n        :rtype: void Do not return anything, modify board in-place instead.\n        \"\"\"\n        if not board:\n            return\n\n        q = collections.deque()\n\n        for i in range(len(board)):\n            if board[i][0] == 'O':\n                board[i][0] = 'V'\n                q.append((i, 0))\n            if board[i][len(board[0])-1] == 'O':\n                board[i][len(board[0])-1] = 'V'\n                q.append((i, len(board[0])-1))\n\n        for j in range(1, len(board[0])-1):\n            if board[0][j] == 'O':\n                board[0][j] = 'V'\n                q.append((0, j))\n            if board[len(board)-1][j] == 'O':\n                board[len(board)-1][j] = 'V'\n                q.append((len(board)-1, j))\n\n        while q:\n            i, j = q.popleft()\n            for x, y in [(i+1, j), (i-1, j), (i, j+1), (i, j-1)]:\n                if 0 <= x < len(board) and 0 <= y < len(board[0]) and \\\n                   board[x][y] == 'O':\n                    board[x][y] = 'V'\n                    q.append((x, y))\n\n        for i in range(len(board)):\n            for j in range(len(board[0])):\n                if board[i][j] != 'V':\n                    board[i][j] = 'X'\n                else:\n                    board[i][j] = 'O'",
+    "C++": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> solveRegions(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int[][] solveRegions(int[][] grid) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def solveRegions(self, grid):\n        pass\n",
     "Python": "class Solution(object):\n    def solve(self, board):\n        \"\"\"\n        :type board: List[List[str]]\n        :rtype: None Do not return anything, modify board in-place instead.\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {character[][]} board\n * @return {void} Do not return anything, modify board in-place instead.\n */\nvar solve = function(board) {\n    \n};",
+    "JavaScript": "class Solution {\n    solveRegions(grid) {\n\n    }\n}\n",
     "TypeScript": "/**\n Do not return anything, modify board in-place instead.\n */\nfunction solve(board: string[][]): void {\n    \n};",
     "C#": "public class Solution {\n    public void Solve(char[][] board) {\n        \n    }\n}",
     "C": "void solve(char** board, int boardSize, int* boardColSize) {\n    \n}",
@@ -379,13 +325,14 @@
     "Scala": "object Solution {\n    def solve(board: Array[Array[Char]]): Unit = {\n        \n    }\n}"
   },
   "_internal": {
-    "methodName": "solve",
+    "methodName": "solveRegions",
     "params": [
       {
-        "name": "board",
-        "type": "character[][]"
+        "name": "grid",
+        "type": "int[][]"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }

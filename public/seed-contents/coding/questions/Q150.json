@@ -1,6 +1,6 @@
 {
   "questionId": "Q150",
-  "title": "Evaluate Reverse Polish Notation Problem",
+  "title": "Evaluate Reverse Polish Notation",
   "slug": "evaluate-reverse-polish-notation",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -23,9 +23,12 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You receive an array of strings `tokens` that represents an arithmetic expression in a [Reverse Polish Notation](http://en.wikipedia.org/wiki/Reverse_Polish_notation).\n\nEvaluate the expression. Output *an integer that represents the value of the expression*.\n\n**Note** that:\n\n* The valid operators are `'+'`, `'-'`, `'*'`, and `'/'`.\n* Each operand may be an integer or another expression.\n* The division between two integers always **truncates toward zero**.\n* There will not be any division by zero.\n* The input represents a valid arithmetic expression in a reverse polish notation.\n* The answer and all the intermediate calculations can be represented in a **32-bit** integer.\n\n**Example 1:**\n\n```\nInput: tokens = [\"2\",\"1\",\"+\",\"3\",\"*\"]\nOutput: 9\nExplanation: ((2 + 1) * 3) = 9\n```\n\n**Example 2:**\n\n```\nInput: tokens = [\"4\",\"13\",\"5\",\"/\",\"+\"]\nOutput: 6\nExplanation: (4 + (13 / 5)) = 6\n```\n\n**Example 3:**\n\n```\nInput: tokens = [\"10\",\"6\",\"9\",\"3\",\"+\",\"-11\",\"*\",\"/\",\"*\",\"17\",\"+\",\"5\",\"+\"]\nOutput: 22\nExplanation: ((10 * (6 / ((9 + 3) * -11))) + 17) + 5\n= ((10 * (6 / (12 * -11))) + 17) + 5\n= ((10 * (6 / -132)) + 17) + 5\n= ((10 * 0) + 17) + 5\n= (0 + 17) + 5\n= 17 + 5\n= 22\n```\n\n**Constraints:**\n\n* `1 <= tokens.length <= 104`\n* `tokens[i]` is either an operator: `\"+\"`, `\"-\"`, `\"*\"`, or `\"/\"`, or an integer in the range `[-200, 200]`.",
+    "problemStatement": "You're given a space-delimited sequence of tokens representing an\narithmetic expression in Reverse Polish Notation (postfix notation). Each\ntoken is either an integer or one of the operators `+`, `-`, `*`, `/`, and\nin RPN an operator always applies to the two numbers immediately before\nit.\n\n**Evaluate the expression and return the result.**\n\nDivision between two integers truncates toward zero, not floor division.",
     "constraints": [
-      "None"
+      "1 <= number of tokens <= 10^4",
+      "each token is an integer in [-200, 200] or one of the operators +, -, *, /",
+      "the answer and all intermediate results fit in a 32-bit signed integer",
+      "division truncates toward zero, not floor division"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -33,23 +36,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "tokens = [\"2\",\"1\",\"+\",\"3\",\"*\"]",
+        "input": "tokens = \"2 1 + 3 *\"",
         "output": "9",
-        "explanation": ""
+        "explanation": "2 1 + evaluates to 3, then 3 3 * evaluates to 9"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "tokens = [\"4\",\"13\",\"5\",\"/\",\"+\"]",
+        "input": "tokens = \"4 13 5 / +\"",
         "output": "6",
-        "explanation": ""
+        "explanation": "13 5 / truncates to 2, then 4 2 + evaluates to 6"
       },
       {
         "id": "sample_3",
         "type": "reg",
-        "input": "tokens = [\"10\",\"6\",\"9\",\"3\",\"+\",\"-11\",\"*\",\"/\",\"*\",\"17\",\"+\",\"5\",\"+\"]",
+        "input": "tokens = \"10 6 9 3 + -11 * / * 17 + 5 +\"",
         "output": "22",
-        "explanation": ""
+        "explanation": "9 3 + = 12; -11 * 12 = -132; 6 -132 / truncates to 0; 10 0 * = 0; 0 17 + = 17; 17 5 + = 22"
       }
     ],
     "notes": []
@@ -59,246 +62,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[\"2 1 + 3 *\"]",
+        "expectedOutput": "9",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[\"4 13 5 / +\"]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[\"10 6 9 3 + -11 * / * 17 + 5 +\"]",
+        "expectedOutput": "22",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[\"18\"]",
+        "expectedOutput": "18",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[\"4 3 -\"]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[\"0\"]",
+        "expectedOutput": "0",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[\"-5\"]",
+        "expectedOutput": "-5",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[\"3 4 +\"]",
+        "expectedOutput": "7",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[\"10 2 /\"]",
+        "expectedOutput": "5",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[\"7 2 /\"]",
+        "expectedOutput": "3",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[\"-7 2 /\"]",
+        "expectedOutput": "-3",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[\"7 -2 /\"]",
+        "expectedOutput": "-3",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[\"5 1 2 + 4 * + 3 -\"]",
+        "expectedOutput": "14",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[\"2 3 * 4 +\"]",
+        "expectedOutput": "10",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[\"15 7 1 1 + - / 3 * 2 1 1 + + -\"]",
+        "expectedOutput": "5",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[\"100 200 *\"]",
+        "expectedOutput": "20000",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[\"6 2 3 + -\"]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[\"4 2 *\"]",
+        "expectedOutput": "8",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[\"9 3 /\"]",
+        "expectedOutput": "3",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[\"5 6 7 * -\"]",
+        "expectedOutput": "-37",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -371,7 +292,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Can sorting the array simplify the problem, or does sorting take too long compared to a hash table lookup?",
+    "Consider two-pointer approaches if the array is sorted, or a sliding window if looking for contiguous subarrays.",
+    "Prefix sums or prefix XORs can answer range sum queries in O(1) time after O(N) preprocessing."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -379,11 +304,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    int evalRPN(vector<string>& tokens) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public int evalRPN(String[] tokens) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n)\n# Space: O(n)\n\nimport operator\n\nclass Solution(object):\n    # @param tokens, a list of string\n    # @return an integer\n    def evalRPN(self, tokens):\n        numerals, operators = [], {\"+\": operator.add, \"-\": operator.sub, \"*\": operator.mul, \"/\": operator.div}\n        for token in tokens:\n            if token not in operators:\n                numerals.append(int(token))\n            else:\n                y, x = numerals.pop(), numerals.pop()\n                numerals.append(int(operators[token](x * 1.0, y)))\n        return numerals.pop()",
+    "C++": "#include <vector>\n#include <string>\n#include <stack>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int evalRPN(string tokens) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int evalRPN(String tokens) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def evalRPN(self, tokens):\n        pass\n",
     "Python": "class Solution(object):\n    def evalRPN(self, tokens):\n        \"\"\"\n        :type tokens: List[str]\n        :rtype: int\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {string[]} tokens\n * @return {number}\n */\nvar evalRPN = function(tokens) {\n    \n};",
+    "JavaScript": "class Solution {\n    evalRPN(tokens) {\n\n    }\n}\n",
     "TypeScript": "function evalRPN(tokens: string[]): number {\n    \n};",
     "C#": "public class Solution {\n    public int EvalRPN(string[] tokens) {\n        \n    }\n}",
     "C": "int evalRPN(char** tokens, int tokensSize) {\n    \n}",
@@ -404,9 +329,10 @@
     "params": [
       {
         "name": "tokens",
-        "type": "string[]"
+        "type": "string"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }

@@ -1,6 +1,6 @@
 {
   "questionId": "Q173",
-  "title": "Binary Search Tree Iterator Problem",
+  "title": "Binary Search Tree Iterator",
   "slug": "binary-search-tree-iterator",
   "version": 1,
   "createdAt": "2026-07-15",
@@ -29,13 +29,38 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Create an implementation of the `BSTIterator` class that represents an iterator over the **[in-order traversal](https://en.wikipedia.org/wiki/Tree_traversal#In-order_(LNR))** of a binary search tree (BST):\n\n* `BSTIterator(TreeNode root)` Initializes an object of the `BSTIterator` class. The `root` of the BST is given as part of the constructor. The pointer should be initialized to a non-existent number smaller than any element in the BST.\n* `boolean hasNext()` Returns `true` if there exists a number in the traversal to the right of the pointer, otherwise returns `false`.\n* `int next()` Moves the pointer to the right, then returns the number at the pointer.\n\nNotice that by initializing the pointer to a non-existent smallest number, the first call to `next()` will output the smallest element in the BST.\n\nYou may assume that `next()` calls will always be valid. That is, there will be no fewer than a next number in the in-order traversal when `next()` is called.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2018/12/25/bst-tree.png)\n\n```\nInput\n[\"BSTIterator\", \"next\", \"next\", \"hasNext\", \"next\", \"hasNext\", \"next\", \"hasNext\", \"next\", \"hasNext\"]\n[[[7, 3, 15, null, null, 9, 20]], [], [], [], [], [], [], [], [], []]\nOutput\n[null, 3, 7, true, 9, true, 15, true, 20, false]\n\nExplanation\nBSTIterator bSTIterator = new BSTIterator([7, 3, 15, null, null, 9, 20]);\nbSTIterator.next();    // return 3\nbSTIterator.next();    // return 7\nbSTIterator.hasNext(); // return True\nbSTIterator.next();    // return 9\nbSTIterator.hasNext(); // return True\nbSTIterator.next();    // return 15\nbSTIterator.hasNext(); // return True\nbSTIterator.next();    // return 20\nbSTIterator.hasNext(); // return False\n```\n\n**Constraints:**\n\n* The number of nodes in the tree is in the range `[1, 105]`.\n* `0 <= Node.val <= 106`\n* At most `105` calls will be made to `hasNext`, and `next`.\n\n**Follow up:**\n\n* Could you implement `next()` and `hasNext()` to run in average `O(1)` time and use `O(h)` memory, where `h` is the height of the tree?",
+    "problemStatement": "Binary trees in these problems are encoded as a flat array named `tree` using complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`, which means \"no node there\"\n\nThe given tree is always a valid binary search tree.\n\n**Design an iterator that walks the tree's nodes in ascending (inorder) order, supporting `next` (returns the value of the next smallest node not yet returned, and advances past it) and `hasNext` (reports whether any node remains to be returned).**\n\nSince this problem asks for a single pure function rather than a stateful object, you're given the tree plus a space-delimited string of operations (each token either \"next\" or \"hasNext\"). Simulate a freshly constructed iterator running through each operation in order, and return a list of results: the returned value for each \"next\", and 1 or 0 for each \"hasNext\".",
     "constraints": [
-      "None"
+      "1 <= number of nodes in tree <= 10^4",
+      "-100 <= tree[i] <= 100 for every real node",
+      "the given tree always satisfies the binary search tree property",
+      "every \"next\" token in ops is only ever called when a preceding hasNext (implicit or checked) would have returned true"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [7, 3, 15, -101, -101, 9, 20], ops = \"next next hasNext next hasNext\"",
+        "output": "[3, 7, 1, 9, 1]",
+        "explanation": "inorder order is 3, 7, 9, 15, 20; the first two next calls return 3 and 7, hasNext is true since 9, 15, 20 remain, next returns 9, and hasNext is still true since 15 and 20 remain"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1], ops = \"hasNext next hasNext\"",
+        "output": "[1, 1, 0]",
+        "explanation": "a single-node tree: hasNext is true before any calls, next returns the only value 1, and hasNext is false afterward since nothing remains"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [2, 1, 3], ops = \"next next next hasNext\"",
+        "output": "[1, 2, 3, 0]",
+        "explanation": "inorder order is 1, 2, 3; after three next calls every node has been returned, so the final hasNext is false"
+      }
+    ],
     "notes": []
   },
   "testCases": {
@@ -43,246 +68,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[7,3,15,-101,-101,9,20],\"next next hasNext next hasNext next hasNext\"]",
+        "expectedOutput": "[3,7,1,9,1,15,1]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[1],\"hasNext next hasNext\"]",
+        "expectedOutput": "[1,1,0]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[2,1,3],\"next next next hasNext\"]",
+        "expectedOutput": "[1,2,3,0]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[10,5,15,2,7,12,20],\"next next next next next next next hasNext\"]",
+        "expectedOutput": "[2,5,7,10,12,15,20,0]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[5,3,8,1,4,7,9],\"hasNext next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext\"]",
+        "expectedOutput": "[1,1,1,3,1,4,1,5,1,7,1,8,1]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[2,1,4],\"next next next hasNext\"]",
+        "expectedOutput": "[1,2,4,0]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[8,4,12,2,6,10,14,1,3,5,7,9,11,13,15],\"next next next next next next next next next next next next next next next hasNext\"]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[20,10,30],\"next next next hasNext\"]",
+        "expectedOutput": "[10,20,30,0]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[1,-101,2],\"next next hasNext\"]",
+        "expectedOutput": "[1,2,0]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[50,25,75,-101,-101,60,100],\"next next next next next hasNext\"]",
+        "expectedOutput": "[25,50,60,75,100,0]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[9,7,-101,6],\"next next next hasNext\"]",
+        "expectedOutput": "[6,7,9,0]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[6,2,8,-101,4,7,9,-101,-101,3,5],\"next next next next next next next hasNext\"]",
+        "expectedOutput": "[2,3,4,5,6,7,8,1]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[100,50,150,25,75,125,175],\"next next hasNext next next hasNext next next hasNext\"]",
+        "expectedOutput": "[25,50,1,75,100,1,125,150,1]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[4,2,6,1,3,5,7],\"next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext next hasNext\"]",
+        "expectedOutput": "[1,1,2,1,3,1,4,1,5,1,6,1,7,0]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[5,2,8,-101,3,-101,9],\"hasNext next next next next hasNext\"]",
+        "expectedOutput": "[1,2,3,5,8,1]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[15,10,20,5,12,18,25],\"next next next next next next next hasNext\"]",
+        "expectedOutput": "[5,10,12,15,18,20,25,0]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[2,1],\"next next hasNext\"]",
+        "expectedOutput": "[1,2,0]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[3,-101,5],\"next next hasNext\"]",
+        "expectedOutput": "[3,5,0]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[12,8,16,4,10,14,18],\"next next next next next next next hasNext\"]",
+        "expectedOutput": "[4,8,10,12,14,16,18,0]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[30,20,40,10,25,35,50],\"next next next next next next next hasNext\"]",
+        "expectedOutput": "[10,20,25,30,35,40,50,0]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -355,7 +298,11 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Identify the search space and verify that the condition is monotonic (true...true...false...false).",
+    "Be mindful of integer overflow when computing mid: use mid = left + (right - left) // 2.",
+    "Ensure the termination condition (left <= right vs left < right) correctly handles boundary elements."
+  ],
   "followUps": [],
   "learningObjectives": [],
   "similarProblems": [],
@@ -363,11 +310,11 @@
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     TreeNode *left;\n *     TreeNode *right;\n *     TreeNode() : val(0), left(nullptr), right(nullptr) {}\n *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}\n *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}\n * };\n */\nclass BSTIterator {\npublic:\n    BSTIterator(TreeNode* root) {\n        \n    }\n    \n    int next() {\n        \n    }\n    \n    bool hasNext() {\n        \n    }\n};\n\n/**\n * Your BSTIterator object will be instantiated and called as such:\n * BSTIterator* obj = new BSTIterator(root);\n * int param_1 = obj->next();\n * bool param_2 = obj->hasNext();\n */",
-    "Java": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     int val;\n *     TreeNode left;\n *     TreeNode right;\n *     TreeNode() {}\n *     TreeNode(int val) { this.val = val; }\n *     TreeNode(int val, TreeNode left, TreeNode right) {\n *         this.val = val;\n *         this.left = left;\n *         this.right = right;\n *     }\n * }\n */\nclass BSTIterator {\n\n    public BSTIterator(TreeNode root) {\n        \n    }\n    \n    public int next() {\n        \n    }\n    \n    public boolean hasNext() {\n        \n    }\n}\n\n/**\n * Your BSTIterator object will be instantiated and called as such:\n * BSTIterator obj = new BSTIterator(root);\n * int param_1 = obj.next();\n * boolean param_2 = obj.hasNext();\n */",
-    "Python3": "# Time:  O(1)\n# Space: O(h), h is height of binary tree\n\nclass TreeNode(object):\n    def __init__(self, x):\n        self.val = x\n        self.left = None\n        self.right = None\n\n\nclass BSTIterator(object):\n    # @param root, a binary search tree's root node\n    def __init__(self, root):\n        self.__stk = []\n        self.__traversalLeft(root)\n\n    # @return a boolean, whether we have a next smallest number\n    def hasNext(self):\n        return self.__stk\n\n    # @return an integer, the next smallest number\n    def next(self):\n        node = self.__stk.pop()\n        self.__traversalLeft(node.right)\n        return node.val\n    \n    def __traversalLeft(self, node):\n        while node is not None:\n            self.__stk.append(node)\n            node = node.left",
+    "C++": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> bstIteratorRun(vector<int>& tree, string ops) {\n\n    }\n};\n",
+    "Java": "class Solution {\n    public int[] bstIteratorRun(int[] tree, String ops) {\n\n    }\n}\n",
+    "Python3": "class Solution:\n    def bstIteratorRun(self, tree, ops):\n        pass\n",
     "Python": "# Definition for a binary tree node.\n# class TreeNode(object):\n#     def __init__(self, val=0, left=None, right=None):\n#         self.val = val\n#         self.left = left\n#         self.right = right\nclass BSTIterator(object):\n\n    def __init__(self, root):\n        \"\"\"\n        :type root: Optional[TreeNode]\n        \"\"\"\n        \n\n    def next(self):\n        \"\"\"\n        :rtype: int\n        \"\"\"\n        \n\n    def hasNext(self):\n        \"\"\"\n        :rtype: bool\n        \"\"\"\n        \n\n\n# Your BSTIterator object will be instantiated and called as such:\n# obj = BSTIterator(root)\n# param_1 = obj.next()\n# param_2 = obj.hasNext()",
-    "JavaScript": "/**\n * Definition for a binary tree node.\n * function TreeNode(val, left, right) {\n *     this.val = (val===undefined ? 0 : val)\n *     this.left = (left===undefined ? null : left)\n *     this.right = (right===undefined ? null : right)\n * }\n */\n/**\n * @param {TreeNode} root\n */\nvar BSTIterator = function(root) {\n    \n};\n\n/**\n * @return {number}\n */\nBSTIterator.prototype.next = function() {\n    \n};\n\n/**\n * @return {boolean}\n */\nBSTIterator.prototype.hasNext = function() {\n    \n};\n\n/** \n * Your BSTIterator object will be instantiated and called as such:\n * var obj = new BSTIterator(root)\n * var param_1 = obj.next()\n * var param_2 = obj.hasNext()\n */",
+    "JavaScript": "class Solution {\n    bstIteratorRun(tree, ops) {\n\n    }\n}\n",
     "TypeScript": "/**\n * Definition for a binary tree node.\n * class TreeNode {\n *     val: number\n *     left: TreeNode | null\n *     right: TreeNode | null\n *     constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {\n *         this.val = (val===undefined ? 0 : val)\n *         this.left = (left===undefined ? null : left)\n *         this.right = (right===undefined ? null : right)\n *     }\n * }\n */\n\nclass BSTIterator {\n    constructor(root: TreeNode | null) {\n        \n    }\n\n    next(): number {\n        \n    }\n\n    hasNext(): boolean {\n        \n    }\n}\n\n/**\n * Your BSTIterator object will be instantiated and called as such:\n * var obj = new BSTIterator(root)\n * var param_1 = obj.next()\n * var param_2 = obj.hasNext()\n */",
     "C#": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     public int val;\n *     public TreeNode left;\n *     public TreeNode right;\n *     public TreeNode(int val=0, TreeNode left=null, TreeNode right=null) {\n *         this.val = val;\n *         this.left = left;\n *         this.right = right;\n *     }\n * }\n */\npublic class BSTIterator {\n\n    public BSTIterator(TreeNode root) {\n        \n    }\n    \n    public int Next() {\n        \n    }\n    \n    public bool HasNext() {\n        \n    }\n}\n\n/**\n * Your BSTIterator object will be instantiated and called as such:\n * BSTIterator obj = new BSTIterator(root);\n * int param_1 = obj.Next();\n * bool param_2 = obj.HasNext();\n */",
     "C": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     struct TreeNode *left;\n *     struct TreeNode *right;\n * };\n */\n\n\n\ntypedef struct {\n    \n} BSTIterator;\n\n\nBSTIterator* bSTIteratorCreate(struct TreeNode* root) {\n    \n}\n\nint bSTIteratorNext(BSTIterator* obj) {\n    \n}\n\nbool bSTIteratorHasNext(BSTIterator* obj) {\n    \n}\n\nvoid bSTIteratorFree(BSTIterator* obj) {\n    \n}\n\n/**\n * Your BSTIterator struct will be instantiated and called as such:\n * BSTIterator* obj = bSTIteratorCreate(root);\n * int param_1 = bSTIteratorNext(obj);\n \n * bool param_2 = bSTIteratorHasNext(obj);\n \n * bSTIteratorFree(obj);\n*/",
@@ -384,17 +331,18 @@
     "Racket": "; Definition for a binary tree node.\n#|\n\n; val : integer?\n; left : (or/c tree-node? #f)\n; right : (or/c tree-node? #f)\n(struct tree-node\n  (val left right) #:mutable #:transparent)\n\n; constructor\n(define (make-tree-node [val 0])\n  (tree-node val #f #f))\n\n|#\n\n(define bst-iterator%\n  (class object%\n    (super-new)\n    \n    ; root : (or/c tree-node? #f)\n    (init-field\n      root)\n    \n    ; next : -> exact-integer?\n    (define/public (next)\n      )\n    ; has-next : -> boolean?\n    (define/public (has-next)\n      )))\n\n;; Your bst-iterator% object will be instantiated and called as such:\n;; (define obj (new bst-iterator% [root root]))\n;; (define param_1 (send obj next))\n;; (define param_2 (send obj has-next))"
   },
   "_internal": {
-    "methodName": "",
+    "methodName": "bstIteratorRun",
     "params": [
       {
-        "name": "inputs",
-        "type": "integer[]"
+        "name": "tree",
+        "type": "int[]"
       },
       {
-        "name": "inputs",
-        "type": "integer[]"
+        "name": "ops",
+        "type": "string"
       }
     ]
   },
-  "verified": false
+  "verified": true,
+  "testCases_count": 20
 }
