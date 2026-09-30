@@ -3374,6 +3374,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                         }, 300);
                     }}
                     isTestActive={!!currentTest && !currentTest.submitted}
+                    isProctorActive={!loading && startCountdown === null && !showInstructions && !currentTest.submitted}
                     maxViolations={Number(currentTest.testInfo?.maxViolations) || 200}
                     onReady={() => {
                         console.log('[MCQPage] Camera proctoring ready');
@@ -3416,6 +3417,7 @@ const MCQPage = ({ isEmbedded = false, testData = null, secTimer = 0, onSectionS
                     uid={user.uid || user.id}
                     assessmentId={currentTest.testInfo?.id || currentTest.id || 'unknown'}
                     isTestActive={!!currentTest && !currentTest.submitted}
+                    isProctorActive={!loading && startCountdown === null && !showInstructions && !currentTest.submitted}
                     maxViolations={Number(currentTest.testInfo?.maxAudioViolations) || Number(currentTest.maxAudioViolations) || 200}
                     onReady={() => {
                         console.log('[MCQPage] Audio proctoring ready');

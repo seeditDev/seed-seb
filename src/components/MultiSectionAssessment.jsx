@@ -3357,6 +3357,7 @@ const MultiSectionAssessment = () => {
             uid={user.uid || user.id}
             assessmentId={assessment.id}
             isTestActive={currentSecIdx >= 0 && !examFinished}
+            isProctorActive={currentSecIdx >= 0 && !examFinished && secStarted && sectionCountdown === null}
             maxViolations={maxViolations}
             onReady={handleProctorReady}
             onViolationUpdate={handleProctorViolationUpdate}
@@ -3368,6 +3369,7 @@ const MultiSectionAssessment = () => {
             uid={user.uid || user.id}
             assessmentId={assessment.id}
             isTestActive={currentSecIdx >= 0 && !examFinished}
+            isProctorActive={currentSecIdx >= 0 && !examFinished && secStarted && sectionCountdown === null}
             maxViolations={maxAudioViolations}
             onReady={handleAudioProctorReady}
             onViolationUpdate={handleAudioProctorViolationUpdate}

@@ -3554,6 +3554,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                         }, 300);
                     }}
                     isTestActive={!!currentAssessment && !submissionSuccess}
+                    isProctorActive={!loading && startCountdown === null && !submissionSuccess}
                     maxViolations={Number(currentAssessment.proctorConfig?.maxViolations ?? currentAssessment.maxViolations) || 200}
                     onReady={() => {
                         console.log('[CodingAssessmentPage] Camera proctoring ready');
@@ -3592,6 +3593,7 @@ const CodingAssessmentPage = ({ isEmbedded = false, testData = null, assessmentI
                     uid={user.uid || user.id}
                     assessmentId={currentAssessment.id ?? ''}
                     isTestActive={!!currentAssessment && !submissionSuccess}
+                    isProctorActive={!loading && startCountdown === null && !submissionSuccess}
                     maxViolations={Number(currentAssessment.maxAudioViolations) || Number(settings.maxAudioViolations) || 200}
                     onReady={() => {
                         console.log('[CodingAssessmentPage] Audio proctoring ready');

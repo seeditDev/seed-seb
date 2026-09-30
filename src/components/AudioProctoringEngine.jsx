@@ -4,22 +4,25 @@ import React, { useEffect, useRef, useCallback } from "react";
 // Monitors student microphone using Web Audio API (AudioContext + AnalyserNode).
 // Flags violations for: sustained noise/talking, mic disconnected, permission denied.
 //
-// KEY DESIGN: mic permission is requested once when isTestActive first becomes true.
-// The stream is kept alive for the entire exam. Sampling is paused when !isTestActive
-// but the mic is NOT torn down – avoids repeated permission prompts between sections.
-//
-// CALIBRATED THRESHOLDS:
-// - noiseThreshold: 0.012 (calibrated above room ambient 0.003-0.005 and typing clacks)
-// - peakThreshold: 0.070 (typing transient impulses produce ~0.03-0.05)
-// - holdFrames: 4 (400ms sustained sound required; typing clicks last <50ms)
-// - isLoudBurst: triggered by sustained elevated RMS > (noiseThreshold * 3.0)
+// KEY DESIGN:
+// 1. Hardware Lifecycle (isTestActive): mic permission requested once on session mount.
+//    Stream kept alive across sections; torn down completely upon final submission.
+// 2. Monitoring State (isProctorActive): Sampling ONLY runs when the test is actively
+//    being taken. During loading screens, instruction views, or start countdowns,
+//    isProctorActive is FALSE, so zero audio samples or violations are recorded.
+// 3. Calibrated Acoustic Thresholds:
+//    - DEFAULT_PREAMP_GAIN: 1.0 (Neutral unity gain, preventing fan noise amplification)
+//    - DEFAULT_NOISE_THRESHOLD: 0.025 (Far above room ambient ~0.003-0.006 and typing ~0.008)
+//    - DEFAULT_PEAK_THRESHOLD: 0.120 (Rejects key clacks ~0.04-0.07)
+//    - DEFAULT_NOISE_HOLD_FRAMES: 5 (500ms sustained sound required; key clicks last <50ms)
+//    - 2-Second Grace Period: Discards initial mic clicks/pops upon entering the test
 
 const DEFAULT_SAMPLE_INTERVAL_MS = 100;
-const DEFAULT_NOISE_HOLD_FRAMES   = 4;      // 4 frames (~400ms) sustained sound rejects single key clicks
-const DEFAULT_NOISE_THRESHOLD     = 0.012;  // RMS threshold tuned for clear speech volume (>0.020)
-const DEFAULT_PEAK_THRESHOLD      = 0.070;  // Peak threshold (typing transients produce ~0.03-0.05)
+const DEFAULT_NOISE_HOLD_FRAMES   = 5;      // 5 frames (~500ms) sustained sound rejects single key clicks
+const DEFAULT_NOISE_THRESHOLD     = 0.025;  // RMS threshold tuned for human speech (>0.030)
+const DEFAULT_PEAK_THRESHOLD      = 0.120;  // Peak threshold (typing transients produce ~0.04-0.07)
 const DEFAULT_COOLDOWN_MS         = 3000;   // 3s cooldown between reported violations
-const DEFAULT_PREAMP_GAIN         = 3.5;    // 3.5x digital preamp multiplier
+const DEFAULT_PREAMP_GAIN         = 1.0;    // Neutral 1.0x gain (clean, no fan noise boost)
 
 const AudioProctoringEngine = ({
   uid,
@@ -41,6 +44,15 @@ const AudioProctoringEngine = ({
   useEffect(() => { onViolationRef.current = onViolationUpdate; }, [onViolationUpdate]);
   useEffect(() => { onReadyRef.current = onReady; },             [onReady]);
 
+  const isProctorActiveRef  = useRef(isProctorActive);
+  const activeStartTimeRef  = useRef(0);
+  useEffect(() => {
+    isProctorActiveRef.current = isProctorActive;
+    if (isProctorActive) {
+      activeStartTimeRef.current = Date.now();
+    }
+  }, [isProctorActive]);
+
   // Internal resources
   const audioCtxRef    = useRef(null);
   const analyserRef    = useRef(null);
@@ -57,6 +69,9 @@ const AudioProctoringEngine = ({
 
   // ── Violation reporter ────────────────────────────────────────────────────
   const reportViolation = useCallback((type, extra = {}) => {
+    // Hard guard: never report if proctoring is not active
+    if (!isProctorActiveRef.current) return;
+
     const now = Date.now();
     if (now - lastViolationRef.current < cooldownMs) return;
     lastViolationRef.current = now;
@@ -115,9 +130,21 @@ const AudioProctoringEngine = ({
 
   // ── Sampling loop ─────────────────────────────────────────────────────────
   const startSampling = useCallback(() => {
-    if (intervalRef.current) return;   // already running
+    if (intervalRef.current) return; // already running
     intervalRef.current = setInterval(() => {
-      // Track disconnected?
+      // 1. Hard gate: never sample if proctoring is not active
+      if (!isProctorActiveRef.current) {
+        noiseFramesRef.current = 0;
+        return;
+      }
+
+      // 2. Initial 2-second grace period when test becomes active
+      if (Date.now() - activeStartTimeRef.current < 2000) {
+        noiseFramesRef.current = 0;
+        return;
+      }
+
+      // 3. Track disconnected check
       if (streamRef.current) {
         const tracks = streamRef.current.getAudioTracks();
         if (!tracks.length || tracks[0].readyState === "ended") {
@@ -129,25 +156,23 @@ const AudioProctoringEngine = ({
       const { rms, peak, vocalEnergy } = getAudioMetrics();
 
       // Dynamically adapt ambient noise baseline during quiet periods
-      if (rms < noiseThreshold * 1.6) {
+      if (rms < noiseThreshold * 1.5) {
         noiseFloorRef.current = noiseFloorRef.current * 0.95 + rms * 0.05;
       }
 
-      // Detection condition (calibrated for speech capture, rejecting keystrokes):
-      // 1. RMS exceeds base threshold AND 1.75x ambient baseline (catches speaking)
-      // 2. OR peak transient exceeds peak threshold (catches sharp speech attacks)
-      // 3. OR human vocal range energy exceeds baseline 28
-      const isDistantVoice = rms > Math.max(noiseThreshold, noiseFloorRef.current * 1.75);
-      const isSharpTransient = peak > peakThreshold;
-      const isVocalPattern = vocalEnergy > 28 && rms > (noiseThreshold * 0.7);
+      // Detection condition (calibrated for speech capture, rejecting fan noise & keystrokes):
+      // - RMS must exceed base threshold (0.025) AND 1.75x ambient baseline (genuine elevated volume)
+      // - AND human vocal range energy must be present (vocalEnergy > 32) OR high peak
+      const isElevatedRms = rms > Math.max(noiseThreshold, noiseFloorRef.current * 1.75);
+      const isVocalPattern = vocalEnergy > 32 && rms > (noiseThreshold * 0.85);
 
-      const isVoiceOrNoise = isDistantVoice || isSharpTransient || isVocalPattern;
+      const isVoiceOrNoise = isElevatedRms && (isVocalPattern || peak > peakThreshold);
 
       if (isVoiceOrNoise) {
         noiseFramesRef.current += 1;
-        // Sustained sound (e.g. 4 frames = 400ms) OR immediate loud burst (loud shouting/blaring sound)
+        // Sustained sound (e.g. 5 frames = 500ms) OR immediate loud burst (loud shouting/blaring sound)
         const isSustained = noiseFramesRef.current >= holdFrames;
-        const isLoudBurst = rms > (noiseThreshold * 3.0);
+        const isLoudBurst = rms > (noiseThreshold * 2.5);
 
         if (isSustained || isLoudBurst) {
           reportViolation("audio-noise-detected", { rms, peak, vocalEnergy, noiseFloor: noiseFloorRef.current });
@@ -166,10 +191,10 @@ const AudioProctoringEngine = ({
     }
   }, []);
 
-  // ── Mic initialisation (runs once) ────────────────────────────────────────
+  // ── Mic initialisation (runs once per test session) ───────────────────────
   const initMicrophone = useCallback(async () => {
     try {
-      console.log("[AudioProctor] Requesting mic permission...");
+      console.log("[AudioProctor] Requesting mic permission for session...");
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -193,7 +218,7 @@ const AudioProctoringEngine = ({
       analyser.fftSize = 2048; // Rich 43ms window (captures fine voice details)
       analyser.smoothingTimeConstant = 0.2;
 
-      // Digital Preamp Gain Node (3.5x gain)
+      // Digital Preamp Gain Node (1.0x neutral gain)
       const source = ctx.createMediaStreamSource(stream);
       const gainNode = ctx.createGain();
       gainNode.gain.value = DEFAULT_PREAMP_GAIN;
@@ -209,13 +234,21 @@ const AudioProctoringEngine = ({
       setTimeout(() => {
         onReadyRef.current?.();
       }, 0);
-      startSampling();
+
+      // Only start sampling immediately if proctoring is already active
+      if (isProctorActiveRef.current) {
+        startSampling();
+      }
     } catch (err) {
       console.error("[AudioProctor] Mic init failed:", err);
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        reportViolation("audio-permission-denied");
+        if (isProctorActiveRef.current) {
+          reportViolation("audio-permission-denied");
+        }
       } else {
-        reportViolation("audio-mic-disconnected");
+        if (isProctorActiveRef.current) {
+          reportViolation("audio-mic-disconnected");
+        }
       }
       // Always fire onReady so prelaunch countdown does not hang forever
       console.log("[AudioProctor] Mic init failed, still firing onReady to unblock prelaunch");
@@ -226,42 +259,46 @@ const AudioProctoringEngine = ({
     initStartedRef.current = false;
   }, [startSampling, reportViolation]);
 
-  // ── Effect: start mic on first activation, pause/resume sampling ──────────
+  // ── Effect: initialize mic when test session starts; release when session ends
   useEffect(() => {
-    const active = isTestActive && isProctorActive;
-
-    if (active) {
+    if (isTestActive) {
       if (!initializedRef.current && !initStartedRef.current) {
         initStartedRef.current = true;
         initMicrophone();
-      } else if (initializedRef.current) {
-        startSampling();
       }
     } else {
       stopSampling();
-      if (!isTestActive) {
-        // Exam finished or not active: completely release mic hardware
-        streamRef.current?.getTracks().forEach(t => {
-          t.onended = null;
-          t.stop();
-        });
-        streamRef.current = null;
-        if (window.micStream) {
-          try { window.micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
-          window.micStream = null;
-        }
-        audioCtxRef.current?.close().catch(() => {});
-        audioCtxRef.current = null;
-        if (window.__sebAudioContext) {
-          try { window.__sebAudioContext.close().catch(() => {}); } catch (_) {}
-          window.__sebAudioContext = null;
-        }
-        analyserRef.current = null;
-        initializedRef.current = false;
-        initStartedRef.current = false;
+      // Exam finished: completely release mic hardware
+      streamRef.current?.getTracks().forEach(t => {
+        t.onended = null;
+        t.stop();
+      });
+      streamRef.current = null;
+      if (window.micStream) {
+        try { window.micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+        window.micStream = null;
       }
+      audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
+      if (window.__sebAudioContext) {
+        try { window.__sebAudioContext.close().catch(() => {}); } catch (_) {}
+        window.__sebAudioContext = null;
+      }
+      analyserRef.current = null;
+      initializedRef.current = false;
+      initStartedRef.current = false;
     }
-  }, [isTestActive, isProctorActive, initMicrophone, startSampling, stopSampling]);
+  }, [isTestActive, initMicrophone, stopSampling]);
+
+  // ── Effect: start/stop sampling loop based on isProctorActive ──────────────
+  useEffect(() => {
+    if (isTestActive && isProctorActive && initializedRef.current) {
+      startSampling();
+    } else {
+      stopSampling();
+      noiseFramesRef.current = 0;
+    }
+  }, [isTestActive, isProctorActive, startSampling, stopSampling]);
 
   // ── Teardown on unmount or submission event ──────────────────────────────
   useEffect(() => {
