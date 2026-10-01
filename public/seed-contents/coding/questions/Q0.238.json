@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.238",
-  "title": "Basic_Level_1_Arrays_7",
+  "title": "K-th Missing Element in Increasing Sequence",
   "slug": "basic-level-1-arrays-7",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,7 +20,8 @@
   "content": {
     "problemStatement": "Kth Missing Element:\n\nGiven an unsorted sequence a[],the task is to find the K-th missing contiguous element in the increasing sequence of the array elements i.e. consider the array in sorted order and find the kth missing number . If no k-th missing element is there output -1.\n\nNote : Only elements exists in the range of minimum and maximum element to be considered.\n\nExamples:\n\nInput : arr[]={2,4,10,7},k=5\n\nOutput:9\n\nMissing elements in the given array : 3,5,6,8,9\n\n5th missing is 9.\n\n\n\nInput: arr[]={1,3,4},k=5\n\nOutput:-1",
     "constraints": [
-      "nil"
+      "1 <= N <= 10^5",
+      "1 <= K <= 10^5"
     ],
     "inputFormat": "Integer Array Integer",
     "outputFormat": "Integer",
@@ -31,14 +32,14 @@
         "type": "reg",
         "input": "4\n2 4 10 7\n5",
         "output": "9",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "8\n98754 865445 1023 1045 1123 100 1099 1276\n1025",
         "output": "1129",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -337,64 +338,43 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Find K-th missing element within the range of array elements in increasing order.",
+    "timeComplexity": "O(N log N)",
+    "spaceComplexity": "O(N)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <stdlib.h>\nint cmp(const void *a, const void *b) {\n    long long diff = *(long long*)a - *(long long*)b;\n    return (diff > 0) - (diff < 0);\n}\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    long long a[100005];\n    for (int i = 0; i < n; i++) scanf(\"%lld\", &a[i]);\n    long long k; scanf(\"%lld\", &k);\n    qsort(a, n, sizeof(long long), cmp);\n    long long count = 0, ans = -1;\n    for (int i = 0; i < n - 1; i++) {\n        if (a[i] == a[i + 1]) continue;\n        long long diff = a[i + 1] - a[i] - 1;\n        if (count + diff >= k) {\n            ans = a[i] + (k - count);\n            break;\n        }\n        count += diff;\n    }\n    printf(\"%lld\\n\", ans);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <vector>\n#include <set>\nusing namespace std;\nint main() {\n    int n; if (!(cin >> n)) return 0;\n    set<long long> st;\n    for (int i = 0; i < n; i++) { long long x; cin >> x; st.insert(x); }\n    long long k; cin >> k;\n    vector<long long> a(st.begin(), st.end());\n    long long count = 0, ans = -1;\n    for (size_t i = 0; i + 1 < a.size(); i++) {\n        long long diff = a[i + 1] - a[i] - 1;\n        if (count + diff >= k) {\n            ans = a[i] + (k - count);\n            break;\n        }\n        count += diff;\n    }\n    cout << ans << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\nimport java.util.TreeSet;\nimport java.util.ArrayList;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            TreeSet<Long> st = new TreeSet<>();\n            for (int i = 0; i < n; i++) st.add(sc.nextLong());\n            long k = sc.nextLong();\n            ArrayList<Long> a = new ArrayList<>(st);\n            long count = 0, ans = -1;\n            for (int i = 0; i + 1 < a.size(); i++) {\n                long diff = a.get(i + 1) - a.get(i) - 1;\n                if (count + diff >= k) {\n                    ans = a.get(i) + (k - count);\n                    break;\n                }\n                count += diff;\n            }\n            System.out.println(ans);\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if not toks: return\n    n = int(toks[0])\n    arr = [int(x) for x in toks[1:n+1]]\n    k = int(toks[n+1])\n    s = sorted(set(arr))\n    count = 0; ans = -1\n    for i in range(len(s) - 1):\n        diff = s[i+1] - s[i] - 1\n        if count + diff >= k:\n            ans = s[i] + (k - count)\n            break\n        count += diff\n    print(ans)\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (!toks || toks.length === 0 || toks[0] === \"\") return;\n    const n = parseInt(toks[0], 10);\n    const k = BigInt(toks[n + 1]);\n    const s = Array.from(new Set(toks.slice(1, n + 1).map(x => BigInt(x))));\n    s.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));\n    let count = 0n, ans = -1n;\n    for (let i = 0; i + 1 < s.length; i++) {\n        const diff = s[i + 1] - s[i] - 1n;\n        if (count + diff >= k) {\n            ans = s[i] + (k - count);\n            break;\n        }\n        count += diff;\n    }\n    console.log(ans.toString());\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "Sort distinct array elements. Iterate adjacent elements to count missing values. If accumulated count covers K, output element; else -1."
   },
-  "hints": [],
+  "hints": [
+    "Sort distinct elements.",
+    "Calculate gaps between adjacent elements.",
+    "Return -1 if total missing < K."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Gap counting in sorted array",
+    "Order statistics"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.168",
-  "title": "Basic_Level_0_Number_Crunching_7",
+  "title": "Sum and Product of Odd and Even Digits",
   "slug": "basic-level-0-number-crunching-7",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,7 +20,7 @@
   "content": {
     "problemStatement": "Sum and Product Of ODD digits and EVEN Digits:",
     "constraints": [
-      "NIl"
+      "1 <= N <= 10^18"
     ],
     "inputFormat": "Integer",
     "outputFormat": "Sum of Odd:\nSum of Even:\nProduct of ODD:\nProduct od Even:",
@@ -31,14 +31,14 @@
         "type": "reg",
         "input": "123456789",
         "output": "Sum of Odd:25\nSum of Even:20\nProduct of ODD:945\nProduct of Even:384",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "55643",
         "output": "Sum of Odd:13\nSum of Even:10\nProduct of ODD:75\nProduct of Even:24",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -337,64 +337,43 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Compute sum and product of odd and even digits separately.",
+    "timeComplexity": "O(D)",
+    "spaceComplexity": "O(1)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\nint main() {\n    char s[1005]; if (scanf(\"%s\", s) != 1) return 0;\n    long long so = 0, se = 0, po = 1, pe = 1;\n    int has_o = 0, has_e = 0;\n    for (int i = 0; s[i]; i++) {\n        int d = s[i] - '0';\n        if (d % 2 != 0) { so += d; po *= d; has_o = 1; }\n        else { se += d; pe *= d; has_e = 1; }\n    }\n    if (!has_o) po = 0;\n    if (!has_e) pe = 0;\n    printf(\"Sum of Odd:%lld\\nSum of Even:%lld\\nProduct of ODD:%lld\\nProduct of Even:%lld\\n\", so, se, po, pe);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <string>\nusing namespace std;\nint main() {\n    string s; if (!(cin >> s)) return 0;\n    long long so = 0, se = 0, po = 1, pe = 1;\n    bool has_o = false, has_e = false;\n    for (char c : s) {\n        int d = c - '0';\n        if (d % 2 != 0) { so += d; po *= d; has_o = true; }\n        else { se += d; pe *= d; has_e = true; }\n    }\n    if (!has_o) po = 0;\n    if (!has_e) pe = 0;\n    cout << \"Sum of Odd:\" << so << \"\\nSum of Even:\" << se << \"\\nProduct of ODD:\" << po << \"\\nProduct of Even:\" << pe << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String s = sc.next();\n            long so = 0, se = 0, po = 1, pe = 1;\n            boolean hasO = false, hasE = false;\n            for (char c : s.toCharArray()) {\n                int d = c - '0';\n                if (d % 2 != 0) { so += d; po *= d; hasO = true; }\n                else { se += d; pe *= d; hasE = true; }\n            }\n            if (!hasO) po = 0;\n            if (!hasE) pe = 0;\n            System.out.println(\"Sum of Odd:\" + so);\n            System.out.println(\"Sum of Even:\" + se);\n            System.out.println(\"Product of ODD:\" + po);\n            System.out.println(\"Product of Even:\" + pe);\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if not toks: return\n    s = toks[0]\n    so = sum(int(c) for c in s if int(c) % 2 != 0)\n    se = sum(int(c) for c in s if int(c) % 2 == 0)\n    po = 1; has_o = False\n    for c in s:\n        if int(c) % 2 != 0: po *= int(c); has_o = True\n    pe = 1; has_e = False\n    for c in s:\n        if int(c) % 2 == 0: pe *= int(c); has_e = True\n    if not has_o: po = 0\n    if not has_e: pe = 0\n    print(f\"Sum of Odd:{so}\\nSum of Even:{se}\\nProduct of ODD:{po}\\nProduct of Even:{pe}\")\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (!toks || !toks[0]) return;\n    const s = toks[0];\n    let so = 0n, se = 0n, po = 1n, pe = 1n;\n    let hasO = false, hasE = false;\n    for (const c of s) {\n        const d = BigInt(c);\n        if (d % 2n !== 0n) { so += d; po *= d; hasO = true; }\n        else { se += d; pe *= d; hasE = true; }\n    }\n    if (!hasO) po = 0n;\n    if (!hasE) pe = 0n;\n    console.log(`Sum of Odd:${so}\\nSum of Even:${se}\\nProduct of ODD:${po}\\nProduct of Even:${pe}`);\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "Iterate through digits, accumulating sums and products for odd and even digits."
   },
-  "hints": [],
+  "hints": [
+    "Notice the exact format: Product of ODD:...",
+    "Handle case where no odd or no even digits exist."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Parity classification",
+    "Multiple accumulators",
+    "Formatting multi-line output"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

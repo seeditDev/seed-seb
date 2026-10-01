@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.249",
-  "title": "Basic_Level_1_Arrays_18",
+  "title": "Array Complement (Elements in A but not in B)",
   "slug": "basic-level-1-arrays-18",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,7 +20,7 @@
   "content": {
     "problemStatement": "Given two sorted arrays find the complement i.e the task is to print the elements those are not in the second array.\n\nFor Example:\n\nThe input is : arr1 ={10,20,30,40,50} arr2={15,10,30,50}\n\nThe output is:20,40",
     "constraints": [
-      "1 <= N <=10^5"
+      "1 <= N1, N2 <= 10^5"
     ],
     "inputFormat": "The input has the size of the arrays and the elements for both the arrays.",
     "outputFormat": "Print the elements separate them by space",
@@ -31,14 +31,14 @@
         "type": "reg",
         "input": "10 5\n2 5 8 10 13 15 20 25 30 45\n8 15 21 33 45",
         "output": "2 5 10 13 20 25 30",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "70 80\n1608 1616 1624 1632 1640 1648 1656 1664 1672 1680 1688 1696 1704 1712 1720 1728 1736 1744 1752 1760 1768 1776 1784 1792 1800 1808 1816 1824 1832 1840 1848 1856 1864 1872 1880 1888 1896 1904 1912 1920 1928 1936 1944 1952 1960 1968 1976 1984 1992 2000 2008 2016 2024 2032 2040 2048 2056 2064 2072 2080 2088 2096 2104 2112 2120 2128 2136 2144 2152 2160\n804 808 812 816 820 824 828 832 836 840 844 848 852 856 860 864 868 872 876 880 884 888 892 896 900 904 908 912 916 920 924 928 932 936 940 944 948 952 956 960 964 968 972 976 980 984 988 992 996 1000 1004 1008 1012 1016 1020 1024 1028 1032 1036 1040 1044 1048 1052 1056 1060 1064 1068 1072 1076 1080 1084 1088 1092 1096 1100 1104 1108 1112 1116 1120",
         "output": "1608 1616 1624 1632 1640 1648 1656 1664 1672 1680 1688 1696 1704 1712 1720 1728 1736 1744 1752 1760 1768 1776 1784 1792 1800 1808 1816 1824 1832 1840 1848 1856 1864 1872 1880 1888 1896 1904 1912 1920 1928 1936 1944 1952 1960 1968 1976 1984 1992 2000 2008 2016 2024 2032 2040 2048 2056 2064 2072 2080 2088 2096 2104 2112 2120 2128 2136 2144 2152 2160",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -337,64 +337,42 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Find elements in array 1 that are not present in array 2.",
+    "timeComplexity": "O(N1 + N2)",
+    "spaceComplexity": "O(N2)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\nint main() {\n    int n1, n2; if (scanf(\"%d %d\", &n1, &n2) != 2) return 0;\n    long long a1[100005], a2[100005];\n    for (int i = 0; i < n1; i++) scanf(\"%lld\", &a1[i]);\n    for (int i = 0; i < n2; i++) scanf(\"%lld\", &a2[i]);\n    int i = 0, j = 0, first = 1;\n    while (i < n1 && j < n2) {\n        if (a1[i] < a2[j]) {\n            if (!first) putchar(' ');\n            printf(\"%lld\", a1[i]); first = 0; i++;\n        } else if (a1[i] == a2[j]) { i++; }\n        else { j++; }\n    }\n    while (i < n1) {\n        if (!first) putchar(' ');\n        printf(\"%lld\", a1[i++]); first = 0;\n    }\n    printf(\"\\n\");\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <vector>\n#include <unordered_set>\nusing namespace std;\nint main() {\n    int n1, n2; if (!(cin >> n1 >> n2)) return 0;\n    vector<long long> a1(n1);\n    for (int i = 0; i < n1; i++) cin >> a1[i];\n    unordered_set<long long> s2;\n    for (int i = 0; i < n2; i++) { long long x; cin >> x; s2.insert(x); }\n    bool first = true;\n    for (long long x : a1) {\n        if (!s2.count(x)) {\n            if (!first) cout << \" \";\n            cout << x; first = false;\n        }\n    }\n    cout << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\nimport java.util.HashSet;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n1 = sc.nextInt(), n2 = sc.nextInt();\n            long[] a1 = new long[n1];\n            for (int i = 0; i < n1; i++) a1[i] = sc.nextLong();\n            HashSet<Long> s2 = new HashSet<>();\n            for (int i = 0; i < n2; i++) s2.add(sc.nextLong());\n            StringBuilder sb = new StringBuilder();\n            for (long x : a1) {\n                if (!s2.contains(x)) {\n                    if (sb.length() > 0) sb.append(\" \");\n                    sb.append(x);\n                }\n            }\n            System.out.println(sb.toString());\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if len(toks) >= 2:\n        n1, n2 = int(toks[0]), int(toks[1])\n        a1 = toks[2:n1+2]\n        s2 = set(toks[n1+2:n1+n2+2])\n        res = [x for x in a1 if x not in s2]\n        print(\" \".join(res))\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (toks.length >= 2) {\n        const n1 = parseInt(toks[0], 10), n2 = parseInt(toks[1], 10);\n        const a1 = toks.slice(2, n1 + 2);\n        const s2 = new Set(toks.slice(n1 + 2, n1 + n2 + 2));\n        const res = a1.filter(x => !s2.has(x));\n        console.log(res.join(\" \"));\n    }\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "Store array 2 elements in set, output elements of array 1 not in set."
   },
-  "hints": [],
+  "hints": [
+    "Store second array in set.",
+    "Filter first array."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Set difference",
+    "Array complement"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

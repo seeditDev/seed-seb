@@ -25,9 +25,11 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "In this problem, a tree is an **undirected graph** that is connected and has no cycles.\n\nYou receive a graph that started as a tree with `n` nodes labeled from `1` to `n`, with one additional edge added. The added edge has two **different** vertices chosen from `1` to `n`, and was not an edge that already existed. The graph is represented as an array `edges` of length `n` where `edges[i] = [ai, bi]` indicates that there is an edge between nodes `ai` and `bi` in the graph.\n\nOutput *an edge that can be removed so that the resulting graph is a tree of* `n` *nodes*. If there are multiple answers, output the answer that occurs last in the input.\n\n**Example 1:**\n\n![](https://assets.leetcode.com/uploads/2021/05/02/reduntant1-1-graph.jpg)\n\n```\nInput: edges = [[1,2],[1,3],[2,3]]\nOutput: [2,3]\n```\n\n**Example 2:**\n\n![](https://assets.leetcode.com/uploads/2021/05/02/reduntant1-2-graph.jpg)\n\n```\nInput: edges = [[1,2],[2,3],[3,4],[1,4],[1,5]]\nOutput: [1,4]\n```\n\n**Constraints:**\n\n* `n == edges.length`\n* `3 <= n <= 1000`\n* `edges[i].length == 2`\n* `1 <= ai < bi <= edges.length`\n* `ai != bi`\n* There are no repeated edges.\n* The given graph is connected.",
+    "problemStatement": "A graph started out as a tree with `n` nodes, labeled 1 to `n`, connected\nby `n`-1 edges. One extra edge was then added, connecting two nodes that\nwere already connected, which created exactly one cycle. You're given the\nlist of `n` edges in the order they were added (each edge is a pair\n[u, v]).\n\n**Return the edge that can be removed to turn the graph back into a tree.**\n\nIf more than one edge could be removed to achieve this, return the one that appears last in the input list.",
     "constraints": [
-      "None"
+      "n == edges.length, 3 <= n <= 1000",
+      "nodes are labeled 1 to n",
+      "the input describes a tree plus exactly one extra edge"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -37,14 +39,21 @@
         "type": "reg",
         "input": "edges = [[1,2],[1,3],[2,3]]",
         "output": "[2,3]",
-        "explanation": ""
+        "explanation": "1-2 and 1-3 already connect all three nodes; 2-3 closes the cycle"
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "edges = [[1,2],[2,3],[3,4],[1,4],[1,5]]",
         "output": "[1,4]",
-        "explanation": ""
+        "explanation": "1-2-3-4 already forms a path; adding 1-4 closes it into a cycle"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "edges = [[1,2],[1,3],[1,4],[3,4]]",
+        "output": "[3,4]",
+        "explanation": "1 is already connected to 2, 3, and 4; adding 3-4 closes a cycle"
       }
     ],
     "notes": []
@@ -54,246 +63,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[[1,2],[1,3],[2,3]]]",
+        "expectedOutput": "[2,3]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[[1,2],[2,3],[3,4],[1,4],[1,5]]]",
+        "expectedOutput": "[1,4]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[[1,2],[1,3],[1,4],[3,4]]]",
+        "expectedOutput": "[3,4]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[[1,2],[2,3],[1,3]]]",
+        "expectedOutput": "[1,3]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[[1,2],[2,3],[3,5],[5,4],[4,1]]]",
+        "expectedOutput": "[4,1]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[[1,2],[2,3],[3,1],[4,5]]]",
+        "expectedOutput": "[3,1]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[[5,1],[3,7],[6,4],[9,10],[8,6],[10,2],[1,3],[7,9],[2,8],[7,4]]]",
+        "expectedOutput": "[7,4]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[[5,4],[14,12],[2,10],[8,6],[15,1],[3,7],[12,13],[1,8],[6,14],[10,9],[4,15],[11,5],[7,2],[9,11],[12,8]]]",
+        "expectedOutput": "[12,8]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[[15,14],[14,9],[10,7],[6,15],[11,8],[13,5],[9,12],[20,16],[8,3],[7,17],[17,2],[4,18],[12,11],[1,13],[19,10],[5,4],[3,1],[18,20],[2,6],[19,4]]]",
+        "expectedOutput": "[19,4]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[[7,8],[8,12],[19,7],[13,17],[6,25],[11,18],[17,4],[20,19],[22,13],[24,21],[21,5],[5,2],[16,20],[23,9],[1,23],[2,11],[4,16],[12,14],[25,1],[18,22],[15,24],[9,15],[10,3],[3,6],[13,17]]]",
+        "expectedOutput": "[13,17]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[[8,9],[22,26],[17,12],[14,29],[5,6],[27,8],[30,19],[29,11],[7,18],[13,4],[9,17],[10,22],[23,28],[15,5],[4,14],[12,1],[25,16],[1,24],[20,23],[24,10],[26,7],[6,2],[18,13],[28,15],[2,27],[3,25],[11,30],[16,20],[19,21],[18,10]]]",
+        "expectedOutput": "[18,10]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[[1,2],[1,3],[1,4],[1,5],[2,3]]]",
+        "expectedOutput": "[2,3]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[[1,2],[2,3],[3,4],[4,5],[5,1]]]",
+        "expectedOutput": "[5,1]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[[1,2],[1,3],[2,4],[2,5],[3,6],[3,7],[6,7]]]",
+        "expectedOutput": "[6,7]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[[6,1],[11,3],[3,7],[7,9],[2,6],[8,5],[1,8],[5,4],[12,2],[4,10],[9,12],[11,9]]]",
+        "expectedOutput": "[11,9]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[[1,2],[2,3],[3,1]]]",
+        "expectedOutput": "[3,1]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[[1,3],[2,4],[6,8],[5,2],[3,6],[4,7],[8,5],[3,4]]]",
+        "expectedOutput": "[3,4]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[[16,9],[12,10],[15,14],[8,17],[1,3],[3,2],[13,15],[6,1],[7,16],[4,18],[10,13],[14,5],[5,7],[2,11],[18,8],[11,4],[17,12],[4,7]]]",
+        "expectedOutput": "[4,7]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[[9,18],[11,14],[15,8],[1,7],[20,3],[12,4],[22,16],[5,19],[21,5],[3,15],[17,22],[14,10],[10,9],[7,11],[6,17],[18,21],[13,6],[16,1],[8,2],[19,20],[4,13],[7,1]]]",
+        "expectedOutput": "[7,1]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[[1,2],[2,3],[3,4],[1,4],[4,5],[5,6],[1,6]]]",
+        "expectedOutput": "[1,4]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -366,19 +293,27 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Model the problem as a graph where states or elements represent vertices and relations represent edges.",
+    "Use Breadth-First Search (BFS) for shortest path/level order, or Depth-First Search (DFS) / Disjoint Set Union (DSU) for connectivity.",
+    "Track visited states with a hash set or boolean array to avoid cycles."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Master algorithmic design for Redundant Connection Problem.",
+    "Understand time and space complexity trade-offs.",
+    "Implement robust edge-case handling for boundary conditions."
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    vector<int> findRedundantConnection(vector<vector<int>>& edges) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public int[] findRedundantConnection(int[][] edges) {\n        \n    }\n}",
-    "Python3": "# Time:  O(nlog*n) ~= O(n), n is the length of the positions\n# Space: O(n)\n\nclass UnionFind(object):\n    def __init__(self, n):\n        self.set = range(n)\n\n    def find_set(self, x):\n        if self.set[x] != x:\n            self.set[x] = self.find_set(self.set[x])  # path compression.\n        return self.set[x]\n\n    def union_set(self, x, y):\n        x_root, y_root = map(self.find_set, (x, y))\n        if x_root == y_root:\n            return False\n        self.set[min(x_root, y_root)] = max(x_root, y_root)\n        return True\n\n\nclass Solution(object):\n    def findRedundantConnection(self, edges):\n        \"\"\"\n        :type edges: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        union_find = UnionFind(len(edges)+1)\n        for edge in edges:\n            if not union_find.union_set(*edge):\n                return edge\n        return []",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    vector<int> findRedundantConnection(vector<vector<int>>& edges) {\n        \n    }\n};\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        Tok tok;\n        if (!line.empty() && line.front() == '[' && line.back() == ']') {\n            tok.s = line.substr(1, line.size() - 2);\n        } else {\n            tok.s = line;\n        }\n        tok.pos = 0;\n        auto arg0 = readInt2D(tok);\n        cout << Solution().findRedundantConnection(arg0) << \"\\n\";\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public int[] findRedundantConnection(int[][] edges) {\n        \n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\") || s.isEmpty()) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[' || c == '{') depth++;\n            else if (c == ']' || c == '}') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\").charAt(0);\n        return arr;\n    }\n    static char[][] toChar2D(String s) {\n        String[] rows = readArrayRaw(s);\n        char[][] mat = new char[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toCharArray(rows[i]);\n        return mat;\n    }\n    static List<Integer> toIntList(String s) {\n        int[] a = toIntArray(s);\n        List<Integer> list = new ArrayList<>();\n        for (int v : a) list.add(v);\n        return list;\n    }\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos) == ',' || _raw.charAt(_pos) == ' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth = 0, start = _pos;\n            while (_pos < _raw.length()) {\n                char x = _raw.charAt(_pos);\n                if (x == '[') depth++;\n                else if (x == ']') { depth--; if (depth == 0) { _pos++; break; } }\n                _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start = _pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start = _pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.startsWith(\"[\") && line.endsWith(\"]\")) {\n            _raw = line.substring(1, line.length() - 1);\n        } else {\n            _raw = line;\n        }\n        _pos = 0;\n        int[][] arg0 = toInt2D(nextToken());\n        System.out.println(new Solution().findRedundantConnection(arg0));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\n# Time:  O(nlog*n) ~= O(n), n is the length of the positions\n# Space: O(n)\n\nclass UnionFind(object):\n    def __init__(self, n):\n        self.set = range(n)\n\n    def find_set(self, x):\n        if self.set[x] != x:\n            self.set[x] = self.find_set(self.set[x])  # path compression.\n        return self.set[x]\n\n    def union_set(self, x, y):\n        x_root, y_root = map(self.find_set, (x, y))\n        if x_root == y_root:\n            return False\n        self.set[min(x_root, y_root)] = max(x_root, y_root)\n        return True\n\n\nclass Solution(object):\n    def findRedundantConnection(self, edges):\n        \"\"\"\n        :type edges: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        union_find = UnionFind(len(edges)+1)\n        for edge in edges:\n            if not union_find.union_set(*edge):\n                return edge\n        return []\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    if not isinstance(args, list):\n        args = [args]\n    res = Solution().findRedundantConnection(*args[:1])\n    print(json.dumps(res, separators=(',', ':')))\n",
     "Python": "class Solution(object):\n    def findRedundantConnection(self, edges):\n        \"\"\"\n        :type edges: List[List[int]]\n        :rtype: List[int]\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {number[][]} edges\n * @return {number[]}\n */\nvar findRedundantConnection = function(edges) {\n    \n};",
+    "JavaScript": "'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number[][]} edges\n * @return {number[]}\n */\nvar findRedundantConnection = function(edges) {\n    \n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    let args = JSON.parse(line.trim());\n    if (!Array.isArray(args)) args = [args];\n    let res = typeof Solution !== 'undefined' && typeof (new Solution().findRedundantConnection) === 'function'\n        ? new Solution().findRedundantConnection(...args.slice(0, 1))\n        : (typeof findRedundantConnection === 'function' ? findRedundantConnection(...args.slice(0, 1)) : (new Solution().findRedundantConnection(...args.slice(0, 1))));\n    console.log(JSON.stringify(res));\n    rl.close();\n});\n",
     "TypeScript": "function findRedundantConnection(edges: number[][]): number[] {\n    \n};",
     "C#": "public class Solution {\n    public int[] FindRedundantConnection(int[][] edges) {\n        \n    }\n}",
     "C": "/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* findRedundantConnection(int** edges, int edgesSize, int* edgesColSize, int* returnSize) {\n    \n}",
@@ -399,9 +334,9 @@
     "params": [
       {
         "name": "edges",
-        "type": "integer[][]"
+        "type": "int[][]"
       }
     ]
   },
-  "verified": false
+  "verified": true
 }

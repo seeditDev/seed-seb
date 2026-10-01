@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.346",
-  "title": "Binary Search Tree (BST) + Traversals",
+  "title": "Binary Search Tree Insertion and Traversals",
   "slug": "binary-search-tree-bst-traversals",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -19,7 +19,7 @@
   "content": {
     "problemStatement": "Insert elements into a BST and print:\n\nInorder\n\nPreorder\n\nPostorder",
     "constraints": [
-      "nil"
+      "1 <= N <= 1000"
     ],
     "inputFormat": "n\nelements",
     "outputFormat": "Inorder\nPreorder\nPostorder",
@@ -30,14 +30,14 @@
         "type": "reg",
         "input": "5\n4 2 6 1 3",
         "output": "Inorder: 1 2 3 4 6\nPreorder: 4 2 1 3 6\nPostorder: 1 3 2 6 4",
-        "explanation": ""
+        "explanation": "Example demonstrating Insert numbers sequentially into BST and output Inorder, Preorder, Postorder traversals."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "3\n2 1 3",
         "output": "Inorder: 1 2 3\nPreorder: 2 1 3\nPostorder: 1 3 2",
-        "explanation": ""
+        "explanation": "Example demonstrating Insert numbers sequentially into BST and output Inorder, Preorder, Postorder traversals."
       }
     ]
   },
@@ -336,64 +336,62 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Insert numbers sequentially into BST and output Inorder, Preorder, Postorder traversals.",
+    "timeComplexity": "O(N^2)",
+    "spaceComplexity": "O(N)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <stdlib.h>\ntypedef struct Node { int v; struct Node *l, *r; } Node;\nNode* new_node(int v) { Node* n = (Node*)malloc(sizeof(Node)); n->v = v; n->l = n->r = NULL; return n; }\nNode* insert(Node* node, int v) {\n    if (!node) return new_node(v);\n    if (v < node->v) node->l = insert(node->l, v);\n    else node->r = insert(node->r, v);\n    return node;\n}\nvoid preorder(Node* root, int* first) { if (!root) return; if (!*first) putchar(' '); printf(\"%d\", root->v); *first = 0; preorder(root->l, first); preorder(root->r, first); }\nvoid inorder(Node* root, int* first) { if (!root) return; inorder(root->l, first); if (!*first) putchar(' '); printf(\"%d\", root->v); *first = 0; inorder(root->r, first); }\nvoid postorder(Node* root, int* first) { if (!root) return; postorder(root->l, first); postorder(root->r, first); if (!*first) putchar(' '); printf(\"%d\", root->v); *first = 0; }\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    Node* root = NULL;\n    for (int i = 0; i < n; i++) {\n        int v; scanf(\"%d\", &v);\n        root = insert(root, v);\n    }\n    int first = 1; printf(\"Inorder: \"); inorder(root, &first); putchar('\\n');\n    first = 1; printf(\"Preorder: \"); preorder(root, &first); putchar('\\n');\n    first = 1; printf(\"Postorder: \"); postorder(root, &first); putchar('\\n');\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <vector>\nusing namespace std;\nstruct Node { int v; Node *l = nullptr, *r = nullptr; Node(int v) : v(v) {} };\nNode* insert(Node* node, int v) {\n    if (!node) return new Node(v);\n    if (v < node->v) node->l = insert(node->l, v);\n    else node->r = insert(node->r, v);\n    return node;\n}\nvoid preorder(Node* root, vector<int>& res) { if (!root) return; res.push_back(root->v); preorder(root->l, res); preorder(root->r, res); }\nvoid inorder(Node* root, vector<int>& res) { if (!root) return; inorder(root->l, res); res.push_back(root->v); inorder(root->r, res); }\nvoid postorder(Node* root, vector<int>& res) { if (!root) return; postorder(root->l, res); postorder(root->r, res); res.push_back(root->v); }\nvoid print_v(const string& label, const vector<int>& v) {\n    cout << label << \": \";\n    for (size_t i = 0; i < v.size(); i++) { if (i > 0) cout << \" \"; cout << v[i]; }\n    cout << \"\\n\";\n}\nint main() {\n    int n; if (cin >> n) {\n        Node* root = nullptr;\n        for (int i = 0; i < n; i++) {\n            int v; cin >> v;\n            root = insert(root, v);\n        }\n        vector<int> ino, pre, post;\n        inorder(root, ino); preorder(root, pre); postorder(root, post);\n        print_v(\"Inorder\", ino); print_v(\"Preorder\", pre); print_v(\"Postorder\", post);\n    }\n    return 0;\n}\n",
+      "Java": "import java.util.*;\npublic class Main {\n    static class Node { int v; Node l, r; Node(int v) { this.v = v; } }\n    static Node insert(Node node, int v) {\n        if (node == null) return new Node(v);\n        if (v < node.v) node.l = insert(node.l, v);\n        else node.r = insert(node.r, v);\n        return node;\n    }\n    static void preorder(Node root, List<String> res) { if (root == null) return; res.add(String.valueOf(root.v)); preorder(root.l, res); preorder(root.r, res); }\n    static void inorder(Node root, List<String> res) { if (root == null) return; inorder(root.l, res); res.add(String.valueOf(root.v)); inorder(root.r, res); }\n    static void postorder(Node root, List<String> res) { if (root == null) return; postorder(root.l, res); postorder(root.r, res); res.add(String.valueOf(root.v)); }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            Node root = null;\n            for (int i = 0; i < n; i++) root = insert(root, sc.nextInt());\n            List<String> ino = new ArrayList<>(), pre = new ArrayList<>(), post = new ArrayList<>();\n            inorder(root, ino); preorder(root, pre); postorder(root, post);\n            System.out.println(\"Inorder: \" + String.join(\" \", ino));\n            System.out.println(\"Preorder: \" + String.join(\" \", pre));\n            System.out.println(\"Postorder: \" + String.join(\" \", post));\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = [int(x) for x in sys.stdin.read().split()]\n    if toks:\n        n = toks[0]\n        vals = toks[1:1+n]\n        class Node:\n            def __init__(self, v): self.v = v; self.l = None; self.r = None\n        root = None\n        def insert(node, v):\n            if not node: return Node(v)\n            if v < node.v: node.l = insert(node.l, v)\n            else: node.r = insert(node.r, v)\n            return node\n        for v in vals: root = insert(root, v)\n        ino, pre, post = [], [], []\n        def dfs(node):\n            if not node: return\n            pre.append(str(node.v)); dfs(node.l)\n            ino.append(str(node.v)); dfs(node.r)\n            post.append(str(node.v))\n        dfs(root)\n        print(f\"Inorder: {' '.join(ino)}\\nPreorder: {' '.join(pre)}\\nPostorder: {' '.join(post)}\")\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/).map(Number);\n    if (toks.length > 0) {\n        const n = toks[0], vals = toks.slice(1, 1 + n);\n        class Node { constructor(v) { this.v = v; this.l = null; this.r = null; } }\n        let root = null;\n        function insert(node, v) {\n            if (!node) return new Node(v);\n            if (v < node.v) node.l = insert(node.l, v);\n            else node.r = insert(node.r, v);\n            return node;\n        }\n        for (const v of vals) root = insert(root, v);\n        const ino = [], pre = [], post = [];\n        function dfs(node) {\n            if (!node) return;\n            pre.push(node.v); dfs(node.l);\n            ino.push(node.v); dfs(node.r);\n            post.push(node.v);\n        }\n        dfs(root);\n        console.log(`Inorder: ${ino.join(\" \")}\\nPreorder: ${pre.join(\" \")}\\nPostorder: ${post.join(\" \")}`);\n    }\n}\nmain();\n"
     },
     "notes": [],
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "overview": "Insert each number into BST recursively. Run traversals to print Inorder, Preorder, and Postorder lines.",
+      "approach": "Insert numbers sequentially into BST and output Inorder, Preorder, Postorder traversals.",
+      "complexityAnalysis": "Time: O(N^2), Space: O(N)"
     }
   },
-  "hints": [],
+  "hints": [
+    "Insert elements into BST.",
+    "Traverse in inorder, preorder, postorder."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "BST insertion",
+    "Tree traversals"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true,
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "5\n4 2 6 1 3",
+      "output": "Inorder: 1 2 3 4 6\nPreorder: 4 2 1 3 6\nPostorder: 1 3 2 6 4",
+      "explanation": "Example demonstrating Insert numbers sequentially into BST and output Inorder, Preorder, Postorder traversals."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "3\n2 1 3",
+      "output": "Inorder: 1 2 3\nPreorder: 2 1 3\nPostorder: 1 3 2",
+      "explanation": "Example demonstrating Insert numbers sequentially into BST and output Inorder, Preorder, Postorder traversals."
+    }
+  ]
 }

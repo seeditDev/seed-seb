@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.345",
-  "title": "Binary Tree Creation + Traversals",
+  "title": "Binary Tree Level-Order Creation and Traversals",
   "slug": "binary-tree-creation-traversals",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -19,7 +19,7 @@
   "content": {
     "problemStatement": "Create a binary tree from level-order input and print:\n\nInorder\n\nPreorder\n\nPostorder",
     "constraints": [
-      "nil"
+      "1 <= N <= 1000"
     ],
     "inputFormat": "n\nlevel order elements (-1 for NULL)",
     "outputFormat": "Inorder\nPreorder\nPostorder",
@@ -30,14 +30,14 @@
         "type": "reg",
         "input": "7\n1 2 3 4 5 -1 -1",
         "output": "Inorder: 4 2 5 1 3\nPreorder: 1 2 4 5 3\nPostorder: 4 5 2 3 1",
-        "explanation": ""
+        "explanation": "Example demonstrating Build binary tree from level order array (-1 represents null) and output Inorder, Preorder, Postorder."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "3\n1 2 3",
         "output": "Inorder: 2 1 3\nPreorder: 1 2 3\nPostorder: 2 3 1",
-        "explanation": ""
+        "explanation": "Example demonstrating Build binary tree from level order array (-1 represents null) and output Inorder, Preorder, Postorder."
       }
     ]
   },
@@ -336,64 +336,62 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Build binary tree from level order array (-1 represents null) and output Inorder, Preorder, Postorder.",
+    "timeComplexity": "O(N)",
+    "spaceComplexity": "O(N)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <stdlib.h>\ntypedef struct Node { int v; struct Node *l, *r; } Node;\nNode* new_node(int v) { Node* n = (Node*)malloc(sizeof(Node)); n->v = v; n->l = n->r = NULL; return n; }\nvoid preorder(Node* root, int* first) { if (!root) return; if (!*first) putchar(' '); printf(\"%d\", root->v); *first = 0; preorder(root->l, first); preorder(root->r, first); }\nvoid inorder(Node* root, int* first) { if (!root) return; inorder(root->l, first); if (!*first) putchar(' '); printf(\"%d\", root->v); *first = 0; inorder(root->r, first); }\nvoid postorder(Node* root, int* first) { if (!root) return; postorder(root->l, first); postorder(root->r, first); if (!*first) putchar(' '); printf(\"%d\", root->v); *first = 0; }\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    int *a = (int*)malloc(n * sizeof(int));\n    for (int i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    if (n == 0 || a[0] == -1) return 0;\n    Node* root = new_node(a[0]);\n    Node* q[2000]; int head = 0, tail = 0; q[tail++] = root;\n    int idx = 1;\n    while (head < tail && idx < n) {\n        Node* cur = q[head++];\n        if (idx < n) { if (a[idx] != -1) { cur->l = new_node(a[idx]); q[tail++] = cur->l; } idx++; }\n        if (idx < n) { if (a[idx] != -1) { cur->r = new_node(a[idx]); q[tail++] = cur->r; } idx++; }\n    }\n    int first = 1; printf(\"Inorder: \"); inorder(root, &first); putchar('\\n');\n    first = 1; printf(\"Preorder: \"); preorder(root, &first); putchar('\\n');\n    first = 1; printf(\"Postorder: \"); postorder(root, &first); putchar('\\n');\n    free(a);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <vector>\n#include <queue>\nusing namespace std;\nstruct Node { int v; Node *l = nullptr, *r = nullptr; Node(int v) : v(v) {} };\nvoid preorder(Node* root, vector<int>& res) { if (!root) return; res.push_back(root->v); preorder(root->l, res); preorder(root->r, res); }\nvoid inorder(Node* root, vector<int>& res) { if (!root) return; inorder(root->l, res); res.push_back(root->v); inorder(root->r, res); }\nvoid postorder(Node* root, vector<int>& res) { if (!root) return; postorder(root->l, res); postorder(root->r, res); res.push_back(root->v); }\nvoid print_v(const string& label, const vector<int>& v) {\n    cout << label << \": \";\n    for (size_t i = 0; i < v.size(); i++) { if (i > 0) cout << \" \"; cout << v[i]; }\n    cout << \"\\n\";\n}\nint main() {\n    int n; if (cin >> n) {\n        vector<int> a(n);\n        for (int i = 0; i < n; i++) cin >> a[i];\n        if (n == 0 || a[0] == -1) return 0;\n        Node* root = new Node(a[0]);\n        queue<Node*> q; q.push(root);\n        int idx = 1;\n        while (!q.empty() && idx < n) {\n            Node* cur = q.front(); q.pop();\n            if (idx < n) { if (a[idx] != -1) { cur->l = new Node(a[idx]); q.push(cur->l); } idx++; }\n            if (idx < n) { if (a[idx] != -1) { cur->r = new Node(a[idx]); q.push(cur->r); } idx++; }\n        }\n        vector<int> ino, pre, post;\n        inorder(root, ino); preorder(root, pre); postorder(root, post);\n        print_v(\"Inorder\", ino); print_v(\"Preorder\", pre); print_v(\"Postorder\", post);\n    }\n    return 0;\n}\n",
+      "Java": "import java.util.*;\npublic class Main {\n    static class Node { int v; Node l, r; Node(int v) { this.v = v; } }\n    static void preorder(Node root, List<String> res) { if (root == null) return; res.add(String.valueOf(root.v)); preorder(root.l, res); preorder(root.r, res); }\n    static void inorder(Node root, List<String> res) { if (root == null) return; inorder(root.l, res); res.add(String.valueOf(root.v)); inorder(root.r, res); }\n    static void postorder(Node root, List<String> res) { if (root == null) return; postorder(root.l, res); postorder(root.r, res); res.add(String.valueOf(root.v)); }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            int[] a = new int[n];\n            for (int i = 0; i < n; i++) a[i] = sc.nextInt();\n            if (n == 0 || a[0] == -1) return;\n            Node root = new Node(a[0]);\n            Queue<Node> q = new LinkedList<>(); q.add(root);\n            int idx = 1;\n            while (!q.isEmpty() && idx < n) {\n                Node cur = q.poll();\n                if (idx < n) { if (a[idx] != -1) { cur.l = new Node(a[idx]); q.add(cur.l); } idx++; }\n                if (idx < n) { if (a[idx] != -1) { cur.r = new Node(a[idx]); q.add(cur.r); } idx++; }\n            }\n            List<String> ino = new ArrayList<>(), pre = new ArrayList<>(), post = new ArrayList<>();\n            inorder(root, ino); preorder(root, pre); postorder(root, post);\n            System.out.println(\"Inorder: \" + String.join(\" \", ino));\n            System.out.println(\"Preorder: \" + String.join(\" \", pre));\n            System.out.println(\"Postorder: \" + String.join(\" \", post));\n        }\n    }\n}\n",
+      "Python3": "import sys\nfrom collections import deque\ndef main():\n    toks = [int(x) for x in sys.stdin.read().split()]\n    if toks:\n        n = toks[0]\n        vals = toks[1:1+n]\n        if not vals or vals[0] == -1: return\n        class Node:\n            def __init__(self, v): self.v = v; self.l = None; self.r = None\n        root = Node(vals[0])\n        q = deque([root]); idx = 1\n        while q and idx < len(vals):\n            cur = q.popleft()\n            if idx < len(vals):\n                if vals[idx] != -1:\n                    cur.l = Node(vals[idx]); q.append(cur.l)\n                idx += 1\n            if idx < len(vals):\n                if vals[idx] != -1:\n                    cur.r = Node(vals[idx]); q.append(cur.r)\n                idx += 1\n        ino, pre, post = [], [], []\n        def dfs(node):\n            if not node: return\n            pre.append(str(node.v)); dfs(node.l)\n            ino.append(str(node.v)); dfs(node.r)\n            post.append(str(node.v))\n        dfs(root)\n        print(f\"Inorder: {' '.join(ino)}\\nPreorder: {' '.join(pre)}\\nPostorder: {' '.join(post)}\")\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/).map(Number);\n    if (toks.length > 0) {\n        const n = toks[0], vals = toks.slice(1, 1 + n);\n        if (vals.length === 0 || vals[0] === -1) return;\n        class Node { constructor(v) { this.v = v; this.l = null; this.r = null; } }\n        const root = new Node(vals[0]), q = [root];\n        let idx = 1;\n        while (q.length > 0 && idx < vals.length) {\n            const cur = q.shift();\n            if (idx < vals.length) {\n                if (vals[idx] !== -1) { cur.l = new Node(vals[idx]); q.push(cur.l); }\n                idx++;\n            }\n            if (idx < vals.length) {\n                if (vals[idx] !== -1) { cur.r = new Node(vals[idx]); q.push(cur.r); }\n                idx++;\n            }\n        }\n        const ino = [], pre = [], post = [];\n        function dfs(node) {\n            if (!node) return;\n            pre.push(node.v); dfs(node.l);\n            ino.push(node.v); dfs(node.r);\n            post.push(node.v);\n        }\n        dfs(root);\n        console.log(`Inorder: ${ino.join(\" \")}\\nPreorder: ${pre.join(\" \")}\\nPostorder: ${post.join(\" \")}`);\n    }\n}\nmain();\n"
     },
     "notes": [],
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "overview": "Use queue for level order reconstruction. Run recursive DFS to collect Inorder, Preorder, and Postorder traversals.",
+      "approach": "Build binary tree from level order array (-1 represents null) and output Inorder, Preorder, Postorder.",
+      "complexityAnalysis": "Time: O(N), Space: O(N)"
     }
   },
-  "hints": [],
+  "hints": [
+    "Use a queue for level-order tree construction.",
+    "Perform inorder, preorder, postorder traversals."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Binary tree construction",
+    "Tree traversals"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true,
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "7\n1 2 3 4 5 -1 -1",
+      "output": "Inorder: 4 2 5 1 3\nPreorder: 1 2 4 5 3\nPostorder: 4 5 2 3 1",
+      "explanation": "Example demonstrating Build binary tree from level order array (-1 represents null) and output Inorder, Preorder, Postorder."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "3\n1 2 3",
+      "output": "Inorder: 2 1 3\nPreorder: 1 2 3\nPostorder: 2 3 1",
+      "explanation": "Example demonstrating Build binary tree from level order array (-1 represents null) and output Inorder, Preorder, Postorder."
+    }
+  ]
 }

@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.198",
-  "title": "Basic_Level_0_Number_Based_Problem_7",
+  "title": "Count Prime Numbers in Range",
   "slug": "basic-level-0-number-based-problem-7",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,7 +20,7 @@
   "content": {
     "problemStatement": "Write a program to accept a number as input, check if it is a Kaprekar number and print Yes or No.\n\nKaprekar Number: Consider an n-digit number k. Square it and add the right n digits to the left n or n-1 digits. If the resultant sum is k, then k is called a Kaprekar number. For example, 9 is a Kaprekar number since\n\n 9^2=81    8+1=9, \nand 297 is a Kaprekar number since\n\n 297^2=88209    88+209=297.",
     "constraints": [
-      "1<=num<=10^10"
+      "1 <= N <= 10^9"
     ],
     "inputFormat": "Given an integer",
     "outputFormat": "Print Yes or No",
@@ -31,14 +31,14 @@
         "type": "reg",
         "input": "45",
         "output": "Yes",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "12",
         "output": "No",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -337,64 +337,43 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Determine whether integer N is a Kaprekar number.",
+    "timeComplexity": "O(D)",
+    "spaceComplexity": "O(D)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>\nint main() {\n    char s[100]; if (scanf(\"%s\", s) != 1) return 0;\n    long long n = atoll(s);\n    long long sq = n * n;\n    char sq_str[100]; sprintf(sq_str, \"%lld\", sq);\n    int d = strlen(s), sq_len = strlen(sq_str);\n    long long r_part = 0, l_part = 0;\n    if (sq_len >= d) {\n        r_part = atoll(sq_str + sq_len - d);\n        sq_str[sq_len - d] = '\\0';\n        if (strlen(sq_str) > 0) l_part = atoll(sq_str);\n    }\n    if (r_part + l_part == n) printf(\"Yes\\n\");\n    else printf(\"No\\n\");\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <string>\nusing namespace std;\nint main() {\n    string s; if (!(cin >> s)) return 0;\n    long long n = stoll(s);\n    long long sq = n * n;\n    string sq_str = to_string(sq);\n    int d = s.length(), sq_len = sq_str.length();\n    long long r_part = 0, l_part = 0;\n    if (sq_len >= d) {\n        r_part = stoll(sq_str.substr(sq_len - d));\n        if (sq_len > d) l_part = stoll(sq_str.substr(0, sq_len - d));\n    }\n    if (r_part + l_part == n) cout << \"Yes\\n\";\n    else cout << \"No\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String s = sc.next();\n            long n = Long.parseLong(s);\n            long sq = n * n;\n            String sqStr = Long.toString(sq);\n            int d = s.length(), sqLen = sqStr.length();\n            long rPart = Long.parseLong(sqStr.substring(Math.max(0, sqLen - d)));\n            long lPart = sqLen > d ? Long.parseLong(sqStr.substring(0, sqLen - d)) : 0;\n            System.out.println(rPart + lPart == n ? \"Yes\" : \"No\");\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if toks:\n        n = int(toks[0])\n        sq = str(n * n)\n        d = len(toks[0])\n        r_part = int(sq[-d:]) if sq[-d:] else 0\n        l_part = int(sq[:-d]) if sq[:-d] else 0\n        print(\"Yes\" if r_part + l_part == n else \"No\")\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (toks && toks[0]) {\n        const n = BigInt(toks[0]);\n        const sq = (n * n).toString();\n        const d = toks[0].length;\n        const rPart = BigInt(sq.slice(-d) || \"0\");\n        const lPart = BigInt(sq.slice(0, -d) || \"0\");\n        console.log(rPart + lPart === n ? \"Yes\" : \"No\");\n    }\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "Square N. Split N^2 into two parts where right part has D digits (D = length of N). If sum of right and left parts equals N, print 'Yes', else 'No'."
   },
-  "hints": [],
+  "hints": [
+    "Compute N^2.",
+    "Split into right D digits and remaining left digits.",
+    "Sum parts and compare to N."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Kaprekar number verification",
+    "Substrings and numerical parsing"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

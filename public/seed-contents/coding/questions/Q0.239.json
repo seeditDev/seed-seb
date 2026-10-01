@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.239",
-  "title": "Basic_Level_1_Arrays_8",
+  "title": "Count Prime Numbers in Prefix Sums",
   "slug": "basic-level-1-arrays-8",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,8 +20,7 @@
   "content": {
     "problemStatement": "Number of primes in the prefix sum\n\nGiven an array arr[] of N integers, the task is to count the number of primes in the prefix sum array of the given array.\n\nExamples:\n\nInput: arr[] = {1, 4, 8, 4}\n\nOutput: 3\n\nExplanation:\n\nThe prefix sum array is {1, 5, 13, 17}\n\nFor 1 there is no prefix , hence it is 1.\n\nIn the second index if we add 1 & 4 , we will get 5.\n\nFor third index the previous updated sum is 5 and the current value is 8,hence the current index is updated with 13.\n\nFor the last index, current values is 4 and previous sum is 13, so the sum is 17\n\nand the three primes are 5, 13 and 17.",
     "constraints": [
-      "1 <= N <= 1000",
-      "1 <= arr[i] <= 10000"
+      "1 <= N <= 10^5"
     ],
     "inputFormat": "First line has the number of elements and the line contains the set of integers delimited by space",
     "outputFormat": "Print the count\n\nSample Input:",
@@ -32,14 +31,14 @@
         "type": "reg",
         "input": "4\n1 4 8 4",
         "output": "3",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "6\n1 5 2 3 7 9",
         "output": "1",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -338,64 +337,42 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Count how many prefix sums of array elements are prime numbers.",
+    "timeComplexity": "O(N * sqrt(max_sum))",
+    "spaceComplexity": "O(1)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\nint is_prime(long long n) {\n    if (n < 2) return 0;\n    if (n == 2 || n == 3) return 1;\n    if (n % 2 == 0 || n % 3 == 0) return 0;\n    for (long long i = 5; i * i <= n; i += 6)\n        if (n % i == 0 || n % (i + 2) == 0) return 0;\n    return 1;\n}\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    long long pref = 0, x; int count = 0;\n    for (int i = 0; i < n; i++) {\n        scanf(\"%lld\", &x);\n        pref += x;\n        if (is_prime(pref)) count++;\n    }\n    printf(\"%d\\n\", count);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\nusing namespace std;\nbool is_prime(long long n) {\n    if (n < 2) return false;\n    if (n == 2 || n == 3) return true;\n    if (n % 2 == 0 || n % 3 == 0) return false;\n    for (long long i = 5; i * i <= n; i += 6)\n        if (n % i == 0 || n % (i + 2) == 0) return false;\n    return true;\n}\nint main() {\n    int n; if (!(cin >> n)) return 0;\n    long long pref = 0, x; int count = 0;\n    for (int i = 0; i < n; i++) {\n        cin >> x; pref += x;\n        if (is_prime(pref)) count++;\n    }\n    cout << count << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    static boolean isPrime(long n) {\n        if (n < 2) return false;\n        if (n == 2 || n == 3) return true;\n        if (n % 2 == 0 || n % 3 == 0) return false;\n        for (long i = 5; i * i <= n; i += 6)\n            if (n % i == 0 || n % (i + 2) == 0) return false;\n        return true;\n    }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            long pref = 0; int count = 0;\n            for (int i = 0; i < n; i++) {\n                pref += sc.nextLong();\n                if (isPrime(pref)) count++;\n            }\n            System.out.println(count);\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef is_prime(n):\n    if n < 2: return False\n    if n in (2, 3): return True\n    if n % 2 == 0 or n % 3 == 0: return False\n    i = 5\n    while i * i <= n:\n        if n % i == 0 or n % (i + 2) == 0: return False\n        i += 6\n    return True\ndef main():\n    toks = sys.stdin.read().split()\n    if not toks: return\n    n = int(toks[0])\n    pref = 0; count = 0\n    for x in toks[1:n+1]:\n        pref += int(x)\n        if is_prime(pref): count += 1\n    print(count)\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction isPrime(n) {\n    if (n < 2) return false;\n    if (n === 2 || n === 3) return true;\n    if (n % 2 === 0 || n % 3 === 0) return false;\n    for (let i = 5; i * i <= n; i += 6)\n        if (n % i === 0 || n % (i + 2) === 0) return false;\n    return true;\n}\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (!toks || toks.length === 0 || toks[0] === \"\") return;\n    const n = parseInt(toks[0], 10);\n    let pref = 0, count = 0;\n    for (let i = 1; i <= n; i++) {\n        pref += parseInt(toks[i], 10);\n        if (isPrime(pref)) count++;\n    }\n    console.log(count);\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "Compute running prefix sum of array. For each prefix sum, check if it is prime and tally count."
   },
-  "hints": [],
+  "hints": [
+    "Maintain running prefix sum.",
+    "Check if prefix sum is prime."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Prefix sums",
+    "Primality testing"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

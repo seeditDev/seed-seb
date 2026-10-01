@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.205",
-  "title": "Basic_Level_1_Number_Based_Problem_4",
+  "title": "Check Good Number (Digit Greater than Right Sum)",
   "slug": "basic-level-1-number-based-problem-4",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -19,7 +19,8 @@
   "content": {
     "problemStatement": "Good Number\n\nProblem Statement\n\nGiven a digit an a range . Write a program to print all the good numbers between range and that do not contain given digit\n\nNote: A good number is a number in which every digit is larger than the sum of digits of its right\n\nExample: 9421 is a good number\n\n          9 > (4+2+1)\n\n          4 > (2+1)\n\n          2 > 1",
     "constraints": [
-      "Nil"
+      "1 <= L <= R <= 10^5",
+      "0 <= D <= 9"
     ],
     "inputFormat": "Input contains two values N1 and N2 and digit D",
     "outputFormat": "Print the Good numbers seperated by space which should not contain given digit",
@@ -30,14 +31,14 @@
         "type": "reg",
         "input": "100 500 4",
         "output": "210 310 320",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "410 520 3",
         "output": "410 420 421 510 520",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -336,64 +337,42 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Find all good numbers in range [L, R] that do not contain digit D.",
+    "timeComplexity": "O((R - L) * D)",
+    "spaceComplexity": "O(1)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <string.h>\nint is_good(int x, char dig) {\n    char s[20]; sprintf(s, \"%d\", x);\n    int len = strlen(s);\n    for (int i = 0; i < len; i++) if (s[i] == dig) return 0;\n    for (int i = 0; i < len - 1; i++) {\n        int d = s[i] - '0', sum_r = 0;\n        for (int j = i + 1; j < len; j++) sum_r += s[j] - '0';\n        if (d <= sum_r) return 0;\n    }\n    return 1;\n}\nint main() {\n    int l, r; char dig[10];\n    if (scanf(\"%d %d %s\", &l, &r, dig) != 3) return 0;\n    int first = 1;\n    for (int x = l; x <= r; x++) {\n        if (is_good(x, dig[0])) {\n            if (!first) putchar(' ');\n            printf(\"%d\", x); first = 0;\n        }\n    }\n    putchar('\\n');\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <string>\nusing namespace std;\nbool is_good(int x, char dig) {\n    string s = to_string(x);\n    if (s.find(dig) != string::npos) return false;\n    for (size_t i = 0; i < s.length() - 1; i++) {\n        int d = s[i] - '0', sum_r = 0;\n        for (size_t j = i + 1; j < s.length(); j++) sum_r += s[j] - '0';\n        if (d <= sum_r) return false;\n    }\n    return true;\n}\nint main() {\n    int l, r; char dig; if (!(cin >> l >> r >> dig)) return 0;\n    bool first = true;\n    for (int x = l; x <= r; x++) {\n        if (is_good(x, dig)) {\n            if (!first) cout << \" \";\n            cout << x; first = false;\n        }\n    }\n    cout << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    static boolean isGood(int x, char dig) {\n        String s = Integer.toString(x);\n        if (s.indexOf(dig) != -1) return false;\n        for (int i = 0; i < s.length() - 1; i++) {\n            int d = s.charAt(i) - '0', sumR = 0;\n            for (int j = i + 1; j < s.length(); j++) sumR += s.charAt(j) - '0';\n            if (d <= sumR) return false;\n        }\n        return true;\n    }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int l = sc.nextInt(), r = sc.nextInt();\n            char dig = sc.next().charAt(0);\n            StringBuilder sb = new StringBuilder();\n            for (int x = l; x <= r; x++) {\n                if (isGood(x, dig)) {\n                    if (sb.length() > 0) sb.append(\" \");\n                    sb.append(x);\n                }\n            }\n            System.out.println(sb.toString());\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if len(toks) >= 3:\n        L, R, dig = int(toks[0]), int(toks[1]), toks[2]\n        res = []\n        for x in range(L, R + 1):\n            s = str(x)\n            if dig in s: continue\n            is_good = True\n            for i in range(len(s) - 1):\n                d = int(s[i])\n                sum_right = sum(int(c) for c in s[i+1:])\n                if d <= sum_right: is_good = False; break\n            if is_good: res.append(str(x))\n        print(\" \".join(res))\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (toks.length >= 3) {\n        const L = parseInt(toks[0], 10), R = parseInt(toks[1], 10), dig = toks[2];\n        const res = [];\n        for (let x = L; x <= R; x++) {\n            const s = x.toString();\n            if (s.includes(dig)) continue;\n            let isGood = true;\n            for (let i = 0; i < s.length - 1; i++) {\n                const d = parseInt(s[i], 10);\n                let sumR = 0;\n                for (let j = i + 1; j < s.length; j++) sumR += parseInt(s[j], 10);\n                if (d <= sumR) { isGood = false; break; }\n            }\n            if (isGood) res.push(x);\n        }\n        console.log(res.join(\" \"));\n    }\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "Iterate numbers in range, skip those with digit D, verify each digit exceeds sum of digits to its right."
   },
-  "hints": [],
+  "hints": [
+    "Check digit D exclusion.",
+    "For each digit except last, ensure digit > sum of remaining digits."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Suffix sum comparison",
+    "Range filtering"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

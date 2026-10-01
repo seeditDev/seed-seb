@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.322",
-  "title": "Group the Anagrams 38",
+  "title": "Group Anagrams",
   "slug": "group-anagrams-38",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,7 +20,7 @@
   "content": {
     "problemStatement": "Given an array of strings, group the anagrams together.\n\nReturn groups in any order.",
     "constraints": [
-      "."
+      "1 <= N <= 10^4"
     ],
     "inputFormat": "n\nstrings (space separated)",
     "outputFormat": "group1\ngroup2\n...",
@@ -31,14 +31,14 @@
         "type": "reg",
         "input": "6\neat tea tan ate nat bat",
         "output": "eat tea ate\ntan nat\nbat",
-        "explanation": ""
+        "explanation": "Example demonstrating Group words by sorted character representation and output each group on a separate line."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "3\nabc bca cab",
         "output": "abc bca cab",
-        "explanation": ""
+        "explanation": "Example demonstrating Group words by sorted character representation and output each group on a separate line."
       }
     ]
   },
@@ -337,64 +337,63 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Group words by sorted character representation and output each group on a separate line.",
+    "timeComplexity": "O(N * L log L)",
+    "spaceComplexity": "O(N * L)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>\nint cmp(const void *a, const void *b) { return (*(char*)a - *(char*)b); }\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    char words[100][50], sorted[100][50];\n    for (int i = 0; i < n; i++) {\n        scanf(\"%s\", words[i]);\n        strcpy(sorted[i], words[i]);\n        qsort(sorted[i], strlen(sorted[i]), 1, cmp);\n    }\n    int printed[100] = {0};\n    for (int i = 0; i < n; i++) {\n        if (printed[i]) continue;\n        printf(\"%s\", words[i]); printed[i] = 1;\n        for (int j = i + 1; j < n; j++) {\n            if (!printed[j] && strcmp(sorted[i], sorted[j]) == 0) {\n                printf(\" %s\", words[j]); printed[j] = 1;\n            }\n        }\n        putchar('\\n');\n    }\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <vector>\n#include <string>\n#include <unordered_map>\n#include <algorithm>\nusing namespace std;\nint main() {\n    int n; if (cin >> n) {\n        unordered_map<string, vector<string>> groups;\n        vector<string> order;\n        for (int i = 0; i < n; i++) {\n            string w; cin >> w;\n            string k = w; sort(k.begin(), k.end());\n            if (groups.find(k) == groups.end()) order.push_back(k);\n            groups[k].push_back(w);\n        }\n        for (const string &k : order) {\n            for (size_t i = 0; i < groups[k].size(); i++) {\n                if (i > 0) cout << \" \";\n                cout << groups[k][i];\n            }\n            cout << \"\\n\";\n        }\n    }\n    return 0;\n}\n",
+      "Java": "import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            LinkedHashMap<String, List<String>> groups = new LinkedHashMap<>();\n            for (int i = 0; i < n; i++) {\n                String w = sc.next();\n                char[] ca = w.toCharArray(); Arrays.sort(ca);\n                String k = new String(ca);\n                groups.computeIfAbsent(k, x -> new ArrayList<>()).add(w);\n            }\n            for (List<String> g : groups.values()) {\n                System.out.println(String.join(\" \", g));\n            }\n        }\n    }\n}\n",
+      "Python3": "import sys\nfrom collections import defaultdict\ndef main():\n    toks = sys.stdin.read().split()\n    if toks:\n        n = int(toks[0])\n        words = toks[1:1+n]\n        groups = defaultdict(list)\n        for w in words:\n            k = \"\".join(sorted(w))\n            groups[k].append(w)\n        for g in groups.values():\n            print(\" \".join(g))\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (toks.length > 0) {\n        const n = parseInt(toks[0], 10);\n        const words = toks.slice(1, 1 + n);\n        const map = new Map();\n        for (const w of words) {\n            const k = w.split(\"\").sort().join(\"\");\n            if (!map.has(k)) map.set(k, []);\n            map.get(k).push(w);\n        }\n        for (const g of map.values()) console.log(g.join(\" \"));\n    }\n}\nmain();\n"
     },
     "notes": [],
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "overview": "Map sorted word string to list of original words. Output each group space-separated on new line.",
+      "approach": "Group words by sorted character representation and output each group on a separate line.",
+      "complexityAnalysis": "Time: O(N * L log L), Space: O(N * L)"
     }
   },
-  "hints": [],
+  "hints": [
+    "Use sorted word as hash map key.",
+    "Collect original words.",
+    "Print group per line."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Hash map grouping",
+    "Anagram sorting"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true,
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "6\neat tea tan ate nat bat",
+      "output": "eat tea ate\ntan nat\nbat",
+      "explanation": "Example demonstrating Group words by sorted character representation and output each group on a separate line."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "3\nabc bca cab",
+      "output": "abc bca cab",
+      "explanation": "Example demonstrating Group words by sorted character representation and output each group on a separate line."
+    }
+  ]
 }

@@ -18,9 +18,9 @@
     "QBCategory": "CCD"
   },
   "content": {
-    "problemStatement": "You are given an integer N (1 ≤ N ≤ 10¹⁸).\n\nLet:\n\nThe rightmost digit be position 1\n\nNext digit position 2\n\nAnd so on…\n\nYou must compute:\n\nSum of digits whose positions are prime numbers,\n\nthen output the sum modulo 1000000007.\n\nPositions:\n\nRightmost → 1  \nNext → 2  \nNext → 3 …  \n\n\nPrime positions are: 2,3,5,7,11,13…\n\nExample\n\nInput:\n\n987654\noutput:\n19\n\n| Digit | Position | Prime? |\n| ----- | -------- | ------ |\n| 4     | 1        | No     |\n| 5     | 2        | ✔ Yes  |\n| 6     | 3        | ✔ Yes  |\n| 7     | 4        | No     |\n| 8     | 5        | ✔ Yes  |\n| 9     | 6        | No     |\n\nPrime positions are: 2, 3, 5\n\nSo we pick digits at those positions:\n\nPosition 2 → digit 5\n\nPosition 3 → digit 6\n\nPosition 5 → digit 8\n\n5 + 6 + 8 = 19\n\nOutput:\n19",
+    "problemStatement": "You are given an integer N (1 \u2264 N \u2264 10\u00b9\u2078).\n\nLet:\n\nThe rightmost digit be position 1\n\nNext digit position 2\n\nAnd so on\u2026\n\nYou must compute:\n\nSum of digits whose positions are prime numbers,\n\nthen output the sum modulo 1000000007.\n\nPositions:\n\nRightmost \u2192 1  \nNext \u2192 2  \nNext \u2192 3 \u2026  \n\n\nPrime positions are: 2,3,5,7,11,13\u2026\n\nExample\n\nInput:\n\n987654\noutput:\n19\n\n| Digit | Position | Prime? |\n| ----- | -------- | ------ |\n| 4     | 1        | No     |\n| 5     | 2        | \u2714 Yes  |\n| 6     | 3        | \u2714 Yes  |\n| 7     | 4        | No     |\n| 8     | 5        | \u2714 Yes  |\n| 9     | 6        | No     |\n\nPrime positions are: 2, 3, 5\n\nSo we pick digits at those positions:\n\nPosition 2 \u2192 digit 5\n\nPosition 3 \u2192 digit 6\n\nPosition 5 \u2192 digit 8\n\n5 + 6 + 8 = 19\n\nOutput:\n19",
     "constraints": [
-      "N (1 ≤ N ≤ 10¹⁸)"
+      "1 <= N <= 10^18"
     ],
     "inputFormat": "integer",
     "outputFormat": "integer",
@@ -31,14 +31,14 @@
         "type": "reg",
         "input": "987654",
         "output": "19",
-        "explanation": ""
+        "explanation": "Example demonstrating Sum digits located at 1-based prime positions counted from the rightmost digit."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "12345",
         "output": "8",
-        "explanation": ""
+        "explanation": "Example demonstrating Sum digits located at 1-based prime positions counted from the rightmost digit."
       }
     ]
   },
@@ -337,64 +337,63 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Sum digits located at 1-based prime positions counted from the rightmost digit.",
+    "timeComplexity": "O(D)",
+    "spaceComplexity": "O(1)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <string.h>\nint is_prime(int n) {\n    if (n < 2) return 0;\n    if (n == 2 || n == 3) return 1;\n    if (n % 2 == 0 || n % 3 == 0) return 0;\n    for (int i = 5; i * i <= n; i += 6)\n        if (n % i == 0 || n % (i + 2) == 0) return 0;\n    return 1;\n}\nint main() {\n    char s[50]; if (scanf(\"%s\", s) != 1) return 0;\n    int len = strlen(s);\n    int sum = 0;\n    for (int i = len - 1; i >= 0; i--) {\n        int pos = len - i;\n        if (is_prime(pos)) sum += s[i] - '0';\n    }\n    printf(\"%d\\n\", sum);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <string>\nusing namespace std;\nbool is_prime(int n) {\n    if (n < 2) return false;\n    if (n == 2 || n == 3) return true;\n    if (n % 2 == 0 || n % 3 == 0) return false;\n    for (int i = 5; i * i <= n; i += 6)\n        if (n % i == 0 || n % (i + 2) == 0) return false;\n    return true;\n}\nint main() {\n    string s; if (cin >> s) {\n        int sum = 0, len = s.length();\n        for (int i = len - 1; i >= 0; i--) {\n            int pos = len - i;\n            if (is_prime(pos)) sum += s[i] - '0';\n        }\n        cout << sum << \"\\n\";\n    }\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    static boolean isPrime(int n) {\n        if (n < 2) return false;\n        if (n == 2 || n == 3) return true;\n        if (n % 2 == 0 || n % 3 == 0) return false;\n        for (int i = 5; i * i <= n; i += 6)\n            if (n % i == 0 || n % (i + 2) == 0) return false;\n        return true;\n    }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String s = sc.next();\n            int sum = 0, len = s.length();\n            for (int i = len - 1; i >= 0; i--) {\n                int pos = len - i;\n                if (isPrime(pos)) sum += s.charAt(i) - '0';\n            }\n            System.out.println(sum);\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if toks:\n        s = toks[0][::-1]\n        primes = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29}\n        print(sum(int(s[i]) for i in range(len(s)) if (i + 1) in primes))\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction isPrime(n) {\n    if (n < 2) return false;\n    if (n === 2 || n === 3) return true;\n    if (n % 2 === 0 || n % 3 === 0) return false;\n    for (let i = 5; i * i <= n; i += 6) if (n % i === 0 || n % (i + 2) === 0) return false;\n    return true;\n}\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (toks[0]) {\n        const s = toks[0];\n        let sum = 0, len = s.length;\n        for (let i = len - 1; i >= 0; i--) {\n            const pos = len - i;\n            if (isPrime(pos)) sum += parseInt(s[i], 10);\n        }\n        console.log(sum);\n    }\n}\nmain();\n"
     },
     "notes": [],
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "overview": "Iterate digits from right to left (1-indexed). If position is prime (2, 3, 5, 7, 11, ...), add to sum.",
+      "approach": "Sum digits located at 1-based prime positions counted from the rightmost digit.",
+      "complexityAnalysis": "Time: O(D), Space: O(1)"
     }
   },
-  "hints": [],
+  "hints": [
+    "Rightmost digit is position 1.",
+    "Check if position is prime.",
+    "Sum corresponding digits."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Position indexing",
+    "Primality check"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true,
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "987654",
+      "output": "19",
+      "explanation": "Example demonstrating Sum digits located at 1-based prime positions counted from the rightmost digit."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "12345",
+      "output": "8",
+      "explanation": "Example demonstrating Sum digits located at 1-based prime positions counted from the rightmost digit."
+    }
+  ]
 }

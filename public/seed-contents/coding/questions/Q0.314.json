@@ -18,9 +18,9 @@
     "QBCategory": "CCD"
   },
   "content": {
-    "problemStatement": "Problem Statement\n\nYou are given an array A of size N.\n\nYou may perform right-rotation any number of times:\n\n1 right rotation: last element moves to front\n\n\nYour task:\n\n✔ Determine the minimum number of right rotations needed to make the array strictly increasing.\n\nIf it is not possible, return -1.\n\nExample\n\nInput:\n\n5\n3 4 5 1 2\n\n\nRight rotation once:\n\n2 3 4 5 1 → not sorted\n\n\nRight rotation twice:\n\n1 2 3 4 5 → sorted ✔\n\n\nOutput:\n\n2",
+    "problemStatement": "Problem Statement\n\nYou are given an array A of size N.\n\nYou may perform right-rotation any number of times:\n\n1 right rotation: last element moves to front\n\n\nYour task:\n\n\u2714 Determine the minimum number of right rotations needed to make the array strictly increasing.\n\nIf it is not possible, return -1.\n\nExample\n\nInput:\n\n5\n3 4 5 1 2\n\n\nRight rotation once:\n\n2 3 4 5 1 \u2192 not sorted\n\n\nRight rotation twice:\n\n1 2 3 4 5 \u2192 sorted \u2714\n\n\nOutput:\n\n2",
     "constraints": [
-      "nil"
+      "1 <= N <= 10^5"
     ],
     "inputFormat": "Integer  n- array size\nN values of Array",
     "outputFormat": "array of Integers",
@@ -31,14 +31,14 @@
         "type": "reg",
         "input": "5\n3 4 5 1 2",
         "output": "2",
-        "explanation": ""
+        "explanation": "Example demonstrating Find minimum right-rotations k in [0, N-1] such that array becomes sorted increasing."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "4\n1 2 3 4",
         "output": "0",
-        "explanation": ""
+        "explanation": "Example demonstrating Find minimum right-rotations k in [0, N-1] such that array becomes sorted increasing."
       }
     ]
   },
@@ -337,64 +337,62 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Find minimum right-rotations k in [0, N-1] such that array becomes sorted increasing.",
+    "timeComplexity": "O(N)",
+    "spaceComplexity": "O(N)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <stdlib.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    int *a = (int*)malloc(n * sizeof(int));\n    for (int i = 0; i < n; i++) scanf(\"%d\", &a[i]);\n    for (int k = 0; k < n; k++) {\n        int sorted = 1;\n        for (int i = 0; i < n - 1; i++) {\n            int val1 = a[(i - k + n * 2) % n];\n            int val2 = a[(i + 1 - k + n * 2) % n];\n            if (val1 > val2) { sorted = 0; break; }\n        }\n        if (sorted) { printf(\"%d\\n\", k); free(a); return 0; }\n    }\n    puts(\"-1\"); free(a);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <vector>\nusing namespace std;\nint main() {\n    int n; if (cin >> n) {\n        vector<int> a(n);\n        for (int i = 0; i < n; i++) cin >> a[i];\n        for (int k = 0; k < n; k++) {\n            bool sorted = true;\n            for (int i = 0; i < n - 1; i++) {\n                if (a[(i - k + 2 * n) % n] > a[(i + 1 - k + 2 * n) % n]) { sorted = false; break; }\n            }\n            if (sorted) { cout << k << \"\\n\"; return 0; }\n        }\n        cout << \"-1\\n\";\n    }\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            int[] a = new int[n];\n            for (int i = 0; i < n; i++) a[i] = sc.nextInt();\n            for (int k = 0; k < n; k++) {\n                boolean sorted = true;\n                for (int i = 0; i < n - 1; i++) {\n                    if (a[(i - k + 2 * n) % n] > a[(i + 1 - k + 2 * n) % n]) { sorted = false; break; }\n                }\n                if (sorted) { System.out.println(k); return; }\n            }\n            System.out.println(\"-1\");\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = [int(x) for x in sys.stdin.read().split()]\n    if toks:\n        n = toks[0]\n        arr = toks[1:1+n]\n        for k in range(n):\n            rot = arr[-k:] + arr[:-k] if k > 0 else arr\n            if all(rot[i] <= rot[i+1] for i in range(n - 1)):\n                print(k); return\n        print(\"-1\")\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/).map(Number);\n    if (toks.length > 0) {\n        const n = toks[0];\n        const arr = toks.slice(1, 1 + n);\n        for (let k = 0; k < n; k++) {\n            const rot = k > 0 ? arr.slice(-k).concat(arr.slice(0, -k)) : arr;\n            let sorted = true;\n            for (let i = 0; i < n - 1; i++) if (rot[i] > rot[i+1]) { sorted = false; break; }\n            if (sorted) { console.log(k); return; }\n        }\n        console.log(\"-1\");\n    }\n}\nmain();\n"
     },
     "notes": [],
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "overview": "Check if rotated array is sorted in non-decreasing order for each k. Return minimum k or -1.",
+      "approach": "Find minimum right-rotations k in [0, N-1] such that array becomes sorted increasing.",
+      "complexityAnalysis": "Time: O(N), Space: O(N)"
     }
   },
-  "hints": [],
+  "hints": [
+    "Try rotations k from 0 to N-1.",
+    "Check if sorted."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Array rotation",
+    "Sorted order detection"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true,
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "5\n3 4 5 1 2",
+      "output": "2",
+      "explanation": "Example demonstrating Find minimum right-rotations k in [0, N-1] such that array becomes sorted increasing."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "4\n1 2 3 4",
+      "output": "0",
+      "explanation": "Example demonstrating Find minimum right-rotations k in [0, N-1] such that array becomes sorted increasing."
+    }
+  ]
 }

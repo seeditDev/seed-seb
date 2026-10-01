@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.329",
-  "title": "Container With Most Water 57",
+  "title": "Container With Most Water",
   "slug": "container-with-most-water-57",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,7 +20,7 @@
   "content": {
     "problemStatement": "Given an integer array height, find two lines that together with the x-axis form a container that holds the most water. Return the maximum area.\n![image](https://s3.amazonaws.com/hr-assets/0/1772269412-44b89d3fc8-IMG-20260228-WA0033.jpg)",
     "constraints": [
-      "..."
+      "2 <= N <= 10^5"
     ],
     "inputFormat": "n\nheight",
     "outputFormat": "max area",
@@ -31,14 +31,14 @@
         "type": "reg",
         "input": "9\n1 8 6 2 5 4 8 3 7",
         "output": "49",
-        "explanation": ""
+        "explanation": "Example demonstrating Two-pointer approach finding maximum area min(h[l], h[r]) * (r - l) moving the shorter line."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "2\n1 1",
         "output": "1",
-        "explanation": ""
+        "explanation": "Example demonstrating Two-pointer approach finding maximum area min(h[l], h[r]) * (r - l) moving the shorter line."
       }
     ]
   },
@@ -337,64 +337,62 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Two-pointer approach finding maximum area min(h[l], h[r]) * (r - l) moving the shorter line.",
+    "timeComplexity": "O(N)",
+    "spaceComplexity": "O(1)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <stdlib.h>\nlong long min(long long a, long long b) { return a < b ? a : b; }\nlong long max(long long a, long long b) { return a > b ? a : b; }\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    long long *h = (long long*)malloc(n * sizeof(long long));\n    for (int i = 0; i < n; i++) scanf(\"%lld\", &h[i]);\n    int l = 0, r = n - 1;\n    long long max_area = 0;\n    while (l < r) {\n        long long area = min(h[l], h[r]) * (r - l);\n        max_area = max(max_area, area);\n        if (h[l] < h[r]) l++;\n        else r--;\n    }\n    printf(\"%lld\\n\", max_area);\n    free(h);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <vector>\n#include <algorithm>\nusing namespace std;\nint main() {\n    int n; if (cin >> n) {\n        vector<long long> h(n);\n        for (int i = 0; i < n; i++) cin >> h[i];\n        int l = 0, r = n - 1;\n        long long max_area = 0;\n        while (l < r) {\n            long long area = min(h[l], h[r]) * (r - l);\n            max_area = max(max_area, area);\n            if (h[l] < h[r]) l++;\n            else r--;\n        }\n        cout << max_area << \"\\n\";\n    }\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            long[] h = new long[n];\n            for (int i = 0; i < n; i++) h[i] = sc.nextLong();\n            int l = 0, r = n - 1;\n            long maxArea = 0;\n            while (l < r) {\n                long area = Math.min(h[l], h[r]) * (r - l);\n                maxArea = Math.max(maxArea, area);\n                if (h[l] < h[r]) l++;\n                else r--;\n            }\n            System.out.println(maxArea);\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = [int(x) for x in sys.stdin.read().split()]\n    if toks:\n        n = toks[0]\n        h = toks[1:1+n]\n        l, r = 0, n - 1\n        max_area = 0\n        while l < r:\n            max_area = max(max_area, min(h[l], h[r]) * (r - l))\n            if h[l] < h[r]: l += 1\n            else: r -= 1\n        print(max_area)\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/).map(Number);\n    if (toks.length > 0) {\n        const n = toks[0];\n        const h = toks.slice(1, 1 + n);\n        let l = 0, r = n - 1, maxArea = 0;\n        while (l < r) {\n            const area = Math.min(h[l], h[r]) * (r - l);\n            if (area > maxArea) maxArea = area;\n            if (h[l] < h[r]) l++;\n            else r--;\n        }\n        console.log(maxArea);\n    }\n}\nmain();\n"
     },
     "notes": [],
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "overview": "Start with left = 0, right = N - 1. Calculate area, update max area, and advance pointer with smaller height.",
+      "approach": "Two-pointer approach finding maximum area min(h[l], h[r]) * (r - l) moving the shorter line.",
+      "complexityAnalysis": "Time: O(N), Space: O(1)"
     }
   },
-  "hints": [],
+  "hints": [
+    "Use two pointers at start and end.",
+    "Move the pointer with shorter height."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Two pointers",
+    "Greedy width narrowing"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true,
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "9\n1 8 6 2 5 4 8 3 7",
+      "output": "49",
+      "explanation": "Example demonstrating Two-pointer approach finding maximum area min(h[l], h[r]) * (r - l) moving the shorter line."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "2\n1 1",
+      "output": "1",
+      "explanation": "Example demonstrating Two-pointer approach finding maximum area min(h[l], h[r]) * (r - l) moving the shorter line."
+    }
+  ]
 }

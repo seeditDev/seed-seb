@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.269",
-  "title": "Basic_level_1_Strings_8",
+  "title": "Most Frequent Character in String",
   "slug": "basic-level-1-strings-8",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,9 +20,7 @@
   "content": {
     "problemStatement": "Return the maximum occurring character in the string",
     "constraints": [
-      "1 <= string length <= 100",
-      "Note: If more than one occurred then print the first occurrence",
-      "all characters in the string will be lowercase only"
+      "1 <= string length <= 500"
     ],
     "inputFormat": "Given a string",
     "outputFormat": "print the maximum occurring character with its count separated by ':'",
@@ -33,14 +31,14 @@
         "type": "reg",
         "input": "this is a test sentence",
         "output": "t:4",
-        "explanation": ""
+        "explanation": "Example demonstrating Find the character with highest frequency (ignoring spaces), breaking ties by first occurrence."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "hello World",
         "output": "l:3",
-        "explanation": ""
+        "explanation": "Example demonstrating Find the character with highest frequency (ignoring spaces), breaking ties by first occurrence."
       }
     ]
   },
@@ -339,64 +337,63 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Find the character with highest frequency (ignoring spaces), breaking ties by first occurrence.",
+    "timeComplexity": "O(N)",
+    "spaceComplexity": "O(K)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <string.h>\nint main() {\n    char s[1000];\n    if (!fgets(s, sizeof(s), stdin)) return 0;\n    int counts[256] = {0};\n    int len = strlen(s);\n    while (len > 0 && (s[len-1] == '\\n' || s[len-1] == '\\r')) s[--len] = '\\0';\n    for (int i = 0; i < len; i++) {\n        if (s[i] != ' ') counts[(unsigned char)s[i]]++;\n    }\n    int max_c = 0; char best = '\\0';\n    for (int i = 0; i < len; i++) {\n        if (s[i] != ' ' && counts[(unsigned char)s[i]] > max_c) {\n            max_c = counts[(unsigned char)s[i]];\n            best = s[i];\n        }\n    }\n    if (best) printf(\"%c:%d\\n\", best, max_c);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <string>\n#include <unordered_map>\nusing namespace std;\nint main() {\n    string s;\n    if (!getline(cin, s)) return 0;\n    unordered_map<char, int> cnt;\n    for (char c : s) if (c != ' ') cnt[c]++;\n    int max_val = 0; char best = '\\0';\n    for (char c : s) {\n        if (c != ' ' && cnt[c] > max_val) {\n            max_val = cnt[c];\n            best = c;\n        }\n    }\n    if (best) cout << best << \":\" << max_val << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\nimport java.util.HashMap;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLine()) {\n            String s = sc.nextLine();\n            HashMap<Character, Integer> cnt = new HashMap<>();\n            for (char c : s.toCharArray()) if (c != ' ') cnt.put(c, cnt.getOrDefault(c, 0) + 1);\n            int max_val = 0; char best = '\\0';\n            for (char c : s.toCharArray()) {\n                if (c != ' ' && cnt.get(c) > max_val) {\n                    max_val = cnt.get(c);\n                    best = c;\n                }\n            }\n            if (best != '\\0') System.out.println(best + \":\" + max_val);\n        }\n    }\n}\n",
+      "Python3": "import sys\nfrom collections import Counter\ndef main():\n    s = sys.stdin.read().rstrip(\"\\r\\n\")\n    counts = Counter(c for c in s if c != \" \")\n    if not counts: return\n    max_c = max(counts.values())\n    for c in s:\n        if c != \" \" and counts[c] == max_c:\n            print(f\"{c}:{max_c}\")\n            break\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const s = fs.readFileSync(0, \"utf-8\").replace(/\\r?\\n$/, \"\");\n    const counts = {};\n    for (const c of s) {\n        if (c !== \" \") counts[c] = (counts[c] || 0) + 1;\n    }\n    let maxC = 0, best = \"\";\n    for (const c of s) {\n        if (c !== \" \" && counts[c] > maxC) {\n            maxC = counts[c];\n            best = c;\n        }\n    }\n    if (best) console.log(`${best}:${maxC}`);\n}\nmain();\n"
     },
     "notes": [],
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "overview": "Count non-space character frequencies. Pick character with max count appearing earliest in original text.",
+      "approach": "Find the character with highest frequency (ignoring spaces), breaking ties by first occurrence.",
+      "complexityAnalysis": "Time: O(N), Space: O(K)"
     }
   },
-  "hints": [],
+  "hints": [
+    "Count occurrences of each non-space character.",
+    "Find maximum frequency.",
+    "Print char:count."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Frequency counting",
+    "Tie breaking"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true,
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "this is a test sentence",
+      "output": "t:4",
+      "explanation": "Example demonstrating Find the character with highest frequency (ignoring spaces), breaking ties by first occurrence."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "hello World",
+      "output": "l:3",
+      "explanation": "Example demonstrating Find the character with highest frequency (ignoring spaces), breaking ties by first occurrence."
+    }
+  ]
 }

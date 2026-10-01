@@ -29,13 +29,37 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "You receive an array of CPU `tasks`, each labeled with a letter from A to Z, and a number `n`. Each CPU interval can be idle or allow the completion of one task. Tasks can be completed in any order, but there's a constraint: there has to be a gap of **no fewer than** `n` intervals between two tasks with the same label.\n\nOutput the **smallest** number of CPU intervals required to complete all tasks.\n\n**Example 1:**\n\n**Input:** tasks = [\"A\",\"A\",\"A\",\"B\",\"B\",\"B\"], n = 2\n\n**Output:** 8\n\n**Explanation:** A possible sequence is: A -> B -> idle -> A -> B -> idle -> A -> B.\n\nAfter completing task A, you must wait two intervals before doing A again. The same applies to task B. In the 3rd interval, neither A nor B can be done, so you idle. By the 4th interval, you can do A again as 2 intervals have passed.\n\n**Example 2:**\n\n**Input:** tasks = [\"A\",\"C\",\"A\",\"B\",\"D\",\"B\"], n = 1\n\n**Output:** 6\n\n**Explanation:** A possible sequence is: A -> B -> C -> D -> A -> B.\n\nWith a cooling interval of 1, you can repeat a task after just one other task.\n\n**Example 3:**\n\n**Input:** tasks = [\"A\",\"A\",\"A\", \"B\",\"B\",\"B\"], n = 3\n\n**Output:** 10\n\n**Explanation:** A possible sequence is: A -> B -> idle -> idle -> A -> B -> idle -> idle -> A -> B.\n\nThere are only two types of tasks, A and B, which need to be separated by 3 intervals. This leads to idling twice between repetitions of these tasks.\n\n**Constraints:**\n\n* `1 <= tasks.length <= 104`\n* `tasks[i]` is an uppercase English letter.\n* `0 <= n <= 100`",
+    "problemStatement": "A CPU must run a list of `tasks`, where each task is represented by an integer task type id. Running any single task takes one unit of time. After running a task of a given type, the CPU must wait at least `n` units of time before running another task of that same type again, though it may run a different type in the meantime, or sit idle if nothing else is available.\n\n**Return the minimum total number of time units needed to finish all the tasks.**\n\nTasks can be run in any order, and idle units count toward the total.",
     "constraints": [
-      "None"
+      "1 <= tasks.length <= 10^4",
+      "0 <= tasks[i] <= 25",
+      "0 <= n <= 100"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tasks = [0, 0, 0, 1, 1, 1], n = 2",
+        "output": "8",
+        "explanation": "one valid schedule is 0,1,idle,0,1,idle,0,1, taking 8 units because after each type-0 or type-1 task there must be a 2-unit cooldown before repeating it"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tasks = [0, 0, 0, 1, 2, 3], n = 2",
+        "output": "7",
+        "explanation": "one valid schedule is 0,1,2,0,3,idle,0, taking 7 units; type 0 needs its cooldown but the other types fill the gaps"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tasks = [0, 0, 1, 1], n = 0",
+        "output": "4",
+        "explanation": "no cooldown is required, so the 4 tasks can just run back to back"
+      }
+    ],
     "notes": []
   },
   "testCases": {
@@ -43,246 +67,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[0,0,0,1,1,1],2]",
+        "expectedOutput": "8",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[0,0,0,1,2,3],2]",
+        "expectedOutput": "7",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[0,1,2,3],2]",
+        "expectedOutput": "4",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[0,0,1,1],0]",
+        "expectedOutput": "4",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[0],5]",
+        "expectedOutput": "1",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[0,0],0]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[0,0],5]",
+        "expectedOutput": "7",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[0,1,2,3,4,5],0]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[0,0,0,0,0,0,1,1],2]",
+        "expectedOutput": "16",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[0,0,0,0],3]",
+        "expectedOutput": "13",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[0,0,1,1,2,2],1]",
+        "expectedOutput": "6",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[0,0,0,0,0,0,0,0,0,0],5]",
+        "expectedOutput": "55",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[0,1,0,1,0,1,0],2]",
+        "expectedOutput": "10",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[0,0,0,1,1,1,2,2,2],3]",
+        "expectedOutput": "11",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[0,0,0,0,1,1],2]",
+        "expectedOutput": "10",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[0,1,2,3,4,5,6,7,8,9],3]",
+        "expectedOutput": "10",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[0,0,0,0,0],4]",
+        "expectedOutput": "21",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[0,1],10]",
+        "expectedOutput": "2",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],1]",
+        "expectedOutput": "39",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[0,1,2,3],1]",
+        "expectedOutput": "4",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -355,19 +297,27 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Break down Task Scheduler Problem into smaller subproblems or mathematical steps.",
+    "Identify time and space complexity trade-offs between brute-force and optimal approaches.",
+    "Test your logic against sample cases, boundary conditions, and large constraints."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Master algorithmic design for Task Scheduler Problem.",
+    "Understand time and space complexity trade-offs.",
+    "Implement robust edge-case handling for boundary conditions."
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Solution {\npublic:\n    int leastInterval(vector<char>& tasks, int n) {\n        \n    }\n};",
-    "Java": "class Solution {\n    public int leastInterval(char[] tasks, int n) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n)\n# Space: O(26) = O(1)\n\nfrom collections import Counter\n\n\nclass Solution(object):\n    def leastInterval(self, tasks, n):\n        \"\"\"\n        :type tasks: List[str]\n        :type n: int\n        :rtype: int\n        \"\"\"\n        counter = Counter(tasks)\n        _, max_count = counter.most_common(1)[0]\n        return max((max_count-1) * (n+1) + counter.values().count(max_count), len(tasks))",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int leastInterval(vector<char>& tasks, int n) {\n        \n    }\n};\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        Tok tok;\n        if (!line.empty() && line.front() == '[' && line.back() == ']') {\n            tok.s = line.substr(1, line.size() - 2);\n        } else {\n            tok.s = line;\n        }\n        tok.pos = 0;\n        auto arg0 = readIntVec(tok);\n        int arg1 = readInt(tok);\n        cout << Solution().leastInterval(arg0, arg1) << \"\\n\";\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public int leastInterval(char[] tasks, int n) {\n        \n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\") || s.isEmpty()) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[' || c == '{') depth++;\n            else if (c == ']' || c == '}') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\").charAt(0);\n        return arr;\n    }\n    static char[][] toChar2D(String s) {\n        String[] rows = readArrayRaw(s);\n        char[][] mat = new char[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toCharArray(rows[i]);\n        return mat;\n    }\n    static List<Integer> toIntList(String s) {\n        int[] a = toIntArray(s);\n        List<Integer> list = new ArrayList<>();\n        for (int v : a) list.add(v);\n        return list;\n    }\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos) == ',' || _raw.charAt(_pos) == ' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth = 0, start = _pos;\n            while (_pos < _raw.length()) {\n                char x = _raw.charAt(_pos);\n                if (x == '[') depth++;\n                else if (x == ']') { depth--; if (depth == 0) { _pos++; break; } }\n                _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start = _pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start = _pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.startsWith(\"[\") && line.endsWith(\"]\")) {\n            _raw = line.substring(1, line.length() - 1);\n        } else {\n            _raw = line;\n        }\n        _pos = 0;\n        int[] arg0 = toIntArray(nextToken());\n        int arg1 = Integer.parseInt(nextToken());\n        System.out.println(new Solution().leastInterval(arg0, arg1));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\n# Time:  O(n)\n# Space: O(26) = O(1)\n\nfrom collections import Counter\n\n\nclass Solution(object):\n    def leastInterval(self, tasks, n):\n        \"\"\"\n        :type tasks: List[str]\n        :type n: int\n        :rtype: int\n        \"\"\"\n        counter = Counter(tasks)\n        _, max_count = counter.most_common(1)[0]\n        return max((max_count-1) * (n+1) + counter.values().count(max_count), len(tasks))\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    if not isinstance(args, list):\n        args = [args]\n    res = Solution().leastInterval(*args[:2])\n    print(json.dumps(res, separators=(',', ':')))\n",
     "Python": "class Solution(object):\n    def leastInterval(self, tasks, n):\n        \"\"\"\n        :type tasks: List[str]\n        :type n: int\n        :rtype: int\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * @param {character[]} tasks\n * @param {number} n\n * @return {number}\n */\nvar leastInterval = function(tasks, n) {\n    \n};",
+    "JavaScript": "'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {character[]} tasks\n * @param {number} n\n * @return {number}\n */\nvar leastInterval = function(tasks, n) {\n    \n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    let args = JSON.parse(line.trim());\n    if (!Array.isArray(args)) args = [args];\n    let res = typeof Solution !== 'undefined' && typeof (new Solution().leastInterval) === 'function'\n        ? new Solution().leastInterval(...args.slice(0, 2))\n        : (typeof leastInterval === 'function' ? leastInterval(...args.slice(0, 2)) : (new Solution().leastInterval(...args.slice(0, 2))));\n    console.log(JSON.stringify(res));\n    rl.close();\n});\n",
     "TypeScript": "function leastInterval(tasks: string[], n: number): number {\n    \n};",
     "C#": "public class Solution {\n    public int LeastInterval(char[] tasks, int n) {\n        \n    }\n}",
     "C": "int leastInterval(char* tasks, int tasksSize, int n) {\n    \n}",
@@ -388,13 +338,13 @@
     "params": [
       {
         "name": "tasks",
-        "type": "character[]"
+        "type": "int[]"
       },
       {
         "name": "n",
-        "type": "integer"
+        "type": "int"
       }
     ]
   },
-  "verified": false
+  "verified": true
 }

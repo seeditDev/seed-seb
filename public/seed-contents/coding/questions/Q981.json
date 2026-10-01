@@ -25,13 +25,38 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Design a time-based key-value data structure that can store multiple values for the same key at different time stamps and retrieve the key's value at a certain timestamp.\n\nCreate an implementation of the `TimeMap` class:\n\n* `TimeMap()` Initializes the object of the data structure.\n* `void set(String key, String value, int timestamp)` Stores the key `key` with the value `value` at the given time `timestamp`.\n* `String get(String key, int timestamp)` Returns a value such that `set` was called previously, with `timestamp_prev <= timestamp`. If there are multiple such values, it returns the value associated with the largest `timestamp_prev`. If there are no values, it returns `\"\"`.\n\n**Example 1:**\n\n```\nInput\n[\"TimeMap\", \"set\", \"get\", \"get\", \"set\", \"get\", \"get\"]\n[[], [\"foo\", \"bar\", 1], [\"foo\", 1], [\"foo\", 3], [\"foo\", \"bar2\", 4], [\"foo\", 4], [\"foo\", 5]]\nOutput\n[null, null, \"bar\", \"bar\", null, \"bar2\", \"bar2\"]\n\nExplanation\nTimeMap timeMap = new TimeMap();\ntimeMap.set(\"foo\", \"bar\", 1);  // store the key \"foo\" and value \"bar\" along with timestamp = 1.\ntimeMap.get(\"foo\", 1);         // return \"bar\"\ntimeMap.get(\"foo\", 3);         // return \"bar\", since there is no value corresponding to foo at timestamp 3 and timestamp 2, then the only value is at timestamp 1 is \"bar\".\ntimeMap.set(\"foo\", \"bar2\", 4); // store the key \"foo\" and value \"bar2\" along with timestamp = 4.\ntimeMap.get(\"foo\", 4);         // return \"bar2\"\ntimeMap.get(\"foo\", 5);         // return \"bar2\"\n```\n\n**Constraints:**\n\n* `1 <= key.length, value.length <= 100`\n* `key` and `value` consist of lowercase English letters and digits.\n* `1 <= timestamp <= 107`\n* All the timestamps `timestamp` of `set` are strictly increasing.\n* At most `2 * 105` calls will be made to `set` and `get`.",
+    "problemStatement": "You're given a space-delimited sequence of operations `ops` against a time-based key-value store, where keys and values are small integers. Each token is one of:\n\n- `set_<key>_<value>_<timestamp>` - store value for key at the given timestamp, no return value\n- `get_<key>_<timestamp>` - return the value that was set for key at the largest recorded timestamp less than or equal to the given timestamp, or -1 if no such value exists\n\n**Simulate the operations in order on an initially empty store, and return a list containing the result of every \"get\" operation, in the order they occurred.**\n\nFor any single key, every set call for that key arrives with a strictly increasing timestamp.",
     "constraints": [
-      "None"
+      "1 <= number of operations <= 2 * 10^5",
+      "0 <= key, value <= 10^6",
+      "1 <= timestamp <= 10^7",
+      "for any single key, all set calls for that key use strictly increasing timestamps"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"set_1_100_1 get_1_1 get_1_3 set_1_200_4 get_1_4 get_1_5\"",
+        "output": "[100, 100, 200, 200]",
+        "explanation": "at timestamp 3, the latest set for key 1 at or before it is still timestamp 1 (value 100); at timestamp 4 and 5, it's timestamp 4 (value 200)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"set_2_50_5 get_2_1 get_2_5 get_2_10\"",
+        "output": "[-1, 50, 50]",
+        "explanation": "get_2_1 queries before key 2's only set (timestamp 5), so it returns -1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"set_3_9_2 set_3_8_4 set_3_7_6 get_3_3 get_3_5 get_3_7\"",
+        "output": "[9, 8, 7]",
+        "explanation": "each get lands strictly between two set timestamps and returns the value from the most recent one at or before the query"
+      }
+    ],
     "notes": []
   },
   "testCases": {
@@ -39,246 +64,172 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[\"set_1_100_1 get_1_1 get_1_3 set_1_200_4 get_1_4 get_1_5\"]",
+        "expectedOutput": "[100,100,200,200]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[\"get_1_1\"]",
+        "expectedOutput": "[-1]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[\"set_2_50_5 get_2_1 get_2_5 get_2_10\"]",
+        "expectedOutput": "[-1,50,50]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[\"set_1_10_1 set_2_20_2 get_1_2 get_2_1 get_1_1 get_2_2\"]",
+        "expectedOutput": "[10,-1,10,20]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[\"set_5_1_1 set_5_2_2 set_5_3_3 get_5_1 get_5_2 get_5_3 get_5_100 get_5_0\"]",
+        "expectedOutput": "[1,2,3,3,-1]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[\"set_1_7_10 get_1_5 get_1_10 get_1_15\"]",
+        "expectedOutput": "[-1,7,7]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[\"set_3_9_2 set_3_8_4 set_3_7_6 get_3_3 get_3_5 get_3_7 get_3_1\"]",
+        "expectedOutput": "[9,8,7,-1]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[\"set_1_1_1 get_1_1000000000\"]",
+        "expectedOutput": "[1]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[\"set_1_11_1 set_2_22_1 set_3_33_1 get_1_1 get_2_1 get_3_1 get_4_1\"]",
+        "expectedOutput": "[11,22,33,-1]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[\"set_1_0_1 get_1_1\"]",
+        "expectedOutput": "[0]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[\"set_1_5_1 set_1_6_2 set_1_7_3 set_1_8_4 set_1_9_5 get_1_1 get_1_2 get_1_3 get_1_4 get_1_5\"]",
+        "expectedOutput": "[5,6,7,8,9]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[\"set_9_100_100 get_9_50 get_9_99 get_9_100 get_9_101\"]",
+        "expectedOutput": "[-1,-1,100,100]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[\"set_1_1_5 set_2_2_5 get_1_5 get_2_5 get_1_4 get_2_4\"]",
+        "expectedOutput": "[1,2,-1,-1]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[\"set_1_100_1 set_1_200_5 set_1_300_10 get_1_3 get_1_7 get_1_12\"]",
+        "expectedOutput": "[100,200,300]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[\"get_1_1 get_2_2 get_3_3\"]",
+        "expectedOutput": "[-1,-1,-1]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[\"set_1_42_1 get_1_1 get_1_1 get_1_1\"]",
+        "expectedOutput": "[42,42,42]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[\"set_1_1_1 set_1_2_2 set_1_3_3 set_1_4_4 set_1_5_5 get_1_0 get_1_6\"]",
+        "expectedOutput": "[-1,5]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[\"set_1_10_2 set_2_20_2 set_1_15_4 set_2_25_4 get_1_3 get_2_3 get_1_5 get_2_5\"]",
+        "expectedOutput": "[10,20,15,25]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[\"set_100_1_1 get_100_1\"]",
+        "expectedOutput": "[1]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[\"set_1_5_3 get_1_3 get_1_2\"]",
+        "expectedOutput": "[5,-1]",
+        "weight": 5
       },
       {
         "id": "tc_21",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 21",
+        "input": "[\"set_2_1_1 set_2_2_2 set_2_3_3 set_2_4_4 set_2_5_5 set_2_6_6 get_2_6 get_2_1 get_2_3\"]",
+        "expectedOutput": "[6,1,3]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -351,19 +302,27 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Break down Time Based Key-Value Store Problem into smaller subproblems or mathematical steps.",
+    "Identify time and space complexity trade-offs between brute-force and optimal approaches.",
+    "Test your logic against sample cases, boundary conditions, and large constraints."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Master algorithmic design for Time Based Key-Value Store Problem.",
+    "Understand time and space complexity trade-offs.",
+    "Implement robust edge-case handling for boundary conditions."
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class TimeMap {\npublic:\n    TimeMap() {\n        \n    }\n    \n    void set(string key, string value, int timestamp) {\n        \n    }\n    \n    string get(string key, int timestamp) {\n        \n    }\n};\n\n/**\n * Your TimeMap object will be instantiated and called as such:\n * TimeMap* obj = new TimeMap();\n * obj->set(key,value,timestamp);\n * string param_2 = obj->get(key,timestamp);\n */",
-    "Java": "class TimeMap {\n\n    public TimeMap() {\n        \n    }\n    \n    public void set(String key, String value, int timestamp) {\n        \n    }\n    \n    public String get(String key, int timestamp) {\n        \n    }\n}\n\n/**\n * Your TimeMap object will be instantiated and called as such:\n * TimeMap obj = new TimeMap();\n * obj.set(key,value,timestamp);\n * String param_2 = obj.get(key,timestamp);\n */",
-    "Python3": "# Time:  set: O(1)\n#        get: O(logn)\n# Space: O(n)\n\nimport collections\nimport bisect\n\n\nclass TimeMap(object):\n\n    def __init__(self):\n        \"\"\"\n        Initialize your data structure here.\n        \"\"\"\n        self.lookup = collections.defaultdict(list)\n\n    def set(self, key, value, timestamp):\n        \"\"\"\n        :type key: str\n        :type value: str\n        :type timestamp: int\n        :rtype: None\n        \"\"\"\n        self.lookup[key].append((timestamp, value))\n        \n\n    def get(self, key, timestamp):\n        \"\"\"\n        :type key: str\n        :type timestamp: int\n        :rtype: str\n        \"\"\"\n        A = self.lookup.get(key, None)\n        if A is None:\n            return \"\"\n        i = bisect.bisect_right(A, (timestamp+1, 0))\n        return A[i-1][1] if i else \"\"",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int timeMapResults(int ops) {\n        return 0;\n    }\n};\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        Tok tok;\n        if (!line.empty() && line.front() == '[' && line.back() == ']') {\n            tok.s = line.substr(1, line.size() - 2);\n        } else {\n            tok.s = line;\n        }\n        tok.pos = 0;\n        string arg0 = readStr(tok);\n        cout << Solution().timeMapResults(arg0) << \"\\n\";\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public int timeMapResults(int ops) {\n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\") || s.isEmpty()) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[' || c == '{') depth++;\n            else if (c == ']' || c == '}') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\").charAt(0);\n        return arr;\n    }\n    static char[][] toChar2D(String s) {\n        String[] rows = readArrayRaw(s);\n        char[][] mat = new char[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toCharArray(rows[i]);\n        return mat;\n    }\n    static List<Integer> toIntList(String s) {\n        int[] a = toIntArray(s);\n        List<Integer> list = new ArrayList<>();\n        for (int v : a) list.add(v);\n        return list;\n    }\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos) == ',' || _raw.charAt(_pos) == ' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth = 0, start = _pos;\n            while (_pos < _raw.length()) {\n                char x = _raw.charAt(_pos);\n                if (x == '[') depth++;\n                else if (x == ']') { depth--; if (depth == 0) { _pos++; break; } }\n                _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start = _pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start = _pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.startsWith(\"[\") && line.endsWith(\"]\")) {\n            _raw = line.substring(1, line.length() - 1);\n        } else {\n            _raw = line;\n        }\n        _pos = 0;\n        String arg0 = nextToken();\n        System.out.println(new Solution().timeMapResults(arg0));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def timeMapResults(self, ops):\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    if not isinstance(args, list):\n        args = [args]\n    res = Solution().timeMapResults(*args[:1])\n    print(json.dumps(res, separators=(',', ':')))\n",
     "Python": "class TimeMap(object):\n\n    def __init__(self):\n        \n\n    def set(self, key, value, timestamp):\n        \"\"\"\n        :type key: str\n        :type value: str\n        :type timestamp: int\n        :rtype: None\n        \"\"\"\n        \n\n    def get(self, key, timestamp):\n        \"\"\"\n        :type key: str\n        :type timestamp: int\n        :rtype: str\n        \"\"\"\n        \n\n\n# Your TimeMap object will be instantiated and called as such:\n# obj = TimeMap()\n# obj.set(key,value,timestamp)\n# param_2 = obj.get(key,timestamp)",
-    "JavaScript": "\nvar TimeMap = function() {\n    \n};\n\n/** \n * @param {string} key \n * @param {string} value \n * @param {number} timestamp\n * @return {void}\n */\nTimeMap.prototype.set = function(key, value, timestamp) {\n    \n};\n\n/** \n * @param {string} key \n * @param {number} timestamp\n * @return {string}\n */\nTimeMap.prototype.get = function(key, timestamp) {\n    \n};\n\n/** \n * Your TimeMap object will be instantiated and called as such:\n * var obj = new TimeMap()\n * obj.set(key,value,timestamp)\n * var param_2 = obj.get(key,timestamp)\n */",
+    "JavaScript": "'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nvar TimeMap = function() {\n    \n};\n\n/** \n * @param {string} key \n * @param {string} value \n * @param {number} timestamp\n * @return {void}\n */\nTimeMap.prototype.set = function(key, value, timestamp) {\n    \n};\n\n/** \n * @param {string} key \n * @param {number} timestamp\n * @return {string}\n */\nTimeMap.prototype.get = function(key, timestamp) {\n    \n};\n\n/** \n * Your TimeMap object will be instantiated and called as such:\n * var obj = new TimeMap()\n * obj.set(key,value,timestamp)\n * var param_2 = obj.get(key,timestamp)\n */\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    let args = JSON.parse(line.trim());\n    if (!Array.isArray(args)) args = [args];\n    let res = typeof Solution !== 'undefined' && typeof (new Solution().timeMapResults) === 'function'\n        ? new Solution().timeMapResults(...args.slice(0, 1))\n        : (typeof timeMapResults === 'function' ? timeMapResults(...args.slice(0, 1)) : (new Solution().timeMapResults(...args.slice(0, 1))));\n    console.log(JSON.stringify(res));\n    rl.close();\n});\n",
     "TypeScript": "class TimeMap {\n    constructor() {\n        \n    }\n\n    set(key: string, value: string, timestamp: number): void {\n        \n    }\n\n    get(key: string, timestamp: number): string {\n        \n    }\n}\n\n/**\n * Your TimeMap object will be instantiated and called as such:\n * var obj = new TimeMap()\n * obj.set(key,value,timestamp)\n * var param_2 = obj.get(key,timestamp)\n */",
     "C#": "public class TimeMap {\n\n    public TimeMap() {\n        \n    }\n    \n    public void Set(string key, string value, int timestamp) {\n        \n    }\n    \n    public string Get(string key, int timestamp) {\n        \n    }\n}\n\n/**\n * Your TimeMap object will be instantiated and called as such:\n * TimeMap obj = new TimeMap();\n * obj.Set(key,value,timestamp);\n * string param_2 = obj.Get(key,timestamp);\n */",
     "C": "\n\n\ntypedef struct {\n    \n} TimeMap;\n\n\nTimeMap* timeMapCreate() {\n    \n}\n\nvoid timeMapSet(TimeMap* obj, char* key, char* value, int timestamp) {\n    \n}\n\nchar* timeMapGet(TimeMap* obj, char* key, int timestamp) {\n    \n}\n\nvoid timeMapFree(TimeMap* obj) {\n    \n}\n\n/**\n * Your TimeMap struct will be instantiated and called as such:\n * TimeMap* obj = timeMapCreate();\n * timeMapSet(obj, key, value, timestamp);\n \n * char* param_2 = timeMapGet(obj, key, timestamp);\n \n * timeMapFree(obj);\n*/",
@@ -380,8 +339,13 @@
     "Racket": "(define time-map%\n  (class object%\n    (super-new)\n    \n    (init-field)\n    \n    ; set : string? string? exact-integer? -> void?\n    (define/public (set key value timestamp)\n      )\n    ; get : string? exact-integer? -> string?\n    (define/public (get key timestamp)\n      )))\n\n;; Your time-map% object will be instantiated and called as such:\n;; (define obj (new time-map%))\n;; (send obj set key value timestamp)\n;; (define param_2 (send obj get key timestamp))"
   },
   "_internal": {
-    "methodName": "",
-    "params": []
+    "methodName": "timeMapResults",
+    "params": [
+      {
+        "name": "ops",
+        "type": "string"
+      }
+    ]
   },
-  "verified": false
+  "verified": true
 }

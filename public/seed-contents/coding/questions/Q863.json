@@ -27,9 +27,12 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "With the `root` of a binary tree, the value of a target node `target`, and an integer `k`, output *an array of the values of all nodes that have a distance* `k` *from the target node.*\n\nYou can output the answer in **any order**.\n\n**Example 1:**\n\n![](https://s3-lc-upload.s3.amazonaws.com/uploads/2018/06/28/sketch0.png)\n\n```\nInput: root = [3,5,1,6,2,0,8,null,null,7,4], target = 5, k = 2\nOutput: [7,4,1]\nExplanation: The nodes that are a distance 2 from the target node (with value 5) have values 7, 4, and 1.\n```\n\n**Example 2:**\n\n```\nInput: root = [1], target = 1, k = 3\nOutput: []\n```\n\n**Constraints:**\n\n* The number of nodes in the tree is in the range `[1, 500]`.\n* `0 <= Node.val <= 500`\n* All the values `Node.val` are **unique**.\n* `target` is the value of one of the nodes in the tree.\n* `0 <= k <= 1000`",
+    "problemStatement": "A binary tree is given as a plain integer array named `tree`, using a complete-binary-tree (heap) index layout:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node here\" - real node values always fall between -100 and 100, so -101 can never be a genuine value\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2 has no left child (sentinel) but does have a right child, 4.\n\nYou're also given a node value `target` (guaranteed to exist somewhere in the tree) and an integer `k`.\n\n**Treating the tree as an undirected graph (you can walk from a node to its parent as well as to its children), find every node whose distance from the target node is exactly `k`, and return their values sorted in ascending order.**\n\nDistance is measured as the number of edges on the shortest path.",
     "constraints": [
-      "None"
+      "1 <= tree.length <= 2000",
+      "-100 <= tree[i] <= 100, or tree[i] == -101 marking a missing node",
+      "0 <= k <= 1000",
+      "target is guaranteed to equal a real value present in tree"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -37,16 +40,23 @@
       {
         "id": "sample_1",
         "type": "reg",
-        "input": "root = [3,5,1,6,2,0,8,null,null,7,4], target = 5, k = 2",
-        "output": "[7,4,1]",
-        "explanation": ""
+        "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], target = 5, k = 2",
+        "output": "[1, 4, 7]",
+        "explanation": "from node 5, distance 1 reaches 3 (parent), 6 and 2 (children); distance 2 from there reaches 1 (3's other child), 7 and 4 (2's children)"
       },
       {
         "id": "sample_2",
         "type": "reg",
-        "input": "root = [1], target = 1, k = 3",
-        "output": "[]",
-        "explanation": ""
+        "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], target = 5, k = 0",
+        "output": "[5]",
+        "explanation": "distance 0 from a node is just the node itself"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [3, 5, 1, 6, 2, 0, 8, -101, -101, 7, 4], target = 3, k = 1",
+        "output": "[1, 5]",
+        "explanation": "the root's only neighbors are its two children"
       }
     ],
     "notes": []
@@ -56,246 +66,212 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,2]",
+        "expectedOutput": "[1,4,7]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],5,0]",
+        "expectedOutput": "[5]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],3,1]",
+        "expectedOutput": "[1,5]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[3,5,1,6,2,0,8,-101,-101,7,4],3,4]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[53,-9,-101,-12,-101,-101,-101,-100,-101,-101,-101,-101,-101,-101,-101,25,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,46],46,0]",
+        "expectedOutput": "[46]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[53,-9,-101,-12,-101,-101,-101,-100,-101,-101,-101,-101,-101,-101,-101,25,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,46],46,1]",
+        "expectedOutput": "[8]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[53,-9,-101,-12,-101,-101,-101,-100,-101,-101,-101,-101,-101,-101,-101,25,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,35,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,8,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,46],46,3]",
+        "expectedOutput": "[25]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[2,-101,60,-101,-101,-101,26,-101,-101,-101,-101,-101,-101,-101,38,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66],66,0]",
+        "expectedOutput": "[66]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[2,-101,60,-101,-101,-101,26,-101,-101,-101,-101,-101,-101,-101,38,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66],66,1]",
+        "expectedOutput": "[17]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[2,-101,60,-101,-101,-101,26,-101,-101,-101,-101,-101,-101,-101,38,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,66],66,3]",
+        "expectedOutput": "[26]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[42,37,41,4,21,-52,-91,-4,1,-50,28,98,-14,97,64],97,0]",
+        "expectedOutput": "[97]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[42,37,41,4,21,-52,-91,-4,1,-50,28,98,-14,97,64],97,1]",
+        "expectedOutput": "[-91]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[42,37,41,4,21,-52,-91,-4,1,-50,28,98,-14,97,64],97,3]",
+        "expectedOutput": "[-52,42]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[-66,-47,-101,9,28,-101,-101,15,-86,-41,71,-101,-101,-101,-101,-101,-101,-101,84,-22,-38,-101,49,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,89,-42,93,-88,-101,-101,-101,-101,-87,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-26,-101,-33,73],84,0]",
+        "expectedOutput": "[84]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[-66,-47,-101,9,28,-101,-101,15,-86,-41,71,-101,-101,-101,-101,-101,-101,-101,84,-22,-38,-101,49,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,89,-42,93,-88,-101,-101,-101,-101,-87,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-26,-101,-33,73],84,1]",
+        "expectedOutput": "[-86,-42,89]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[-66,-47,-101,9,28,-101,-101,15,-86,-41,71,-101,-101,-101,-101,-101,-101,-101,84,-22,-38,-101,49,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,89,-42,93,-88,-101,-101,-101,-101,-87,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-26,-101,-33,73],84,3]",
+        "expectedOutput": "[-47,15]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[-54,47,45,0,61,69,-28,-101,33,-56,83,98,90,-101,-101,-101,-101,57,-57,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,20,-23,-101,-101,-101,-101,77,-51,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,79,-101,-101,-101,-101,-101,-101,-101,-101,-101,-85,76,74,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,56],0,0]",
+        "expectedOutput": "[0]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[-54,47,45,0,61,69,-28,-101,33,-56,83,98,90,-101,-101,-101,-101,57,-57,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,20,-23,-101,-101,-101,-101,77,-51,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,79,-101,-101,-101,-101,-101,-101,-101,-101,-101,-85,76,74,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,56],0,1]",
+        "expectedOutput": "[33,47]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[-54,47,45,0,61,69,-28,-101,33,-56,83,98,90,-101,-101,-101,-101,57,-57,-101,-53,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,20,-23,-101,-101,-101,-101,77,-51,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,79,-101,-101,-101,-101,-101,-101,-101,-101,-101,-85,76,74,17,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,56],0,3]",
+        "expectedOutput": "[-56,-23,20,45,83]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[63,30,-24,95,77,-25,33],63,0]",
+        "expectedOutput": "[63]",
+        "weight": 5
       },
       {
         "id": "tc_21",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 21",
+        "input": "[[63,30,-24,95,77,-25,33],63,1]",
+        "expectedOutput": "[-24,30]",
+        "weight": 5
       },
       {
         "id": "tc_22",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 22",
+        "input": "[[63,30,-24,95,77,-25,33],63,3]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_23",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 23",
+        "input": "[[-53],-53,0]",
+        "expectedOutput": "[-53]",
+        "weight": 5
       },
       {
         "id": "tc_24",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 24",
+        "input": "[[-53],-53,1]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_25",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 25",
+        "input": "[[-53],-53,3]",
+        "expectedOutput": "[]",
+        "weight": 5
       },
       {
         "id": "tc_26",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 26",
+        "input": "[[-66,-47,-101,9,28,-101,-101,15,-86,-41,71,-101,-101,-101,-101,-101,-101,-101,84,-22,-38,-101,49,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,89,-42,93,-88,-101,-101,-101,-101,-87,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-101,-26,-101,-33,73],-66,88]",
+        "expectedOutput": "[]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -368,19 +344,27 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Identify whether depth-first search (DFS) or breadth-first search (BFS) is optimal for All Nodes Distance K in Binary Tree Problem.",
+    "Consider recursively processing the left and right subtrees and combining their results.",
+    "Account for edge cases such as empty trees or single-node trees."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Master algorithmic design for All Nodes Distance K in Binary Tree Problem.",
+    "Understand time and space complexity trade-offs.",
+    "Implement robust edge-case handling for boundary conditions."
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     TreeNode *left;\n *     TreeNode *right;\n *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}\n * };\n */\nclass Solution {\npublic:\n    vector<int> distanceK(TreeNode* root, TreeNode* target, int k) {\n        \n    }\n};",
-    "Java": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     int val;\n *     TreeNode left;\n *     TreeNode right;\n *     TreeNode(int x) { val = x; }\n * }\n */\nclass Solution {\n    public List<Integer> distanceK(TreeNode root, TreeNode target, int k) {\n        \n    }\n}",
-    "Python3": "# Time:  O(n)\n# Space: O(n)\n\nimport collections\n\n\nclass Solution(object):\n    def distanceK(self, root, target, K):\n        \"\"\"\n        :type root: TreeNode\n        :type target: TreeNode\n        :type K: int\n        :rtype: List[int]\n        \"\"\"\n        def dfs(parent, child, neighbors):\n            if not child:\n                return\n            if parent:\n                neighbors[parent.val].append(child.val)\n                neighbors[child.val].append(parent.val)\n            dfs(child, child.left, neighbors)\n            dfs(child, child.right, neighbors)\n\n        neighbors = collections.defaultdict(list)\n        dfs(None, root, neighbors)\n        bfs = [target.val]\n        lookup = set(bfs)\n        for _ in range(K):\n            bfs = [nei for node in bfs\n                   for nei in neighbors[node]\n                   if nei not in lookup]\n            lookup |= set(bfs)\n        return bfs",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     TreeNode *left;\n *     TreeNode *right;\n *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}\n * };\n */\nclass Solution {\npublic:\n    vector<int> distanceK(TreeNode* root, TreeNode* target, int k) {\n        \n    }\n};\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        Tok tok;\n        if (!line.empty() && line.front() == '[' && line.back() == ']') {\n            tok.s = line.substr(1, line.size() - 2);\n        } else {\n            tok.s = line;\n        }\n        tok.pos = 0;\n        auto arg0 = readIntVec(tok);\n        int arg1 = readInt(tok);\n        int arg2 = readInt(tok);\n        cout << Solution().distanceK(arg0, arg1, arg2) << \"\\n\";\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     int val;\n *     TreeNode left;\n *     TreeNode right;\n *     TreeNode(int x) { val = x; }\n * }\n */\nclass Solution {\n    public List<Integer> distanceK(TreeNode root, TreeNode target, int k) {\n        \n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\") || s.isEmpty()) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[' || c == '{') depth++;\n            else if (c == ']' || c == '}') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\").charAt(0);\n        return arr;\n    }\n    static char[][] toChar2D(String s) {\n        String[] rows = readArrayRaw(s);\n        char[][] mat = new char[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toCharArray(rows[i]);\n        return mat;\n    }\n    static List<Integer> toIntList(String s) {\n        int[] a = toIntArray(s);\n        List<Integer> list = new ArrayList<>();\n        for (int v : a) list.add(v);\n        return list;\n    }\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos) == ',' || _raw.charAt(_pos) == ' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth = 0, start = _pos;\n            while (_pos < _raw.length()) {\n                char x = _raw.charAt(_pos);\n                if (x == '[') depth++;\n                else if (x == ']') { depth--; if (depth == 0) { _pos++; break; } }\n                _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start = _pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start = _pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.startsWith(\"[\") && line.endsWith(\"]\")) {\n            _raw = line.substring(1, line.length() - 1);\n        } else {\n            _raw = line;\n        }\n        _pos = 0;\n        int[] arg0 = toIntArray(nextToken());\n        int arg1 = Integer.parseInt(nextToken());\n        int arg2 = Integer.parseInt(nextToken());\n        System.out.println(new Solution().distanceK(arg0, arg1, arg2));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\n# Time:  O(n)\n# Space: O(n)\n\nimport collections\n\n\nclass Solution(object):\n    def distanceK(self, root, target, K):\n        \"\"\"\n        :type root: TreeNode\n        :type target: TreeNode\n        :type K: int\n        :rtype: List[int]\n        \"\"\"\n        def dfs(parent, child, neighbors):\n            if not child:\n                return\n            if parent:\n                neighbors[parent.val].append(child.val)\n                neighbors[child.val].append(parent.val)\n            dfs(child, child.left, neighbors)\n            dfs(child, child.right, neighbors)\n\n        neighbors = collections.defaultdict(list)\n        dfs(None, root, neighbors)\n        bfs = [target.val]\n        lookup = set(bfs)\n        for _ in range(K):\n            bfs = [nei for node in bfs\n                   for nei in neighbors[node]\n                   if nei not in lookup]\n            lookup |= set(bfs)\n        return bfs\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    if not isinstance(args, list):\n        args = [args]\n    res = Solution().distanceK(*args[:3])\n    print(json.dumps(res, separators=(',', ':')))\n",
     "Python": "# Definition for a binary tree node.\n# class TreeNode(object):\n#     def __init__(self, x):\n#         self.val = x\n#         self.left = None\n#         self.right = None\n\nclass Solution(object):\n    def distanceK(self, root, target, k):\n        \"\"\"\n        :type root: TreeNode\n        :type target: TreeNode\n        :type k: int\n        :rtype: List[int]\n        \"\"\"\n        ",
-    "JavaScript": "/**\n * Definition for a binary tree node.\n * function TreeNode(val) {\n *     this.val = val;\n *     this.left = this.right = null;\n * }\n */\n/**\n * @param {TreeNode} root\n * @param {TreeNode} target\n * @param {number} k\n * @return {number[]}\n */\nvar distanceK = function(root, target, k) {\n    \n};",
+    "JavaScript": "'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * Definition for a binary tree node.\n * function TreeNode(val) {\n *     this.val = val;\n *     this.left = this.right = null;\n * }\n */\n/**\n * @param {TreeNode} root\n * @param {TreeNode} target\n * @param {number} k\n * @return {number[]}\n */\nvar distanceK = function(root, target, k) {\n    \n};\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    let args = JSON.parse(line.trim());\n    if (!Array.isArray(args)) args = [args];\n    let res = typeof Solution !== 'undefined' && typeof (new Solution().distanceK) === 'function'\n        ? new Solution().distanceK(...args.slice(0, 3))\n        : (typeof distanceK === 'function' ? distanceK(...args.slice(0, 3)) : (new Solution().distanceK(...args.slice(0, 3))));\n    console.log(JSON.stringify(res));\n    rl.close();\n});\n",
     "TypeScript": "/**\n * Definition for a binary tree node.\n * class TreeNode {\n *     val: number\n *     left: TreeNode | null\n *     right: TreeNode | null\n *     constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {\n *         this.val = (val===undefined ? 0 : val)\n *         this.left = (left===undefined ? null : left)\n *         this.right = (right===undefined ? null : right)\n *     }\n * }\n */\n\nfunction distanceK(root: TreeNode | null, target: TreeNode | null, k: number): number[] {\n    \n};",
     "C#": "/**\n * Definition for a binary tree node.\n * public class TreeNode {\n *     public int val;\n *     public TreeNode left;\n *     public TreeNode right;\n *     public TreeNode(int x) { val = x; }\n * }\n */\npublic class Solution {\n    public IList<int> DistanceK(TreeNode root, TreeNode target, int k) {\n        \n    }\n}",
     "C": "/**\n * Definition for a binary tree node.\n * struct TreeNode {\n *     int val;\n *     struct TreeNode *left;\n *     struct TreeNode *right;\n * };\n */\n\n\n/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* distanceK(struct TreeNode* root, struct TreeNode* target, int k, int* returnSize) {\n    \n}",
@@ -396,18 +380,18 @@
     "methodName": "distanceK",
     "params": [
       {
-        "name": "root",
-        "type": "TreeNode"
+        "name": "tree",
+        "type": "int[]"
       },
       {
         "name": "target",
-        "type": "integer"
+        "type": "int"
       },
       {
         "name": "k",
-        "type": "integer"
+        "type": "int"
       }
     ]
   },
-  "verified": false
+  "verified": true
 }

@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.160",
-  "title": "Basic_Level_3_Patterns_9",
+  "title": "Mirrored Number Ladder with Zero Fill",
   "slug": "basic-level-3-patterns-9",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,7 +20,7 @@
   "content": {
     "problemStatement": "Write a program to accept the n value and display the below pattern",
     "constraints": [
-      "Nil"
+      "1 <= N <= 20"
     ],
     "inputFormat": "Accept n values of input",
     "outputFormat": "Pattern",
@@ -31,14 +31,14 @@
         "type": "reg",
         "input": "5",
         "output": "100000001\n120000021\n123000321\n123404321\n123454321",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "6",
         "output": "10000000001\n12000000021\n12300000321\n12340004321\n12345054321\n12345654321",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -337,64 +337,44 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Print numbers 1..i, followed by zeros, followed by i..1.",
+    "timeComplexity": "O(N^2)",
+    "spaceComplexity": "O(N^2)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    for (int i = 1; i <= n; i++) {\n        for (int j = 1; j <= i; j++) printf(\"%d\", j);\n        if (i < n) for (int z = 0; z < 2 * (n - i) - 1; z++) putchar('0');\n        int start = (i == n) ? i - 1 : i;\n        for (int j = start; j >= 1; j--) printf(\"%d\", j);\n        printf(\"\\n\");\n    }\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <string>\nusing namespace std;\nint main() {\n    int n; if (!(cin >> n)) return 0;\n    for (int i = 1; i <= n; i++) {\n        for (int j = 1; j <= i; j++) cout << j;\n        if (i < n) cout << string(2 * (n - i) - 1, '0');\n        int start = (i == n) ? i - 1 : i;\n        for (int j = start; j >= 1; j--) cout << j;\n        cout << \"\\n\";\n    }\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            StringBuilder sb = new StringBuilder();\n            for (int i = 1; i <= n; i++) {\n                for (int j = 1; j <= i; j++) sb.append(j);\n                if (i < n) sb.append(\"0\".repeat(2 * (n - i) - 1));\n                int start = (i == n) ? i - 1 : i;\n                for (int j = start; j >= 1; j--) sb.append(j);\n                sb.append(\"\\n\");\n            }\n            System.out.print(sb.toString());\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if not toks: return\n    n = int(toks[0])\n    for i in range(1, n + 1):\n        left = \"\".join(str(j) for j in range(1, i + 1))\n        zeros = \"0\" * (2 * (n - i) - 1) if i < n else \"\"\n        right = \"\".join(str(j) for j in range(i - (1 if i == n else 0), 0, -1))\n        print(left + zeros + right)\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (!toks || toks.length === 0 || toks[0] === \"\") return;\n    const n = parseInt(toks[0], 10);\n    const lines = [];\n    for (let i = 1; i <= n; i++) {\n        let left = \"\"; for (let j = 1; j <= i; j++) left += j;\n        const zeros = i < n ? \"0\".repeat(2 * (n - i) - 1) : \"\";\n        let right = \"\";\n        const start = (i === n) ? i - 1 : i;\n        for (let j = start; j >= 1; j--) right += j;\n        lines.push(left + zeros + right);\n    }\n    console.log(lines.join(\"\\n\"));\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "For row i (1 to N), print ascending numbers 1..i, zeros (2*(N-i)-1 if i<N), and descending numbers."
   },
-  "hints": [],
+  "hints": [
+    "Left side is 1 to i.",
+    "Middle is zeros of length 2*(N-i)-1.",
+    "Right side descends back to 1."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Pyramid construction",
+    "Digit concatenation",
+    "Conditional zero-padding"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

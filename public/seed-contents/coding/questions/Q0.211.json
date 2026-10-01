@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.211",
-  "title": "Basic_Level_1_Number_Based_Problem_10",
+  "title": "Print Abundant Numbers in Range",
   "slug": "basic-level-1-number-based-problem-10",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,7 +20,7 @@
   "content": {
     "problemStatement": "Abundent Numbers:\n\nWrite a program to find the Abundant numbers (integers) within given range.\n\nDivisor of 12:\n12= 1*12\n12= 3*4\n12= 6*2\n\nSum of Divisors: \n1+3+4+6+2 =16\n\n16>12 \n12 is an Abundent Number.",
     "constraints": [
-      "Nil"
+      "1 <= L <= R <= 10^4"
     ],
     "inputFormat": "2 Integers",
     "outputFormat": "List of Abundent Numbers",
@@ -31,14 +31,14 @@
         "type": "reg",
         "input": " 1 50",
         "output": "12 18 20 24 30 36 40 42 48",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "1 100",
         "output": "12 18 20 24 30 36 40 42 48 54 56 60 66 70 72 78 80 84 88 90 96 100",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -337,64 +337,42 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Find all abundant numbers (sum of proper divisors > n) in range [L, R].",
+    "timeComplexity": "O((R - L) * sqrt(R))",
+    "spaceComplexity": "O(1)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\nint is_abundant(int x) {\n    if (x <= 1) return 0;\n    int sum = 1;\n    for (int i = 2; i * i <= x; i++) {\n        if (x % i == 0) {\n            sum += i;\n            if (i * i != x) sum += x / i;\n        }\n    }\n    return sum > x;\n}\nint main() {\n    int l, r; if (scanf(\"%d %d\", &l, &r) != 2) return 0;\n    int first = 1;\n    for (int x = l; x <= r; x++) {\n        if (is_abundant(x)) {\n            if (!first) putchar(' ');\n            printf(\"%d\", x); first = 0;\n        }\n    }\n    putchar('\\n');\n    return 0;\n}\n",
+      "C++": "#include <iostream>\nusing namespace std;\nbool is_abundant(int x) {\n    if (x <= 1) return false;\n    int sum = 1;\n    for (int i = 2; i * i <= x; i++) {\n        if (x % i == 0) {\n            sum += i;\n            if (i * i != x) sum += x / i;\n        }\n    }\n    return sum > x;\n}\nint main() {\n    int l, r; if (!(cin >> l >> r)) return 0;\n    bool first = true;\n    for (int x = l; x <= r; x++) {\n        if (is_abundant(x)) {\n            if (!first) cout << \" \";\n            cout << x; first = false;\n        }\n    }\n    cout << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    static boolean isAbundant(int x) {\n        if (x <= 1) return false;\n        int sum = 1;\n        for (int i = 2; i * i <= x; i++) {\n            if (x % i == 0) {\n                sum += i;\n                if (i * i != x) sum += x / i;\n            }\n        }\n        return sum > x;\n    }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int l = sc.nextInt(), r = sc.nextInt();\n            StringBuilder sb = new StringBuilder();\n            for (int x = l; x <= r; x++) {\n                if (isAbundant(x)) {\n                    if (sb.length() > 0) sb.append(\" \");\n                    sb.append(x);\n                }\n            }\n            System.out.println(sb.toString());\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if len(toks) >= 2:\n        L, R = int(toks[0]), int(toks[1])\n        res = []\n        for x in range(L, R + 1):\n            div_sum = sum(i for i in range(1, x) if x % i == 0)\n            if div_sum > x: res.append(str(x))\n        print(\" \".join(res))\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (toks.length >= 2) {\n        const L = parseInt(toks[0], 10), R = parseInt(toks[1], 10);\n        const res = [];\n        for (let x = L; x <= R; x++) {\n            let sum = 0;\n            for (let i = 1; i < x; i++) if (x % i === 0) sum += i;\n            if (sum > x) res.push(x);\n        }\n        console.log(res.join(\" \"));\n    }\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "For each integer x in range, sum proper divisors. If sum > x, print x."
   },
-  "hints": [],
+  "hints": [
+    "Sum proper divisors of x.",
+    "Check if sum > x."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Abundant numbers",
+    "Divisor summation"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

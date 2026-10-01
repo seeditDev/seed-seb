@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.234",
-  "title": "Basic_Level_1_Arrays_3",
+  "title": "Double Adjacent Equal Elements and Shift Zeros",
   "slug": "basic-level-1-arrays-3",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,8 +20,7 @@
   "content": {
     "problemStatement": "Rearrange the array\n\nWrite a program to convert the array in such a way that double its value and replace the next number with 0 if current and next element are same and rearrange the array such that all 0's shifted to the end.\n\n\n\nFor Example\n\nThe given array is: 0 3 3 3 0 0 7 7 0 9\n\nThe new array is: 6 3 14 9 0 0 0 0 0 0\n\nExplanation:\n\n   In the given array the second and third element is equal hence hence double the first 3 and make the next index value as 0. The element which which is in third index doesn't have any match so leave as it is. finally move all zero to the end",
     "constraints": [
-      "1 <= N <= 100",
-      "1 <= arr[i] <= 1000"
+      "1 <= N <= 10^5"
     ],
     "inputFormat": "The input contains an integer N which is the size of the array and in the array and in the next line N elements will be there",
     "outputFormat": "Print the updated array with the space",
@@ -32,14 +31,14 @@
         "type": "reg",
         "input": "10\n0 3 3 3 0 0 7 7 0 9",
         "output": "6 3 14 9 0 0 0 0 0 0",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "25\n1 0 2 3 2 2 1 3 2 2 2 3 0 2 4 1 1 1 2 4 1 5 2 4 0",
         "output": "1 2 3 4 1 3 4 2 3 2 4 2 1 2 4 1 5 2 4 0 0 0 0 0 0",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -338,64 +337,42 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Multiply adjacent equal elements by 2 and zero out second, then shift all zeros to end.",
+    "timeComplexity": "O(N)",
+    "spaceComplexity": "O(N)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    long long a[100005];\n    for (int i = 0; i < n; i++) scanf(\"%lld\", &a[i]);\n    for (int i = 0; i < n - 1; i++) {\n        if (a[i] != 0 && a[i] == a[i + 1]) {\n            a[i] *= 2; a[i + 1] = 0; i++;\n        }\n    }\n    long long res[100005]; int idx = 0;\n    for (int i = 0; i < n; i++) if (a[i] != 0) res[idx++] = a[i];\n    while (idx < n) res[idx++] = 0;\n    for (int i = 0; i < n; i++) {\n        if (i > 0) putchar(' ');\n        printf(\"%lld\", res[i]);\n    }\n    printf(\"\\n\");\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <vector>\nusing namespace std;\nint main() {\n    int n; if (!(cin >> n)) return 0;\n    vector<long long> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    for (int i = 0; i < n - 1; i++) {\n        if (a[i] != 0 && a[i] == a[i + 1]) {\n            a[i] *= 2; a[i + 1] = 0; i++;\n        }\n    }\n    vector<long long> res;\n    for (int i = 0; i < n; i++) if (a[i] != 0) res.push_back(a[i]);\n    while (res.size() < (size_t)n) res.push_back(0);\n    for (int i = 0; i < n; i++) {\n        if (i > 0) cout << \" \";\n        cout << res[i];\n    }\n    cout << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            long[] a = new long[n];\n            for (int i = 0; i < n; i++) a[i] = sc.nextLong();\n            for (int i = 0; i < n - 1; i++) {\n                if (a[i] != 0 && a[i] == a[i + 1]) {\n                    a[i] *= 2; a[i + 1] = 0; i++;\n                }\n            }\n            StringBuilder sb = new StringBuilder();\n            int count = 0;\n            for (int i = 0; i < n; i++) {\n                if (a[i] != 0) {\n                    if (sb.length() > 0) sb.append(\" \");\n                    sb.append(a[i]); count++;\n                }\n            }\n            while (count < n) {\n                if (sb.length() > 0) sb.append(\" \");\n                sb.append(0); count++;\n            }\n            System.out.println(sb.toString());\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if not toks: return\n    n = int(toks[0])\n    arr = [int(x) for x in toks[1:n+1]]\n    i = 0\n    while i < n - 1:\n        if arr[i] != 0 and arr[i] == arr[i+1]:\n            arr[i] *= 2; arr[i+1] = 0; i += 2\n        else: i += 1\n    non_zeros = [x for x in arr if x != 0]\n    zeros = [0] * (n - len(non_zeros))\n    print(\" \".join(str(x) for x in (non_zeros + zeros)))\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (!toks || toks.length === 0 || toks[0] === \"\") return;\n    const n = parseInt(toks[0], 10);\n    const arr = toks.slice(1, n + 1).map(x => BigInt(x));\n    let i = 0;\n    while (i < n - 1) {\n        if (arr[i] !== 0n && arr[i] === arr[i + 1]) {\n            arr[i] *= 2n; arr[i + 1] = 0n; i += 2;\n        } else i++;\n    }\n    const nonZeros = arr.filter(x => x !== 0n);\n    while (nonZeros.length < n) nonZeros.push(0n);\n    console.log(nonZeros.map(x => x.toString()).join(\" \"));\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "Iterate i from 0 to N-2. If arr[i] == arr[i+1] != 0, double arr[i] and set arr[i+1] = 0. Then move non-zeros forward and zeros to end."
   },
-  "hints": [],
+  "hints": [
+    "Scan pairs.",
+    "Shift zeros to right."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Array transformation",
+    "Zero shifting"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

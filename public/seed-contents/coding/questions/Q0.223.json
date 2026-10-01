@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.223",
-  "title": "Basic_Level_0_Arrays_22",
+  "title": "Median of Two Sorted Arrays of Equal Size",
   "slug": "basic-level-0-arrays-22",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -19,8 +19,7 @@
   "content": {
     "problemStatement": "Write a program to find the median of two sorted arrays of same size.\n\nFor example:\n\nThe given array ->1 is : 1 5 13 24 35\n\nThe given array ->2 is : 3 8 15 17 32\n\nThe median of the 2 sorted arrays is :14\n\nExplanation:\n\nAfter merging two arrays,we get 1 3 5 8 13 15 17 24 32 35\n\nIn the middle two elements are 13 & 15.\n\nAverage of these two is (13+15)/2=14\n\nHence median of these two array is 14.",
     "constraints": [
-      "1<=N<=100",
-      "0<=arr[i]<=10^6"
+      "1 <= N <= 10^5"
     ],
     "inputFormat": "The first line has an integer N denotes the size, which is same for both the array.\n\nThe second line contains N values separated by space",
     "outputFormat": "Print the median",
@@ -31,14 +30,14 @@
         "type": "reg",
         "input": "5\n1 5 13 24 35\n3 8 15 17 32",
         "output": "14",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "10\n90 227 508 512 665 696 737 852 965 991\n73 213 255 334 460 574 660 665 770 807",
         "output": "617",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -337,64 +336,42 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Find median of two merged sorted arrays of equal size N.",
+    "timeComplexity": "O(N log N)",
+    "spaceComplexity": "O(N)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <stdlib.h>\nint cmp(const void *a, const void *b) {\n    long long diff = *(long long*)a - *(long long*)b;\n    return (diff > 0) - (diff < 0);\n}\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    long long a[200005];\n    for (int i = 0; i < 2 * n; i++) scanf(\"%lld\", &a[i]);\n    qsort(a, 2 * n, sizeof(long long), cmp);\n    long long sum = a[n - 1] + a[n];\n    if (sum % 2 == 0) printf(\"%lld\\n\", sum / 2);\n    else printf(\"%.1f\\n\", (double)sum / 2.0);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <vector>\n#include <algorithm>\nusing namespace std;\nint main() {\n    int n; if (!(cin >> n)) return 0;\n    vector<long long> a(2 * n);\n    for (int i = 0; i < 2 * n; i++) cin >> a[i];\n    sort(a.begin(), a.end());\n    long long sum = a[n - 1] + a[n];\n    if (sum % 2 == 0) cout << (sum / 2) << \"\\n\";\n    else cout << ((double)sum / 2.0) << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\nimport java.util.Arrays;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            long[] a = new long[2 * n];\n            for (int i = 0; i < 2 * n; i++) a[i] = sc.nextLong();\n            Arrays.sort(a);\n            long sum = a[n - 1] + a[n];\n            if (sum % 2 == 0) System.out.println(sum / 2);\n            else System.out.println((double)sum / 2.0);\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if not toks: return\n    n = int(toks[0])\n    merged = sorted(int(x) for x in toks[1:2*n+1])\n    m1, m2 = merged[n - 1], merged[n]\n    if (m1 + m2) % 2 == 0: print((m1 + m2) // 2)\n    else: print((m1 + m2) / 2)\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (!toks || toks.length === 0 || toks[0] === \"\") return;\n    const n = parseInt(toks[0], 10);\n    const merged = [];\n    for (let i = 1; i <= 2 * n; i++) merged.push(BigInt(toks[i]));\n    merged.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));\n    const sum = merged[n - 1] + merged[n];\n    if (sum % 2n === 0n) console.log((sum / 2n).toString());\n    else console.log((Number(sum) / 2).toString());\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "Combine both arrays, sort, and compute average of middle two elements (m1 + m2) / 2."
   },
-  "hints": [],
+  "hints": [
+    "Combine arrays and sort.",
+    "Median is (merged[N-1] + merged[N]) / 2."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Median calculation",
+    "Two sorted arrays"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.347",
-  "title": "Valid Parentheses 82",
+  "title": "Valid Parentheses",
   "slug": "valid-parentheses-82",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -19,7 +19,7 @@
   "content": {
     "problemStatement": "Given a string containing ()[]{}, determine if it is valid.\nRules\n\nOpen brackets must be closed correctly.\n\nCorrect order must be maintained.",
     "constraints": [
-      "nil"
+      "1 <= string length <= 10^5"
     ],
     "inputFormat": "string",
     "outputFormat": "true / false",
@@ -30,14 +30,14 @@
         "type": "reg",
         "input": "()",
         "output": "true",
-        "explanation": ""
+        "explanation": "Example demonstrating Validate matching brackets using a stack. Print 'true' or 'false'."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "([)]",
         "output": "false",
-        "explanation": ""
+        "explanation": "Example demonstrating Validate matching brackets using a stack. Print 'true' or 'false'."
       }
     ]
   },
@@ -336,64 +336,62 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Validate matching brackets using a stack. Print 'true' or 'false'.",
+    "timeComplexity": "O(N)",
+    "spaceComplexity": "O(N)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <string.h>\nint main() {\n    char s[100005]; if (scanf(\"%s\", s) != 1) return 0;\n    char stack[100005]; int top = 0;\n    for (int i = 0; s[i]; i++) {\n        char c = s[i];\n        if (c == '(' || c == '[' || c == '{') stack[top++] = c;\n        else {\n            if (top == 0) { puts(\"false\"); return 0; }\n            char o = stack[--top];\n            if (c == ')' && o != '(') { puts(\"false\"); return 0; }\n            if (c == ']' && o != '[') { puts(\"false\"); return 0; }\n            if (c == '}' && o != '{') { puts(\"false\"); return 0; }\n        }\n    }\n    puts(top == 0 ? \"true\" : \"false\");\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <string>\n#include <stack>\nusing namespace std;\nint main() {\n    string s; if (cin >> s) {\n        stack<char> st;\n        bool ok = true;\n        for (char c : s) {\n            if (c == '(' || c == '[' || c == '{') st.push(c);\n            else {\n                if (st.empty()) { ok = false; break; }\n                char o = st.top(); st.pop();\n                if ((c == ')' && o != '(') || (c == ']' && o != '[') || (c == '}' && o != '{')) { ok = false; break; }\n            }\n        }\n        cout << (ok && st.empty() ? \"true\" : \"false\") << \"\\n\";\n    }\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\nimport java.util.Stack;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String s = sc.next();\n            Stack<Character> st = new Stack<>();\n            boolean ok = true;\n            for (char c : s.toCharArray()) {\n                if (c == '(' || c == '[' || c == '{') st.push(c);\n                else {\n                    if (st.isEmpty()) { ok = false; break; }\n                    char o = st.pop();\n                    if ((c == ')' && o != '(') || (c == ']' && o != '[') || (c == '}' && o != '{')) { ok = false; break; }\n                }\n            }\n            System.out.println(ok && st.isEmpty() ? \"true\" : \"false\");\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    s = sys.stdin.read().strip()\n    stack = []\n    matching = {\")\": \"(\", \"}\": \"{\", \"]\": \"[\"}\n    for c in s:\n        if c in \"({[\": stack.append(c)\n        elif c in matching:\n            if not stack or stack[-1] != matching[c]:\n                print(\"false\"); return\n            stack.pop()\n    print(\"true\" if not stack else \"false\")\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const s = fs.readFileSync(0, \"utf-8\").trim();\n    const stack = [];\n    const matching = { \")\": \"(\", \"}\": \"{\", \"]\": \"[\" };\n    for (const c of s) {\n        if (c === \"(\" || c === \"{\" || c === \"[\") stack.push(c);\n        else if (matching[c]) {\n            if (stack.length === 0 || stack[stack.length - 1] !== matching[c]) {\n                console.log(\"false\"); return;\n            }\n            stack.pop();\n        }\n    }\n    console.log(stack.length === 0 ? \"true\" : \"false\");\n}\nmain();\n"
     },
     "notes": [],
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "overview": "Push open brackets onto stack. For closing brackets, check if matches top of stack and pop. Print 'true' if stack empty, else 'false'.",
+      "approach": "Validate matching brackets using a stack. Print 'true' or 'false'.",
+      "complexityAnalysis": "Time: O(N), Space: O(N)"
     }
   },
-  "hints": [],
+  "hints": [
+    "Use a stack to match brackets.",
+    "Ensure stack is empty at end."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Stack operations",
+    "Balanced parentheses"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true,
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "()",
+      "output": "true",
+      "explanation": "Example demonstrating Validate matching brackets using a stack. Print 'true' or 'false'."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "([)]",
+      "output": "false",
+      "explanation": "Example demonstrating Validate matching brackets using a stack. Print 'true' or 'false'."
+    }
+  ]
 }

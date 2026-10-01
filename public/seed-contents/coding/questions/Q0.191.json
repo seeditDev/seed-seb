@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.191",
-  "title": "Basic_Level_2_Number_Crunching_10",
+  "title": "Add Numbers in Different Bases and Convert",
   "slug": "basic-level-2-number-crunching-10",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,7 +20,7 @@
   "content": {
     "problemStatement": "Given two numbers and their current bases , add both the number, convert the result into the given base",
     "constraints": [
-      "2 <= base <= 9"
+      "2 <= B1, B2, B3 <= 10"
     ],
     "inputFormat": "Given five integers separated by SPACE\n\n   First integer is num1\n\n   second integer is num2\n\n   Third integer is the base of num1\n\n   Fourth integer is the base of num2\n\n   Fifth integer is the base of the result",
     "outputFormat": "Print the integer in the given result base",
@@ -31,14 +31,14 @@
         "type": "reg",
         "input": "12342 10238 5 9 7",
         "output": "31352",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "2376 4325 8 6 5",
         "output": "33032",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -337,64 +337,43 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Convert N1 from base B1 to decimal, N2 from base B2 to decimal, add them, and convert sum to base B3.",
+    "timeComplexity": "O(D)",
+    "spaceComplexity": "O(D)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\nint main() {\n    char n1[100], n2[100]; long long b1, b2, b3;\n    if (scanf(\"%s %s %lld %lld %lld\", n1, n2, &b1, &b2, &b3) != 5) return 0;\n    long long v1 = 0, v2 = 0;\n    for (int i = 0; n1[i]; i++) v1 = v1 * b1 + (n1[i] - '0');\n    for (int i = 0; n2[i]; i++) v2 = v2 * b2 + (n2[i] - '0');\n    long long total = v1 + v2;\n    if (total == 0) { printf(\"0\\n\"); return 0; }\n    char digits[100]; int idx = 0;\n    while (total > 0) { digits[idx++] = (total % b3) + '0'; total /= b3; }\n    for (int i = idx - 1; i >= 0; i--) putchar(digits[i]);\n    putchar('\\n');\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <string>\n#include <algorithm>\nusing namespace std;\nint main() {\n    string n1, n2; long long b1, b2, b3;\n    if (!(cin >> n1 >> n2 >> b1 >> b2 >> b3)) return 0;\n    long long v1 = 0, v2 = 0;\n    for (char c : n1) v1 = v1 * b1 + (c - '0');\n    for (char c : n2) v2 = v2 * b2 + (c - '0');\n    long long total = v1 + v2;\n    if (total == 0) { cout << \"0\\n\"; return 0; }\n    string res = \"\";\n    while (total > 0) { res += to_string(total % b3); total /= b3; }\n    reverse(res.begin(), res.end());\n    cout << res << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String n1 = sc.next(), n2 = sc.next();\n            long b1 = sc.nextLong(), b2 = sc.nextLong(), b3 = sc.nextLong();\n            long v1 = 0, v2 = 0;\n            for (char c : n1.toCharArray()) v1 = v1 * b1 + (c - '0');\n            for (char c : n2.toCharArray()) v2 = v2 * b2 + (c - '0');\n            long total = v1 + v2;\n            if (total == 0) { System.out.println(\"0\"); return; }\n            StringBuilder sb = new StringBuilder();\n            while (total > 0) { sb.append(total % b3); total /= b3; }\n            System.out.println(sb.reverse().toString());\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if len(toks) >= 5:\n        n1, n2 = toks[0], toks[1]\n        b1, b2, b3 = int(toks[2]), int(toks[3]), int(toks[4])\n        total = int(n1, b1) + int(n2, b2)\n        if total == 0: print(\"0\"); return\n        res = []\n        while total > 0:\n            res.append(str(total % b3))\n            total //= b3\n        print(\"\".join(reversed(res)))\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (toks.length >= 5) {\n        const n1 = toks[0], n2 = toks[1];\n        const b1 = BigInt(toks[2]), b2 = BigInt(toks[3]), b3 = BigInt(toks[4]);\n        let v1 = 0n, v2 = 0n;\n        for (const c of n1) v1 = v1 * b1 + BigInt(c);\n        for (const c of n2) v2 = v2 * b2 + BigInt(c);\n        let total = v1 + v2;\n        if (total === 0n) { console.log(\"0\"); return; }\n        const res = [];\n        while (total > 0n) {\n            res.push((total % b3).toString());\n            total /= b3;\n        }\n        console.log(res.reverse().join(\"\"));\n    }\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "Parse both numbers using their respective bases into integers, calculate sum, and convert sum into base B3 representation."
   },
-  "hints": [],
+  "hints": [
+    "Parse N1 in base B1.",
+    "Parse N2 in base B2.",
+    "Convert sum to base B3."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Multi-base arithmetic",
+    "Full round-trip radix conversion"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

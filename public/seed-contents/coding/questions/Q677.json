@@ -25,13 +25,38 @@
     "QBCategory": "LCD"
   },
   "content": {
-    "problemStatement": "Design a map that allows you to do the following:\n\n* Maps a string key to a given value.\n* Returns the sum of the values that have a key with a prefix equal to a given string.\n\nCreate an implementation of the `MapSum` class:\n\n* `MapSum()` Initializes the `MapSum` object.\n* `void insert(String key, int val)` Inserts the `key-val` pair into the map. If the `key` already existed, the original `key-value` pair will be overridden to the new one.\n* `int sum(string prefix)` Returns the sum of all the pairs' value whose `key` starts with the `prefix`.\n\n**Example 1:**\n\n```\nInput\n[\"MapSum\", \"insert\", \"sum\", \"insert\", \"sum\"]\n[[], [\"apple\", 3], [\"ap\"], [\"app\", 2], [\"ap\"]]\nOutput\n[null, null, 3, null, 5]\n\nExplanation\nMapSum mapSum = new MapSum();\nmapSum.insert(\"apple\", 3);  \nmapSum.sum(\"ap\");           // return 3 (apple = 3)\nmapSum.insert(\"app\", 2);    \nmapSum.sum(\"ap\");           // return 5 (apple + app = 3 + 2 = 5)\n```\n\n**Constraints:**\n\n* `1 <= key.length, prefix.length <= 50`\n* `key` and `prefix` consist of only lowercase English letters.\n* `1 <= val <= 1000`\n* At most `50` calls will be made to `insert` and `sum`.",
+    "problemStatement": "You're given a single space-delimited sequence of `ops` to run against an\ninitially empty key-value map. Each token has one of two forms:\n`\"insert:key,val\"` sets `key`'s value to the integer `val` (overwriting\nany previous value for that key), and `\"sum:prefix\"` asks for the sum of\nthe values of every currently stored key that starts with `prefix` (0 if\nnone match).\n\n**Simulate the tokens in order and return a list containing the result of every \"sum\" operation, in the order they occurred.**",
     "constraints": [
-      "None"
+      "1 <= key.length <= 50",
+      "key consists of lowercase English letters",
+      "-10^6 <= val <= 10^6",
+      "1 <= number of operations <= 1000"
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
-    "sampleTestCases": [],
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"insert:apple,3 sum:ap insert:app,2 sum:ap\"",
+        "output": "[3, 5]",
+        "explanation": "after inserting apple=3, sum:ap = 3; after also inserting app=2, sum:ap = 3 + 2 = 5"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"insert:a,1 insert:a,5 sum:a\"",
+        "output": "[5]",
+        "explanation": "inserting key \"a\" again overwrites its value from 1 to 5"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"insert:dog,1 insert:doggy,2 insert:door,3 sum:do sum:dog sum:cat\"",
+        "output": "[6, 3, 0]",
+        "explanation": "\"do\" matches all three keys (1+2+3=6); \"dog\" matches dog and doggy (1+2=3); \"cat\" matches nothing (0)"
+      }
+    ],
     "notes": []
   },
   "testCases": {
@@ -39,246 +64,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[\"insert:apple,3 sum:ap insert:app,2 sum:ap\"]",
+        "expectedOutput": "[3,5]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[\"insert:a,1 insert:a,5 sum:a\"]",
+        "expectedOutput": "[5]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[\"insert:dog,1 insert:doggy,2 insert:door,3 sum:do sum:dog sum:cat\"]",
+        "expectedOutput": "[6,3,0]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[\"insert:x,10 sum:x sum:y\"]",
+        "expectedOutput": "[10,0]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[\"insert:neg,-5 sum:neg\"]",
+        "expectedOutput": "[-5]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[\"insert:a,0 sum:a\"]",
+        "expectedOutput": "[0]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[\"insert:abc,10 insert:ab,5 insert:a,2 sum:a sum:ab sum:abc sum:abcd\"]",
+        "expectedOutput": "[17,15,10,0]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[\"insert:x,1 insert:y,2 insert:z,3 sum:x sum:y sum:z sum:xyz\"]",
+        "expectedOutput": "[1,2,3,0]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[\"insert:key,100 insert:key,200 insert:key,-50 sum:key\"]",
+        "expectedOutput": "[-50]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[\"sum:nokey\"]",
+        "expectedOutput": "[0]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[\"insert:aa,1 insert:aa,1 insert:aa,1 sum:aa sum:a\"]",
+        "expectedOutput": "[1,1]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[\"insert:cat,5 insert:cats,3 insert:catalog,7 sum:cat sum:cats sum:ca\"]",
+        "expectedOutput": "[15,3,15]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[\"insert:one,1 sum:one insert:one,2 sum:one insert:one,3 sum:one\"]",
+        "expectedOutput": "[1,2,3]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[\"insert:p,-1 insert:pp,-2 insert:ppp,-3 sum:p sum:pp sum:ppp\"]",
+        "expectedOutput": "[-6,-5,-3]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[\"insert:m,1000000 sum:m\"]",
+        "expectedOutput": "[1000000]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[\"insert:abc,1 sum:abcdef\"]",
+        "expectedOutput": "[0]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[\"insert:a,1 insert:b,2 insert:c,3 sum:a sum:b sum:c sum:d\"]",
+        "expectedOutput": "[1,2,3,0]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[\"insert:same,10 insert:same,20 insert:same,30 insert:same,40 sum:same\"]",
+        "expectedOutput": "[40]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[\"insert:dog,1 insert:doge,2 insert:doggo,3 sum:dog sum:doge sum:d\"]",
+        "expectedOutput": "[6,2,6]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[\"insert:foo,7 insert:foobar,3 sum:foo sum:foob sum:bar\"]",
+        "expectedOutput": "[10,3,0]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -351,19 +294,27 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Analyze whether sorting, prefix sums, or a monotonic stack/queue can optimize the search.",
+    "Consider dynamic programming if the problem exhibits optimal substructure or overlapping subproblems.",
+    "Pay close attention to boundary indices (empty arrays, single elements, and integer overflow)."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Master algorithmic design for Map Sum Pairs Problem.",
+    "Understand time and space complexity trade-offs.",
+    "Implement robust edge-case handling for boundary conditions."
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class MapSum {\npublic:\n    MapSum() {\n        \n    }\n    \n    void insert(string key, int val) {\n        \n    }\n    \n    int sum(string prefix) {\n        \n    }\n};\n\n/**\n * Your MapSum object will be instantiated and called as such:\n * MapSum* obj = new MapSum();\n * obj->insert(key,val);\n * int param_2 = obj->sum(prefix);\n */",
-    "Java": "class MapSum {\n\n    public MapSum() {\n        \n    }\n    \n    public void insert(String key, int val) {\n        \n    }\n    \n    public int sum(String prefix) {\n        \n    }\n}\n\n/**\n * Your MapSum object will be instantiated and called as such:\n * MapSum obj = new MapSum();\n * obj.insert(key,val);\n * int param_2 = obj.sum(prefix);\n */",
-    "Python3": "# Time:  O(n), n is the length of key\n# Space: O(t), t is the number of nodes in trie\n\nimport collections\n\n\nclass MapSum(object):\n\n    def __init__(self):\n        \"\"\"\n        Initialize your data structure here.\n        \"\"\"\n        _trie = lambda: collections.defaultdict(_trie)\n        self.__root = _trie()\n\n\n    def insert(self, key, val):\n        \"\"\"\n        :type key: str\n        :type val: int\n        :rtype: void\n        \"\"\"\n        # Time: O(n)\n        curr = self.__root\n        for c in key:\n            curr = curr[c]\n        delta = val\n        if \"_end\" in curr:\n            delta -= curr[\"_end\"]\n\n        curr = self.__root\n        for c in key:\n            curr = curr[c]\n            if \"_count\" in curr:\n                curr[\"_count\"] += delta\n            else:\n                curr[\"_count\"] = delta\n        curr[\"_end\"] = val\n\n\n    def sum(self, prefix):\n        \"\"\"\n        :type prefix: str\n        :rtype: int\n        \"\"\"\n        # Time: O(n)\n        curr = self.__root\n        for c in prefix:\n            if c not in curr:\n                return 0\n            curr = curr[c]\n        return curr[\"_count\"]",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int mapSumResults(int ops) {\n        return 0;\n    }\n};\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        Tok tok;\n        if (!line.empty() && line.front() == '[' && line.back() == ']') {\n            tok.s = line.substr(1, line.size() - 2);\n        } else {\n            tok.s = line;\n        }\n        tok.pos = 0;\n        string arg0 = readStr(tok);\n        cout << Solution().mapSumResults(arg0) << \"\\n\";\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public int mapSumResults(int ops) {\n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\") || s.isEmpty()) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[' || c == '{') depth++;\n            else if (c == ']' || c == '}') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\").charAt(0);\n        return arr;\n    }\n    static char[][] toChar2D(String s) {\n        String[] rows = readArrayRaw(s);\n        char[][] mat = new char[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toCharArray(rows[i]);\n        return mat;\n    }\n    static List<Integer> toIntList(String s) {\n        int[] a = toIntArray(s);\n        List<Integer> list = new ArrayList<>();\n        for (int v : a) list.add(v);\n        return list;\n    }\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos) == ',' || _raw.charAt(_pos) == ' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth = 0, start = _pos;\n            while (_pos < _raw.length()) {\n                char x = _raw.charAt(_pos);\n                if (x == '[') depth++;\n                else if (x == ']') { depth--; if (depth == 0) { _pos++; break; } }\n                _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start = _pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start = _pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.startsWith(\"[\") && line.endsWith(\"]\")) {\n            _raw = line.substring(1, line.length() - 1);\n        } else {\n            _raw = line;\n        }\n        _pos = 0;\n        String arg0 = nextToken();\n        System.out.println(new Solution().mapSumResults(arg0));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nclass Solution:\n    def mapSumResults(self, ops):\n        pass\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    if not isinstance(args, list):\n        args = [args]\n    res = Solution().mapSumResults(*args[:1])\n    print(json.dumps(res, separators=(',', ':')))\n",
     "Python": "class MapSum(object):\n\n    def __init__(self):\n        \n\n    def insert(self, key, val):\n        \"\"\"\n        :type key: str\n        :type val: int\n        :rtype: None\n        \"\"\"\n        \n\n    def sum(self, prefix):\n        \"\"\"\n        :type prefix: str\n        :rtype: int\n        \"\"\"\n        \n\n\n# Your MapSum object will be instantiated and called as such:\n# obj = MapSum()\n# obj.insert(key,val)\n# param_2 = obj.sum(prefix)",
-    "JavaScript": "\nvar MapSum = function() {\n    \n};\n\n/** \n * @param {string} key \n * @param {number} val\n * @return {void}\n */\nMapSum.prototype.insert = function(key, val) {\n    \n};\n\n/** \n * @param {string} prefix\n * @return {number}\n */\nMapSum.prototype.sum = function(prefix) {\n    \n};\n\n/** \n * Your MapSum object will be instantiated and called as such:\n * var obj = new MapSum()\n * obj.insert(key,val)\n * var param_2 = obj.sum(prefix)\n */",
+    "JavaScript": "'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nvar MapSum = function() {\n    \n};\n\n/** \n * @param {string} key \n * @param {number} val\n * @return {void}\n */\nMapSum.prototype.insert = function(key, val) {\n    \n};\n\n/** \n * @param {string} prefix\n * @return {number}\n */\nMapSum.prototype.sum = function(prefix) {\n    \n};\n\n/** \n * Your MapSum object will be instantiated and called as such:\n * var obj = new MapSum()\n * obj.insert(key,val)\n * var param_2 = obj.sum(prefix)\n */\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    let args = JSON.parse(line.trim());\n    if (!Array.isArray(args)) args = [args];\n    let res = typeof Solution !== 'undefined' && typeof (new Solution().mapSumResults) === 'function'\n        ? new Solution().mapSumResults(...args.slice(0, 1))\n        : (typeof mapSumResults === 'function' ? mapSumResults(...args.slice(0, 1)) : (new Solution().mapSumResults(...args.slice(0, 1))));\n    console.log(JSON.stringify(res));\n    rl.close();\n});\n",
     "TypeScript": "class MapSum {\n    constructor() {\n        \n    }\n\n    insert(key: string, val: number): void {\n        \n    }\n\n    sum(prefix: string): number {\n        \n    }\n}\n\n/**\n * Your MapSum object will be instantiated and called as such:\n * var obj = new MapSum()\n * obj.insert(key,val)\n * var param_2 = obj.sum(prefix)\n */",
     "C#": "public class MapSum {\n\n    public MapSum() {\n        \n    }\n    \n    public void Insert(string key, int val) {\n        \n    }\n    \n    public int Sum(string prefix) {\n        \n    }\n}\n\n/**\n * Your MapSum object will be instantiated and called as such:\n * MapSum obj = new MapSum();\n * obj.Insert(key,val);\n * int param_2 = obj.Sum(prefix);\n */",
     "C": "\n\n\ntypedef struct {\n    \n} MapSum;\n\n\nMapSum* mapSumCreate() {\n    \n}\n\nvoid mapSumInsert(MapSum* obj, char* key, int val) {\n    \n}\n\nint mapSumSum(MapSum* obj, char* prefix) {\n    \n}\n\nvoid mapSumFree(MapSum* obj) {\n    \n}\n\n/**\n * Your MapSum struct will be instantiated and called as such:\n * MapSum* obj = mapSumCreate();\n * mapSumInsert(obj, key, val);\n \n * int param_2 = mapSumSum(obj, prefix);\n \n * mapSumFree(obj);\n*/",
@@ -380,8 +331,13 @@
     "Racket": "(define map-sum%\n  (class object%\n    (super-new)\n    \n    (init-field)\n    \n    ; insert : string? exact-integer? -> void?\n    (define/public (insert key val)\n      )\n    ; sum : string? -> exact-integer?\n    (define/public (sum prefix)\n      )))\n\n;; Your map-sum% object will be instantiated and called as such:\n;; (define obj (new map-sum%))\n;; (send obj insert key val)\n;; (define param_2 (send obj sum prefix))"
   },
   "_internal": {
-    "methodName": "",
-    "params": []
+    "methodName": "mapSumResults",
+    "params": [
+      {
+        "name": "ops",
+        "type": "string"
+      }
+    ]
   },
-  "verified": false
+  "verified": true
 }

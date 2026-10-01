@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.187",
-  "title": "Basic_Level_2_Number_Crunching_6",
+  "title": "Rearrange Number by Parity Choice",
   "slug": "basic-level-2-number-crunching-6",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -20,7 +20,8 @@
   "content": {
     "problemStatement": "Write a program to accept a number and choice as input. If the choice is 0 rearrange the number such that the odd digits are ordered first followed by the even digits. If the choice is 1 rearrange the number such that the even digits are ordered first followed by the odd digits. Print the rearranged number. The order of occurrence of the digits is to be preserved",
     "constraints": [
-      "1<=num<=10^15"
+      "1 <= N <= 10^100",
+      "ch in {0, 1}"
     ],
     "inputFormat": "Given two integers are separated by space. First integer is the number and second integer is the option",
     "outputFormat": "Rearranged number",
@@ -31,14 +32,14 @@
         "type": "reg",
         "input": "123456 0",
         "output": "135246",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "123456 1",
         "output": "246135",
-        "explanation": ""
+        "explanation": "Input produces the expected output following problem rules."
       }
     ]
   },
@@ -337,64 +338,42 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Partition number digits into odds and evens, ordered based on control flag ch.",
+    "timeComplexity": "O(D)",
+    "spaceComplexity": "O(D)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\nint main() {\n    char s[1005], ch[10];\n    if (scanf(\"%s %s\", s, ch) != 2) return 0;\n    char odds[1005], evens[1005];\n    int o = 0, e = 0;\n    for (int i = 0; s[i]; i++) {\n        if ((s[i] - '0') % 2 != 0) odds[o++] = s[i];\n        else evens[e++] = s[i];\n    }\n    odds[o] = '\\0'; evens[e] = '\\0';\n    if (ch[0] == '0') printf(\"%s%s\\n\", odds, evens);\n    else printf(\"%s%s\\n\", evens, odds);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <string>\nusing namespace std;\nint main() {\n    string s, ch; if (!(cin >> s >> ch)) return 0;\n    string odds = \"\", evens = \"\";\n    for (char c : s) if ((c - '0') % 2 != 0) odds += c; else evens += c;\n    if (ch == \"0\") cout << odds << evens << \"\\n\";\n    else cout << evens << odds << \"\\n\";\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String s = sc.next(), ch = sc.next();\n            StringBuilder odds = new StringBuilder(), evens = new StringBuilder();\n            for (char c : s.toCharArray()) {\n                if ((c - '0') % 2 != 0) odds.append(c);\n                else evens.append(c);\n            }\n            if (ch.equals(\"0\")) System.out.println(odds.toString() + evens.toString());\n            else System.out.println(evens.toString() + odds.toString());\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if len(toks) >= 2:\n        s, ch = toks[0], toks[1]\n        odds = [c for c in s if int(c) % 2 != 0]\n        evens = [c for c in s if int(c) % 2 == 0]\n        if ch == \"0\": print(\"\".join(odds) + \"\".join(evens))\n        else: print(\"\".join(evens) + \"\".join(odds))\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (toks.length >= 2) {\n        const s = toks[0], ch = toks[1];\n        const odds = s.split(\"\").filter(c => parseInt(c, 10) % 2 !== 0).join(\"\");\n        const evens = s.split(\"\").filter(c => parseInt(c, 10) % 2 === 0).join(\"\");\n        if (ch === \"0\") console.log(odds + evens);\n        else console.log(evens + odds);\n    }\n}\nmain();\n"
     },
-    "notes": [],
-    "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
-    }
+    "notes": "Ensure standard I/O format handling.",
+    "editorial": "Extract odd and even digits preserving relative order. If ch == '0' output odds then evens, else evens then odds."
   },
-  "hints": [],
+  "hints": [
+    "Extract odd digits and even digits.",
+    "If flag is '0', print odds + evens; else evens + odds."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Flag-based conditional logic",
+    "Stable partitioning"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\n\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true
 }

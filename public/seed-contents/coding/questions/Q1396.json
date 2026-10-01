@@ -25,7 +25,9 @@
   "content": {
     "problemStatement": "An underground railway system is keeping track of customer travel times between different stations. They are using this data to calculate the average time it takes to travel from one station to another.\n\nCreate an implementation of the `UndergroundSystem` class:\n\n* `void checkIn(int id, string stationName, int t)`\n  + A customer with a card ID equal to `id`, checks in at the station `stationName` at time `t`.\n  + A customer can only be checked into one place at a time.\n* `void checkOut(int id, string stationName, int t)`\n  + A customer with a card ID equal to `id`, checks out from the station `stationName` at time `t`.\n* `double getAverageTime(string startStation, string endStation)`\n  + Returns the average time it takes to travel from `startStation` to `endStation`.\n  + The average time is computed from all the previous traveling times from `startStation` to `endStation` that happened **directly**, meaning a check in at `startStation` followed by a check out from `endStation`.\n  + The time it takes to travel from `startStation` to `endStation` **may be different** from the time it takes to travel from `endStation` to `startStation`.\n  + There will be no fewer than one customer that has traveled from `startStation` to `endStation` before `getAverageTime` is called.\n\nYou may assume all calls to the `checkIn` and `checkOut` methods are consistent. If a customer checks in at time `t1` then checks out at time `t2`, then `t1 < t2`. All events happen in chronological order.\n\n**Example 1:**\n\n```\nInput\n[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\",\"checkIn\",\"getAverageTime\",\"checkOut\",\"getAverageTime\"]\n[[],[45,\"Leyton\",3],[32,\"Paradise\",8],[27,\"Leyton\",10],[45,\"Waterloo\",15],[27,\"Waterloo\",20],[32,\"Cambridge\",22],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"],[10,\"Leyton\",24],[\"Leyton\",\"Waterloo\"],[10,\"Waterloo\",38],[\"Leyton\",\"Waterloo\"]]\n\nOutput\n[null,null,null,null,null,null,null,14.00000,11.00000,null,11.00000,null,12.00000]\n\nExplanation\nUndergroundSystem undergroundSystem = new UndergroundSystem();\nundergroundSystem.checkIn(45, \"Leyton\", 3);\nundergroundSystem.checkIn(32, \"Paradise\", 8);\nundergroundSystem.checkIn(27, \"Leyton\", 10);\nundergroundSystem.checkOut(45, \"Waterloo\", 15);  // Customer 45 \"Leyton\" -> \"Waterloo\" in 15-3 = 12\nundergroundSystem.checkOut(27, \"Waterloo\", 20);  // Customer 27 \"Leyton\" -> \"Waterloo\" in 20-10 = 10\nundergroundSystem.checkOut(32, \"Cambridge\", 22); // Customer 32 \"Paradise\" -> \"Cambridge\" in 22-8 = 14\nundergroundSystem.getAverageTime(\"Paradise\", \"Cambridge\"); // return 14.00000. One trip \"Paradise\" -> \"Cambridge\", (14) / 1 = 14\nundergroundSystem.getAverageTime(\"Leyton\", \"Waterloo\");    // return 11.00000. Two trips \"Leyton\" -> \"Waterloo\", (10 + 12) / 2 = 11\nundergroundSystem.checkIn(10, \"Leyton\", 24);\nundergroundSystem.getAverageTime(\"Leyton\", \"Waterloo\");    // return 11.00000\nundergroundSystem.checkOut(10, \"Waterloo\", 38);  // Customer 10 \"Leyton\" -> \"Waterloo\" in 38-24 = 14\nundergroundSystem.getAverageTime(\"Leyton\", \"Waterloo\");    // return 12.00000. Three trips \"Leyton\" -> \"Waterloo\", (10 + 12 + 14) / 3 = 12\n```\n\n**Example 2:**\n\n```\nInput\n[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\",\"checkIn\",\"checkOut\",\"getAverageTime\",\"checkIn\",\"checkOut\",\"getAverageTime\"]\n[[],[10,\"Leyton\",3],[10,\"Paradise\",8],[\"Leyton\",\"Paradise\"],[5,\"Leyton\",10],[5,\"Paradise\",16],[\"Leyton\",\"Paradise\"],[2,\"Leyton\",21],[2,\"Paradise\",30],[\"Leyton\",\"Paradise\"]]\n\nOutput\n[null,null,null,5.00000,null,null,5.50000,null,null,6.66667]\n\nExplanation\nUndergroundSystem undergroundSystem = new UndergroundSystem();\nundergroundSystem.checkIn(10, \"Leyton\", 3);\nundergroundSystem.checkOut(10, \"Paradise\", 8); // Customer 10 \"Leyton\" -> \"Paradise\" in 8-3 = 5\nundergroundSystem.getAverageTime(\"Leyton\", \"Paradise\"); // return 5.00000, (5) / 1 = 5\nundergroundSystem.checkIn(5, \"Leyton\", 10);\nundergroundSystem.checkOut(5, \"Paradise\", 16); // Customer 5 \"Leyton\" -> \"Paradise\" in 16-10 = 6\nundergroundSystem.getAverageTime(\"Leyton\", \"Paradise\"); // return 5.50000, (5 + 6) / 2 = 5.5\nundergroundSystem.checkIn(2, \"Leyton\", 21);\nundergroundSystem.checkOut(2, \"Paradise\", 30); // Customer 2 \"Leyton\" -> \"Paradise\" in 30-21 = 9\nundergroundSystem.getAverageTime(\"Leyton\", \"Paradise\"); // return 6.66667, (5 + 6 + 9) / 3 = 6.66667\n```\n\n**Constraints:**\n\n* `1 <= id, t <= 106`\n* `1 <= stationName.length, startStation.length, endStation.length <= 10`\n* All strings consist of uppercase and lowercase English letters and digits.\n* There will be no more than `2 * 104` calls **in total** to `checkIn`, `checkOut`, and `getAverageTime`.\n* Answers within `10-5` of the actual value will be accepted.",
     "constraints": [
-      "None"
+      "1 <= input.length <= 10^4",
+      "1 <= elements <= 10^4",
+      "Time complexity must be optimized to run within execution limits."
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -37,246 +39,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\"],[[],[\"45\",\"Leyton\",\"3\"],[\"32\",\"Paradise\",\"8\"],[\"27\",\"Leyton\",\"10\"],[\"45\",\"Waterloo\",\"15\"],[\"27\",\"Waterloo\",\"20\"],[\"32\",\"Cambridge\",\"22\"],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"]]]",
+        "expectedOutput": "[null,null,null,null,null,null,null,14.0,11.0]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\"],[[],[\"1\",\"A\",\"5\"],[\"1\",\"B\",\"15\"],[\"A\",\"B\"]]]",
+        "expectedOutput": "[null,null,null,10.0]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\"],[[],[\"45\",\"Leyton\",\"3\"],[\"32\",\"Paradise\",\"8\"],[\"27\",\"Leyton\",\"10\"],[\"45\",\"Waterloo\",\"15\"],[\"27\",\"Waterloo\",\"20\"],[\"32\",\"Cambridge\",\"22\"],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"]]]",
+        "expectedOutput": "[null,null,null,null,null,null,null,14.0,11.0]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\"],[[],[\"1\",\"A\",\"5\"],[\"1\",\"B\",\"15\"],[\"A\",\"B\"]]]",
+        "expectedOutput": "[null,null,null,10.0]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\"],[[],[\"45\",\"Leyton\",\"3\"],[\"32\",\"Paradise\",\"8\"],[\"27\",\"Leyton\",\"10\"],[\"45\",\"Waterloo\",\"15\"],[\"27\",\"Waterloo\",\"20\"],[\"32\",\"Cambridge\",\"22\"],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"]]]",
+        "expectedOutput": "[null,null,null,null,null,null,null,14.0,11.0]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\"],[[],[\"1\",\"A\",\"5\"],[\"1\",\"B\",\"15\"],[\"A\",\"B\"]]]",
+        "expectedOutput": "[null,null,null,10.0]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\"],[[],[\"45\",\"Leyton\",\"3\"],[\"32\",\"Paradise\",\"8\"],[\"27\",\"Leyton\",\"10\"],[\"45\",\"Waterloo\",\"15\"],[\"27\",\"Waterloo\",\"20\"],[\"32\",\"Cambridge\",\"22\"],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"]]]",
+        "expectedOutput": "[null,null,null,null,null,null,null,14.0,11.0]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\"],[[],[\"1\",\"A\",\"5\"],[\"1\",\"B\",\"15\"],[\"A\",\"B\"]]]",
+        "expectedOutput": "[null,null,null,10.0]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\"],[[],[\"45\",\"Leyton\",\"3\"],[\"32\",\"Paradise\",\"8\"],[\"27\",\"Leyton\",\"10\"],[\"45\",\"Waterloo\",\"15\"],[\"27\",\"Waterloo\",\"20\"],[\"32\",\"Cambridge\",\"22\"],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"]]]",
+        "expectedOutput": "[null,null,null,null,null,null,null,14.0,11.0]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\"],[[],[\"1\",\"A\",\"5\"],[\"1\",\"B\",\"15\"],[\"A\",\"B\"]]]",
+        "expectedOutput": "[null,null,null,10.0]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\"],[[],[\"45\",\"Leyton\",\"3\"],[\"32\",\"Paradise\",\"8\"],[\"27\",\"Leyton\",\"10\"],[\"45\",\"Waterloo\",\"15\"],[\"27\",\"Waterloo\",\"20\"],[\"32\",\"Cambridge\",\"22\"],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"]]]",
+        "expectedOutput": "[null,null,null,null,null,null,null,14.0,11.0]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\"],[[],[\"1\",\"A\",\"5\"],[\"1\",\"B\",\"15\"],[\"A\",\"B\"]]]",
+        "expectedOutput": "[null,null,null,10.0]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\"],[[],[\"45\",\"Leyton\",\"3\"],[\"32\",\"Paradise\",\"8\"],[\"27\",\"Leyton\",\"10\"],[\"45\",\"Waterloo\",\"15\"],[\"27\",\"Waterloo\",\"20\"],[\"32\",\"Cambridge\",\"22\"],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"]]]",
+        "expectedOutput": "[null,null,null,null,null,null,null,14.0,11.0]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\"],[[],[\"1\",\"A\",\"5\"],[\"1\",\"B\",\"15\"],[\"A\",\"B\"]]]",
+        "expectedOutput": "[null,null,null,10.0]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\"],[[],[\"45\",\"Leyton\",\"3\"],[\"32\",\"Paradise\",\"8\"],[\"27\",\"Leyton\",\"10\"],[\"45\",\"Waterloo\",\"15\"],[\"27\",\"Waterloo\",\"20\"],[\"32\",\"Cambridge\",\"22\"],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"]]]",
+        "expectedOutput": "[null,null,null,null,null,null,null,14.0,11.0]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\"],[[],[\"1\",\"A\",\"5\"],[\"1\",\"B\",\"15\"],[\"A\",\"B\"]]]",
+        "expectedOutput": "[null,null,null,10.0]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\"],[[],[\"45\",\"Leyton\",\"3\"],[\"32\",\"Paradise\",\"8\"],[\"27\",\"Leyton\",\"10\"],[\"45\",\"Waterloo\",\"15\"],[\"27\",\"Waterloo\",\"20\"],[\"32\",\"Cambridge\",\"22\"],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"]]]",
+        "expectedOutput": "[null,null,null,null,null,null,null,14.0,11.0]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\"],[[],[\"1\",\"A\",\"5\"],[\"1\",\"B\",\"15\"],[\"A\",\"B\"]]]",
+        "expectedOutput": "[null,null,null,10.0]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkIn\",\"checkIn\",\"checkOut\",\"checkOut\",\"checkOut\",\"getAverageTime\",\"getAverageTime\"],[[],[\"45\",\"Leyton\",\"3\"],[\"32\",\"Paradise\",\"8\"],[\"27\",\"Leyton\",\"10\"],[\"45\",\"Waterloo\",\"15\"],[\"27\",\"Waterloo\",\"20\"],[\"32\",\"Cambridge\",\"22\"],[\"Paradise\",\"Cambridge\"],[\"Leyton\",\"Waterloo\"]]]",
+        "expectedOutput": "[null,null,null,null,null,null,null,14.0,11.0]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[\"UndergroundSystem\",\"checkIn\",\"checkOut\",\"getAverageTime\"],[[],[\"1\",\"A\",\"5\"],[\"1\",\"B\",\"15\"],[\"A\",\"B\"]]]",
+        "expectedOutput": "[null,null,null,10.0]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -349,22 +269,28 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Consider the optimal data structure and algorithm for Design Underground System Problem.",
+    "Analyze time and space complexity to ensure no redundant passes over the data."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Master Strings pattern recognition and optimal solution formulation.",
+    "Understand time and space complexity trade-offs for production-ready code."
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class UndergroundSystem {\npublic:\n    UndergroundSystem() {\n        \n    }\n    \n    void checkIn(int id, string stationName, int t) {\n        \n    }\n    \n    void checkOut(int id, string stationName, int t) {\n        \n    }\n    \n    double getAverageTime(string startStation, string endStation) {\n        \n    }\n};\n\n/**\n * Your UndergroundSystem object will be instantiated and called as such:\n * UndergroundSystem* obj = new UndergroundSystem();\n * obj->checkIn(id,stationName,t);\n * obj->checkOut(id,stationName,t);\n * double param_3 = obj->getAverageTime(startStation,endStation);\n */",
-    "Java": "class UndergroundSystem {\n\n    public UndergroundSystem() {\n        \n    }\n    \n    public void checkIn(int id, String stationName, int t) {\n        \n    }\n    \n    public void checkOut(int id, String stationName, int t) {\n        \n    }\n    \n    public double getAverageTime(String startStation, String endStation) {\n        \n    }\n}\n\n/**\n * Your UndergroundSystem object will be instantiated and called as such:\n * UndergroundSystem obj = new UndergroundSystem();\n * obj.checkIn(id,stationName,t);\n * obj.checkOut(id,stationName,t);\n * double param_3 = obj.getAverageTime(startStation,endStation);\n */",
-    "Python3": "# Time:  ctor:       O(1)\n#        checkin:    O(1)\n#        checkout:   O(1)\n#        getaverage: O(1)\n# Space: O(n)\n\nimport collections\n\n\nclass UndergroundSystem(object):\n\n    def __init__(self):\n        self.__live = {}\n        self.__statistics = collections.defaultdict(lambda: [0, 0])\n        \n\n    def checkIn(self, id, stationName, t):\n        \"\"\"\n        :type id: int\n        :type stationName: str\n        :type t: int\n        :rtype: None\n        \"\"\"\n        self.__live[id] = (stationName, t)\n\n    def checkOut(self, id, stationName, t):\n        \"\"\"\n        :type id: int\n        :type stationName: str\n        :type t: int\n        :rtype: None\n        \"\"\"\n        startStation, startTime = self.__live.pop(id)\n        self.__statistics[startStation, stationName][0] += t-startTime\n        self.__statistics[startStation, stationName][1] += 1\n        \n    def getAverageTime(self, startStation, endStation):\n        \"\"\"\n        :type startStation: str\n        :type endStation: str\n        :rtype: float\n        \"\"\"\n        total_time, cnt = self.__statistics[startStation, endStation]\n        return float(total_time) / cnt",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int runUndergroundSystem(int commands, int args) {\n        return 0;\n    }\n};\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        Tok tok;\n        if (!line.empty() && line.front() == '[' && line.back() == ']') {\n            tok.s = line.substr(1, line.size() - 2);\n        } else {\n            tok.s = line;\n        }\n        tok.pos = 0;\n        string arg0 = readStr(tok);\n        string arg1 = readStr(tok);\n        cout << Solution().runUndergroundSystem(arg0, arg1) << \"\\n\";\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public int runUndergroundSystem(int commands, int args) {\n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\") || s.isEmpty()) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[' || c == '{') depth++;\n            else if (c == ']' || c == '}') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\").charAt(0);\n        return arr;\n    }\n    static char[][] toChar2D(String s) {\n        String[] rows = readArrayRaw(s);\n        char[][] mat = new char[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toCharArray(rows[i]);\n        return mat;\n    }\n    static List<Integer> toIntList(String s) {\n        int[] a = toIntArray(s);\n        List<Integer> list = new ArrayList<>();\n        for (int v : a) list.add(v);\n        return list;\n    }\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos) == ',' || _raw.charAt(_pos) == ' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth = 0, start = _pos;\n            while (_pos < _raw.length()) {\n                char x = _raw.charAt(_pos);\n                if (x == '[') depth++;\n                else if (x == ']') { depth--; if (depth == 0) { _pos++; break; } }\n                _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start = _pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start = _pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.startsWith(\"[\") && line.endsWith(\"]\")) {\n            _raw = line.substring(1, line.length() - 1);\n        } else {\n            _raw = line;\n        }\n        _pos = 0;\n        String arg0 = nextToken();\n        String arg1 = nextToken();\n        System.out.println(new Solution().runUndergroundSystem(arg0, arg1));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\n# Time:  ctor:       O(1)\n#        checkin:    O(1)\n#        checkout:   O(1)\n#        getaverage: O(1)\n# Space: O(n)\n\nimport collections\n\n\nclass UndergroundSystem(object):\n\n    def __init__(self):\n        self.__live = {}\n        self.__statistics = collections.defaultdict(lambda: [0, 0])\n        \n\n    def checkIn(self, id, stationName, t):\n        \"\"\"\n        :type id: int\n        :type stationName: str\n        :type t: int\n        :rtype: None\n        \"\"\"\n        self.__live[id] = (stationName, t)\n\n    def checkOut(self, id, stationName, t):\n        \"\"\"\n        :type id: int\n        :type stationName: str\n        :type t: int\n        :rtype: None\n        \"\"\"\n        startStation, startTime = self.__live.pop(id)\n        self.__statistics[startStation, stationName][0] += t-startTime\n        self.__statistics[startStation, stationName][1] += 1\n        \n    def getAverageTime(self, startStation, endStation):\n        \"\"\"\n        :type startStation: str\n        :type endStation: str\n        :rtype: float\n        \"\"\"\n        total_time, cnt = self.__statistics[startStation, endStation]\n        return float(total_time) / cnt\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    if not isinstance(args, list):\n        args = [args]\n    res = Solution().runUndergroundSystem(*args[:2])\n    print(json.dumps(res, separators=(',', ':')))\n",
     "Python": "class UndergroundSystem(object):\n\n    def __init__(self):\n        \n\n    def checkIn(self, id, stationName, t):\n        \"\"\"\n        :type id: int\n        :type stationName: str\n        :type t: int\n        :rtype: None\n        \"\"\"\n        \n\n    def checkOut(self, id, stationName, t):\n        \"\"\"\n        :type id: int\n        :type stationName: str\n        :type t: int\n        :rtype: None\n        \"\"\"\n        \n\n    def getAverageTime(self, startStation, endStation):\n        \"\"\"\n        :type startStation: str\n        :type endStation: str\n        :rtype: float\n        \"\"\"\n        \n\n\n# Your UndergroundSystem object will be instantiated and called as such:\n# obj = UndergroundSystem()\n# obj.checkIn(id,stationName,t)\n# obj.checkOut(id,stationName,t)\n# param_3 = obj.getAverageTime(startStation,endStation)",
-    "JavaScript": "\nvar UndergroundSystem = function() {\n    \n};\n\n/** \n * @param {number} id \n * @param {string} stationName \n * @param {number} t\n * @return {void}\n */\nUndergroundSystem.prototype.checkIn = function(id, stationName, t) {\n    \n};\n\n/** \n * @param {number} id \n * @param {string} stationName \n * @param {number} t\n * @return {void}\n */\nUndergroundSystem.prototype.checkOut = function(id, stationName, t) {\n    \n};\n\n/** \n * @param {string} startStation \n * @param {string} endStation\n * @return {number}\n */\nUndergroundSystem.prototype.getAverageTime = function(startStation, endStation) {\n    \n};\n\n/** \n * Your UndergroundSystem object will be instantiated and called as such:\n * var obj = new UndergroundSystem()\n * obj.checkIn(id,stationName,t)\n * obj.checkOut(id,stationName,t)\n * var param_3 = obj.getAverageTime(startStation,endStation)\n */",
+    "JavaScript": "'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nvar UndergroundSystem = function() {\n    \n};\n\n/** \n * @param {number} id \n * @param {string} stationName \n * @param {number} t\n * @return {void}\n */\nUndergroundSystem.prototype.checkIn = function(id, stationName, t) {\n    \n};\n\n/** \n * @param {number} id \n * @param {string} stationName \n * @param {number} t\n * @return {void}\n */\nUndergroundSystem.prototype.checkOut = function(id, stationName, t) {\n    \n};\n\n/** \n * @param {string} startStation \n * @param {string} endStation\n * @return {number}\n */\nUndergroundSystem.prototype.getAverageTime = function(startStation, endStation) {\n    \n};\n\n/** \n * Your UndergroundSystem object will be instantiated and called as such:\n * var obj = new UndergroundSystem()\n * obj.checkIn(id,stationName,t)\n * obj.checkOut(id,stationName,t)\n * var param_3 = obj.getAverageTime(startStation,endStation)\n */\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    let args = JSON.parse(line.trim());\n    if (!Array.isArray(args)) args = [args];\n    let res = typeof Solution !== 'undefined' && typeof (new Solution().runUndergroundSystem) === 'function'\n        ? new Solution().runUndergroundSystem(...args.slice(0, 2))\n        : (typeof runUndergroundSystem === 'function' ? runUndergroundSystem(...args.slice(0, 2)) : (new Solution().runUndergroundSystem(...args.slice(0, 2))));\n    console.log(JSON.stringify(res));\n    rl.close();\n});\n",
     "TypeScript": "class UndergroundSystem {\n    constructor() {\n        \n    }\n\n    checkIn(id: number, stationName: string, t: number): void {\n        \n    }\n\n    checkOut(id: number, stationName: string, t: number): void {\n        \n    }\n\n    getAverageTime(startStation: string, endStation: string): number {\n        \n    }\n}\n\n/**\n * Your UndergroundSystem object will be instantiated and called as such:\n * var obj = new UndergroundSystem()\n * obj.checkIn(id,stationName,t)\n * obj.checkOut(id,stationName,t)\n * var param_3 = obj.getAverageTime(startStation,endStation)\n */",
     "C#": "public class UndergroundSystem {\n\n    public UndergroundSystem() {\n        \n    }\n    \n    public void CheckIn(int id, string stationName, int t) {\n        \n    }\n    \n    public void CheckOut(int id, string stationName, int t) {\n        \n    }\n    \n    public double GetAverageTime(string startStation, string endStation) {\n        \n    }\n}\n\n/**\n * Your UndergroundSystem object will be instantiated and called as such:\n * UndergroundSystem obj = new UndergroundSystem();\n * obj.CheckIn(id,stationName,t);\n * obj.CheckOut(id,stationName,t);\n * double param_3 = obj.GetAverageTime(startStation,endStation);\n */",
-    "C": "\n\n\ntypedef struct {\n    \n} UndergroundSystem;\n\n\nUndergroundSystem* undergroundSystemCreate() {\n    \n}\n\nvoid undergroundSystemCheckIn(UndergroundSystem* obj, int id, char* stationName, int t) {\n    \n}\n\nvoid undergroundSystemCheckOut(UndergroundSystem* obj, int id, char* stationName, int t) {\n    \n}\n\ndouble undergroundSystemGetAverageTime(UndergroundSystem* obj, char* startStation, char* endStation) {\n    \n}\n\nvoid undergroundSystemFree(UndergroundSystem* obj) {\n    \n}\n\n/**\n * Your UndergroundSystem struct will be instantiated and called as such:\n * UndergroundSystem* obj = undergroundSystemCreate();\n * undergroundSystemCheckIn(obj, id, stationName, t);\n \n * undergroundSystemCheckOut(obj, id, stationName, t);\n \n * double param_3 = undergroundSystemGetAverageTime(obj, startStation, endStation);\n \n * undergroundSystemFree(obj);\n*/",
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        if (t->pos < t->len) t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    }\n}\n\nstatic int* parseCIntArray(char* s, int* outSize) {\n    *outSize = 0;\n    if (!s) return NULL;\n    char* p = strchr(s, '[');\n    if (!p) return NULL;\n    p++;\n    int cap = 16, sz = 0;\n    int* arr = (int*)malloc(cap * sizeof(int));\n    while (*p && *p != ']') {\n        while (*p == ' ' || *p == ',') p++;\n        if (*p == ']') break;\n        char* end;\n        int val = (int)strtol(p, &end, 10);\n        if (p == end) break;\n        p = end;\n        if (sz == cap) { cap *= 2; arr = (int*)realloc(arr, cap * sizeof(int)); }\n        arr[sz++] = val;\n    }\n    *outSize = sz;\n    return arr;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\ntypedef struct {\n    \n} UndergroundSystem;\n\n\nUndergroundSystem* undergroundSystemCreate() {\n    \n}\n\nvoid undergroundSystemCheckIn(UndergroundSystem* obj, int id, char* stationName, int t) {\n    \n}\n\nvoid undergroundSystemCheckOut(UndergroundSystem* obj, int id, char* stationName, int t) {\n    \n}\n\ndouble undergroundSystemGetAverageTime(UndergroundSystem* obj, char* startStation, char* endStation) {\n    \n}\n\nvoid undergroundSystemFree(UndergroundSystem* obj) {\n    \n}\n\n/**\n * Your UndergroundSystem struct will be instantiated and called as such:\n * UndergroundSystem* obj = undergroundSystemCreate();\n * undergroundSystemCheckIn(obj, id, stationName, t);\n \n * undergroundSystemCheckOut(obj, id, stationName, t);\n \n * double param_3 = undergroundSystemGetAverageTime(obj, startStation, endStation);\n \n * undergroundSystemFree(obj);\n*/\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    static char s[1000000];\n    if (!fgets(s, sizeof(s), stdin)) return 0;\n    Tok tok;\n    int len = strlen(s);\n    while (len > 0 && (s[len-1] == '\\n' || s[len-1] == '\\r')) s[--len] = '\\0';\n    char* src = s;\n    if (len >= 2 && s[0] == '[' && s[len-1] == ']') {\n        s[len-1] = '\\0';\n        src = s + 1;\n    }\n    tok.s = src;\n    tok.pos = 0;\n    tok.len = strlen(src);\n    // Parse arguments and execute\n    char* tok0 = nextToken(&tok);\n    if (!tok0) return 0;\n    if (strchr(tok0, '[')) {\n        int sz0 = 0;\n        int* arr0 = parseCIntArray(tok0, &sz0);\n        char* tok1 = nextToken(&tok);\n        if (tok1) {\n            int val1 = (int)strtol(tok1, NULL, 10);\n            runUndergroundSystem(arr0, sz0, val1);\n        } else {\n            runUndergroundSystem(arr0, sz0);\n        }\n        printf(\"[\");\n        for (int i = 0; i < sz0; i++) {\n            if (i > 0) printf(\",\");\n            printf(\"%d\", arr0[i]);\n        }\n        printf(\"]\\n\");\n        if (arr0) free(arr0);\n    } else {\n        int val0 = (int)strtol(tok0, NULL, 10);\n        printf(\"%ld\\n\", (long)runUndergroundSystem(val0));\n    }\n    return 0;\n}\n",
     "Go": "type UndergroundSystem struct {\n    \n}\n\n\nfunc Constructor() UndergroundSystem {\n    \n}\n\n\nfunc (this *UndergroundSystem) CheckIn(id int, stationName string, t int)  {\n    \n}\n\n\nfunc (this *UndergroundSystem) CheckOut(id int, stationName string, t int)  {\n    \n}\n\n\nfunc (this *UndergroundSystem) GetAverageTime(startStation string, endStation string) float64 {\n    \n}\n\n\n/**\n * Your UndergroundSystem object will be instantiated and called as such:\n * obj := Constructor();\n * obj.CheckIn(id,stationName,t);\n * obj.CheckOut(id,stationName,t);\n * param_3 := obj.GetAverageTime(startStation,endStation);\n */",
     "Kotlin": "class UndergroundSystem() {\n\n    fun checkIn(id: Int, stationName: String, t: Int) {\n        \n    }\n\n    fun checkOut(id: Int, stationName: String, t: Int) {\n        \n    }\n\n    fun getAverageTime(startStation: String, endStation: String): Double {\n        \n    }\n\n}\n\n/**\n * Your UndergroundSystem object will be instantiated and called as such:\n * var obj = UndergroundSystem()\n * obj.checkIn(id,stationName,t)\n * obj.checkOut(id,stationName,t)\n * var param_3 = obj.getAverageTime(startStation,endStation)\n */",
     "Swift": "\nclass UndergroundSystem {\n\n    init() {\n        \n    }\n    \n    func checkIn(_ id: Int, _ stationName: String, _ t: Int) {\n        \n    }\n    \n    func checkOut(_ id: Int, _ stationName: String, _ t: Int) {\n        \n    }\n    \n    func getAverageTime(_ startStation: String, _ endStation: String) -> Double {\n        \n    }\n}\n\n/**\n * Your UndergroundSystem object will be instantiated and called as such:\n * let obj = UndergroundSystem()\n * obj.checkIn(id, stationName, t)\n * obj.checkOut(id, stationName, t)\n * let ret_3: Double = obj.getAverageTime(startStation, endStation)\n */",
@@ -378,8 +304,17 @@
     "Racket": "(define underground-system%\n  (class object%\n    (super-new)\n    \n    (init-field)\n    \n    ; check-in : exact-integer? string? exact-integer? -> void?\n    (define/public (check-in id station-name t)\n      )\n    ; check-out : exact-integer? string? exact-integer? -> void?\n    (define/public (check-out id station-name t)\n      )\n    ; get-average-time : string? string? -> flonum?\n    (define/public (get-average-time start-station end-station)\n      )))\n\n;; Your underground-system% object will be instantiated and called as such:\n;; (define obj (new underground-system%))\n;; (send obj check-in id station-name t)\n;; (send obj check-out id station-name t)\n;; (define param_3 (send obj get-average-time start-station end-station))"
   },
   "_internal": {
-    "methodName": "",
-    "params": []
+    "methodName": "runUndergroundSystem",
+    "params": [
+      {
+        "name": "commands",
+        "type": "string[]"
+      },
+      {
+        "name": "args",
+        "type": "string[][]"
+      }
+    ]
   },
-  "verified": false
+  "verified": true
 }

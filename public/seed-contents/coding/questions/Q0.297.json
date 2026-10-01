@@ -1,6 +1,6 @@
 {
   "questionId": "Q0.297",
-  "title": "Greatest Number Possible",
+  "title": "Largest Number Formable from Digits",
   "slug": "greatest-number-possible",
   "version": 1,
   "createdAt": "2026-07-06",
@@ -19,7 +19,7 @@
   "content": {
     "problemStatement": "You are given a function,\nchar* FindMax(int* arr, int size);\nchar* FindMax(int* arr, int size);\nstatic String FindMax(int[] arr){}\nstatic string FindMax(int[] arr){}\ndef FindMax(arr):\nThe function accepts an integer array 'arr' of length 'size' as its argument. Implement the function\nto find and return the maximum number that can be formed by any permutation or arrangement of\nall the digits obtained from all the numbers present in the array. You have to return the number\nformed as a string.\nNote: You may need to rearrange the digits of the numbers to form the maximum number.",
     "constraints": [
-      "None"
+      "1 <= N <= 10^5"
     ],
     "inputFormat": "34 79 58 64",
     "outputFormat": "98765443",
@@ -30,14 +30,14 @@
         "type": "reg",
         "input": "4\n34 79 58 64",
         "output": "98765443",
-        "explanation": ""
+        "explanation": "Example demonstrating Extract all digits from all numbers in the array and sort them descending."
       },
       {
         "id": "sample_2",
         "type": "reg",
         "input": "3\n21 90 23",
         "output": "932210",
-        "explanation": ""
+        "explanation": "Example demonstrating Extract all digits from all numbers in the array and sort them descending."
       }
     ]
   },
@@ -336,64 +336,63 @@
     "notes": []
   },
   "solution": {
-    "approach": "",
-    "timeComplexity": "",
-    "spaceComplexity": "",
+    "approach": "Extract all digits from all numbers in the array and sort them descending.",
+    "timeComplexity": "O(Total Digits * log(Total Digits))",
+    "spaceComplexity": "O(Total Digits)",
     "code": {
-      "C": "",
-      "C++": "",
-      "Java": "",
-      "Python3": "",
-      "JavaScript": ""
+      "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\nint cmp(const void *a, const void *b) { return (*(char*)b - *(char*)a); }\nint main() {\n    int n; if (scanf(\"%d\", &n) != 1) return 0;\n    char digits[100000]; int idx = 0;\n    for (int i = 0; i < n; i++) {\n        char buf[50]; scanf(\"%s\", buf);\n        for (int k = 0; buf[k]; k++) if (buf[k] >= '0' && buf[k] <= '9') digits[idx++] = buf[k];\n    }\n    digits[idx] = '\\0';\n    qsort(digits, idx, 1, cmp);\n    puts(digits);\n    return 0;\n}\n",
+      "C++": "#include <iostream>\n#include <string>\n#include <vector>\n#include <algorithm>\nusing namespace std;\nint main() {\n    int n; if (cin >> n) {\n        string digits = \"\";\n        for (int i = 0; i < n; i++) {\n            string s; cin >> s;\n            for (char c : s) if (isdigit(c)) digits += c;\n        }\n        sort(digits.rbegin(), digits.rend());\n        cout << digits << \"\\n\";\n    }\n    return 0;\n}\n",
+      "Java": "import java.util.Scanner;\nimport java.util.ArrayList;\nimport java.util.Collections;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            ArrayList<Character> digits = new ArrayList<>();\n            for (int i = 0; i < n; i++) {\n                String s = sc.next();\n                for (char c : s.toCharArray()) if (Character.isDigit(c)) digits.add(c);\n            }\n            Collections.sort(digits, Collections.reverseOrder());\n            StringBuilder sb = new StringBuilder();\n            for (char c : digits) sb.append(c);\n            System.out.println(sb.toString());\n        }\n    }\n}\n",
+      "Python3": "import sys\ndef main():\n    toks = sys.stdin.read().split()\n    if toks:\n        n = int(toks[0])\n        digits = []\n        for x in toks[1:1+n]:\n            for d in str(abs(int(x))):\n                digits.append(d)\n        digits.sort(reverse=True)\n        print(\"\".join(digits))\nif __name__ == \"__main__\": main()\n",
+      "JavaScript": "const fs = require(\"fs\");\nfunction main() {\n    const toks = fs.readFileSync(0, \"utf-8\").trim().split(/\\s+/);\n    if (toks.length > 0) {\n        const n = parseInt(toks[0], 10);\n        const digits = [];\n        for (let i = 1; i <= n && i < toks.length; i++) {\n            for (const d of Math.abs(parseInt(toks[i], 10)).toString()) {\n                digits.push(d);\n            }\n        }\n        digits.sort((a, b) => b.localeCompare(a));\n        console.log(digits.join(\"\"));\n    }\n}\nmain();\n"
     },
     "notes": [],
     "editorial": {
-      "bruteForce": {
-        "description": "",
-        "complexity": ""
-      },
-      "better": {
-        "description": "",
-        "complexity": ""
-      },
-      "optimal": {
-        "description": "",
-        "complexity": ""
-      }
+      "overview": "Convert each number into individual digits, sort all collected digits in descending order, and concatenate.",
+      "approach": "Extract all digits from all numbers in the array and sort them descending.",
+      "complexityAnalysis": "Time: O(Total Digits * log(Total Digits)), Space: O(Total Digits)"
     }
   },
-  "hints": [],
+  "hints": [
+    "Extract all digits.",
+    "Sort descending.",
+    "Join together."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Digit sorting",
+    "Greedy arrangement"
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C": "#include <stdio.h>\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // your code goes here\n    return 0;\n}",
-    "Java": "import java.util.*;\nimport java.io.*;\n\npublic class Main {\n    public static void main(String[] args) throws IOException {\n        // your code goes here\n    }\n}",
-    "Python3": "# your code goes here\n",
-    "JavaScript": "// your code goes here\n",
-    "solution": {
-      "approach": "",
-      "timeComplexity": "",
-      "spaceComplexity": "",
-      "code": {
-        "C": "",
-        "C++": "",
-        "Java": "",
-        "Python3": "",
-        "JavaScript": ""
-      }
-    },
-    "_internal": {
-      "methodName": "",
-      "params": [],
-      "phase": "ready-for-judge"
-    },
-    "verified": true
+    "C": "#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "C++": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n",
+    "Java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n",
+    "Python3": "import sys\ndef main():\n    # Write your solution here\n    pass\n\nif __name__ == '__main__':\n    main()\n",
+    "JavaScript": "'use strict';\nconst fs = require('fs');\n\nfunction main() {\n    // Write your solution here\n}\n\nmain();\n"
   },
-  "_internal": {},
-  "verified": false
+  "_internal": {
+    "methodName": "main",
+    "params": []
+  },
+  "verified": true,
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "4\n34 79 58 64",
+      "output": "98765443",
+      "explanation": "Example demonstrating Extract all digits from all numbers in the array and sort them descending."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "3\n21 90 23",
+      "output": "932210",
+      "explanation": "Example demonstrating Extract all digits from all numbers in the array and sort them descending."
+    }
+  ]
 }

@@ -24,11 +24,12 @@ const getModelsPath = (subPath) => {
   return `/${subPath}`;
 };
 
-const DETECTION_INTERVAL_MS = 2000; // no longer used for tight loop, kept for reference
-const CONSECUTIVE_DETECTIONS_REQUIRED = 2; // legacy, not used in new strategy
-const VIOLATION_RESET_WINDOW_MS = 6000; // legacy, not used in new strategy
-const CHECK_INTERVAL_MS = 4000; // 4 seconds between proctor checks
-const SEQUENCE_GAP_MS = 1500; // 1.5 seconds between the 2 images in a sequence
+// Dream AI Proctoring Pipeline Timing Configuration
+const TIER_1_INTERVAL_MS = 1000;       // Tier 1: Face Presence & 3D Head Pose (every 1s)
+const TIER_2_INTERVAL_MS = 3000;       // Tier 2: YOLOv8 Unauthorized Object Detection (every 3s)
+const TIER_3_INTERVAL_MS = 30000;      // Tier 3: Biometric Identity Verification (every 30s)
+const STARTUP_GRACE_PERIOD_MS = 2500;  // 2.5s grace period upon test start / section switch
+const VIOLATION_COOLDOWN_MS = 3000;    // 3s cooldown between same-type violations to prevent spamming
 const MAX_VIOLATIONS = 5;
 
 // Global model loading state to prevent multiple loads
@@ -193,11 +194,11 @@ const runYolov8Inference = async (videoElement, model) => {
     let bookDetected = false;
     
     for (const item of suppressed) {
-      if (item.classId === 0) {
+      if (item.classId === 0 && item.score >= 0.40) {
         personCount++;
-      } else if (item.classId === 67) {
+      } else if (item.classId === 67 && item.score >= 0.42) {
         phoneDetected = true;
-      } else if (item.classId === 73) {
+      } else if (item.classId === 73 && item.score >= 0.45) {
         bookDetected = true;
       }
     }
@@ -236,13 +237,32 @@ const ProctoringEngine = ({
 }) => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
-  const detectionIntervalRef = useRef(null);
   const modelsLoadedRef = useRef(false);
   const initializedRef = useRef(false);
   const retryCountRef = useRef(0);
-  const detectionInProgressRef = useRef(false);
-  const sequenceInProgressRef = useRef(false);
   const selectedDeviceIdRef = useRef(null);
+
+  // Dream AI Pipeline Interval & Concurrency Guards
+  const tier1IntervalRef = useRef(null);
+  const tier2IntervalRef = useRef(null);
+  const tier3IntervalRef = useRef(null);
+  const tier1RunningRef = useRef(false);
+  const tier2RunningRef = useRef(false);
+  const tier3RunningRef = useRef(false);
+
+  // Debounce & Streak Counters
+  const noFaceStreakRef = useRef(0);
+  const lookingAwayStreakRef = useRef(0);
+  const multiFaceStreakRef = useRef(0);
+  const yoloMultiPersonStreakRef = useRef(0);
+  const mismatchStreakRef = useRef(0);
+
+  // Cross-Model Corroboration & Gating
+  const lastYoloPersonCountRef = useRef(0);
+  const lastYoloTimeRef = useRef(0);
+  const lastViolationTimeRef = useRef({});
+  const isProctorActiveRef = useRef(isProctorActive);
+  const activeStartTimeRef = useRef(0);
 
   const [violationCount, setViolationCount] = useState(() => {
     // Guarded: proctorCache is a plain localStorage utility — no async deps.
@@ -481,32 +501,29 @@ const ProctoringEngine = ({
     }
   }, []);
 
-  const stopDetectionLoop = useCallback(() => {
-    if (detectionIntervalRef.current) {
-      clearInterval(detectionIntervalRef.current);
-      detectionIntervalRef.current = null;
+  const stopTieredEngine = useCallback(() => {
+    if (tier1IntervalRef.current) {
+      clearInterval(tier1IntervalRef.current);
+      tier1IntervalRef.current = null;
     }
+    if (tier2IntervalRef.current) {
+      clearInterval(tier2IntervalRef.current);
+      tier2IntervalRef.current = null;
+    }
+    if (tier3IntervalRef.current) {
+      clearInterval(tier3IntervalRef.current);
+      tier3IntervalRef.current = null;
+    }
+    tier1RunningRef.current = false;
+    tier2RunningRef.current = false;
+    tier3RunningRef.current = false;
   }, []);
-
-  const notifyViolationEvent = useCallback(
-    (violationType, countOverride) => {
-      if (!violationType || !onViolationUpdateRef.current) return;
-      const payloadCount =
-        typeof countOverride === 'number' ? countOverride : violationCountRef.current;
-      onViolationUpdateRef.current({
-        violationCount: payloadCount,
-        violationType,
-        timestamp: timeService.getNow().toISOString()
-      });
-    },
-    []
-  );
 
   // Initialize webcam - with duplicate prevention and reuse existing stream
   const initializeWebcam = useCallback(async (force = false) => {
     if (force) {
       console.log('[ProctoringEngine] Forcing webcam reinitialization...');
-      stopDetectionLoop();
+      stopTieredEngine();
       cleanupStream();
     }
 
@@ -637,10 +654,23 @@ const ProctoringEngine = ({
       
       return false;
     }
-  }, [cleanupStream, stopDetectionLoop]);
+  }, [cleanupStream, stopTieredEngine]);
 
   // Helper to handle and increment violation events
   const handleViolation = useCallback((type) => {
+    // 1. Strict Gating: Zero checks or violations if proctoring is inactive (e.g. countdown / instructions / loading)
+    if (!isProctorActiveRef.current) return;
+
+    // 2. Startup Grace Period: 2.5s to settle in upon entering test or switching sections
+    if (Date.now() - activeStartTimeRef.current < STARTUP_GRACE_PERIOD_MS) return;
+
+    // 3. Cooldown throttle per violation type to avoid cascading spam
+    const now = Date.now();
+    if (lastViolationTimeRef.current[type] && (now - lastViolationTimeRef.current[type] < VIOLATION_COOLDOWN_MS)) {
+      return;
+    }
+    lastViolationTimeRef.current[type] = now;
+
     setViolationCount(prev => {
       const newCount = prev + 1;
       
@@ -659,7 +689,7 @@ const ProctoringEngine = ({
         msg = 'Face verification failed: Different person detected in camera view!';
       }
 
-      // Record to local cache for Firestore submission
+      // Record to local cache for Firestore write-through audit trail
       const record = recordViolation(assessmentId, uid, type, { message: msg }, uid);
 
       // Defer side effects to prevent updating other React components during this state transition
@@ -690,190 +720,300 @@ const ProctoringEngine = ({
     });
   }, [assessmentId, uid, showAlert]);
 
-  // Single-frame detection helper (used in scheduled sequences)
-  const detectFrame = useCallback(async () => {
+  // ── Tier 1: High Frequency (1000ms) - Face Presence & 3D Head Pose ─────────
+  const runTier1FaceCheck = useCallback(async () => {
+    if (!isTestActive || !isProctorActiveRef.current) return;
+    if (Date.now() - activeStartTimeRef.current < STARTUP_GRACE_PERIOD_MS) return;
+    if (!videoRef.current || !streamRef.current || tier1RunningRef.current) return;
+
     const track = streamRef.current?.getVideoTracks()?.[0] || window.cameraStream?.getVideoTracks()?.[0];
-    if (!isTestActive || !videoRef.current || !streamRef.current || !track || !track.enabled || track.readyState !== 'live') {
-      return { violationType: null, faceCount: 0 };
-    }
-    if (detectionInProgressRef.current) {
-      return { violationType: null, faceCount: 0 };
+    if (!track || !track.enabled || track.readyState !== 'live') return;
+
+    const video = videoRef.current;
+    if (video.readyState < 2 || video.paused) {
+      try { await video.play(); } catch (_) {}
+      if (video.readyState < 2) return;
     }
 
-    detectionInProgressRef.current = true;
+    if (!window.faceApiLoaded) return;
 
+    tier1RunningRef.current = true;
     try {
-      const video = videoRef.current;
+      // SsdMobilenetv1 + 68 Landmarks (No face descriptors in Tier 1 to save CPU!)
+      const faceDetections = await faceapi.detectAllFaces(
+        video,
+        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 })
+      ).withFaceLandmarks();
 
-      if (video.readyState < 2 || video.paused) {
-        try {
-          await video.play();
-        } catch (_) {}
-        if (video.readyState < 2) {
-          return { violationType: null, faceCount: 0 };
+      const faceCount = faceDetections ? faceDetections.length : 0;
+
+      if (faceCount === 0) {
+        // Hybrid corroboration: check if YOLO recently confirmed person is seated at desk
+        const yoloHasPerson = (Date.now() - lastYoloTimeRef.current < 6000) && (lastYoloPersonCountRef.current >= 1);
+        const requiredStreak = yoloHasPerson ? 5 : 3;
+
+        noFaceStreakRef.current += 1;
+        lookingAwayStreakRef.current = 0;
+        multiFaceStreakRef.current = 0;
+
+        if (noFaceStreakRef.current >= requiredStreak) {
+          handleViolation('no_face');
+          noFaceStreakRef.current = 0;
         }
-      }
+      } else if (faceCount > 1) {
+        multiFaceStreakRef.current += 1;
+        noFaceStreakRef.current = 0;
+        lookingAwayStreakRef.current = 0;
 
-      let faceCount = 0;
-      let violationType = null;
-      let lookingAway = false;
+        if (multiFaceStreakRef.current >= 2) {
+          handleViolation('multiple_faces');
+          multiFaceStreakRef.current = 0;
+        }
+      } else {
+        // Exactly 1 face detected
+        noFaceStreakRef.current = 0;
+        multiFaceStreakRef.current = 0;
 
-      // 1. Run Face-API detection (Offline Primary Guard)
-      if (window.faceApiLoaded) {
-        try {
-          const faceDetections = await faceapi.detectAllFaces(
-            video, 
-            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 })
-          ).withFaceLandmarks().withFaceDescriptors();
+        // 3D Head Pose Estimation (Yaw, Pitch & Roll from 68 landmarks)
+        const landmarks = faceDetections[0].landmarks;
+        const jawOutline = landmarks.getJawOutline();
+        const nose = landmarks.getNose();
+        const leftEye = landmarks.getLeftEye();
+        const rightEye = landmarks.getRightEye();
 
-          faceCount = faceDetections.length;
-          console.log('[ProctoringEngine] Face-API detections count:', faceCount);
+        let isLookingAway = false;
 
-          if (faceCount === 0) {
-            violationType = 'no_face';
-          } else if (faceCount > 1) {
-            violationType = 'multiple_faces';
-          } else {
-            // Identity Face Verification matching check
-            const savedDescriptorStr = localStorage.getItem('proctor_reference_descriptor_' + assessmentId);
-            if (savedDescriptorStr && faceDetections[0].descriptor) {
-              try {
-                const referenceDescriptor = new Float32Array(JSON.parse(savedDescriptorStr));
-                const distance = faceapi.euclideanDistance(referenceDescriptor, faceDetections[0].descriptor);
-                console.log('[ProctoringEngine] Face verification distance:', distance);
-                if (distance > 0.62) {
-                  violationType = 'face_mismatch';
-                }
-              } catch (err) {
-                console.error('[ProctoringEngine] Error parsing reference descriptor:', err);
+        if (jawOutline && jawOutline.length >= 17 && nose && nose.length >= 7 && leftEye && rightEye) {
+          const leftEdge = jawOutline[0];
+          const rightEdge = jawOutline[16];
+          const noseTip = nose[6];
+
+          // 1. Yaw (Horizontal left/right rotation)
+          const distLeft = noseTip.x - leftEdge.x;
+          const distRight = rightEdge.x - noseTip.x;
+          if (distLeft > 0 && distRight > 0) {
+            const yawRatio = distLeft / distRight;
+            if (yawRatio < 0.28 || yawRatio > 3.4) {
+              isLookingAway = true;
+            }
+          }
+
+          // 2. Pitch (Vertical looking down at desk/lap/phone or up at ceiling)
+          if (!isLookingAway && leftEye.length >= 6 && rightEye.length >= 6) {
+            const leftEyeY = (leftEye[1].y + leftEye[2].y + leftEye[4].y + leftEye[5].y) / 4;
+            const rightEyeY = (rightEye[1].y + rightEye[2].y + rightEye[4].y + rightEye[5].y) / 4;
+            const eyeMidY = (leftEyeY + rightEyeY) / 2;
+            const chinY = jawOutline[8].y;
+            const noseTipY = noseTip.y;
+
+            const upperDist = noseTipY - eyeMidY;
+            const lowerDist = chinY - noseTipY;
+
+            if (upperDist > 0 && lowerDist > 0) {
+              const pitchRatio = upperDist / lowerDist;
+              // Pitch ratio > 2.1 = looking down at lap/cellphone; < 0.35 = looking up away
+              if (pitchRatio > 2.1 || pitchRatio < 0.35) {
+                isLookingAway = true;
               }
             }
+          }
 
-            // Check head pose (Looking Away detection)
-            if (!violationType) {
-              const landmarks = faceDetections[0].landmarks;
-              const nose = landmarks.getNose();
-              const jawOutline = landmarks.getJawOutline();
-              
-              if (jawOutline && jawOutline.length >= 17 && nose && nose.length >= 7) {
-                const leftEdge = jawOutline[0];
-                const rightEdge = jawOutline[16];
-                const noseTip = nose[6];
-                
-                const distLeft = noseTip.x - leftEdge.x;
-                const distRight = rightEdge.x - noseTip.x;
-                
-                if (distLeft > 0 && distRight > 0) {
-                  const ratio = distLeft / distRight;
-                  console.log('[ProctoringEngine] Face ratio (nose/jaw):', ratio);
-                  if (ratio < 0.32 || ratio > 3.1) {
-                    lookingAway = true;
-                    violationType = 'looking_away';
-                  }
-                }
-              }
+          // 3. Roll (Head tilt)
+          if (!isLookingAway && leftEye.length >= 6 && rightEye.length >= 6) {
+            const leftEyeY = (leftEye[1].y + leftEye[4].y) / 2;
+            const rightEyeY = (rightEye[1].y + rightEye[4].y) / 2;
+            const eyeDeltaY = rightEyeY - leftEyeY;
+            const eyeDeltaX = rightEye[3].x - leftEye[0].x;
+            const rollAngle = Math.abs(Math.atan2(eyeDeltaY, eyeDeltaX) * (180 / Math.PI));
+            if (rollAngle > 35) {
+              isLookingAway = true;
             }
           }
-        } catch (faceErr) {
-          console.error('[ProctoringEngine] Face-API runtime error:', faceErr);
         }
-      }
 
-      // 2. Run YOLOv8 detection (Object Detection Guard)
-      if (window.yolov8Model && window.yolov8Loaded && !window.yoloModelBroken) {
-        try {
-          const yoloResult = await runYolov8Inference(video, window.yolov8Model);
-          console.log('[ProctoringEngine] YOLOv8 detection result:', yoloResult);
-          
-          if (!window.faceApiLoaded) {
-            faceCount = yoloResult.personCount;
-            if (faceCount === 0) {
-              violationType = 'no_face';
-            } else if (faceCount > 1) {
-              violationType = 'multiple_faces';
-            }
-          } else {
-            // Hybrid verification: if Face-API momentarily missed face due to lighting/angle,
-            // but YOLO clearly detects personCount >= 1, avoid false no_face flag.
-            if (violationType === 'no_face' && yoloResult.personCount >= 1) {
-              console.log('[ProctoringEngine] YOLO confirms candidate is present at desk despite low landmark confidence');
-              violationType = null;
-            }
+        if (isLookingAway) {
+          lookingAwayStreakRef.current += 1;
+          if (lookingAwayStreakRef.current >= 3) {
+            handleViolation('looking_away');
+            lookingAwayStreakRef.current = 0;
           }
-
-          if (yoloResult.phoneDetected) {
-            violationType = 'cell_phone';
-          } else if (yoloResult.bookDetected && !violationType) {
-            violationType = 'prohibited_object';
-          }
-        } catch (yoloErr) {
-          console.error('[ProctoringEngine] YOLOv8 runtime error (disabling YOLOv8 engine due to backend failure):', yoloErr);
-          window.yoloModelBroken = true; // Disable YOLOv8 to prevent UI thread freezing
+        } else {
+          lookingAwayStreakRef.current = 0;
         }
-      }
-
-      return { violationType, faceCount };
-    } catch (error) {
-      console.error('[ProctoringEngine] Detection error:', error);
-      return { violationType: null, faceCount: 0 };
-    } finally {
-      detectionInProgressRef.current = false;
-    }
-  }, [isTestActive, assessmentId]);
-
-  // Scheduled sequence: capture two frames and compare
-  const runPresenceCheckSequence = useCallback(async () => {
-    if (!isTestActive || sequenceInProgressRef.current) return;
-    if (!videoRef.current || !streamRef.current) return;
-
-    sequenceInProgressRef.current = true;
-    try {
-      const first = await detectFrame();
-      
-      // Handle instant critical violations immediately
-      if (first.violationType && (first.violationType === 'cell_phone' || first.violationType === 'multiple_faces' || first.violationType === 'prohibited_object')) {
-        handleViolation(first.violationType);
-        return;
-      }
-
-      if (first.violationType) {
-        notifyViolationEvent(first.violationType);
-      }
-
-      await new Promise(resolve => setTimeout(resolve, SEQUENCE_GAP_MS));
-
-      const second = await detectFrame();
-      
-      // Handle instant critical violations immediately
-      if (second.violationType && (second.violationType === 'cell_phone' || second.violationType === 'multiple_faces' || second.violationType === 'prohibited_object')) {
-        handleViolation(second.violationType);
-        return;
-      }
-
-      if (second.violationType) {
-        notifyViolationEvent(second.violationType);
-      }
-
-      const noFaceFirst = first.violationType === 'no_face';
-      const noFaceSecond = second.violationType === 'no_face';
-      const lookingAwayFirst = first.violationType === 'looking_away';
-      const lookingAwaySecond = second.violationType === 'looking_away';
-      const faceMismatchFirst = first.violationType === 'face_mismatch';
-      const faceMismatchSecond = second.violationType === 'face_mismatch';
-
-      if (noFaceFirst && noFaceSecond) {
-        handleViolation('no_face');
-      } else if (lookingAwayFirst && lookingAwaySecond) {
-        handleViolation('looking_away');
-      } else if (faceMismatchFirst && faceMismatchSecond) {
-        handleViolation('face_mismatch');
       }
     } catch (err) {
-      console.error('[ProctoringEngine] Error in presence check sequence:', err);
+      console.warn('[ProctoringEngine] Tier 1 detection error:', err);
     } finally {
-      sequenceInProgressRef.current = false;
+      tier1RunningRef.current = false;
     }
-  }, [detectFrame, isTestActive, notifyViolationEvent, handleViolation]);
+  }, [isTestActive, handleViolation]);
+
+  // ── Tier 2: Medium Frequency (3000ms) - YOLOv8 Unauthorized Objects ────────
+  const runTier2YoloCheck = useCallback(async () => {
+    if (!isTestActive || !isProctorActiveRef.current) return;
+    if (Date.now() - activeStartTimeRef.current < STARTUP_GRACE_PERIOD_MS) return;
+    if (!videoRef.current || !streamRef.current || tier2RunningRef.current) return;
+    if (!window.yolov8Loaded || !window.yolov8Model || window.yoloModelBroken) return;
+
+    const track = streamRef.current?.getVideoTracks()?.[0] || window.cameraStream?.getVideoTracks()?.[0];
+    if (!track || !track.enabled || track.readyState !== 'live') return;
+
+    const video = videoRef.current;
+    if (video.readyState < 2 || video.paused) return;
+
+    tier2RunningRef.current = true;
+    try {
+      const yoloResult = await runYolov8Inference(video, window.yolov8Model);
+      lastYoloTimeRef.current = Date.now();
+      lastYoloPersonCountRef.current = yoloResult.personCount;
+
+      // 1. Mobile Phone Detection (Instant violation)
+      if (yoloResult.phoneDetected) {
+        handleViolation('cell_phone');
+        return;
+      }
+
+      // 2. Prohibited Material / Book Detection (Instant violation)
+      if (yoloResult.bookDetected) {
+        handleViolation('prohibited_object');
+        return;
+      }
+
+      // 3. Secondary Person Detection via YOLO
+      if (yoloResult.personCount > 1) {
+        yoloMultiPersonStreakRef.current += 1;
+        if (yoloMultiPersonStreakRef.current >= 2) {
+          handleViolation('multiple_faces');
+          yoloMultiPersonStreakRef.current = 0;
+        }
+      } else {
+        yoloMultiPersonStreakRef.current = 0;
+      }
+
+      // Fallback if Face-API failed to load offline: use YOLO personCount
+      if (!window.faceApiLoaded) {
+        if (yoloResult.personCount === 0) {
+          noFaceStreakRef.current += 1;
+          if (noFaceStreakRef.current >= 3) {
+            handleViolation('no_face');
+            noFaceStreakRef.current = 0;
+          }
+        } else {
+          noFaceStreakRef.current = 0;
+        }
+      }
+    } catch (err) {
+      console.error('[ProctoringEngine] Tier 2 YOLO error:', err);
+      window.yoloModelBroken = true;
+    } finally {
+      tier2RunningRef.current = false;
+    }
+  }, [isTestActive, handleViolation]);
+
+  // ── Tier 3: Low Frequency (30000ms) - Biometric Identity Verification ──────
+  const runTier3IdentityCheck = useCallback(async () => {
+    if (!isTestActive || !isProctorActiveRef.current) return;
+    if (Date.now() - activeStartTimeRef.current < STARTUP_GRACE_PERIOD_MS) return;
+    if (!videoRef.current || !streamRef.current || tier3RunningRef.current) return;
+    if (!window.faceApiLoaded) return;
+
+    const track = streamRef.current?.getVideoTracks()?.[0] || window.cameraStream?.getVideoTracks()?.[0];
+    if (!track || !track.enabled || track.readyState !== 'live') return;
+
+    const savedDescriptorStr = localStorage.getItem('proctor_reference_descriptor_' + assessmentId);
+    if (!savedDescriptorStr) return;
+
+    const video = videoRef.current;
+    if (video.readyState < 2 || video.paused) return;
+
+    tier3RunningRef.current = true;
+    try {
+      let referenceDescriptor;
+      try {
+        referenceDescriptor = new Float32Array(JSON.parse(savedDescriptorStr));
+      } catch (_) {
+        return;
+      }
+
+      const detection = await faceapi.detectSingleFace(
+        video,
+        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.40 })
+      ).withFaceLandmarks().withFaceDescriptor();
+
+      if (detection && detection.descriptor) {
+        const distance = faceapi.euclideanDistance(referenceDescriptor, detection.descriptor);
+        console.log(`[ProctoringEngine] Tier 3 Identity verification distance: ${distance.toFixed(3)} (threshold: 0.62)`);
+
+        if (distance > 0.62) {
+          mismatchStreakRef.current += 1;
+          if (mismatchStreakRef.current >= 2) {
+            handleViolation('face_mismatch');
+            mismatchStreakRef.current = 0;
+          }
+        } else {
+          mismatchStreakRef.current = 0;
+        }
+      }
+    } catch (err) {
+      console.warn('[ProctoringEngine] Tier 3 Identity verification error:', err);
+    } finally {
+      tier3RunningRef.current = false;
+    }
+  }, [isTestActive, assessmentId, handleViolation]);
+
+  const startTieredEngine = useCallback(() => {
+    stopTieredEngine();
+
+    // Tier 1: 1000ms cadence
+    tier1IntervalRef.current = setInterval(() => {
+      runTier1FaceCheck();
+    }, TIER_1_INTERVAL_MS);
+
+    // Tier 2: 3000ms cadence (staggered start by 1500ms)
+    setTimeout(() => {
+      if (isProctorActiveRef.current) {
+        runTier2YoloCheck();
+        tier2IntervalRef.current = setInterval(() => {
+          runTier2YoloCheck();
+        }, TIER_2_INTERVAL_MS);
+      }
+    }, 1500);
+
+    // Tier 3: 30000ms cadence (staggered start by 10000ms)
+    setTimeout(() => {
+      if (isProctorActiveRef.current) {
+        runTier3IdentityCheck();
+        tier3IntervalRef.current = setInterval(() => {
+          runTier3IdentityCheck();
+        }, TIER_3_INTERVAL_MS);
+      }
+    }, 10000);
+
+    console.log('[ProctoringEngine] Dream AI Tiered Pipeline started (T1: 1s, T2: 3s, T3: 30s)');
+  }, [stopTieredEngine, runTier1FaceCheck, runTier2YoloCheck, runTier3IdentityCheck]);
+
+  // Gating Effect: start or stop tiered detection loop strictly based on isProctorActive
+  useEffect(() => {
+    isProctorActiveRef.current = isProctorActive;
+    if (isProctorActive) {
+      activeStartTimeRef.current = Date.now();
+      noFaceStreakRef.current = 0;
+      lookingAwayStreakRef.current = 0;
+      multiFaceStreakRef.current = 0;
+      yoloMultiPersonStreakRef.current = 0;
+      mismatchStreakRef.current = 0;
+      if (isInitialized && modelsLoadedRef.current) {
+        startTieredEngine();
+      }
+    } else {
+      stopTieredEngine();
+      noFaceStreakRef.current = 0;
+      lookingAwayStreakRef.current = 0;
+      multiFaceStreakRef.current = 0;
+      yoloMultiPersonStreakRef.current = 0;
+      mismatchStreakRef.current = 0;
+    }
+  }, [isProctorActive, isInitialized, startTieredEngine, stopTieredEngine]);
 
   // Initialize proctoring system - with duplicate prevention
   useEffect(() => {
@@ -881,11 +1021,7 @@ const ProctoringEngine = ({
       // Stop camera and cleanup when test is not active
       console.log('[ProctoringEngine] Test not active, cleaning up...');
       
-      if (detectionIntervalRef.current) {
-        clearInterval(detectionIntervalRef.current);
-        detectionIntervalRef.current = null;
-      }
-      
+      stopTieredEngine();
       cleanupStream();
       
       if (videoRef.current) {
@@ -937,13 +1073,10 @@ const ProctoringEngine = ({
             // 3. Load TensorFlow models in background while video is already rendering
             const modelsLoaded = await loadModels();
             if (modelsLoaded) {
-              stopDetectionLoop();
-              // Run presence checks
-              runPresenceCheckSequence();
-              detectionIntervalRef.current = setInterval(() => {
-                runPresenceCheckSequence();
-              }, CHECK_INTERVAL_MS);
-              console.log('[ProctoringEngine] Scheduled proctoring AI checks started');
+              if (isProctorActiveRef.current) {
+                startTieredEngine();
+              }
+              console.log('[ProctoringEngine] Dream AI proctoring pipeline ready');
             }
             // Always fire onReady whether modelsLoaded was true or false, so prelaunch is unblocked
             if (onReadyRef.current) {
@@ -978,7 +1111,7 @@ const ProctoringEngine = ({
 
     const handleHardwareTeardown = () => {
       console.log('[ProctoringEngine] Hardware teardown event received, stopping camera and AI...');
-      stopDetectionLoop();
+      stopTieredEngine();
       cleanupStream();
       if (videoRef.current) {
         videoRef.current.srcObject = null;
@@ -994,7 +1127,7 @@ const ProctoringEngine = ({
       console.log('[ProctoringEngine] Cleanup running...');
       clearTimeout(safetyTimer);
       window.removeEventListener('seb:stop-proctoring-hardware', handleHardwareTeardown);
-      stopDetectionLoop();
+      stopTieredEngine();
       cleanupStream();
       
       if (videoRef.current) {
@@ -1187,7 +1320,7 @@ const ProctoringEngine = ({
             <div className="camera-label">
               <span className="camera-rec-dot" /> LIVE 
               <span style={{ marginLeft: '4px', fontSize: '9px', opacity: 0.85, fontWeight: '700' }}>
-                | {modelStatus === 'active' ? 'AI ACTIVE' : modelStatus === 'face_only' ? 'AI ACTIVE (FACE ONLY)' : modelStatus === 'objects_only' ? 'AI ACTIVE (OBJECTS)' : modelStatus === 'loading' ? 'LOADING AI...' : 'CAMERA ONLY'}
+                | {modelStatus === 'active' ? 'AI ACTIVE (TIERED)' : modelStatus === 'face_only' ? 'AI ACTIVE (FACE ONLY)' : modelStatus === 'objects_only' ? 'AI ACTIVE (OBJECTS)' : modelStatus === 'loading' ? 'LOADING AI...' : 'CAMERA ONLY'}
               </span>
             </div>
             {/* Violation count badge overlaid on camera */}

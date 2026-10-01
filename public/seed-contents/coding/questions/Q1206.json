@@ -23,7 +23,9 @@
   "content": {
     "problemStatement": "Design a **Skiplist** without using any built-in libraries.\n\nA **skiplist** is a data structure that takes `O(log(n))` time to add, erase and search. Comparing with treap and red-black tree which has the same function and performance, the code length of Skiplist can be comparatively short and the idea behind Skiplists is just simple linked lists.\n\nAs an example, we have a Skiplist containing `[30,40,50,60,70,90]` and we want to add `80` and `45` into it. The Skiplist works this way:\n\n![](https://assets.leetcode.com/uploads/2019/09/27/1506_skiplist.gif)  \nArtyom Kalinin [CC BY-SA 3.0], via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Skip_list_add_element-en.gif \"Artyom Kalinin [CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)], via Wikimedia Commons\")\n\nYou can see there are many layers in the Skiplist. Each layer is a sorted linked list. With the help of the top layers, add, erase and search can be faster than `O(n)`. It can be proven that the average time complexity for each operation is `O(log(n))` and space complexity is `O(n)`.\n\nSee more about Skiplist: <https://en.wikipedia.org/wiki/Skip_list>\n\nCreate an implementation of the `Skiplist` class:\n\n* `Skiplist()` Initializes the object of the skiplist.\n* `bool search(int target)` Returns `true` if the integer `target` exists in the Skiplist or `false` otherwise.\n* `void add(int num)` Inserts the value `num` into the SkipList.\n* `bool erase(int num)` Removes the value `num` from the Skiplist and returns `true`. If `num` does not exist in the Skiplist, do nothing and output `false`. If there exist multiple `num` values, removing any one of them is fine.\n\nKeep in mind that duplicates may exist in the Skiplist, your code needs to handle this situation.\n\n**Example 1:**\n\n```\nInput\n[\"Skiplist\", \"add\", \"add\", \"add\", \"search\", \"add\", \"search\", \"erase\", \"erase\", \"search\"]\n[[], [1], [2], [3], [0], [4], [1], [0], [1], [1]]\nOutput\n[null, null, null, null, false, null, true, false, true, false]\n\nExplanation\nSkiplist skiplist = new Skiplist();\nskiplist.add(1);\nskiplist.add(2);\nskiplist.add(3);\nskiplist.search(0); // return False\nskiplist.add(4);\nskiplist.search(1); // return True\nskiplist.erase(0);  // return False, 0 is not in skiplist.\nskiplist.erase(1);  // return True\nskiplist.search(1); // return False, 1 has already been erased.\n```\n\n**Constraints:**\n\n* `0 <= num, target <= 2 * 104`\n* At most `5 * 104` calls will be made to `search`, `add`, and `erase`.",
     "constraints": [
-      "None"
+      "1 <= input.length <= 10^4",
+      "1 <= elements <= 10^4",
+      "Time complexity must be optimized to run within execution limits."
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -35,246 +37,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"add\",\"search\",\"add\",\"search\",\"erase\",\"erase\",\"search\"],[[],[1],[2],[3],[0],[4],[1],[0],[1],[1]]]",
+        "expectedOutput": "[null,null,null,null,false,null,true,false,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[[\"Skiplist\",\"add\",\"search\",\"erase\",\"search\"],[[],[5],[5],[5],[5]]]",
+        "expectedOutput": "[null,null,true,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"erase\",\"search\"],[[],[2],[2],[2],[2]]]",
+        "expectedOutput": "[null,null,null,true,true]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"add\",\"search\",\"add\",\"search\",\"erase\",\"erase\",\"search\"],[[],[1],[2],[3],[0],[4],[1],[0],[1],[1]]]",
+        "expectedOutput": "[null,null,null,null,false,null,true,false,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[[\"Skiplist\",\"add\",\"search\",\"erase\",\"search\"],[[],[5],[5],[5],[5]]]",
+        "expectedOutput": "[null,null,true,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"erase\",\"search\"],[[],[2],[2],[2],[2]]]",
+        "expectedOutput": "[null,null,null,true,true]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"add\",\"search\",\"add\",\"search\",\"erase\",\"erase\",\"search\"],[[],[1],[2],[3],[0],[4],[1],[0],[1],[1]]]",
+        "expectedOutput": "[null,null,null,null,false,null,true,false,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[[\"Skiplist\",\"add\",\"search\",\"erase\",\"search\"],[[],[5],[5],[5],[5]]]",
+        "expectedOutput": "[null,null,true,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"erase\",\"search\"],[[],[2],[2],[2],[2]]]",
+        "expectedOutput": "[null,null,null,true,true]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"add\",\"search\",\"add\",\"search\",\"erase\",\"erase\",\"search\"],[[],[1],[2],[3],[0],[4],[1],[0],[1],[1]]]",
+        "expectedOutput": "[null,null,null,null,false,null,true,false,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[[\"Skiplist\",\"add\",\"search\",\"erase\",\"search\"],[[],[5],[5],[5],[5]]]",
+        "expectedOutput": "[null,null,true,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"erase\",\"search\"],[[],[2],[2],[2],[2]]]",
+        "expectedOutput": "[null,null,null,true,true]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"add\",\"search\",\"add\",\"search\",\"erase\",\"erase\",\"search\"],[[],[1],[2],[3],[0],[4],[1],[0],[1],[1]]]",
+        "expectedOutput": "[null,null,null,null,false,null,true,false,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[[\"Skiplist\",\"add\",\"search\",\"erase\",\"search\"],[[],[5],[5],[5],[5]]]",
+        "expectedOutput": "[null,null,true,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"erase\",\"search\"],[[],[2],[2],[2],[2]]]",
+        "expectedOutput": "[null,null,null,true,true]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"add\",\"search\",\"add\",\"search\",\"erase\",\"erase\",\"search\"],[[],[1],[2],[3],[0],[4],[1],[0],[1],[1]]]",
+        "expectedOutput": "[null,null,null,null,false,null,true,false,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[[\"Skiplist\",\"add\",\"search\",\"erase\",\"search\"],[[],[5],[5],[5],[5]]]",
+        "expectedOutput": "[null,null,true,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"erase\",\"search\"],[[],[2],[2],[2],[2]]]",
+        "expectedOutput": "[null,null,null,true,true]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[[\"Skiplist\",\"add\",\"add\",\"add\",\"search\",\"add\",\"search\",\"erase\",\"erase\",\"search\"],[[],[1],[2],[3],[0],[4],[1],[0],[1],[1]]]",
+        "expectedOutput": "[null,null,null,null,false,null,true,false,true,false]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[[\"Skiplist\",\"add\",\"search\",\"erase\",\"search\"],[[],[5],[5],[5],[5]]]",
+        "expectedOutput": "[null,null,true,true,false]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -347,22 +267,28 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Consider the optimal data structure and algorithm for Design Skiplist Problem.",
+    "Analyze time and space complexity to ensure no redundant passes over the data."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Master Linked List pattern recognition and optimal solution formulation.",
+    "Understand time and space complexity trade-offs for production-ready code."
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class Skiplist {\npublic:\n    Skiplist() {\n        \n    }\n    \n    bool search(int target) {\n        \n    }\n    \n    void add(int num) {\n        \n    }\n    \n    bool erase(int num) {\n        \n    }\n};\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * Skiplist* obj = new Skiplist();\n * bool param_1 = obj->search(target);\n * obj->add(num);\n * bool param_3 = obj->erase(num);\n */",
-    "Java": "class Skiplist {\n\n    public Skiplist() {\n        \n    }\n    \n    public boolean search(int target) {\n        \n    }\n    \n    public void add(int num) {\n        \n    }\n    \n    public boolean erase(int num) {\n        \n    }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * Skiplist obj = new Skiplist();\n * boolean param_1 = obj.search(target);\n * obj.add(num);\n * boolean param_3 = obj.erase(num);\n */",
-    "Python3": "# Time:  O(logn) on average for each operation\n# Space: O(n)\n\n# see proof in references:\n# 1. https://kunigami.blog/2012/09/25/skip-lists-in-python/\n# 2. https://opendatastructures.org/ods-cpp/4_4_Analysis_Skiplists.html\n# 3. https://brilliant.org/wiki/skip-lists/\nimport random\n\n\nclass SkipNode(object):\n    def __init__(self, level=0, num=None):\n        self.num = num\n        self.nexts = [None]*level\n\n\nclass Skiplist(object):\n    P_NUMERATOR, P_DENOMINATOR = 1, 2  # P = 1/4 in redis implementation\n    MAX_LEVEL = 32  # enough for 2^32 elements\n\n    def __init__(self):\n        self.__head = SkipNode()\n        self.__len = 0\n\n    def search(self, target):\n        \"\"\"\n        :type target: int\n        :rtype: bool\n        \"\"\"\n        return True if self.__find(target, self.__find_prev_nodes(target)) else False\n        \n    def add(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: None\n        \"\"\"\n        node = SkipNode(self.__random_level(), num)\n        if len(self.__head.nexts) < len(node.nexts): \n            self.__head.nexts.extend([None]*(len(node.nexts)-len(self.__head.nexts)))\n        prevs = self.__find_prev_nodes(num)\n        for i in range(len(node.nexts)):\n            node.nexts[i] = prevs[i].nexts[i]\n            prevs[i].nexts[i] = node\n        self.__len += 1\n\n    def erase(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: bool\n        \"\"\"\n        prevs = self.__find_prev_nodes(num)\n        curr = self.__find(num, prevs)\n        if not curr:\n            return False\n        self.__len -= 1   \n        for i in reversed(range(len(curr.nexts))):\n            prevs[i].nexts[i] = curr.nexts[i]\n            if not self.__head.nexts[i]:\n                self.__head.nexts.pop()\n        return True\n    \n    def __find(self, num, prevs):\n        if prevs:\n            candidate = prevs[0].nexts[0]\n            if candidate and candidate.num == num:\n                return candidate\n        return None\n\n    def __find_prev_nodes(self, num):\n        prevs = [None]*len(self.__head.nexts)\n        curr = self.__head\n        for i in reversed(range(len(self.__head.nexts))):\n            while curr.nexts[i] and curr.nexts[i].num < num:\n                curr = curr.nexts[i]\n            prevs[i] = curr\n        return prevs\n\n    def __random_level(self):\n        level = 1\n        while random.randint(1, Skiplist.P_DENOMINATOR) <= Skiplist.P_NUMERATOR and \\\n              level < Skiplist.MAX_LEVEL:\n            level += 1\n        return level\n\n    def __len__(self):\n        return self.__len\n    \n    def __str__(self):\n        result = []\n        for i in reversed(range(len(self.__head.nexts))):\n            result.append([])\n            curr = self.__head.nexts[i]\n            while curr:\n                result[-1].append(str(curr.num))\n                curr = curr.nexts[i]\n        return \"\\n\".join(map(lambda x: \"->\".join(x), result))",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int runSkiplist(int commands, int args) {\n        return 0;\n    }\n};\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        Tok tok;\n        if (!line.empty() && line.front() == '[' && line.back() == ']') {\n            tok.s = line.substr(1, line.size() - 2);\n        } else {\n            tok.s = line;\n        }\n        tok.pos = 0;\n        string arg0 = readStr(tok);\n        auto arg1 = readInt2D(tok);\n        cout << Solution().runSkiplist(arg0, arg1) << \"\\n\";\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public int runSkiplist(int commands, int args) {\n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\") || s.isEmpty()) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[' || c == '{') depth++;\n            else if (c == ']' || c == '}') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\").charAt(0);\n        return arr;\n    }\n    static char[][] toChar2D(String s) {\n        String[] rows = readArrayRaw(s);\n        char[][] mat = new char[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toCharArray(rows[i]);\n        return mat;\n    }\n    static List<Integer> toIntList(String s) {\n        int[] a = toIntArray(s);\n        List<Integer> list = new ArrayList<>();\n        for (int v : a) list.add(v);\n        return list;\n    }\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos) == ',' || _raw.charAt(_pos) == ' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth = 0, start = _pos;\n            while (_pos < _raw.length()) {\n                char x = _raw.charAt(_pos);\n                if (x == '[') depth++;\n                else if (x == ']') { depth--; if (depth == 0) { _pos++; break; } }\n                _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start = _pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start = _pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.startsWith(\"[\") && line.endsWith(\"]\")) {\n            _raw = line.substring(1, line.length() - 1);\n        } else {\n            _raw = line;\n        }\n        _pos = 0;\n        String arg0 = nextToken();\n        int[][] arg1 = toInt2D(nextToken());\n        System.out.println(new Solution().runSkiplist(arg0, arg1));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\n# Time:  O(logn) on average for each operation\n# Space: O(n)\n\n# see proof in references:\n# 1. https://kunigami.blog/2012/09/25/skip-lists-in-python/\n# 2. https://opendatastructures.org/ods-cpp/4_4_Analysis_Skiplists.html\n# 3. https://brilliant.org/wiki/skip-lists/\nimport random\n\n\nclass SkipNode(object):\n    def __init__(self, level=0, num=None):\n        self.num = num\n        self.nexts = [None]*level\n\n\nclass Skiplist(object):\n    P_NUMERATOR, P_DENOMINATOR = 1, 2  # P = 1/4 in redis implementation\n    MAX_LEVEL = 32  # enough for 2^32 elements\n\n    def __init__(self):\n        self.__head = SkipNode()\n        self.__len = 0\n\n    def search(self, target):\n        \"\"\"\n        :type target: int\n        :rtype: bool\n        \"\"\"\n        return True if self.__find(target, self.__find_prev_nodes(target)) else False\n        \n    def add(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: None\n        \"\"\"\n        node = SkipNode(self.__random_level(), num)\n        if len(self.__head.nexts) < len(node.nexts): \n            self.__head.nexts.extend([None]*(len(node.nexts)-len(self.__head.nexts)))\n        prevs = self.__find_prev_nodes(num)\n        for i in range(len(node.nexts)):\n            node.nexts[i] = prevs[i].nexts[i]\n            prevs[i].nexts[i] = node\n        self.__len += 1\n\n    def erase(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: bool\n        \"\"\"\n        prevs = self.__find_prev_nodes(num)\n        curr = self.__find(num, prevs)\n        if not curr:\n            return False\n        self.__len -= 1   \n        for i in reversed(range(len(curr.nexts))):\n            prevs[i].nexts[i] = curr.nexts[i]\n            if not self.__head.nexts[i]:\n                self.__head.nexts.pop()\n        return True\n    \n    def __find(self, num, prevs):\n        if prevs:\n            candidate = prevs[0].nexts[0]\n            if candidate and candidate.num == num:\n                return candidate\n        return None\n\n    def __find_prev_nodes(self, num):\n        prevs = [None]*len(self.__head.nexts)\n        curr = self.__head\n        for i in reversed(range(len(self.__head.nexts))):\n            while curr.nexts[i] and curr.nexts[i].num < num:\n                curr = curr.nexts[i]\n            prevs[i] = curr\n        return prevs\n\n    def __random_level(self):\n        level = 1\n        while random.randint(1, Skiplist.P_DENOMINATOR) <= Skiplist.P_NUMERATOR and \\\n              level < Skiplist.MAX_LEVEL:\n            level += 1\n        return level\n\n    def __len__(self):\n        return self.__len\n    \n    def __str__(self):\n        result = []\n        for i in reversed(range(len(self.__head.nexts))):\n            result.append([])\n            curr = self.__head.nexts[i]\n            while curr:\n                result[-1].append(str(curr.num))\n                curr = curr.nexts[i]\n        return \"\\n\".join(map(lambda x: \"->\".join(x), result))\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    if not isinstance(args, list):\n        args = [args]\n    res = Solution().runSkiplist(*args[:2])\n    print(json.dumps(res, separators=(',', ':')))\n",
     "Python": "class Skiplist(object):\n\n    def __init__(self):\n        \n\n    def search(self, target):\n        \"\"\"\n        :type target: int\n        :rtype: bool\n        \"\"\"\n        \n\n    def add(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: None\n        \"\"\"\n        \n\n    def erase(self, num):\n        \"\"\"\n        :type num: int\n        :rtype: bool\n        \"\"\"\n        \n\n\n# Your Skiplist object will be instantiated and called as such:\n# obj = Skiplist()\n# param_1 = obj.search(target)\n# obj.add(num)\n# param_3 = obj.erase(num)",
-    "JavaScript": "\nvar Skiplist = function() {\n    \n};\n\n/** \n * @param {number} target\n * @return {boolean}\n */\nSkiplist.prototype.search = function(target) {\n    \n};\n\n/** \n * @param {number} num\n * @return {void}\n */\nSkiplist.prototype.add = function(num) {\n    \n};\n\n/** \n * @param {number} num\n * @return {boolean}\n */\nSkiplist.prototype.erase = function(num) {\n    \n};\n\n/** \n * Your Skiplist object will be instantiated and called as such:\n * var obj = new Skiplist()\n * var param_1 = obj.search(target)\n * obj.add(num)\n * var param_3 = obj.erase(num)\n */",
+    "JavaScript": "'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nvar Skiplist = function() {\n    \n};\n\n/** \n * @param {number} target\n * @return {boolean}\n */\nSkiplist.prototype.search = function(target) {\n    \n};\n\n/** \n * @param {number} num\n * @return {void}\n */\nSkiplist.prototype.add = function(num) {\n    \n};\n\n/** \n * @param {number} num\n * @return {boolean}\n */\nSkiplist.prototype.erase = function(num) {\n    \n};\n\n/** \n * Your Skiplist object will be instantiated and called as such:\n * var obj = new Skiplist()\n * var param_1 = obj.search(target)\n * obj.add(num)\n * var param_3 = obj.erase(num)\n */\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    let args = JSON.parse(line.trim());\n    if (!Array.isArray(args)) args = [args];\n    let res = typeof Solution !== 'undefined' && typeof (new Solution().runSkiplist) === 'function'\n        ? new Solution().runSkiplist(...args.slice(0, 2))\n        : (typeof runSkiplist === 'function' ? runSkiplist(...args.slice(0, 2)) : (new Solution().runSkiplist(...args.slice(0, 2))));\n    console.log(JSON.stringify(res));\n    rl.close();\n});\n",
     "TypeScript": "class Skiplist {\n    constructor() {\n        \n    }\n\n    search(target: number): boolean {\n        \n    }\n\n    add(num: number): void {\n        \n    }\n\n    erase(num: number): boolean {\n        \n    }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * var obj = new Skiplist()\n * var param_1 = obj.search(target)\n * obj.add(num)\n * var param_3 = obj.erase(num)\n */",
     "C#": "public class Skiplist {\n\n    public Skiplist() {\n        \n    }\n    \n    public bool Search(int target) {\n        \n    }\n    \n    public void Add(int num) {\n        \n    }\n    \n    public bool Erase(int num) {\n        \n    }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * Skiplist obj = new Skiplist();\n * bool param_1 = obj.Search(target);\n * obj.Add(num);\n * bool param_3 = obj.Erase(num);\n */",
-    "C": "\n\n\ntypedef struct {\n    \n} Skiplist;\n\n\nSkiplist* skiplistCreate() {\n    \n}\n\nbool skiplistSearch(Skiplist* obj, int target) {\n    \n}\n\nvoid skiplistAdd(Skiplist* obj, int num) {\n    \n}\n\nbool skiplistErase(Skiplist* obj, int num) {\n    \n}\n\nvoid skiplistFree(Skiplist* obj) {\n    \n}\n\n/**\n * Your Skiplist struct will be instantiated and called as such:\n * Skiplist* obj = skiplistCreate();\n * bool param_1 = skiplistSearch(obj, target);\n \n * skiplistAdd(obj, num);\n \n * bool param_3 = skiplistErase(obj, num);\n \n * skiplistFree(obj);\n*/",
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        if (t->pos < t->len) t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    }\n}\n\nstatic int* parseCIntArray(char* s, int* outSize) {\n    *outSize = 0;\n    if (!s) return NULL;\n    char* p = strchr(s, '[');\n    if (!p) return NULL;\n    p++;\n    int cap = 16, sz = 0;\n    int* arr = (int*)malloc(cap * sizeof(int));\n    while (*p && *p != ']') {\n        while (*p == ' ' || *p == ',') p++;\n        if (*p == ']') break;\n        char* end;\n        int val = (int)strtol(p, &end, 10);\n        if (p == end) break;\n        p = end;\n        if (sz == cap) { cap *= 2; arr = (int*)realloc(arr, cap * sizeof(int)); }\n        arr[sz++] = val;\n    }\n    *outSize = sz;\n    return arr;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\ntypedef struct {\n    \n} Skiplist;\n\n\nSkiplist* skiplistCreate() {\n    \n}\n\nbool skiplistSearch(Skiplist* obj, int target) {\n    \n}\n\nvoid skiplistAdd(Skiplist* obj, int num) {\n    \n}\n\nbool skiplistErase(Skiplist* obj, int num) {\n    \n}\n\nvoid skiplistFree(Skiplist* obj) {\n    \n}\n\n/**\n * Your Skiplist struct will be instantiated and called as such:\n * Skiplist* obj = skiplistCreate();\n * bool param_1 = skiplistSearch(obj, target);\n \n * skiplistAdd(obj, num);\n \n * bool param_3 = skiplistErase(obj, num);\n \n * skiplistFree(obj);\n*/\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    static char s[1000000];\n    if (!fgets(s, sizeof(s), stdin)) return 0;\n    Tok tok;\n    int len = strlen(s);\n    while (len > 0 && (s[len-1] == '\\n' || s[len-1] == '\\r')) s[--len] = '\\0';\n    char* src = s;\n    if (len >= 2 && s[0] == '[' && s[len-1] == ']') {\n        s[len-1] = '\\0';\n        src = s + 1;\n    }\n    tok.s = src;\n    tok.pos = 0;\n    tok.len = strlen(src);\n    // Parse arguments and execute\n    char* tok0 = nextToken(&tok);\n    if (!tok0) return 0;\n    if (strchr(tok0, '[')) {\n        int sz0 = 0;\n        int* arr0 = parseCIntArray(tok0, &sz0);\n        char* tok1 = nextToken(&tok);\n        if (tok1) {\n            int val1 = (int)strtol(tok1, NULL, 10);\n            runSkiplist(arr0, sz0, val1);\n        } else {\n            runSkiplist(arr0, sz0);\n        }\n        printf(\"[\");\n        for (int i = 0; i < sz0; i++) {\n            if (i > 0) printf(\",\");\n            printf(\"%d\", arr0[i]);\n        }\n        printf(\"]\\n\");\n        if (arr0) free(arr0);\n    } else {\n        int val0 = (int)strtol(tok0, NULL, 10);\n        printf(\"%ld\\n\", (long)runSkiplist(val0));\n    }\n    return 0;\n}\n",
     "Go": "type Skiplist struct {\n    \n}\n\n\nfunc Constructor() Skiplist {\n    \n}\n\n\nfunc (this *Skiplist) Search(target int) bool {\n    \n}\n\n\nfunc (this *Skiplist) Add(num int)  {\n    \n}\n\n\nfunc (this *Skiplist) Erase(num int) bool {\n    \n}\n\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * obj := Constructor();\n * param_1 := obj.Search(target);\n * obj.Add(num);\n * param_3 := obj.Erase(num);\n */",
     "Kotlin": "class Skiplist() {\n\n    fun search(target: Int): Boolean {\n        \n    }\n\n    fun add(num: Int) {\n        \n    }\n\n    fun erase(num: Int): Boolean {\n        \n    }\n\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * var obj = Skiplist()\n * var param_1 = obj.search(target)\n * obj.add(num)\n * var param_3 = obj.erase(num)\n */",
     "Swift": "\nclass Skiplist {\n\n    init() {\n        \n    }\n    \n    func search(_ target: Int) -> Bool {\n        \n    }\n    \n    func add(_ num: Int) {\n        \n    }\n    \n    func erase(_ num: Int) -> Bool {\n        \n    }\n}\n\n/**\n * Your Skiplist object will be instantiated and called as such:\n * let obj = Skiplist()\n * let ret_1: Bool = obj.search(target)\n * obj.add(num)\n * let ret_3: Bool = obj.erase(num)\n */",
@@ -376,8 +302,17 @@
     "Racket": "(define skiplist%\n  (class object%\n    (super-new)\n    \n    (init-field)\n    \n    ; search : exact-integer? -> boolean?\n    (define/public (search target)\n      )\n    ; add : exact-integer? -> void?\n    (define/public (add num)\n      )\n    ; erase : exact-integer? -> boolean?\n    (define/public (erase num)\n      )))\n\n;; Your skiplist% object will be instantiated and called as such:\n;; (define obj (new skiplist%))\n;; (define param_1 (send obj search target))\n;; (send obj add num)\n;; (define param_3 (send obj erase num))"
   },
   "_internal": {
-    "methodName": "",
-    "params": []
+    "methodName": "runSkiplist",
+    "params": [
+      {
+        "name": "commands",
+        "type": "string[]"
+      },
+      {
+        "name": "args",
+        "type": "int[][]"
+      }
+    ]
   },
-  "verified": false
+  "verified": true
 }
