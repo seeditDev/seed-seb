@@ -12,7 +12,23 @@ function HomePage() {
   const [expandedFaqs, setExpandedFaqs] = useState({});
   const [liveCount, setLiveCount] = useState(0);
 
+  const [currentUser, setCurrentUser] = useState(null);
+
   useEffect(() => {
+    try {
+      const authData = localStorage.getItem("auth_data");
+      const role = localStorage.getItem("role") || "student";
+      if (authData) {
+        const parsed = JSON.parse(authData);
+        if (parsed && (parsed.uid || parsed.email)) {
+          setCurrentUser({
+            ...parsed,
+            dashboardUrl: (role === "admin" || role === "staff") ? "/admin/questions" : "/student/dashboard"
+          });
+        }
+      }
+    } catch (_) {}
+
     // Subscribe to live user count
     const unsubscribe = TrackingService.subscribeToLiveCount((count) => {
       setLiveCount(count);
@@ -94,21 +110,33 @@ function HomePage() {
             }}
           >Contact</a>
 
-          {/* Update Login and Register buttons with new classes */}
-          <Link
-            to="/login"
-            className="nav-link header-btn header-btn-primary"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Login Now
-          </Link>
-          <Link
-            to="/register"
-            className="nav-link header-btn header-btn-outline"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Register
-          </Link>
+          {/* Navigation auth buttons: once logged in, remove /login and show Dashboard */}
+          {currentUser ? (
+            <Link
+              to={currentUser.dashboardUrl}
+              className="nav-link header-btn header-btn-primary"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="nav-link header-btn header-btn-primary"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Login Now
+              </Link>
+              <Link
+                to="/register"
+                className="nav-link header-btn header-btn-outline"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Register
+              </Link>
+            </>
+          )}
         </nav>
       </header>
 
@@ -131,12 +159,20 @@ function HomePage() {
                 <h2>Student and Staff Login</h2>
                 <p>Access your personalized dashboard and learning resources:</p>
                 <div className="seed-btn-section">
-                  <Link to="/login" className="seed-orange-btn">
-                    Login Now
-                  </Link>
-                  <Link to="/register" className="seed-outline-btn">
-                    Register
-                  </Link>
+                  {currentUser ? (
+                    <Link to={currentUser.dashboardUrl} className="seed-orange-btn">
+                      Go to Dashboard
+                    </Link>
+                  ) : (
+                    <>
+                      <Link to="/login" className="seed-orange-btn">
+                        Login Now
+                      </Link>
+                      <Link to="/register" className="seed-outline-btn">
+                        Register
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

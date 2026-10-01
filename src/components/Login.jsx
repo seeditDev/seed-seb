@@ -27,6 +27,19 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // If user is already logged in, remove /login from navigation and go directly to dashboard
+    try {
+      const authData = localStorage.getItem("auth_data");
+      const role = localStorage.getItem("role") || ROLES.STUDENT;
+      if (authData) {
+        const parsed = JSON.parse(authData);
+        if (parsed?.uid || parsed?.email) {
+          navigate(DASHBOARD_PATHS[role] || DASHBOARD_PATHS.student, { replace: true });
+          return;
+        }
+      }
+    } catch (_) {}
+
     const saved = getStorageJson("rememberedUser", null);
     if (saved?.email) {
       setEmail(saved.email);
@@ -38,7 +51,7 @@ const Login = () => {
       setError("Simultaneous login detected: Your account was signed in on another machine or browser. For exam security, your previous session was terminated.");
       sessionStorage.removeItem("session_terminated_reason");
     }
-  }, []);
+  }, [navigate]);
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
@@ -99,7 +112,7 @@ const Login = () => {
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        navigate(DASHBOARD_PATHS[effectiveRole] || DASHBOARD_PATHS.student);
+        navigate(DASHBOARD_PATHS[effectiveRole] || DASHBOARD_PATHS.student, { replace: true });
       }, 1200);
     } catch (err) {
       const code = err?.code ?? "";
@@ -130,7 +143,7 @@ const Login = () => {
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);
-      navigate("/student/dashboard");
+      navigate("/student/dashboard", { replace: true });
     }, 400);
   };
 

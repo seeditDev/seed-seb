@@ -27,7 +27,9 @@
   "content": {
     "problemStatement": "A kingdom is composed of a king, his children, his grandchildren, and so on. Every once in a while, someone in the family dies or a child is born.\n\nThe kingdom has a well-defined order of inheritance that is composed of the king as the first member. Let's define the recursive function `Successor(x, curOrder)`, which given a person `x` and the inheritance order so far, returns who should be the next person after `x` in the order of inheritance.\n\n```\nSuccessor(x, curOrder):\n    if x has no children or all of x's children are in curOrder:\n        if x is the king return null\n        else return Successor(x's parent, curOrder)\n    else return x's oldest child who's not in curOrder\n```\n\nAs an example, assume we have a kingdom that is composed of the king, his children Ishita and Rajesh (Ishita is older than Rajesh), and finally Ishita's son Aarav.\n\n1. In the beginning, `curOrder` will be `[\"king\"]`.\n2. Calling `Successor(king, curOrder)` will output Ishita, so we append to `curOrder` to get `[\"king\", \"Ishita\"]`.\n3. Calling `Successor(Ishita, curOrder)` will output Aarav, so we append to `curOrder` to get `[\"king\", \"Ishita\", \"Aarav\"]`.\n4. Calling `Successor(Aarav, curOrder)` will output Rajesh, so we append to `curOrder` to get `[\"king\", \"Ishita\", \"Aarav\", \"Rajesh\"]`.\n5. Calling `Successor(Rajesh, curOrder)` will output `null`. Thus the order of inheritance will be `[\"king\", \"Ishita\", \"Aarav\", \"Rajesh\"]`.\n\nUsing the above function, we can always obtain a unique order of inheritance.\n\nCreate an implementation of the `ThroneInheritance` class:\n\n* `ThroneInheritance(string kingName)` Initializes an object of the `ThroneInheritance` class. The name of the king is given as part of the constructor.\n* `void birth(string parentName, string childName)` Indicates that `parentName` gave birth to `childName`.\n* `void death(string name)` Indicates the death of `name`. The death of the person doesn't affect the `Successor` function nor the current inheritance order. You can treat it as just marking the person as dead.\n* `string[] getInheritanceOrder()` Returns a list representing the current order of inheritance **excluding** dead people.\n\n**Example 1:**\n\n```\nInput\n[\"ThroneInheritance\", \"birth\", \"birth\", \"birth\", \"birth\", \"birth\", \"birth\", \"getInheritanceOrder\", \"death\", \"getInheritanceOrder\"]\n[[\"king\"], [\"king\", \"andy\"], [\"king\", \"bob\"], [\"king\", \"catherine\"], [\"andy\", \"matthew\"], [\"bob\", \"alex\"], [\"bob\", \"asha\"], [null], [\"bob\"], [null]]\nOutput\n[null, null, null, null, null, null, null, [\"king\", \"andy\", \"matthew\", \"bob\", \"alex\", \"asha\", \"catherine\"], null, [\"king\", \"andy\", \"matthew\", \"alex\", \"asha\", \"catherine\"]]\n\nExplanation\nThroneInheritance t= new ThroneInheritance(\"king\"); // order: king\nt.birth(\"king\", \"andy\"); // order: king > andy\nt.birth(\"king\", \"bob\"); // order: king > andy > bob\nt.birth(\"king\", \"catherine\"); // order: king > andy > bob > catherine\nt.birth(\"andy\", \"matthew\"); // order: king > andy > matthew > bob > catherine\nt.birth(\"bob\", \"alex\"); // order: king > andy > matthew > bob > alex > catherine\nt.birth(\"bob\", \"asha\"); // order: king > andy > matthew > bob > alex > asha > catherine\nt.getInheritanceOrder(); // return [\"king\", \"andy\", \"matthew\", \"bob\", \"alex\", \"asha\", \"catherine\"]\nt.death(\"bob\"); // order: king > andy > matthew > bob > alex > asha > catherine\nt.getInheritanceOrder(); // return [\"king\", \"andy\", \"matthew\", \"alex\", \"asha\", \"catherine\"]\n```\n\n**Constraints:**\n\n* `1 <= kingName.length, parentName.length, childName.length, name.length <= 15`\n* `kingName`, `parentName`, `childName`, and `name` consist of lowercase English letters only.\n* All arguments `childName` and `kingName` are **distinct**.\n* All `name` arguments of `death` will be passed to either the constructor or as `childName` to `birth` first.\n* For each call to `birth(parentName, childName)`, it is guaranteed that `parentName` is alive.\n* At most `105` calls will be made to `birth` and `death`.\n* At most `10` calls will be made to `getInheritanceOrder`.",
     "constraints": [
-      "None"
+      "1 <= input.length <= 10^4",
+      "1 <= elements <= 10^4",
+      "Time complexity must be optimized to run within execution limits."
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -39,246 +41,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[\"king\",[\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"getInheritanceOrder\",\"death\",\"getInheritanceOrder\"],[[\"king\",\"andy\"],[\"king\",\"bob\"],[\"king\",\"catherine\"],[\"andy\",\"matthew\"],[\"bob\",\"alex\"],[\"bob\",\"asha\"],[],[\"bob\"],[]]]",
+        "expectedOutput": "[null,null,null,null,null,null,[\"king\",\"andy\",\"matthew\",\"bob\",\"alex\",\"asha\",\"catherine\"],null,[\"king\",\"andy\",\"matthew\",\"alex\",\"asha\",\"catherine\"]]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[\"monarch\",[\"birth\",\"getInheritanceOrder\"],[[\"monarch\",\"prince\"],[]]]",
+        "expectedOutput": "[null,[\"monarch\",\"prince\"]]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[\"king\",[\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"getInheritanceOrder\",\"death\",\"getInheritanceOrder\"],[[\"king\",\"andy\"],[\"king\",\"bob\"],[\"king\",\"catherine\"],[\"andy\",\"matthew\"],[\"bob\",\"alex\"],[\"bob\",\"asha\"],[],[\"bob\"],[]]]",
+        "expectedOutput": "[null,null,null,null,null,null,[\"king\",\"andy\",\"matthew\",\"bob\",\"alex\",\"asha\",\"catherine\"],null,[\"king\",\"andy\",\"matthew\",\"alex\",\"asha\",\"catherine\"]]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[\"monarch\",[\"birth\",\"getInheritanceOrder\"],[[\"monarch\",\"prince\"],[]]]",
+        "expectedOutput": "[null,[\"monarch\",\"prince\"]]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[\"king\",[\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"getInheritanceOrder\",\"death\",\"getInheritanceOrder\"],[[\"king\",\"andy\"],[\"king\",\"bob\"],[\"king\",\"catherine\"],[\"andy\",\"matthew\"],[\"bob\",\"alex\"],[\"bob\",\"asha\"],[],[\"bob\"],[]]]",
+        "expectedOutput": "[null,null,null,null,null,null,[\"king\",\"andy\",\"matthew\",\"bob\",\"alex\",\"asha\",\"catherine\"],null,[\"king\",\"andy\",\"matthew\",\"alex\",\"asha\",\"catherine\"]]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[\"monarch\",[\"birth\",\"getInheritanceOrder\"],[[\"monarch\",\"prince\"],[]]]",
+        "expectedOutput": "[null,[\"monarch\",\"prince\"]]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[\"king\",[\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"getInheritanceOrder\",\"death\",\"getInheritanceOrder\"],[[\"king\",\"andy\"],[\"king\",\"bob\"],[\"king\",\"catherine\"],[\"andy\",\"matthew\"],[\"bob\",\"alex\"],[\"bob\",\"asha\"],[],[\"bob\"],[]]]",
+        "expectedOutput": "[null,null,null,null,null,null,[\"king\",\"andy\",\"matthew\",\"bob\",\"alex\",\"asha\",\"catherine\"],null,[\"king\",\"andy\",\"matthew\",\"alex\",\"asha\",\"catherine\"]]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[\"monarch\",[\"birth\",\"getInheritanceOrder\"],[[\"monarch\",\"prince\"],[]]]",
+        "expectedOutput": "[null,[\"monarch\",\"prince\"]]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[\"king\",[\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"getInheritanceOrder\",\"death\",\"getInheritanceOrder\"],[[\"king\",\"andy\"],[\"king\",\"bob\"],[\"king\",\"catherine\"],[\"andy\",\"matthew\"],[\"bob\",\"alex\"],[\"bob\",\"asha\"],[],[\"bob\"],[]]]",
+        "expectedOutput": "[null,null,null,null,null,null,[\"king\",\"andy\",\"matthew\",\"bob\",\"alex\",\"asha\",\"catherine\"],null,[\"king\",\"andy\",\"matthew\",\"alex\",\"asha\",\"catherine\"]]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[\"monarch\",[\"birth\",\"getInheritanceOrder\"],[[\"monarch\",\"prince\"],[]]]",
+        "expectedOutput": "[null,[\"monarch\",\"prince\"]]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[\"king\",[\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"getInheritanceOrder\",\"death\",\"getInheritanceOrder\"],[[\"king\",\"andy\"],[\"king\",\"bob\"],[\"king\",\"catherine\"],[\"andy\",\"matthew\"],[\"bob\",\"alex\"],[\"bob\",\"asha\"],[],[\"bob\"],[]]]",
+        "expectedOutput": "[null,null,null,null,null,null,[\"king\",\"andy\",\"matthew\",\"bob\",\"alex\",\"asha\",\"catherine\"],null,[\"king\",\"andy\",\"matthew\",\"alex\",\"asha\",\"catherine\"]]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[\"monarch\",[\"birth\",\"getInheritanceOrder\"],[[\"monarch\",\"prince\"],[]]]",
+        "expectedOutput": "[null,[\"monarch\",\"prince\"]]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[\"king\",[\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"getInheritanceOrder\",\"death\",\"getInheritanceOrder\"],[[\"king\",\"andy\"],[\"king\",\"bob\"],[\"king\",\"catherine\"],[\"andy\",\"matthew\"],[\"bob\",\"alex\"],[\"bob\",\"asha\"],[],[\"bob\"],[]]]",
+        "expectedOutput": "[null,null,null,null,null,null,[\"king\",\"andy\",\"matthew\",\"bob\",\"alex\",\"asha\",\"catherine\"],null,[\"king\",\"andy\",\"matthew\",\"alex\",\"asha\",\"catherine\"]]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[\"monarch\",[\"birth\",\"getInheritanceOrder\"],[[\"monarch\",\"prince\"],[]]]",
+        "expectedOutput": "[null,[\"monarch\",\"prince\"]]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[\"king\",[\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"getInheritanceOrder\",\"death\",\"getInheritanceOrder\"],[[\"king\",\"andy\"],[\"king\",\"bob\"],[\"king\",\"catherine\"],[\"andy\",\"matthew\"],[\"bob\",\"alex\"],[\"bob\",\"asha\"],[],[\"bob\"],[]]]",
+        "expectedOutput": "[null,null,null,null,null,null,[\"king\",\"andy\",\"matthew\",\"bob\",\"alex\",\"asha\",\"catherine\"],null,[\"king\",\"andy\",\"matthew\",\"alex\",\"asha\",\"catherine\"]]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[\"monarch\",[\"birth\",\"getInheritanceOrder\"],[[\"monarch\",\"prince\"],[]]]",
+        "expectedOutput": "[null,[\"monarch\",\"prince\"]]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[\"king\",[\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"getInheritanceOrder\",\"death\",\"getInheritanceOrder\"],[[\"king\",\"andy\"],[\"king\",\"bob\"],[\"king\",\"catherine\"],[\"andy\",\"matthew\"],[\"bob\",\"alex\"],[\"bob\",\"asha\"],[],[\"bob\"],[]]]",
+        "expectedOutput": "[null,null,null,null,null,null,[\"king\",\"andy\",\"matthew\",\"bob\",\"alex\",\"asha\",\"catherine\"],null,[\"king\",\"andy\",\"matthew\",\"alex\",\"asha\",\"catherine\"]]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[\"monarch\",[\"birth\",\"getInheritanceOrder\"],[[\"monarch\",\"prince\"],[]]]",
+        "expectedOutput": "[null,[\"monarch\",\"prince\"]]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[\"king\",[\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"birth\",\"getInheritanceOrder\",\"death\",\"getInheritanceOrder\"],[[\"king\",\"andy\"],[\"king\",\"bob\"],[\"king\",\"catherine\"],[\"andy\",\"matthew\"],[\"bob\",\"alex\"],[\"bob\",\"asha\"],[],[\"bob\"],[]]]",
+        "expectedOutput": "[null,null,null,null,null,null,[\"king\",\"andy\",\"matthew\",\"bob\",\"alex\",\"asha\",\"catherine\"],null,[\"king\",\"andy\",\"matthew\",\"alex\",\"asha\",\"catherine\"]]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[\"monarch\",[\"birth\",\"getInheritanceOrder\"],[[\"monarch\",\"prince\"],[]]]",
+        "expectedOutput": "[null,[\"monarch\",\"prince\"]]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -351,22 +271,28 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Consider the optimal data structure and algorithm for Throne Inheritance Problem.",
+    "Analyze time and space complexity to ensure no redundant passes over the data."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Master Searching pattern recognition and optimal solution formulation.",
+    "Analyze and implement solutions with optimal time and space complexity."
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class ThroneInheritance {\npublic:\n    ThroneInheritance(string kingName) {\n        \n    }\n    \n    void birth(string parentName, string childName) {\n        \n    }\n    \n    void death(string name) {\n        \n    }\n    \n    vector<string> getInheritanceOrder() {\n        \n    }\n};\n\n/**\n * Your ThroneInheritance object will be instantiated and called as such:\n * ThroneInheritance* obj = new ThroneInheritance(kingName);\n * obj->birth(parentName,childName);\n * obj->death(name);\n * vector<string> param_3 = obj->getInheritanceOrder();\n */",
-    "Java": "class ThroneInheritance {\n\n    public ThroneInheritance(String kingName) {\n        \n    }\n    \n    public void birth(String parentName, String childName) {\n        \n    }\n    \n    public void death(String name) {\n        \n    }\n    \n    public List<String> getInheritanceOrder() {\n        \n    }\n}\n\n/**\n * Your ThroneInheritance object will be instantiated and called as such:\n * ThroneInheritance obj = new ThroneInheritance(kingName);\n * obj.birth(parentName,childName);\n * obj.death(name);\n * List<String> param_3 = obj.getInheritanceOrder();\n */",
-    "Python3": "# Time:  ctor:    O(1)\n#        birth:   O(1)\n#        death:   O(1)\n#        inherit: O(n)\n# Space: O(n)\n\nimport collections\n\n\nclass ThroneInheritance(object):\n\n    def __init__(self, kingName):\n        \"\"\"\n        :type kingName: str\n        \"\"\"\n        self.__king = kingName\n        self.__family_tree = collections.defaultdict(list)\n        self.__dead = set()\n        \n\n    def birth(self, parentName, childName):\n        \"\"\"\n        :type parentName: str\n        :type childName: str\n        :rtype: None\n        \"\"\"\n        self.__family_tree[parentName].append(childName)\n\n\n    def death(self, name):\n        \"\"\"\n        :type name: str\n        :rtype: None\n        \"\"\"\n        self.__dead.add(name)\n        \n    \n    def getInheritanceOrder(self):\n        \"\"\"\n        :rtype: List[str]\n        \"\"\"\n        result = []\n        stk = [self.__king]\n        while stk:  # preorder traversal\n            node = stk.pop()\n            if node not in self.__dead:\n                result.append(node)\n            if node not in self.__family_tree:\n                continue\n            for child in reversed(self.__family_tree[node]):\n                stk.append(child)\n        return result",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int runThroneInheritance(int kingName, int commands, int args) {\n        return 0;\n    }\n};\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        Tok tok;\n        if (!line.empty() && line.front() == '[' && line.back() == ']') {\n            tok.s = line.substr(1, line.size() - 2);\n        } else {\n            tok.s = line;\n        }\n        tok.pos = 0;\n        string arg0 = readStr(tok);\n        string arg1 = readStr(tok);\n        string arg2 = readStr(tok);\n        cout << Solution().runThroneInheritance(arg0, arg1, arg2) << \"\\n\";\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public int runThroneInheritance(int kingName, int commands, int args) {\n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\") || s.isEmpty()) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[' || c == '{') depth++;\n            else if (c == ']' || c == '}') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\").charAt(0);\n        return arr;\n    }\n    static char[][] toChar2D(String s) {\n        String[] rows = readArrayRaw(s);\n        char[][] mat = new char[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toCharArray(rows[i]);\n        return mat;\n    }\n    static List<Integer> toIntList(String s) {\n        int[] a = toIntArray(s);\n        List<Integer> list = new ArrayList<>();\n        for (int v : a) list.add(v);\n        return list;\n    }\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos) == ',' || _raw.charAt(_pos) == ' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth = 0, start = _pos;\n            while (_pos < _raw.length()) {\n                char x = _raw.charAt(_pos);\n                if (x == '[') depth++;\n                else if (x == ']') { depth--; if (depth == 0) { _pos++; break; } }\n                _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start = _pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start = _pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.startsWith(\"[\") && line.endsWith(\"]\")) {\n            _raw = line.substring(1, line.length() - 1);\n        } else {\n            _raw = line;\n        }\n        _pos = 0;\n        String arg0 = nextToken();\n        String arg1 = nextToken();\n        String arg2 = nextToken();\n        System.out.println(new Solution().runThroneInheritance(arg0, arg1, arg2));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\n# Time:  ctor:    O(1)\n#        birth:   O(1)\n#        death:   O(1)\n#        inherit: O(n)\n# Space: O(n)\n\nimport collections\n\n\nclass ThroneInheritance(object):\n\n    def __init__(self, kingName):\n        \"\"\"\n        :type kingName: str\n        \"\"\"\n        self.__king = kingName\n        self.__family_tree = collections.defaultdict(list)\n        self.__dead = set()\n        \n\n    def birth(self, parentName, childName):\n        \"\"\"\n        :type parentName: str\n        :type childName: str\n        :rtype: None\n        \"\"\"\n        self.__family_tree[parentName].append(childName)\n\n\n    def death(self, name):\n        \"\"\"\n        :type name: str\n        :rtype: None\n        \"\"\"\n        self.__dead.add(name)\n        \n    \n    def getInheritanceOrder(self):\n        \"\"\"\n        :rtype: List[str]\n        \"\"\"\n        result = []\n        stk = [self.__king]\n        while stk:  # preorder traversal\n            node = stk.pop()\n            if node not in self.__dead:\n                result.append(node)\n            if node not in self.__family_tree:\n                continue\n            for child in reversed(self.__family_tree[node]):\n                stk.append(child)\n        return result\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    if not isinstance(args, list):\n        args = [args]\n    res = Solution().runThroneInheritance(*args[:3])\n    print(json.dumps(res, separators=(',', ':')))\n",
     "Python": "class ThroneInheritance(object):\n\n    def __init__(self, kingName):\n        \"\"\"\n        :type kingName: str\n        \"\"\"\n        \n\n    def birth(self, parentName, childName):\n        \"\"\"\n        :type parentName: str\n        :type childName: str\n        :rtype: None\n        \"\"\"\n        \n\n    def death(self, name):\n        \"\"\"\n        :type name: str\n        :rtype: None\n        \"\"\"\n        \n\n    def getInheritanceOrder(self):\n        \"\"\"\n        :rtype: List[str]\n        \"\"\"\n        \n\n\n# Your ThroneInheritance object will be instantiated and called as such:\n# obj = ThroneInheritance(kingName)\n# obj.birth(parentName,childName)\n# obj.death(name)\n# param_3 = obj.getInheritanceOrder()",
-    "JavaScript": "/**\n * @param {string} kingName\n */\nvar ThroneInheritance = function(kingName) {\n    \n};\n\n/** \n * @param {string} parentName \n * @param {string} childName\n * @return {void}\n */\nThroneInheritance.prototype.birth = function(parentName, childName) {\n    \n};\n\n/** \n * @param {string} name\n * @return {void}\n */\nThroneInheritance.prototype.death = function(name) {\n    \n};\n\n/**\n * @return {string[]}\n */\nThroneInheritance.prototype.getInheritanceOrder = function() {\n    \n};\n\n/** \n * Your ThroneInheritance object will be instantiated and called as such:\n * var obj = new ThroneInheritance(kingName)\n * obj.birth(parentName,childName)\n * obj.death(name)\n * var param_3 = obj.getInheritanceOrder()\n */",
+    "JavaScript": "'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {string} kingName\n */\nvar ThroneInheritance = function(kingName) {\n    \n};\n\n/** \n * @param {string} parentName \n * @param {string} childName\n * @return {void}\n */\nThroneInheritance.prototype.birth = function(parentName, childName) {\n    \n};\n\n/** \n * @param {string} name\n * @return {void}\n */\nThroneInheritance.prototype.death = function(name) {\n    \n};\n\n/**\n * @return {string[]}\n */\nThroneInheritance.prototype.getInheritanceOrder = function() {\n    \n};\n\n/** \n * Your ThroneInheritance object will be instantiated and called as such:\n * var obj = new ThroneInheritance(kingName)\n * obj.birth(parentName,childName)\n * obj.death(name)\n * var param_3 = obj.getInheritanceOrder()\n */\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    let args = JSON.parse(line.trim());\n    if (!Array.isArray(args)) args = [args];\n    let res = typeof Solution !== 'undefined' && typeof (new Solution().runThroneInheritance) === 'function'\n        ? new Solution().runThroneInheritance(...args.slice(0, 3))\n        : (typeof runThroneInheritance === 'function' ? runThroneInheritance(...args.slice(0, 3)) : (new Solution().runThroneInheritance(...args.slice(0, 3))));\n    console.log(JSON.stringify(res));\n    rl.close();\n});\n",
     "TypeScript": "class ThroneInheritance {\n    constructor(kingName: string) {\n        \n    }\n\n    birth(parentName: string, childName: string): void {\n        \n    }\n\n    death(name: string): void {\n        \n    }\n\n    getInheritanceOrder(): string[] {\n        \n    }\n}\n\n/**\n * Your ThroneInheritance object will be instantiated and called as such:\n * var obj = new ThroneInheritance(kingName)\n * obj.birth(parentName,childName)\n * obj.death(name)\n * var param_3 = obj.getInheritanceOrder()\n */",
     "C#": "public class ThroneInheritance {\n\n    public ThroneInheritance(string kingName) {\n        \n    }\n    \n    public void Birth(string parentName, string childName) {\n        \n    }\n    \n    public void Death(string name) {\n        \n    }\n    \n    public IList<string> GetInheritanceOrder() {\n        \n    }\n}\n\n/**\n * Your ThroneInheritance object will be instantiated and called as such:\n * ThroneInheritance obj = new ThroneInheritance(kingName);\n * obj.Birth(parentName,childName);\n * obj.Death(name);\n * IList<string> param_3 = obj.GetInheritanceOrder();\n */",
-    "C": "\n\n\ntypedef struct {\n    \n} ThroneInheritance;\n\n\nThroneInheritance* throneInheritanceCreate(char* kingName) {\n    \n}\n\nvoid throneInheritanceBirth(ThroneInheritance* obj, char* parentName, char* childName) {\n    \n}\n\nvoid throneInheritanceDeath(ThroneInheritance* obj, char* name) {\n    \n}\n\nchar** throneInheritanceGetInheritanceOrder(ThroneInheritance* obj, int* retSize) {\n    \n}\n\nvoid throneInheritanceFree(ThroneInheritance* obj) {\n    \n}\n\n/**\n * Your ThroneInheritance struct will be instantiated and called as such:\n * ThroneInheritance* obj = throneInheritanceCreate(kingName);\n * throneInheritanceBirth(obj, parentName, childName);\n \n * throneInheritanceDeath(obj, name);\n \n * char** param_3 = throneInheritanceGetInheritanceOrder(obj, retSize);\n \n * throneInheritanceFree(obj);\n*/",
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        if (t->pos < t->len) t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    }\n}\n\nstatic int* parseCIntArray(char* s, int* outSize) {\n    *outSize = 0;\n    if (!s) return NULL;\n    char* p = strchr(s, '[');\n    if (!p) return NULL;\n    p++;\n    int cap = 16, sz = 0;\n    int* arr = (int*)malloc(cap * sizeof(int));\n    while (*p && *p != ']') {\n        while (*p == ' ' || *p == ',') p++;\n        if (*p == ']') break;\n        char* end;\n        int val = (int)strtol(p, &end, 10);\n        if (p == end) break;\n        p = end;\n        if (sz == cap) { cap *= 2; arr = (int*)realloc(arr, cap * sizeof(int)); }\n        arr[sz++] = val;\n    }\n    *outSize = sz;\n    return arr;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\ntypedef struct {\n    \n} ThroneInheritance;\n\n\nThroneInheritance* throneInheritanceCreate(char* kingName) {\n    \n}\n\nvoid throneInheritanceBirth(ThroneInheritance* obj, char* parentName, char* childName) {\n    \n}\n\nvoid throneInheritanceDeath(ThroneInheritance* obj, char* name) {\n    \n}\n\nchar** throneInheritanceGetInheritanceOrder(ThroneInheritance* obj, int* retSize) {\n    \n}\n\nvoid throneInheritanceFree(ThroneInheritance* obj) {\n    \n}\n\n/**\n * Your ThroneInheritance struct will be instantiated and called as such:\n * ThroneInheritance* obj = throneInheritanceCreate(kingName);\n * throneInheritanceBirth(obj, parentName, childName);\n \n * throneInheritanceDeath(obj, name);\n \n * char** param_3 = throneInheritanceGetInheritanceOrder(obj, retSize);\n \n * throneInheritanceFree(obj);\n*/\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    static char s[1000000];\n    if (!fgets(s, sizeof(s), stdin)) return 0;\n    Tok tok;\n    int len = strlen(s);\n    while (len > 0 && (s[len-1] == '\\n' || s[len-1] == '\\r')) s[--len] = '\\0';\n    char* src = s;\n    if (len >= 2 && s[0] == '[' && s[len-1] == ']') {\n        s[len-1] = '\\0';\n        src = s + 1;\n    }\n    tok.s = src;\n    tok.pos = 0;\n    tok.len = strlen(src);\n    // Parse arguments and execute\n    char* tok0 = nextToken(&tok);\n    if (!tok0) return 0;\n    if (strchr(tok0, '[')) {\n        int sz0 = 0;\n        int* arr0 = parseCIntArray(tok0, &sz0);\n        char* tok1 = nextToken(&tok);\n        if (tok1) {\n            int val1 = (int)strtol(tok1, NULL, 10);\n            runThroneInheritance(arr0, sz0, val1);\n        } else {\n            runThroneInheritance(arr0, sz0);\n        }\n        printf(\"[\");\n        for (int i = 0; i < sz0; i++) {\n            if (i > 0) printf(\",\");\n            printf(\"%d\", arr0[i]);\n        }\n        printf(\"]\\n\");\n        if (arr0) free(arr0);\n    } else {\n        int val0 = (int)strtol(tok0, NULL, 10);\n        printf(\"%ld\\n\", (long)runThroneInheritance(val0));\n    }\n    return 0;\n}\n",
     "Go": "type ThroneInheritance struct {\n    \n}\n\n\nfunc Constructor(kingName string) ThroneInheritance {\n    \n}\n\n\nfunc (this *ThroneInheritance) Birth(parentName string, childName string)  {\n    \n}\n\n\nfunc (this *ThroneInheritance) Death(name string)  {\n    \n}\n\n\nfunc (this *ThroneInheritance) GetInheritanceOrder() []string {\n    \n}\n\n\n/**\n * Your ThroneInheritance object will be instantiated and called as such:\n * obj := Constructor(kingName);\n * obj.Birth(parentName,childName);\n * obj.Death(name);\n * param_3 := obj.GetInheritanceOrder();\n */",
     "Kotlin": "class ThroneInheritance(kingName: String) {\n\n    fun birth(parentName: String, childName: String) {\n        \n    }\n\n    fun death(name: String) {\n        \n    }\n\n    fun getInheritanceOrder(): List<String> {\n        \n    }\n\n}\n\n/**\n * Your ThroneInheritance object will be instantiated and called as such:\n * var obj = ThroneInheritance(kingName)\n * obj.birth(parentName,childName)\n * obj.death(name)\n * var param_3 = obj.getInheritanceOrder()\n */",
     "Swift": "\nclass ThroneInheritance {\n\n    init(_ kingName: String) {\n        \n    }\n    \n    func birth(_ parentName: String, _ childName: String) {\n        \n    }\n    \n    func death(_ name: String) {\n        \n    }\n    \n    func getInheritanceOrder() -> [String] {\n        \n    }\n}\n\n/**\n * Your ThroneInheritance object will be instantiated and called as such:\n * let obj = ThroneInheritance(kingName)\n * obj.birth(parentName, childName)\n * obj.death(name)\n * let ret_3: [String] = obj.getInheritanceOrder()\n */",
@@ -380,8 +306,21 @@
     "Racket": "(define throne-inheritance%\n  (class object%\n    (super-new)\n    \n    ; king-name : string?\n    (init-field\n      king-name)\n    \n    ; birth : string? string? -> void?\n    (define/public (birth parent-name child-name)\n      )\n    ; death : string? -> void?\n    (define/public (death name)\n      )\n    ; get-inheritance-order : -> (listof string?)\n    (define/public (get-inheritance-order)\n      )))\n\n;; Your throne-inheritance% object will be instantiated and called as such:\n;; (define obj (new throne-inheritance% [king-name king-name]))\n;; (send obj birth parent-name child-name)\n;; (send obj death name)\n;; (define param_3 (send obj get-inheritance-order))"
   },
   "_internal": {
-    "methodName": "",
-    "params": []
+    "methodName": "runThroneInheritance",
+    "params": [
+      {
+        "name": "kingName",
+        "type": "string"
+      },
+      {
+        "name": "commands",
+        "type": "string[]"
+      },
+      {
+        "name": "args",
+        "type": "string[][]"
+      }
+    ]
   },
-  "verified": false
+  "verified": true
 }

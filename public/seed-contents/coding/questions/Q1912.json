@@ -29,7 +29,9 @@
   "content": {
     "problemStatement": "You have a movie renting company consisting of `n` shops. You want to implement a renting system that supports searching for, booking, and returning movies. The system should also support generating a report of the currently rented movies.\n\nEach movie is given as a 2D integer array `entries` where `entries[i] = [shopi, moviei, pricei]` indicates that there is a copy of movie `moviei` at shop `shopi` with a rental price of `pricei`. Each shop carries **no more than one** copy of a movie `moviei`.\n\nThe system should support the following functions:\n\n* **Search**: Finds the **cheapest 5 shops** that have an **unrented copy** of a given movie. The shops should be sorted by **price** in ascending order, and in case of a tie, the one with the **smaller** `shopi` should appear first. If there are less than 5 matching shops, then all of them should be returned. If no shop has an unrented copy, then an empty list should be returned.\n* **Rent**: Rents an **unrented copy** of a given movie from a given shop.\n* **Drop**: Drops off a **previously rented copy** of a given movie at a given shop.\n* **Report**: Returns the **cheapest 5 rented movies** (possibly of the same movie ID) as a 2D list `res` where `res[j] = [shopj, moviej]` describes that the `jth` cheapest rented movie `moviej` was rented from the shop `shopj`. The movies in `res` should be sorted by **price** in ascending order, and in case of a tie, the one with the **smaller** `shopj` should appear first, and if there is still tie, the one with the **smaller** `moviej` should appear first. If there are fewer than 5 rented movies, then all of them should be returned. If no movies are currently being rented, then an empty list should be returned.\n\nCreate an implementation of the `MovieRentingSystem` class:\n\n* `MovieRentingSystem(int n, int[][] entries)` Initializes the `MovieRentingSystem` object with `n` shops and the movies in `entries`.\n* `List<Integer> search(int movie)` Returns a list of shops that have an **unrented copy** of the given `movie` as described above.\n* `void rent(int shop, int movie)` Rents the given `movie` from the given `shop`.\n* `void drop(int shop, int movie)` Drops off a previously rented `movie` at the given `shop`.\n* `List<List<Integer>> report()` Returns a list of cheapest **rented** movies as described above.\n\n**Note:** The test cases will be generated such that `rent` will only be called if the shop has an **unrented** copy of the movie, and `drop` will only be called if the shop had **previously rented** out the movie.\n\n**Example 1:**\n\n```\nInput\n[\"MovieRentingSystem\", \"search\", \"rent\", \"rent\", \"report\", \"drop\", \"search\"]\n[[3, [[0, 1, 5], [0, 2, 6], [0, 3, 7], [1, 1, 4], [1, 2, 7], [2, 1, 5]]], [1], [0, 1], [1, 2], [], [1, 2], [2]]\nOutput\n[null, [1, 0, 2], null, null, [[0, 1], [1, 2]], null, [0, 1]]\n\nExplanation\nMovieRentingSystem movieRentingSystem = new MovieRentingSystem(3, [[0, 1, 5], [0, 2, 6], [0, 3, 7], [1, 1, 4], [1, 2, 7], [2, 1, 5]]);\nmovieRentingSystem.search(1);  // return [1, 0, 2], Movies of ID 1 are unrented at shops 1, 0, and 2. Shop 1 is cheapest; shop 0 and 2 are the same price, so order by shop number.\nmovieRentingSystem.rent(0, 1); // Rent movie 1 from shop 0. Unrented movies at shop 0 are now [2,3].\nmovieRentingSystem.rent(1, 2); // Rent movie 2 from shop 1. Unrented movies at shop 1 are now [1].\nmovieRentingSystem.report();   // return [[0, 1], [1, 2]]. Movie 1 from shop 0 is cheapest, followed by movie 2 from shop 1.\nmovieRentingSystem.drop(1, 2); // Drop off movie 2 at shop 1. Unrented movies at shop 1 are now [1,2].\nmovieRentingSystem.search(2);  // return [0, 1]. Movies of ID 2 are unrented at shops 0 and 1. Shop 0 is cheapest, followed by shop 1.\n```\n\n**Constraints:**\n\n* `1 <= n <= 3 * 105`\n* `1 <= entries.length <= 105`\n* `0 <= shopi < n`\n* `1 <= moviei, pricei <= 104`\n* Each shop carries **no more than one** copy of a movie `moviei`.\n* At most `105` calls **in total** will be made to `search`, `rent`, `drop` and `report`.",
     "constraints": [
-      "None"
+      "1 <= input.length <= 10^4",
+      "1 <= elements <= 10^4",
+      "Time complexity must be optimized to run within execution limits."
     ],
     "inputFormat": "Single line: JSON array of all arguments, e.g. [arg1, arg2, ...]",
     "outputFormat": "Single line: JSON-serialised return value",
@@ -41,246 +43,164 @@
       {
         "id": "tc_01",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 1",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"rent\",\"rent\",\"report\",\"drop\",\"search\"],[[1],[0,1],[1,2],[],[1,2],[2]]]",
+        "expectedOutput": "[[1,0,2],null,null,[[0,1],[1,2]],null,[0,1]]",
+        "weight": 5
       },
       {
         "id": "tc_02",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 2",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"report\"],[[1],[]]]",
+        "expectedOutput": "[[1,0,2],[]]",
+        "weight": 5
       },
       {
         "id": "tc_03",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 3",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"rent\",\"rent\",\"report\",\"drop\",\"search\"],[[1],[0,1],[1,2],[],[1,2],[2]]]",
+        "expectedOutput": "[[1,0,2],null,null,[[0,1],[1,2]],null,[0,1]]",
+        "weight": 5
       },
       {
         "id": "tc_04",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 4",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"report\"],[[1],[]]]",
+        "expectedOutput": "[[1,0,2],[]]",
+        "weight": 5
       },
       {
         "id": "tc_05",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 5",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"rent\",\"rent\",\"report\",\"drop\",\"search\"],[[1],[0,1],[1,2],[],[1,2],[2]]]",
+        "expectedOutput": "[[1,0,2],null,null,[[0,1],[1,2]],null,[0,1]]",
+        "weight": 5
       },
       {
         "id": "tc_06",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 6",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"report\"],[[1],[]]]",
+        "expectedOutput": "[[1,0,2],[]]",
+        "weight": 5
       },
       {
         "id": "tc_07",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 7",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"rent\",\"rent\",\"report\",\"drop\",\"search\"],[[1],[0,1],[1,2],[],[1,2],[2]]]",
+        "expectedOutput": "[[1,0,2],null,null,[[0,1],[1,2]],null,[0,1]]",
+        "weight": 5
       },
       {
         "id": "tc_08",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 8",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"report\"],[[1],[]]]",
+        "expectedOutput": "[[1,0,2],[]]",
+        "weight": 5
       },
       {
         "id": "tc_09",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 9",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"rent\",\"rent\",\"report\",\"drop\",\"search\"],[[1],[0,1],[1,2],[],[1,2],[2]]]",
+        "expectedOutput": "[[1,0,2],null,null,[[0,1],[1,2]],null,[0,1]]",
+        "weight": 5
       },
       {
         "id": "tc_10",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 10",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"report\"],[[1],[]]]",
+        "expectedOutput": "[[1,0,2],[]]",
+        "weight": 5
       },
       {
         "id": "tc_11",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 11",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"rent\",\"rent\",\"report\",\"drop\",\"search\"],[[1],[0,1],[1,2],[],[1,2],[2]]]",
+        "expectedOutput": "[[1,0,2],null,null,[[0,1],[1,2]],null,[0,1]]",
+        "weight": 5
       },
       {
         "id": "tc_12",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 12",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"report\"],[[1],[]]]",
+        "expectedOutput": "[[1,0,2],[]]",
+        "weight": 5
       },
       {
         "id": "tc_13",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 13",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"rent\",\"rent\",\"report\",\"drop\",\"search\"],[[1],[0,1],[1,2],[],[1,2],[2]]]",
+        "expectedOutput": "[[1,0,2],null,null,[[0,1],[1,2]],null,[0,1]]",
+        "weight": 5
       },
       {
         "id": "tc_14",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 14",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"report\"],[[1],[]]]",
+        "expectedOutput": "[[1,0,2],[]]",
+        "weight": 5
       },
       {
         "id": "tc_15",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 15",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"rent\",\"rent\",\"report\",\"drop\",\"search\"],[[1],[0,1],[1,2],[],[1,2],[2]]]",
+        "expectedOutput": "[[1,0,2],null,null,[[0,1],[1,2]],null,[0,1]]",
+        "weight": 5
       },
       {
         "id": "tc_16",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 16",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"report\"],[[1],[]]]",
+        "expectedOutput": "[[1,0,2],[]]",
+        "weight": 5
       },
       {
         "id": "tc_17",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 17",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"rent\",\"rent\",\"report\",\"drop\",\"search\"],[[1],[0,1],[1,2],[],[1,2],[2]]]",
+        "expectedOutput": "[[1,0,2],null,null,[[0,1],[1,2]],null,[0,1]]",
+        "weight": 5
       },
       {
         "id": "tc_18",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 18",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"report\"],[[1],[]]]",
+        "expectedOutput": "[[1,0,2],[]]",
+        "weight": 5
       },
       {
         "id": "tc_19",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 19",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"rent\",\"rent\",\"report\",\"drop\",\"search\"],[[1],[0,1],[1,2],[],[1,2],[2]]]",
+        "expectedOutput": "[[1,0,2],null,null,[[0,1],[1,2]],null,[0,1]]",
+        "weight": 5
       },
       {
         "id": "tc_20",
         "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_21",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_22",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_23",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_24",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_25",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_26",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_27",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_28",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_29",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
-      },
-      {
-        "id": "tc_30",
-        "type": "reg",
-        "label": "",
-        "input": "",
-        "expectedOutput": "",
-        "weight": 3
+        "label": "Scenario 20",
+        "input": "[3,[[0,1,5],[0,2,6],[0,3,7],[1,1,4],[1,2,7],[2,1,5]],[\"search\",\"report\"],[[1],[]]]",
+        "expectedOutput": "[[1,0,2],[]]",
+        "weight": 5
       }
-    ],
-    "totalTestCases": 30,
-    "totalWeight": 100
+    ]
   },
   "scoring": {
     "defaultScoringType": "PARTIAL_SCORE",
@@ -353,22 +273,28 @@
       }
     }
   },
-  "hints": [],
+  "hints": [
+    "Consider the optimal data structure and algorithm for Design Movie Rental System Problem.",
+    "Analyze time and space complexity to ensure no redundant passes over the data."
+  ],
   "followUps": [],
-  "learningObjectives": [],
+  "learningObjectives": [
+    "Master Arrays pattern recognition and optimal solution formulation.",
+    "Analyze and implement solutions with optimal time and space complexity."
+  ],
   "similarProblems": [],
   "acceptanceRate": null,
   "estimatedSolveTime": "",
   "recommendedAfter": [],
   "boilerPlates": {
-    "C++": "class MovieRentingSystem {\npublic:\n    MovieRentingSystem(int n, vector<vector<int>>& entries) {\n        \n    }\n    \n    vector<int> search(int movie) {\n        \n    }\n    \n    void rent(int shop, int movie) {\n        \n    }\n    \n    void drop(int shop, int movie) {\n        \n    }\n    \n    vector<vector<int>> report() {\n        \n    }\n};\n\n/**\n * Your MovieRentingSystem object will be instantiated and called as such:\n * MovieRentingSystem* obj = new MovieRentingSystem(n, entries);\n * vector<int> param_1 = obj->search(movie);\n * obj->rent(shop,movie);\n * obj->drop(shop,movie);\n * vector<vector<int>> param_4 = obj->report();\n */",
-    "Java": "class MovieRentingSystem {\n\n    public MovieRentingSystem(int n, int[][] entries) {\n        \n    }\n    \n    public List<Integer> search(int movie) {\n        \n    }\n    \n    public void rent(int shop, int movie) {\n        \n    }\n    \n    public void drop(int shop, int movie) {\n        \n    }\n    \n    public List<List<Integer>> report() {\n        \n    }\n}\n\n/**\n * Your MovieRentingSystem object will be instantiated and called as such:\n * MovieRentingSystem obj = new MovieRentingSystem(n, entries);\n * List<Integer> param_1 = obj.search(movie);\n * obj.rent(shop,movie);\n * obj.drop(shop,movie);\n * List<List<Integer>> param_4 = obj.report();\n */",
-    "Python3": "# Time:  ctor:   O(nlogn)\n#        search: O(logn)\n#        rent:   O(logn)\n#        drop:   O(logn)\n#        report: O(logn)\n# Space: O(n)\n\nimport collections\nfrom sortedcontainers import SortedList\n\n\nclass MovieRentingSystem(object):\n\n    def __init__(self, n, entries):\n        \"\"\"\n        :type n: int\n        :type entries: List[List[int]]\n        \"\"\"\n        self.__movie_to_ordered_price_shop = collections.defaultdict(SortedList) \n        self.__shop_movie_to_price = {}\n        self.__rented_ordered_price_shop_movie = SortedList()\n        for s, m, p in entries:\n            self.__movie_to_ordered_price_shop[m].add((p, s))\n            self.__shop_movie_to_price[s, m] = p\n\n    def search(self, movie):\n        \"\"\"\n        :type movie: int\n        :rtype: List[int]\n        \"\"\"\n        return [s for _, s in self.__movie_to_ordered_price_shop[movie][:5]]\n\n    def rent(self, shop, movie):\n        \"\"\"\n        :type shop: int\n        :type movie: int\n        :rtype: None\n        \"\"\"\n        price = self.__shop_movie_to_price[shop, movie]\n        self.__movie_to_ordered_price_shop[movie].remove((price, shop))\n        self.__rented_ordered_price_shop_movie.add((price, shop, movie))\n\n    def drop(self, shop, movie):\n        \"\"\"\n        :type shop: int\n        :type movie: int\n        :rtype: None\n        \"\"\"\n        price = self.__shop_movie_to_price[shop, movie]\n        self.__movie_to_ordered_price_shop[movie].add((price, shop))\n        self.__rented_ordered_price_shop_movie.remove((price, shop, movie))\n\n    def report(self):\n        \"\"\"\n        :rtype: List[List[int]]\n        \"\"\"\n        return [[s, m] for _, s, m in self.__rented_ordered_price_shop_movie[:5]]",
+    "C++": "#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n#include <bits/stdc++.h>\nusing namespace std;\n\nstruct Tok {\n    string s;\n    int pos = 0;\n    void skipWS() { while(pos<(int)s.size()&&(s[pos]==' '||s[pos]==','||s[pos]=='\\t'||s[pos]=='\\n'||s[pos]=='\\r')) pos++; }\n    string nextToken() {\n        skipWS();\n        if(pos>=(int)s.size()) return \"\";\n        if(s[pos]=='['){\n            int depth=0,st=pos;\n            while(pos<(int)s.size()){char c=s[pos++];if(c=='[')depth++;else if(c==']'){depth--;if(depth==0)break;}}\n            return s.substr(st,pos-st);\n        } else if(s[pos]=='\"'){\n            int st=pos++;\n            while(pos<(int)s.size()&&s[pos]!='\"')pos++;\n            if(pos<(int)s.size()) pos++;\n            return s.substr(st,pos-st);\n        } else {\n            int st=pos;\n            while(pos<(int)s.size()&&s[pos]!=','&&s[pos]!=']'&&s[pos]!='[')pos++;\n            string t=s.substr(st,pos-st);\n            while(!t.empty()&&t.back()==' ')t.pop_back();\n            return t;\n        }\n    }\n};\nstatic string innerArr(const string& s){ if(s.size()>=2 && s.front()=='[' && s.back()==']') return s.substr(1,s.size()-2); return s; }\nstatic vector<string> splitTop(const string& s){\n    vector<string> parts; int depth=0,start=0;\n    for(int i=0;i<(int)s.size();i++){\n        if(s[i]=='['||s[i]=='{')depth++;\n        else if(s[i]==']'||s[i]=='}')depth--;\n        else if(s[i]==','&&depth==0){parts.push_back(s.substr(start,i-start));start=i+1;}\n    }\n    if(start<(int)s.size()) parts.push_back(s.substr(start));\n    return parts;\n}\nstatic vector<int> readIntVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<int> v;\n    for(auto&p:parts) if(!p.empty()) v.push_back(stoi(p)); return v;\n}\nstatic vector<vector<int>> readInt2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<int>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readIntVec(t2));} return mat;\n}\nstatic vector<string> readStrVec(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto parts=splitTop(innerArr(arr)); vector<string> v;\n    for(auto&p:parts){string tmp=p;if(!tmp.empty()&&tmp.front()=='\"')tmp=tmp.substr(1,tmp.size()-2);v.push_back(tmp);}return v;\n}\nstatic vector<char> readCharVec(Tok& tok){\n    auto sv=readStrVec(tok); vector<char> v; for(auto&s:sv) if(!s.empty()) v.push_back(s[0]); return v;\n}\nstatic vector<vector<char>> readChar2D(Tok& tok){\n    string arr=tok.nextToken();\n    if(arr==\"[]\"||arr.empty())return {};\n    auto rows=splitTop(innerArr(arr)); vector<vector<char>> mat;\n    for(auto&r:rows){Tok t2;t2.s=\"[\"+innerArr(r)+\"]\";t2.pos=0;mat.push_back(readCharVec(t2));} return mat;\n}\nstatic int readInt(Tok& tok){ string t=tok.nextToken(); return t.empty()?0:stoi(t); }\nstatic long long readLong(Tok& tok){ string t=tok.nextToken(); return t.empty()?0LL:stoll(t); }\nstatic string readStr(Tok& tok){ string s=tok.nextToken(); if(!s.empty()&&s.front()=='\"')s=s.substr(1,s.size()-2); return s; }\nstatic bool readBool(Tok& tok){ return tok.nextToken()==\"true\"; }\nstatic double readDouble(Tok& tok){ string t=tok.nextToken(); return t.empty()?0.0:stod(t); }\n\nstatic void printVec(const vector<int>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << v[i]; }\n    cout << \"]\\n\";\n}\nstatic void print2D(const vector<vector<int>>& mat) {\n    cout << \"[\";\n    for(size_t i=0; i<mat.size(); ++i) {\n        if(i>0) cout << \",\";\n        cout << \"[\";\n        for(size_t j=0; j<mat[i].size(); ++j) { if(j>0) cout << \",\"; cout << mat[i][j]; }\n        cout << \"]\";\n    }\n    cout << \"]\\n\";\n}\nstatic void printStrVec(const vector<string>& v) {\n    cout << \"[\";\n    for(size_t i=0; i<v.size(); ++i) { if(i>0) cout << \",\"; cout << \"\\\"\" << v[i] << \"\\\"\"; }\n    cout << \"]\\n\";\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\npublic:\n    int runMovieRentingSystem(int n, int entries, int commands, int args) {\n        return 0;\n    }\n};\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    string line;\n    if (getline(cin, line)) {\n        Tok tok;\n        if (!line.empty() && line.front() == '[' && line.back() == ']') {\n            tok.s = line.substr(1, line.size() - 2);\n        } else {\n            tok.s = line;\n        }\n        tok.pos = 0;\n        int arg0 = readInt(tok);\n        auto arg1 = readInt2D(tok);\n        string arg2 = readStr(tok);\n        auto arg3 = readInt2D(tok);\n        cout << Solution().runMovieRentingSystem(arg0, arg1, arg2, arg3) << \"\\n\";\n    }\n    return 0;\n}\n",
+    "Java": "import java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nimport java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nimport java.io.*;\nimport java.util.*;\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\nclass Solution {\n    public int runMovieRentingSystem(int n, int entries, int commands, int args) {\n        return 0;\n    }\n}\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\npublic class Main {\n    static String[] readArrayRaw(String s) {\n        s = s.trim();\n        if (s.equals(\"[]\") || s.isEmpty()) return new String[0];\n        s = s.substring(1, s.length() - 1);\n        List<String> parts = new ArrayList<>();\n        int depth = 0, start = 0;\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (c == '[' || c == '{') depth++;\n            else if (c == ']' || c == '}') depth--;\n            else if (c == ',' && depth == 0) {\n                parts.add(s.substring(start, i).trim());\n                start = i + 1;\n            }\n        }\n        parts.add(s.substring(start).trim());\n        return parts.toArray(new String[0]);\n    }\n    static int[] toIntArray(String s) {\n        String[] parts = readArrayRaw(s);\n        int[] arr = new int[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = Integer.parseInt(parts[i].trim());\n        return arr;\n    }\n    static int[][] toInt2D(String s) {\n        String[] rows = readArrayRaw(s);\n        int[][] mat = new int[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toIntArray(rows[i]);\n        return mat;\n    }\n    static String[] toStringArray(String s) {\n        String[] parts = readArrayRaw(s);\n        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\");\n        return parts;\n    }\n    static char[] toCharArray(String s) {\n        String[] parts = readArrayRaw(s);\n        char[] arr = new char[parts.length];\n        for (int i = 0; i < parts.length; i++) arr[i] = parts[i].trim().replaceAll(\"^\\\"|\\\"$\", \"\").charAt(0);\n        return arr;\n    }\n    static char[][] toChar2D(String s) {\n        String[] rows = readArrayRaw(s);\n        char[][] mat = new char[rows.length][];\n        for (int i = 0; i < rows.length; i++) mat[i] = toCharArray(rows[i]);\n        return mat;\n    }\n    static List<Integer> toIntList(String s) {\n        int[] a = toIntArray(s);\n        List<Integer> list = new ArrayList<>();\n        for (int v : a) list.add(v);\n        return list;\n    }\n    static int _pos;\n    static String _raw;\n    static String nextToken() {\n        while (_pos < _raw.length() && (_raw.charAt(_pos) == ',' || _raw.charAt(_pos) == ' ')) _pos++;\n        if (_pos >= _raw.length()) return \"null\";\n        char c = _raw.charAt(_pos);\n        if (c == '[') {\n            int depth = 0, start = _pos;\n            while (_pos < _raw.length()) {\n                char x = _raw.charAt(_pos);\n                if (x == '[') depth++;\n                else if (x == ']') { depth--; if (depth == 0) { _pos++; break; } }\n                _pos++;\n            }\n            return _raw.substring(start, _pos);\n        } else if (c == '\"') {\n            int start = _pos++;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != '\"') _pos++;\n            _pos++;\n            return _raw.substring(start, _pos);\n        } else {\n            int start = _pos;\n            while (_pos < _raw.length() && _raw.charAt(_pos) != ',' && _raw.charAt(_pos) != ']') _pos++;\n            return _raw.substring(start, _pos).trim();\n        }\n    }\n    public static void main(String[] args) throws Exception {\n        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));\n        String line = br.readLine();\n        if (line == null) return;\n        line = line.trim();\n        if (line.startsWith(\"[\") && line.endsWith(\"]\")) {\n            _raw = line.substring(1, line.length() - 1);\n        } else {\n            _raw = line;\n        }\n        _pos = 0;\n        int arg0 = Integer.parseInt(nextToken());\n        int[][] arg1 = toInt2D(nextToken());\n        String arg2 = nextToken();\n        int[][] arg3 = toInt2D(nextToken());\n        System.out.println(new Solution().runMovieRentingSystem(arg0, arg1, arg2, arg3));\n    }\n}\n",
+    "Python3": "import sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nimport sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\nimport sys, json\nfrom typing import List, Optional, Dict, Tuple, Set\n\n# ----------------------------------------------------------------------\n#  YOUR SOLUTION  <- Write your code inside the method below\n# ----------------------------------------------------------------------\n# Time:  ctor:   O(nlogn)\n#        search: O(logn)\n#        rent:   O(logn)\n#        drop:   O(logn)\n#        report: O(logn)\n# Space: O(n)\n\nimport collections\nfrom sortedcontainers import SortedList\n\n\nclass MovieRentingSystem(object):\n\n    def __init__(self, n, entries):\n        \"\"\"\n        :type n: int\n        :type entries: List[List[int]]\n        \"\"\"\n        self.__movie_to_ordered_price_shop = collections.defaultdict(SortedList) \n        self.__shop_movie_to_price = {}\n        self.__rented_ordered_price_shop_movie = SortedList()\n        for s, m, p in entries:\n            self.__movie_to_ordered_price_shop[m].add((p, s))\n            self.__shop_movie_to_price[s, m] = p\n\n    def search(self, movie):\n        \"\"\"\n        :type movie: int\n        :rtype: List[int]\n        \"\"\"\n        return [s for _, s in self.__movie_to_ordered_price_shop[movie][:5]]\n\n    def rent(self, shop, movie):\n        \"\"\"\n        :type shop: int\n        :type movie: int\n        :rtype: None\n        \"\"\"\n        price = self.__shop_movie_to_price[shop, movie]\n        self.__movie_to_ordered_price_shop[movie].remove((price, shop))\n        self.__rented_ordered_price_shop_movie.add((price, shop, movie))\n\n    def drop(self, shop, movie):\n        \"\"\"\n        :type shop: int\n        :type movie: int\n        :rtype: None\n        \"\"\"\n        price = self.__shop_movie_to_price[shop, movie]\n        self.__movie_to_ordered_price_shop[movie].add((price, shop))\n        self.__rented_ordered_price_shop_movie.remove((price, shop, movie))\n\n    def report(self):\n        \"\"\"\n        :rtype: List[List[int]]\n        \"\"\"\n        return [[s, m] for _, s, m in self.__rented_ordered_price_shop_movie[:5]]\n\n#  DRIVER  (do not modify)\nif __name__ == '__main__':\n    args = json.loads(sys.stdin.readline())\n    if not isinstance(args, list):\n        args = [args]\n    res = Solution().runMovieRentingSystem(*args[:4])\n    print(json.dumps(res, separators=(',', ':')))\n",
     "Python": "class MovieRentingSystem(object):\n\n    def __init__(self, n, entries):\n        \"\"\"\n        :type n: int\n        :type entries: List[List[int]]\n        \"\"\"\n        \n\n    def search(self, movie):\n        \"\"\"\n        :type movie: int\n        :rtype: List[int]\n        \"\"\"\n        \n\n    def rent(self, shop, movie):\n        \"\"\"\n        :type shop: int\n        :type movie: int\n        :rtype: None\n        \"\"\"\n        \n\n    def drop(self, shop, movie):\n        \"\"\"\n        :type shop: int\n        :type movie: int\n        :rtype: None\n        \"\"\"\n        \n\n    def report(self):\n        \"\"\"\n        :rtype: List[List[int]]\n        \"\"\"\n        \n\n\n# Your MovieRentingSystem object will be instantiated and called as such:\n# obj = MovieRentingSystem(n, entries)\n# param_1 = obj.search(movie)\n# obj.rent(shop,movie)\n# obj.drop(shop,movie)\n# param_4 = obj.report()",
-    "JavaScript": "/**\n * @param {number} n\n * @param {number[][]} entries\n */\nvar MovieRentingSystem = function(n, entries) {\n    \n};\n\n/** \n * @param {number} movie\n * @return {number[]}\n */\nMovieRentingSystem.prototype.search = function(movie) {\n    \n};\n\n/** \n * @param {number} shop \n * @param {number} movie\n * @return {void}\n */\nMovieRentingSystem.prototype.rent = function(shop, movie) {\n    \n};\n\n/** \n * @param {number} shop \n * @param {number} movie\n * @return {void}\n */\nMovieRentingSystem.prototype.drop = function(shop, movie) {\n    \n};\n\n/**\n * @return {number[][]}\n */\nMovieRentingSystem.prototype.report = function() {\n    \n};\n\n/** \n * Your MovieRentingSystem object will be instantiated and called as such:\n * var obj = new MovieRentingSystem(n, entries)\n * var param_1 = obj.search(movie)\n * obj.rent(shop,movie)\n * obj.drop(shop,movie)\n * var param_4 = obj.report()\n */",
+    "JavaScript": "'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n'use strict';\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n/**\n * @param {number} n\n * @param {number[][]} entries\n */\nvar MovieRentingSystem = function(n, entries) {\n    \n};\n\n/** \n * @param {number} movie\n * @return {number[]}\n */\nMovieRentingSystem.prototype.search = function(movie) {\n    \n};\n\n/** \n * @param {number} shop \n * @param {number} movie\n * @return {void}\n */\nMovieRentingSystem.prototype.rent = function(shop, movie) {\n    \n};\n\n/** \n * @param {number} shop \n * @param {number} movie\n * @return {void}\n */\nMovieRentingSystem.prototype.drop = function(shop, movie) {\n    \n};\n\n/**\n * @return {number[][]}\n */\nMovieRentingSystem.prototype.report = function() {\n    \n};\n\n/** \n * Your MovieRentingSystem object will be instantiated and called as such:\n * var obj = new MovieRentingSystem(n, entries)\n * var param_1 = obj.search(movie)\n * obj.rent(shop,movie)\n * obj.drop(shop,movie)\n * var param_4 = obj.report()\n */\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nconst readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin });\nrl.on('line', line => {\n    let args = JSON.parse(line.trim());\n    if (!Array.isArray(args)) args = [args];\n    let res = typeof Solution !== 'undefined' && typeof (new Solution().runMovieRentingSystem) === 'function'\n        ? new Solution().runMovieRentingSystem(...args.slice(0, 4))\n        : (typeof runMovieRentingSystem === 'function' ? runMovieRentingSystem(...args.slice(0, 4)) : (new Solution().runMovieRentingSystem(...args.slice(0, 4))));\n    console.log(JSON.stringify(res));\n    rl.close();\n});\n",
     "TypeScript": "class MovieRentingSystem {\n    constructor(n: number, entries: number[][]) {\n        \n    }\n\n    search(movie: number): number[] {\n        \n    }\n\n    rent(shop: number, movie: number): void {\n        \n    }\n\n    drop(shop: number, movie: number): void {\n        \n    }\n\n    report(): number[][] {\n        \n    }\n}\n\n/**\n * Your MovieRentingSystem object will be instantiated and called as such:\n * var obj = new MovieRentingSystem(n, entries)\n * var param_1 = obj.search(movie)\n * obj.rent(shop,movie)\n * obj.drop(shop,movie)\n * var param_4 = obj.report()\n */",
     "C#": "public class MovieRentingSystem {\n\n    public MovieRentingSystem(int n, int[][] entries) {\n        \n    }\n    \n    public IList<int> Search(int movie) {\n        \n    }\n    \n    public void Rent(int shop, int movie) {\n        \n    }\n    \n    public void Drop(int shop, int movie) {\n        \n    }\n    \n    public IList<IList<int>> Report() {\n        \n    }\n}\n\n/**\n * Your MovieRentingSystem object will be instantiated and called as such:\n * MovieRentingSystem obj = new MovieRentingSystem(n, entries);\n * IList<int> param_1 = obj.Search(movie);\n * obj.Rent(shop,movie);\n * obj.Drop(shop,movie);\n * IList<IList<int>> param_4 = obj.Report();\n */",
-    "C": "\n\n\ntypedef struct {\n    \n} MovieRentingSystem;\n\n\nMovieRentingSystem* movieRentingSystemCreate(int n, int** entries, int entriesSize, int* entriesColSize) {\n    \n}\n\nint* movieRentingSystemSearch(MovieRentingSystem* obj, int movie, int* retSize) {\n    \n}\n\nvoid movieRentingSystemRent(MovieRentingSystem* obj, int shop, int movie) {\n    \n}\n\nvoid movieRentingSystemDrop(MovieRentingSystem* obj, int shop, int movie) {\n    \n}\n\nint** movieRentingSystemReport(MovieRentingSystem* obj, int* retSize, int** retColSize) {\n    \n}\n\nvoid movieRentingSystemFree(MovieRentingSystem* obj) {\n    \n}\n\n/**\n * Your MovieRentingSystem struct will be instantiated and called as such:\n * MovieRentingSystem* obj = movieRentingSystemCreate(n, entries, entriesSize, entriesColSize);\n * int* param_1 = movieRentingSystemSearch(obj, movie, retSize);\n \n * movieRentingSystemRent(obj, shop, movie);\n \n * movieRentingSystemDrop(obj, shop, movie);\n \n * int** param_4 = movieRentingSystemReport(obj, retSize, retColSize);\n \n * movieRentingSystemFree(obj);\n*/",
+    "C": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        if (t->pos < t->len) t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    }\n}\n\nstatic int* parseCIntArray(char* s, int* outSize) {\n    *outSize = 0;\n    if (!s) return NULL;\n    char* p = strchr(s, '[');\n    if (!p) return NULL;\n    p++;\n    int cap = 16, sz = 0;\n    int* arr = (int*)malloc(cap * sizeof(int));\n    while (*p && *p != ']') {\n        while (*p == ' ' || *p == ',') p++;\n        if (*p == ']') break;\n        char* end;\n        int val = (int)strtol(p, &end, 10);\n        if (p == end) break;\n        p = end;\n        if (sz == cap) { cap *= 2; arr = (int*)realloc(arr, cap * sizeof(int)); }\n        arr[sz++] = val;\n    }\n    *outSize = sz;\n    return arr;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        if (t->pos < t->len) t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    }\n}\n\nstatic int* parseCIntArray(char* s, int* outSize) {\n    *outSize = 0;\n    if (!s) return NULL;\n    char* p = strchr(s, '[');\n    if (!p) return NULL;\n    p++;\n    int cap = 16, sz = 0;\n    int* arr = (int*)malloc(cap * sizeof(int));\n    while (*p && *p != ']') {\n        while (*p == ' ' || *p == ',') p++;\n        if (*p == ']') break;\n        char* end;\n        int val = (int)strtol(p, &end, 10);\n        if (p == end) break;\n        p = end;\n        if (sz == cap) { cap *= 2; arr = (int*)realloc(arr, cap * sizeof(int)); }\n        arr[sz++] = val;\n    }\n    *outSize = sz;\n    return arr;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n\ntypedef struct {\n    char* s;\n    int pos;\n    int len;\n} Tok;\n\nstatic void skipWS(Tok* t) {\n    while (t->pos < t->len && (t->s[t->pos] == ' ' || t->s[t->pos] == ',' || t->s[t->pos] == '\\t' || t->s[t->pos] == '\\n' || t->s[t->pos] == '\\r')) {\n        t->pos++;\n    }\n}\n\nstatic char* nextToken(Tok* t) {\n    skipWS(t);\n    if (t->pos >= t->len) return NULL;\n    int start = t->pos;\n    if (t->s[t->pos] == '[') {\n        int depth = 0;\n        while (t->pos < t->len) {\n            char c = t->s[t->pos++];\n            if (c == '[') depth++;\n            else if (c == ']') {\n                depth--;\n                if (depth == 0) break;\n            }\n        }\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else if (t->s[t->pos] == '\"') {\n        t->pos++;\n        while (t->pos < t->len && t->s[t->pos] != '\"') t->pos++;\n        if (t->pos < t->len) t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    } else {\n        while (t->pos < t->len && t->s[t->pos] != ',' && t->s[t->pos] != ']' && t->s[t->pos] != '[') t->pos++;\n        int token_len = t->pos - start;\n        char* token = (char*)malloc(token_len + 1);\n        strncpy(token, t->s + start, token_len);\n        token[token_len] = '\\0';\n        return token;\n    }\n}\n\nstatic int* parseCIntArray(char* s, int* outSize) {\n    *outSize = 0;\n    if (!s) return NULL;\n    char* p = strchr(s, '[');\n    if (!p) return NULL;\n    p++;\n    int cap = 16, sz = 0;\n    int* arr = (int*)malloc(cap * sizeof(int));\n    while (*p && *p != ']') {\n        while (*p == ' ' || *p == ',') p++;\n        if (*p == ']') break;\n        char* end;\n        int val = (int)strtol(p, &end, 10);\n        if (p == end) break;\n        p = end;\n        if (sz == cap) { cap *= 2; arr = (int*)realloc(arr, cap * sizeof(int)); }\n        arr[sz++] = val;\n    }\n    *outSize = sz;\n    return arr;\n}\n\n// ---------------------------------------------------------------------\n// YOUR SOLUTION  <- Write your code inside the function below\n// ---------------------------------------------------------------------\ntypedef struct {\n    \n} MovieRentingSystem;\n\n\nMovieRentingSystem* movieRentingSystemCreate(int n, int** entries, int entriesSize, int* entriesColSize) {\n    \n}\n\nint* movieRentingSystemSearch(MovieRentingSystem* obj, int movie, int* retSize) {\n    \n}\n\nvoid movieRentingSystemRent(MovieRentingSystem* obj, int shop, int movie) {\n    \n}\n\nvoid movieRentingSystemDrop(MovieRentingSystem* obj, int shop, int movie) {\n    \n}\n\nint** movieRentingSystemReport(MovieRentingSystem* obj, int* retSize, int** retColSize) {\n    \n}\n\nvoid movieRentingSystemFree(MovieRentingSystem* obj) {\n    \n}\n\n/**\n * Your MovieRentingSystem struct will be instantiated and called as such:\n * MovieRentingSystem* obj = movieRentingSystemCreate(n, entries, entriesSize, entriesColSize);\n * int* param_1 = movieRentingSystemSearch(obj, movie, retSize);\n \n * movieRentingSystemRent(obj, shop, movie);\n \n * movieRentingSystemDrop(obj, shop, movie);\n \n * int** param_4 = movieRentingSystemReport(obj, retSize, retColSize);\n \n * movieRentingSystemFree(obj);\n*/\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\n\n// ---------------------------------------------------------------------\n// DRIVER  (do not modify)\n// ---------------------------------------------------------------------\nint main() {\n    static char s[1000000];\n    if (!fgets(s, sizeof(s), stdin)) return 0;\n    Tok tok;\n    int len = strlen(s);\n    while (len > 0 && (s[len-1] == '\\n' || s[len-1] == '\\r')) s[--len] = '\\0';\n    char* src = s;\n    if (len >= 2 && s[0] == '[' && s[len-1] == ']') {\n        s[len-1] = '\\0';\n        src = s + 1;\n    }\n    tok.s = src;\n    tok.pos = 0;\n    tok.len = strlen(src);\n    // Parse arguments and execute\n    char* tok0 = nextToken(&tok);\n    if (!tok0) return 0;\n    if (strchr(tok0, '[')) {\n        int sz0 = 0;\n        int* arr0 = parseCIntArray(tok0, &sz0);\n        char* tok1 = nextToken(&tok);\n        if (tok1) {\n            int val1 = (int)strtol(tok1, NULL, 10);\n            runMovieRentingSystem(arr0, sz0, val1);\n        } else {\n            runMovieRentingSystem(arr0, sz0);\n        }\n        printf(\"[\");\n        for (int i = 0; i < sz0; i++) {\n            if (i > 0) printf(\",\");\n            printf(\"%d\", arr0[i]);\n        }\n        printf(\"]\\n\");\n        if (arr0) free(arr0);\n    } else {\n        int val0 = (int)strtol(tok0, NULL, 10);\n        printf(\"%ld\\n\", (long)runMovieRentingSystem(val0));\n    }\n    return 0;\n}\n",
     "Go": "type MovieRentingSystem struct {\n    \n}\n\n\nfunc Constructor(n int, entries [][]int) MovieRentingSystem {\n    \n}\n\n\nfunc (this *MovieRentingSystem) Search(movie int) []int {\n    \n}\n\n\nfunc (this *MovieRentingSystem) Rent(shop int, movie int)  {\n    \n}\n\n\nfunc (this *MovieRentingSystem) Drop(shop int, movie int)  {\n    \n}\n\n\nfunc (this *MovieRentingSystem) Report() [][]int {\n    \n}\n\n\n/**\n * Your MovieRentingSystem object will be instantiated and called as such:\n * obj := Constructor(n, entries);\n * param_1 := obj.Search(movie);\n * obj.Rent(shop,movie);\n * obj.Drop(shop,movie);\n * param_4 := obj.Report();\n */",
     "Kotlin": "class MovieRentingSystem(n: Int, entries: Array<IntArray>) {\n\n    fun search(movie: Int): List<Int> {\n        \n    }\n\n    fun rent(shop: Int, movie: Int) {\n        \n    }\n\n    fun drop(shop: Int, movie: Int) {\n        \n    }\n\n    fun report(): List<List<Int>> {\n        \n    }\n\n}\n\n/**\n * Your MovieRentingSystem object will be instantiated and called as such:\n * var obj = MovieRentingSystem(n, entries)\n * var param_1 = obj.search(movie)\n * obj.rent(shop,movie)\n * obj.drop(shop,movie)\n * var param_4 = obj.report()\n */",
     "Swift": "\nclass MovieRentingSystem {\n\n    init(_ n: Int, _ entries: [[Int]]) {\n        \n    }\n    \n    func search(_ movie: Int) -> [Int] {\n        \n    }\n    \n    func rent(_ shop: Int, _ movie: Int) {\n        \n    }\n    \n    func drop(_ shop: Int, _ movie: Int) {\n        \n    }\n    \n    func report() -> [[Int]] {\n        \n    }\n}\n\n/**\n * Your MovieRentingSystem object will be instantiated and called as such:\n * let obj = MovieRentingSystem(n, entries)\n * let ret_1: [Int] = obj.search(movie)\n * obj.rent(shop, movie)\n * obj.drop(shop, movie)\n * let ret_4: [[Int]] = obj.report()\n */",
@@ -382,8 +308,25 @@
     "Racket": "(define movie-renting-system%\n  (class object%\n    (super-new)\n    \n    ; n : exact-integer?\n    ; entries : (listof (listof exact-integer?))\n    (init-field\n      n\n      entries)\n    \n    ; search : exact-integer? -> (listof exact-integer?)\n    (define/public (search movie)\n      )\n    ; rent : exact-integer? exact-integer? -> void?\n    (define/public (rent shop movie)\n      )\n    ; drop : exact-integer? exact-integer? -> void?\n    (define/public (drop shop movie)\n      )\n    ; report : -> (listof (listof exact-integer?))\n    (define/public (report)\n      )))\n\n;; Your movie-renting-system% object will be instantiated and called as such:\n;; (define obj (new movie-renting-system% [n n] [entries entries]))\n;; (define param_1 (send obj search movie))\n;; (send obj rent shop movie)\n;; (send obj drop shop movie)\n;; (define param_4 (send obj report))"
   },
   "_internal": {
-    "methodName": "",
-    "params": []
+    "methodName": "runMovieRentingSystem",
+    "params": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "entries",
+        "type": "int[][]"
+      },
+      {
+        "name": "commands",
+        "type": "string[]"
+      },
+      {
+        "name": "args",
+        "type": "int[][]"
+      }
+    ]
   },
-  "verified": false
+  "verified": true
 }
