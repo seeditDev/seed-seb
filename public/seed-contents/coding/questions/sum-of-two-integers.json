@@ -1,0 +1,629 @@
+{
+  "id": "sum-of-two-integers",
+  "questionId": "sum-of-two-integers",
+  "slug": "sum-of-two-integers",
+  "title": "Sum of Two Integers",
+  "difficulty": "Medium",
+  "category": "Bit manipulation",
+  "patterns": [
+    "bit manipulation"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "think about how you add two binary numbers by hand, digit by digit, tracking a carry - which single bitwise operation gives you the 'sum ignoring carry' at each position?",
+    "XOR of two bits gives you exactly the sum digit ignoring any carry-in (1+0=1, 0+1=1, 1+1=0 with a carry, 0+0=0)",
+    "AND of two bits tells you where a carry is generated, and that carry needs to be applied one position to the left (shifted left by 1) to be added in at the next digit",
+    "repeat: compute partial_sum = a XOR b and carry = (a AND b) << 1, then set a = partial_sum and b = carry, and loop until carry becomes 0 - at that point a holds the final sum"
+  ],
+  "commonMistakes": [
+    "not looping until carry is fully zero - a single XOR/AND pass only handles one 'layer' of carries, multi-bit carries need repeated passes",
+    "in languages with fixed-width signed integers, not handling negative numbers correctly since the carry logic still relies on two's complement bit patterns working out",
+    "accidentally using + or - somewhere in the implementation (even in a loop counter) when the point is to avoid them entirely for the arithmetic itself"
+  ],
+  "content": {
+    "problemStatement": "You're given two integers `a` and `b`.\n\n**Return their sum, but without using the + or - operators anywhere in your solution.**\n",
+    "constraints": [
+      "-1000 <= a <= 1000",
+      "-1000 <= b <= 1000"
+    ],
+    "notes": [
+      "both a and b are 0",
+      "a and b are opposite signs and sum to 0",
+      "both a and b are negative"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "a = 1, b = 2",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "a = -2, b = 3",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "a = -5, b = -3",
+        "output": "-8",
+        "expectedOutput": "-8",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[1,2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[-2,3]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[-5,-3]",
+        "output": "-8",
+        "expectedOutput": "-8",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[0,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[100,-100]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[0,5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[5,0]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[-1,1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[-1,-1]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[500,500]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[-500,-500]",
+        "output": "-1000",
+        "expectedOutput": "-1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1000,-1000]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[999,1]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[-999,-1]",
+        "output": "-1000",
+        "expectedOutput": "-1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[7,8]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[-7,8]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[7,-8]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[1000,1000]",
+        "output": "2000",
+        "expectedOutput": "2000",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[-1000,-1000]",
+        "output": "-2000",
+        "expectedOutput": "-2000",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1,-1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "a = 1, b = 2",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "a = -2, b = 3",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "a = -5, b = -3",
+      "output": "-8",
+      "expectedOutput": "-8",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "a = 1, b = 2",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "a = -2, b = 3",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "a = -5, b = -3",
+      "output": "-8",
+      "expectedOutput": "-8",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[1,2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[-2,3]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[-5,-3]",
+      "output": "-8",
+      "expectedOutput": "-8",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[0,0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[100,-100]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[0,5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[5,0]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[-1,1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[-1,-1]",
+      "output": "-2",
+      "expectedOutput": "-2",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[500,500]",
+      "output": "1000",
+      "expectedOutput": "1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[-500,-500]",
+      "output": "-1000",
+      "expectedOutput": "-1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[1000,-1000]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[999,1]",
+      "output": "1000",
+      "expectedOutput": "1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[-999,-1]",
+      "output": "-1000",
+      "expectedOutput": "-1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[7,8]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[-7,8]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[7,-8]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[1000,1000]",
+      "output": "2000",
+      "expectedOutput": "2000",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[-1000,-1000]",
+      "output": "-2000",
+      "expectedOutput": "-2000",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[1,-1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "a = 1, b = 2",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "a = -2, b = 3",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "a = -5, b = -3",
+        "output": "-8",
+        "expectedOutput": "-8",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[1,2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[-2,3]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[-5,-3]",
+        "output": "-8",
+        "expectedOutput": "-8",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[0,0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[100,-100]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[0,5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[5,0]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[-1,1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[-1,-1]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[500,500]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[-500,-500]",
+        "output": "-1000",
+        "expectedOutput": "-1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[1000,-1000]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[999,1]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[-999,-1]",
+        "output": "-1000",
+        "expectedOutput": "-1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[7,8]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[-7,8]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[7,-8]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[1000,1000]",
+        "output": "2000",
+        "expectedOutput": "2000",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[-1000,-1000]",
+        "output": "-2000",
+        "expectedOutput": "-2000",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1,-1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def getSum(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getSum(int a, int b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getSum(int a, int b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getSum(a: Int, b: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getSum(a, b) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def getSum(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getSum(int a, int b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getSum(int a, int b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getSum(a: Int, b: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getSum(a, b) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def getSum(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getSum(int a, int b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getSum(int a, int b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getSum(a: Int, b: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getSum(a, b) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def getSum(self, a, b):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int getSum(int a, int b) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int getSum(int a, int b) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getSum(a: Int, b: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getSum(a, b) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(32) = O(1), bounded by bit width",
+      "space": "O(1)",
+      "pattern": "bit manipulation (simulate binary addition: XOR for sum without carry, AND+shift for carry)"
+    },
+    "bruteForce": {
+      "approach": "there's no meaningfully different 'slower' approach here since + is banned outright - the direct bitwise simulation below is the only real approach",
+      "time": "O(32) = O(1)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "bit manipulation (simulate binary addition: XOR for sum without carry, AND+shift for carry)",
+    "time": "O(32) = O(1), bounded by bit width",
+    "space": "O(1)",
+    "hint_ladder": [
+      "think about how you add two binary numbers by hand, digit by digit, tracking a carry - which single bitwise operation gives you the 'sum ignoring carry' at each position?",
+      "XOR of two bits gives you exactly the sum digit ignoring any carry-in (1+0=1, 0+1=1, 1+1=0 with a carry, 0+0=0)",
+      "AND of two bits tells you where a carry is generated, and that carry needs to be applied one position to the left (shifted left by 1) to be added in at the next digit",
+      "repeat: compute partial_sum = a XOR b and carry = (a AND b) << 1, then set a = partial_sum and b = carry, and loop until carry becomes 0 - at that point a holds the final sum"
+    ]
+  },
+  "bruteForce": {
+    "approach": "there's no meaningfully different 'slower' approach here since + is banned outright - the direct bitwise simulation below is the only real approach",
+    "time": "O(32) = O(1)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

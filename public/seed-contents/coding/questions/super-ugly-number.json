@@ -1,0 +1,630 @@
+{
+  "id": "super-ugly-number",
+  "questionId": "super-ugly-number",
+  "slug": "super-ugly-number",
+  "title": "Super Ugly Number",
+  "difficulty": "Medium",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "min-heap",
+    "number theory"
+  ],
+  "lists": [],
+  "hints": [
+    "this is the same shape of problem as generating ugly numbers with primes 2, 3, 5, just generalized to any given list of primes",
+    "every super ugly number besides 1 is some smaller super ugly number multiplied by one of the given primes",
+    "use a min-heap seeded with 1. repeatedly pop the smallest value, and for each prime in the list, push value * prime, skipping duplicates you've already generated",
+    "the nth distinct value popped is your answer - watch out that with many primes, duplicate products (like 2*7 and 7*2, or 2*13 vs other combinations landing on the same number) are common and must be deduplicated, e.g. with a seen set"
+  ],
+  "commonMistakes": [
+    "not deduplicating across different prime multiplications that land on the same product, over-counting the sequence",
+    "iterating primes with a naive nested loop per candidate integer instead of a heap, which is far slower for large n",
+    "forgetting that primes may not be sorted in the input and not needing them to be, since the heap handles ordering regardless"
+  ],
+  "content": {
+    "problemStatement": "A super ugly number is a positive integer whose only prime factors come from a given list of primes. You're given a number `n` and a list `primes`.\n\n**Return the `n`th super ugly number in ascending order.**\n\nNumbering is 1-indexed, so n = 1 returns the smallest super ugly number. 1 counts as super ugly, since it has no prime factors at all.\n",
+    "constraints": [
+      "1 <= n <= 100000",
+      "1 <= primes.length <= 100",
+      "every value in primes is a prime number"
+    ],
+    "notes": [
+      "n = 1, the smallest possible input",
+      "a single prime in the primes list, producing only its powers",
+      "primes list containing a large prime, creating big gaps in the sequence"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 12, primes = [2, 7, 13, 19]",
+        "output": "32",
+        "expectedOutput": "32",
+        "explanation": "the sequence is 1,2,4,7,8,13,14,16,19,26,28,32 - the 12th value is 32"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1, primes = [2, 3, 5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 9, primes = [2, 3, 5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "with primes limited to 2, 3, 5 this is the same as regular ugly numbers: 1,2,3,4,5,6,8,9,10 - the 9th value is 10"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[12,[2,7,13,19]]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1,[2,3,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[9,[2,3,5]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[6,[2,7,13,19]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[5,[2]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[10,[3]]",
+        "output": "19683",
+        "expectedOutput": "19683",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[1,[2,3,5,7,11]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[20,[2,3,5]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[15,[2,5]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[25,[2,3,5,7]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[8,[3,5,7]]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[30,[2,3]]",
+        "output": "324",
+        "expectedOutput": "324",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[12,[5,7]]",
+        "output": "875",
+        "expectedOutput": "875",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[50,[2,3,5,7,11,13]]",
+        "output": "75",
+        "expectedOutput": "75",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[2,[97]]",
+        "output": "97",
+        "expectedOutput": "97",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[18,[2,3,5,7,11]]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[40,[2,3,5,7,11,13,17,19]]",
+        "output": "48",
+        "expectedOutput": "48",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[3,[2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[100,[2,3,5]]",
+        "output": "1536",
+        "expectedOutput": "1536",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 12, primes = [2, 7, 13, 19]",
+      "output": "32",
+      "expectedOutput": "32",
+      "explanation": "the sequence is 1,2,4,7,8,13,14,16,19,26,28,32 - the 12th value is 32"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1, primes = [2, 3, 5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 9, primes = [2, 3, 5]",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "with primes limited to 2, 3, 5 this is the same as regular ugly numbers: 1,2,3,4,5,6,8,9,10 - the 9th value is 10"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 12, primes = [2, 7, 13, 19]",
+      "output": "32",
+      "expectedOutput": "32",
+      "explanation": "the sequence is 1,2,4,7,8,13,14,16,19,26,28,32 - the 12th value is 32"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1, primes = [2, 3, 5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 9, primes = [2, 3, 5]",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "with primes limited to 2, 3, 5 this is the same as regular ugly numbers: 1,2,3,4,5,6,8,9,10 - the 9th value is 10"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[12,[2,7,13,19]]",
+      "output": "32",
+      "expectedOutput": "32",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[1,[2,3,5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[9,[2,3,5]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[6,[2,7,13,19]]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,[2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[5,[2]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[10,[3]]",
+      "output": "19683",
+      "expectedOutput": "19683",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[1,[2,3,5,7,11]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[20,[2,3,5]]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[15,[2,5]]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[25,[2,3,5,7]]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[8,[3,5,7]]",
+      "output": "25",
+      "expectedOutput": "25",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[30,[2,3]]",
+      "output": "324",
+      "expectedOutput": "324",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[12,[5,7]]",
+      "output": "875",
+      "expectedOutput": "875",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[50,[2,3,5,7,11,13]]",
+      "output": "75",
+      "expectedOutput": "75",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[2,[97]]",
+      "output": "97",
+      "expectedOutput": "97",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[18,[2,3,5,7,11]]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[40,[2,3,5,7,11,13,17,19]]",
+      "output": "48",
+      "expectedOutput": "48",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[3,[2,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[100,[2,3,5]]",
+      "output": "1536",
+      "expectedOutput": "1536",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 12, primes = [2, 7, 13, 19]",
+        "output": "32",
+        "expectedOutput": "32",
+        "explanation": "the sequence is 1,2,4,7,8,13,14,16,19,26,28,32 - the 12th value is 32"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1, primes = [2, 3, 5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 9, primes = [2, 3, 5]",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "with primes limited to 2, 3, 5 this is the same as regular ugly numbers: 1,2,3,4,5,6,8,9,10 - the 9th value is 10"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[12,[2,7,13,19]]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1,[2,3,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[9,[2,3,5]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[6,[2,7,13,19]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[5,[2]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[10,[3]]",
+        "output": "19683",
+        "expectedOutput": "19683",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[1,[2,3,5,7,11]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[20,[2,3,5]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[15,[2,5]]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[25,[2,3,5,7]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[8,[3,5,7]]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[30,[2,3]]",
+        "output": "324",
+        "expectedOutput": "324",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[12,[5,7]]",
+        "output": "875",
+        "expectedOutput": "875",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[50,[2,3,5,7,11,13]]",
+        "output": "75",
+        "expectedOutput": "75",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[2,[97]]",
+        "output": "97",
+        "expectedOutput": "97",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[18,[2,3,5,7,11]]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[40,[2,3,5,7,11,13,17,19]]",
+        "output": "48",
+        "expectedOutput": "48",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[3,[2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[100,[2,3,5]]",
+        "output": "1536",
+        "expectedOutput": "1536",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def nthSuperUglyNumber(self, n, primes):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int nthSuperUglyNumber(int n, vector<int>& primes) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int nthSuperUglyNumber(int n, int[] primes) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nthSuperUglyNumber(n: Int, primes: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nthSuperUglyNumber(n, primes) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def nthSuperUglyNumber(self, n, primes):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int nthSuperUglyNumber(int n, vector<int>& primes) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int nthSuperUglyNumber(int n, int[] primes) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nthSuperUglyNumber(n: Int, primes: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nthSuperUglyNumber(n, primes) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def nthSuperUglyNumber(self, n, primes):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int nthSuperUglyNumber(int n, vector<int>& primes) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int nthSuperUglyNumber(int n, int[] primes) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nthSuperUglyNumber(n: Int, primes: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nthSuperUglyNumber(n, primes) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def nthSuperUglyNumber(self, n, primes):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int nthSuperUglyNumber(int n, vector<int>& primes) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int nthSuperUglyNumber(int n, int[] primes) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nthSuperUglyNumber(n: Int, primes: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nthSuperUglyNumber(n, primes) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log(primes.length))",
+      "space": "O(n + primes.length)",
+      "pattern": "min-heap generalizing ugly number generation to an arbitrary list of primes"
+    },
+    "bruteForce": {
+      "approach": "check every positive integer starting from 1, testing whether it's super ugly by dividing out each prime in the list repeatedly and seeing if 1 remains, counting until the nth one is found",
+      "time": "O(result_value * primes.length)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "min-heap generalizing ugly number generation to an arbitrary list of primes",
+    "time": "O(n log(primes.length))",
+    "space": "O(n + primes.length)",
+    "hint_ladder": [
+      "this is the same shape of problem as generating ugly numbers with primes 2, 3, 5, just generalized to any given list of primes",
+      "every super ugly number besides 1 is some smaller super ugly number multiplied by one of the given primes",
+      "use a min-heap seeded with 1. repeatedly pop the smallest value, and for each prime in the list, push value * prime, skipping duplicates you've already generated",
+      "the nth distinct value popped is your answer - watch out that with many primes, duplicate products (like 2*7 and 7*2, or 2*13 vs other combinations landing on the same number) are common and must be deduplicated, e.g. with a seen set"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every positive integer starting from 1, testing whether it's super ugly by dividing out each prime in the list repeatedly and seeing if 1 remains, counting until the nth one is found",
+    "time": "O(result_value * primes.length)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

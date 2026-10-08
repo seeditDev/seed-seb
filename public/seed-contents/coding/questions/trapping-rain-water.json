@@ -1,0 +1,616 @@
+{
+  "id": "trapping-rain-water",
+  "questionId": "trapping-rain-water",
+  "slug": "trapping-rain-water",
+  "title": "Trapping Rain Water",
+  "difficulty": "Hard",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers"
+  ],
+  "lists": [],
+  "hints": [
+    "precomputing leftMax and rightMax arrays gets you to O(n) time, but costs O(n) space. do you really need the FULL arrays, or just enough information at each step?",
+    "if you're standing at the shorter of your two pointers, do you already know enough to compute the water trapped there, even without knowing the exact max on the far side?",
+    "keep a running leftMax and rightMax as you move two pointers inward; whichever side is currently shorter, that side's running max is guaranteed to be the limiting height, because something taller must exist further along the other side",
+    "move the pointer on the shorter side inward, adding trapped water as you go, since that side's answer is now fully determined"
+  ],
+  "commonMistakes": [
+    "using only leftMax without also tracking rightMax, or updating the max at the wrong point in the loop (before vs after computing trapped water)",
+    "not recognizing which side is 'safe' to advance, and mistakenly assuming the taller side's water amount is already known",
+    "off-by-one errors including or excluding the current bar's own height when computing water above it"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of bar `height`s forming an elevation map, one unit wide each. After it rains, water gets trapped between the bars.\n\n**Return the total amount of water trapped.**\n",
+    "constraints": [
+      "0 <= height.length <= 2 * 10^4",
+      "0 <= height[i] <= 10^5"
+    ],
+    "notes": [
+      "strictly increasing or strictly decreasing heights (no water trapped)",
+      "a single bar or two bars (no water trapped)",
+      "a deep well between two tall bars"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "height = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "height = [4, 2, 0, 3, 2, 5]",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[0,1,0,2,1,0,1,3,2,1,2,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[4,2,0,3,2,5]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,0,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[4,2,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,5,0,5,0,5,0]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,0,2,0,2,0,2,0,2]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[6,4,2,0,3,2,0,5,3,3,9,7,4,2,0,1,3,4,2,3]]",
+        "output": "43",
+        "expectedOutput": "43",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[3,1,2,1,3]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,0,2,1,0,1,3,2,1,2,1,0,2,1,0,1,3,2,1,2,1,0]]",
+        "output": "23",
+        "expectedOutput": "23",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,5,5,5,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0,1,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,2,0,3,2,5,1,2,0,4]]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2,1,3,1,4,1,5,1,4,1,3,1,2,1]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "height = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "height = [4, 2, 0, 3, 2, 5]",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "height = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "height = [4, 2, 0, 3, 2, 5]",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[0,1,0,2,1,0,1,3,2,1,2,1]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[4,2,0,3,2,5]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3,4,5]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[3,0,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[4,2,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,5,0,5,0,5,0]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,0,2,0,2,0,2,0,2]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[6,4,2,0,3,2,0,5,3,3,9,7,4,2,0,1,3,4,2,3]]",
+      "output": "43",
+      "expectedOutput": "43",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[3,1,2,1,3]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,0,2,1,0,1,3,2,1,2,1,0,2,1,0,1,3,2,1,2,1,0]]",
+      "output": "23",
+      "expectedOutput": "23",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[5,5,5,5,5]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[2,1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[0,1,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[4,2,0,3,2,5,1,2,0,4]]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[1,2,1,3,1,4,1,5,1,4,1,3,1,2,1]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "height = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "height = [4, 2, 0, 3, 2, 5]",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[0,1,0,2,1,0,1,3,2,1,2,1]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[4,2,0,3,2,5]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,0,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[4,2,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,5,0,5,0,5,0]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,0,2,0,2,0,2,0,2]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[6,4,2,0,3,2,0,5,3,3,9,7,4,2,0,1,3,4,2,3]]",
+        "output": "43",
+        "expectedOutput": "43",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[3,1,2,1,3]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,0,2,1,0,1,3,2,1,2,1,0,2,1,0,1,3,2,1,2,1,0]]",
+        "output": "23",
+        "expectedOutput": "23",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[5,5,5,5,5]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0,1,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,2,0,3,2,5,1,2,0,4]]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[1,2,1,3,1,4,1,5,1,4,1,3,1,2,1]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def trap(self, height):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int trap(vector<int>& height) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int trap(int[] height) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun trap(height: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    trap(height) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def trap(self, height):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int trap(vector<int>& height) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int trap(int[] height) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun trap(height: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    trap(height) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def trap(self, height):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int trap(vector<int>& height) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int trap(int[] height) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun trap(height: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    trap(height) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def trap(self, height):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int trap(vector<int>& height) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int trap(int[] height) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun trap(height: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    trap(height) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "two pointers from both ends, tracking a running max on each side instead of precomputing full arrays"
+    },
+    "bruteForce": {
+      "approach": "for each bar, scan left to find the tallest bar so far and scan right to find the tallest bar so far, then add min(leftMax, rightMax) - height[i] if positive",
+      "time": "O(n^2) with per-index scans, or O(n) time / O(n) space if you precompute leftMax and rightMax arrays first",
+      "space": "O(1) for the naive scan version, O(n) for the precomputed-arrays version"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers from both ends, tracking a running max on each side instead of precomputing full arrays",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "precomputing leftMax and rightMax arrays gets you to O(n) time, but costs O(n) space. do you really need the FULL arrays, or just enough information at each step?",
+      "if you're standing at the shorter of your two pointers, do you already know enough to compute the water trapped there, even without knowing the exact max on the far side?",
+      "keep a running leftMax and rightMax as you move two pointers inward; whichever side is currently shorter, that side's running max is guaranteed to be the limiting height, because something taller must exist further along the other side",
+      "move the pointer on the shorter side inward, adding trapped water as you go, since that side's answer is now fully determined"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each bar, scan left to find the tallest bar so far and scan right to find the tallest bar so far, then add min(leftMax, rightMax) - height[i] if positive",
+    "time": "O(n^2) with per-index scans, or O(n) time / O(n) space if you precompute leftMax and rightMax arrays first",
+    "space": "O(1) for the naive scan version, O(n) for the precomputed-arrays version"
+  },
+  "isIndex0": true,
+  "level": null
+}

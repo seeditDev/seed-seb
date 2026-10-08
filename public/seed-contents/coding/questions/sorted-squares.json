@@ -1,0 +1,617 @@
+{
+  "id": "sorted-squares",
+  "questionId": "sorted-squares",
+  "slug": "sorted-squares",
+  "title": "Squares of a Sorted Array",
+  "difficulty": "Easy",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers"
+  ],
+  "lists": [],
+  "hints": [
+    "sorting after squaring works, but it ignores that the input was already sorted. where in the array can the biggest square possibly come from?",
+    "the largest square is always at one of the two ends - either the most negative number or the largest positive number",
+    "use two pointers starting at both ends, compare the squares, and place the bigger one at the back of the result, working inward",
+    "you're filling the answer array from the back forward, since you're finding the largest values first"
+  ],
+  "commonMistakes": [
+    "forgetting negative numbers exist and just squaring in the original order",
+    "sorting after squaring instead of using the two-pointer fill, missing the point of using the sorted input",
+    "filling the result array from the front instead of the back, which doesn't match finding the biggest values first"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers sorted in ascending order, which may\ninclude negative numbers.\n\n**Return a new array of the squares of each number, itself sorted in ascending order.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^4",
+      "-10^4 <= nums[i] <= 10^4",
+      "nums is sorted in non-decreasing order"
+    ],
+    "notes": [
+      "all negative numbers",
+      "all non-negative numbers",
+      "a single element"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [-4, -1, 0, 3, 10]",
+        "output": "[0, 1, 9, 16, 100]",
+        "expectedOutput": "[0, 1, 9, 16, 100]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-7, -3, 2, 3, 11]",
+        "output": "[4, 9, 9, 49, 121]",
+        "expectedOutput": "[4, 9, 9, 49, 121]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[-4,-1,0,3,10]]",
+        "output": "[0,1,9,16,100]",
+        "expectedOutput": "[0,1,9,16,100]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-7,-3,2,3,11]]",
+        "output": "[4,9,9,49,121]",
+        "expectedOutput": "[4,9,9,49,121]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-5]]",
+        "output": "[25]",
+        "expectedOutput": "[25]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3]]",
+        "output": "[1,4,9]",
+        "expectedOutput": "[1,4,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-2,-1]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-3,-2,-1,0,1,2,3]]",
+        "output": "[0,1,1,4,4,9,9]",
+        "expectedOutput": "[0,1,1,4,4,9,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-100,-50,0,25,75]]",
+        "output": "[0,625,2500,5625,10000]",
+        "expectedOutput": "[0,625,2500,5625,10000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1]]",
+        "output": "[1,4,9,16,25,36,49,64,81,100]",
+        "expectedOutput": "[1,4,9,16,25,36,49,64,81,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[1,4,9,16,25,36,49,64,81,100]",
+        "expectedOutput": "[1,4,9,16,25,36,49,64,81,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-5,-5,-5,0,5,5,5]]",
+        "output": "[0,25,25,25,25,25,25]",
+        "expectedOutput": "[0,25,25,25,25,25,25]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-40,-30,-20,-10,0,10,20,30,40,50]]",
+        "output": "[0,100,100,400,400,900,900,1600,1600,2500]",
+        "expectedOutput": "[0,100,100,400,400,900,900,1600,1600,2500]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0]]",
+        "output": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+        "expectedOutput": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+        "expectedOutput": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-1,0,1]]",
+        "output": "[0,1,1]",
+        "expectedOutput": "[0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-2,-1,1,2]]",
+        "output": "[1,1,4,4]",
+        "expectedOutput": "[1,1,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-15,-10,-5,-3,-1,0,2,4,6,8,10,12,14,16,18]]",
+        "output": "[0,1,4,9,16,25,36,64,100,100,144,196,225,256,324]",
+        "expectedOutput": "[0,1,4,9,16,25,36,64,100,100,144,196,225,256,324]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-3]]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[3]]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [-4, -1, 0, 3, 10]",
+      "output": "[0, 1, 9, 16, 100]",
+      "expectedOutput": "[0, 1, 9, 16, 100]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-7, -3, 2, 3, 11]",
+      "output": "[4, 9, 9, 49, 121]",
+      "expectedOutput": "[4, 9, 9, 49, 121]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [-4, -1, 0, 3, 10]",
+      "output": "[0, 1, 9, 16, 100]",
+      "expectedOutput": "[0, 1, 9, 16, 100]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-7, -3, 2, 3, 11]",
+      "output": "[4, 9, 9, 49, 121]",
+      "expectedOutput": "[4, 9, 9, 49, 121]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[-4,-1,0,3,10]]",
+      "output": "[0,1,9,16,100]",
+      "expectedOutput": "[0,1,9,16,100]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-7,-3,2,3,11]]",
+      "output": "[4,9,9,49,121]",
+      "expectedOutput": "[4,9,9,49,121]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[-5]]",
+      "output": "[25]",
+      "expectedOutput": "[25]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3]]",
+      "output": "[1,4,9]",
+      "expectedOutput": "[1,4,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[0]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[-2,-1]]",
+      "output": "[1,4]",
+      "expectedOutput": "[1,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2]]",
+      "output": "[1,4]",
+      "expectedOutput": "[1,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-3,-2,-1,0,1,2,3]]",
+      "output": "[0,1,1,4,4,9,9]",
+      "expectedOutput": "[0,1,1,4,4,9,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-100,-50,0,25,75]]",
+      "output": "[0,625,2500,5625,10000]",
+      "expectedOutput": "[0,625,2500,5625,10000]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1]]",
+      "output": "[1,4,9,16,25,36,49,64,81,100]",
+      "expectedOutput": "[1,4,9,16,25,36,49,64,81,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "[1,4,9,16,25,36,49,64,81,100]",
+      "expectedOutput": "[1,4,9,16,25,36,49,64,81,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-5,-5,-5,0,5,5,5]]",
+      "output": "[0,25,25,25,25,25,25]",
+      "expectedOutput": "[0,25,25,25,25,25,25]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-40,-30,-20,-10,0,10,20,30,40,50]]",
+      "output": "[0,100,100,400,400,900,900,1600,1600,2500]",
+      "expectedOutput": "[0,100,100,400,400,900,900,1600,1600,2500]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0]]",
+      "output": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+      "expectedOutput": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+      "expectedOutput": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-1,0,1]]",
+      "output": "[0,1,1]",
+      "expectedOutput": "[0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-2,-1,1,2]]",
+      "output": "[1,1,4,4]",
+      "expectedOutput": "[1,1,4,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-15,-10,-5,-3,-1,0,2,4,6,8,10,12,14,16,18]]",
+      "output": "[0,1,4,9,16,25,36,64,100,100,144,196,225,256,324]",
+      "expectedOutput": "[0,1,4,9,16,25,36,64,100,100,144,196,225,256,324]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-3]]",
+      "output": "[9]",
+      "expectedOutput": "[9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[3]]",
+      "output": "[9]",
+      "expectedOutput": "[9]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [-4, -1, 0, 3, 10]",
+        "output": "[0, 1, 9, 16, 100]",
+        "expectedOutput": "[0, 1, 9, 16, 100]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-7, -3, 2, 3, 11]",
+        "output": "[4, 9, 9, 49, 121]",
+        "expectedOutput": "[4, 9, 9, 49, 121]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[-4,-1,0,3,10]]",
+        "output": "[0,1,9,16,100]",
+        "expectedOutput": "[0,1,9,16,100]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-7,-3,2,3,11]]",
+        "output": "[4,9,9,49,121]",
+        "expectedOutput": "[4,9,9,49,121]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[-5]]",
+        "output": "[25]",
+        "expectedOutput": "[25]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3]]",
+        "output": "[1,4,9]",
+        "expectedOutput": "[1,4,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-2,-1]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2]]",
+        "output": "[1,4]",
+        "expectedOutput": "[1,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-3,-2,-1,0,1,2,3]]",
+        "output": "[0,1,1,4,4,9,9]",
+        "expectedOutput": "[0,1,1,4,4,9,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-100,-50,0,25,75]]",
+        "output": "[0,625,2500,5625,10000]",
+        "expectedOutput": "[0,625,2500,5625,10000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1]]",
+        "output": "[1,4,9,16,25,36,49,64,81,100]",
+        "expectedOutput": "[1,4,9,16,25,36,49,64,81,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[1,4,9,16,25,36,49,64,81,100]",
+        "expectedOutput": "[1,4,9,16,25,36,49,64,81,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-5,-5,-5,0,5,5,5]]",
+        "output": "[0,25,25,25,25,25,25]",
+        "expectedOutput": "[0,25,25,25,25,25,25]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-40,-30,-20,-10,0,10,20,30,40,50]]",
+        "output": "[0,100,100,400,400,900,900,1600,1600,2500]",
+        "expectedOutput": "[0,100,100,400,400,900,900,1600,1600,2500]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0]]",
+        "output": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+        "expectedOutput": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+        "expectedOutput": "[0,1,4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-1,0,1]]",
+        "output": "[0,1,1]",
+        "expectedOutput": "[0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-2,-1,1,2]]",
+        "output": "[1,1,4,4]",
+        "expectedOutput": "[1,1,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-15,-10,-5,-3,-1,0,2,4,6,8,10,12,14,16,18]]",
+        "output": "[0,1,4,9,16,25,36,64,100,100,144,196,225,256,324]",
+        "expectedOutput": "[0,1,4,9,16,25,36,64,100,100,144,196,225,256,324]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-3]]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[3]]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def sortedSquares(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sortedSquares(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sortedSquares(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sortedSquares(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sortedSquares(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def sortedSquares(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sortedSquares(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sortedSquares(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sortedSquares(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sortedSquares(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def sortedSquares(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sortedSquares(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sortedSquares(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sortedSquares(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sortedSquares(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def sortedSquares(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sortedSquares(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sortedSquares(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sortedSquares(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sortedSquares(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the output (unavoidable), but no extra sort",
+      "pattern": "two pointers from both ends, since the largest square always comes from the number furthest from zero"
+    },
+    "bruteForce": {
+      "approach": "square every element, then sort the resulting array",
+      "time": "O(n log n) for the sort",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers from both ends, since the largest square always comes from the number furthest from zero",
+    "time": "O(n)",
+    "space": "O(n) for the output (unavoidable), but no extra sort",
+    "hint_ladder": [
+      "sorting after squaring works, but it ignores that the input was already sorted. where in the array can the biggest square possibly come from?",
+      "the largest square is always at one of the two ends - either the most negative number or the largest positive number",
+      "use two pointers starting at both ends, compare the squares, and place the bigger one at the back of the result, working inward",
+      "you're filling the answer array from the back forward, since you're finding the largest values first"
+    ]
+  },
+  "bruteForce": {
+    "approach": "square every element, then sort the resulting array",
+    "time": "O(n log n) for the sort",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

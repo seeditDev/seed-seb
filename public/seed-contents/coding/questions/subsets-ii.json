@@ -1,0 +1,596 @@
+{
+  "id": "subsets-ii",
+  "questionId": "subsets-ii",
+  "slug": "subsets-ii",
+  "title": "Subsets with Duplicates",
+  "difficulty": "Medium",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [],
+  "hints": [
+    "sort nums first - now equal values are adjacent, which makes duplicates easy to detect",
+    "use the same include/exclude backtracking as plain Subsets, walking through sorted indices with a start pointer",
+    "the duplicate subsets come from choosing 'skip this value' at one occurrence but 'include it' at an identical later occurrence at the same decision point",
+    "at each recursive call, when looping over candidates to include next, skip a candidate if it equals the previous candidate you already tried and moved past at this same loop level"
+  ],
+  "commonMistakes": [
+    "not sorting first, which makes adjacent-duplicate skipping unreliable",
+    "skipping duplicates globally instead of only within the same recursive call's loop, which incorrectly removes valid subsets like [2, 2]",
+    "comparing against the previous element in the array instead of the previous element tried at the current loop level"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers that may contain duplicate values.\n\n**Return every possible unique subset, such that no two subsets in the result are the same multiset of values.**\n\nThe list can be returned in any order, and elements within a subset can be in any order.\n",
+    "constraints": [
+      "nums may contain duplicate values",
+      "1 <= length of nums <= 10",
+      "no two subsets in the result may represent the same multiset"
+    ],
+    "notes": [
+      "all elements are identical (only length+1 distinct subsets exist)",
+      "no duplicates at all (behaves like plain Subsets)",
+      "duplicates that are not adjacent once sorted, e.g. multiple values each appearing more than once"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 2]",
+        "output": "[[], [1], [2], [1, 2], [2, 2], [1, 2, 2]]",
+        "expectedOutput": "[[], [1], [2], [1, 2], [2, 2], [1, 2, 2]]",
+        "explanation": "the two 2's are indistinguishable, so subsets that only differ in which physical 2 was picked are the same subset"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 0]",
+        "output": "[[], [0], [0, 0]]",
+        "expectedOutput": "[[], [0], [0, 0]]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,2]]",
+        "output": "[[],[1],[2],[1,2],[2,2],[1,2,2]]",
+        "expectedOutput": "[[],[1],[2],[1,2],[2,2],[1,2,2]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0]]",
+        "output": "[[],[0],[0,0]]",
+        "expectedOutput": "[[],[0],[0,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5]]",
+        "output": "[[],[5]]",
+        "expectedOutput": "[[],[5]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1,2]]",
+        "output": "[[],[1],[2],[1,1],[1,2],[1,1,2]]",
+        "expectedOutput": "[[],[1],[2],[1,1],[1,2],[1,1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1,1]]",
+        "output": "[[],[1],[1,1],[1,1,1]]",
+        "expectedOutput": "[[],[1],[1,1],[1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[4,4,4,4]]",
+        "output": "[[],[4],[4,4],[4,4,4],[4,4,4,4]]",
+        "expectedOutput": "[[],[4],[4,4],[4,4,4],[4,4,4,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3]]",
+        "output": "[[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]]",
+        "expectedOutput": "[[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,2,2]]",
+        "output": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+        "expectedOutput": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,1,2,1]]",
+        "output": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+        "expectedOutput": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0]]",
+        "output": "[[],[0]]",
+        "expectedOutput": "[[],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-1,-1,0]]",
+        "output": "[[],[-1],[-1,-1],[-1,-1,0],[-1,0],[0]]",
+        "expectedOutput": "[[],[-1],[-1,-1],[-1,-1,0],[-1,0],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,2,3,3]]",
+        "output": "[[],[1],[1,2],[1,2,2],[1,2,2,3],[1,2,2,3,3],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,2],[2,2,3],[2,2,3,3],[2,3],[2,3,3],[3],[3,3]]",
+        "expectedOutput": "[[],[1],[1,2],[1,2,2],[1,2,2,3],[1,2,2,3,3],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,2],[2,2,3],[2,2,3,3],[2,3],[2,3,3],[3],[3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,3,3,3]]",
+        "output": "[[],[3],[3,3],[3,3,3],[3,3,3,3]]",
+        "expectedOutput": "[[],[3],[3,3],[3,3,3],[3,3,3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,1,2]]",
+        "output": "[[],[1],[1,1],[1,1,1],[1,1,1,2],[1,1,2],[1,2],[2]]",
+        "expectedOutput": "[[],[1],[1,1],[1,1,1],[1,1,1,2],[1,1,2],[1,2],[2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,5,6,6,7]]",
+        "output": "[[],[5],[5,5],[5,5,6],[5,5,6,6],[5,5,6,6,7],[5,5,6,7],[5,5,7],[5,6],[5,6,6],[5,6,6,7],[5,6,7],[5,7],[6],[6,6],[6,6,7],[6,7],[7]]",
+        "expectedOutput": "[[],[5],[5,5],[5,5,6],[5,5,6,6],[5,5,6,6,7],[5,5,6,7],[5,5,7],[5,6],[5,6,6],[5,6,6,7],[5,6,7],[5,7],[6],[6,6],[6,6,7],[6,7],[7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,3]]",
+        "output": "[[],[1],[1,2],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,3],[2,3,3],[3],[3,3]]",
+        "expectedOutput": "[[],[1],[1,2],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,3],[2,3,3],[3],[3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,2]]",
+        "output": "[[],[2],[2,2]]",
+        "expectedOutput": "[[],[2],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1,1,1]]",
+        "output": "[[],[1],[1,1],[1,1,1],[1,1,1,1]]",
+        "expectedOutput": "[[],[1],[1,1],[1,1,1],[1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[9,1,9]]",
+        "output": "[[],[1],[1,9],[1,9,9],[9],[9,9]]",
+        "expectedOutput": "[[],[1],[1,9],[1,9,9],[9],[9,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,5,4,5]]",
+        "output": "[[],[4],[4,4],[4,4,5],[4,4,5,5],[4,5],[4,5,5],[5],[5,5]]",
+        "expectedOutput": "[[],[4],[4,4],[4,4,5],[4,4,5,5],[4,5],[4,5,5],[5],[5,5]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 2]",
+      "output": "[[], [1], [2], [1, 2], [2, 2], [1, 2, 2]]",
+      "expectedOutput": "[[], [1], [2], [1, 2], [2, 2], [1, 2, 2]]",
+      "explanation": "the two 2's are indistinguishable, so subsets that only differ in which physical 2 was picked are the same subset"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 0]",
+      "output": "[[], [0], [0, 0]]",
+      "expectedOutput": "[[], [0], [0, 0]]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 2]",
+      "output": "[[], [1], [2], [1, 2], [2, 2], [1, 2, 2]]",
+      "expectedOutput": "[[], [1], [2], [1, 2], [2, 2], [1, 2, 2]]",
+      "explanation": "the two 2's are indistinguishable, so subsets that only differ in which physical 2 was picked are the same subset"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 0]",
+      "output": "[[], [0], [0, 0]]",
+      "expectedOutput": "[[], [0], [0, 0]]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,2]]",
+      "output": "[[],[1],[2],[1,2],[2,2],[1,2,2]]",
+      "expectedOutput": "[[],[1],[2],[1,2],[2,2],[1,2,2]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,0]]",
+      "output": "[[],[0],[0,0]]",
+      "expectedOutput": "[[],[0],[0,0]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[5]]",
+      "output": "[[],[5]]",
+      "expectedOutput": "[[],[5]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,1,2]]",
+      "output": "[[],[1],[2],[1,1],[1,2],[1,1,2]]",
+      "expectedOutput": "[[],[1],[2],[1,1],[1,2],[1,1,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,1,1]]",
+      "output": "[[],[1],[1,1],[1,1,1]]",
+      "expectedOutput": "[[],[1],[1,1],[1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[4,4,4,4]]",
+      "output": "[[],[4],[4,4],[4,4,4],[4,4,4,4]]",
+      "expectedOutput": "[[],[4],[4,4],[4,4,4],[4,4,4,4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3]]",
+      "output": "[[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]]",
+      "expectedOutput": "[[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,1,2,2]]",
+      "output": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+      "expectedOutput": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,1,2,1]]",
+      "output": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+      "expectedOutput": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0]]",
+      "output": "[[],[0]]",
+      "expectedOutput": "[[],[0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-1,-1,0]]",
+      "output": "[[],[-1],[-1,-1],[-1,-1,0],[-1,0],[0]]",
+      "expectedOutput": "[[],[-1],[-1,-1],[-1,-1,0],[-1,0],[0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,2,3,3]]",
+      "output": "[[],[1],[1,2],[1,2,2],[1,2,2,3],[1,2,2,3,3],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,2],[2,2,3],[2,2,3,3],[2,3],[2,3,3],[3],[3,3]]",
+      "expectedOutput": "[[],[1],[1,2],[1,2,2],[1,2,2,3],[1,2,2,3,3],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,2],[2,2,3],[2,2,3,3],[2,3],[2,3,3],[3],[3,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[3,3,3,3]]",
+      "output": "[[],[3],[3,3],[3,3,3],[3,3,3,3]]",
+      "expectedOutput": "[[],[3],[3,3],[3,3,3],[3,3,3,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,1,1,2]]",
+      "output": "[[],[1],[1,1],[1,1,1],[1,1,1,2],[1,1,2],[1,2],[2]]",
+      "expectedOutput": "[[],[1],[1,1],[1,1,1],[1,1,1,2],[1,1,2],[1,2],[2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[5,5,6,6,7]]",
+      "output": "[[],[5],[5,5],[5,5,6],[5,5,6,6],[5,5,6,6,7],[5,5,6,7],[5,5,7],[5,6],[5,6,6],[5,6,6,7],[5,6,7],[5,7],[6],[6,6],[6,6,7],[6,7],[7]]",
+      "expectedOutput": "[[],[5],[5,5],[5,5,6],[5,5,6,6],[5,5,6,6,7],[5,5,6,7],[5,5,7],[5,6],[5,6,6],[5,6,6,7],[5,6,7],[5,7],[6],[6,6],[6,6,7],[6,7],[7]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3,3]]",
+      "output": "[[],[1],[1,2],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,3],[2,3,3],[3],[3,3]]",
+      "expectedOutput": "[[],[1],[1,2],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,3],[2,3,3],[3],[3,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[2,2]]",
+      "output": "[[],[2],[2,2]]",
+      "expectedOutput": "[[],[2],[2,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,1,1,1]]",
+      "output": "[[],[1],[1,1],[1,1,1],[1,1,1,1]]",
+      "expectedOutput": "[[],[1],[1,1],[1,1,1],[1,1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[9,1,9]]",
+      "output": "[[],[1],[1,9],[1,9,9],[9],[9,9]]",
+      "expectedOutput": "[[],[1],[1,9],[1,9,9],[9],[9,9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[4,5,4,5]]",
+      "output": "[[],[4],[4,4],[4,4,5],[4,4,5,5],[4,5],[4,5,5],[5],[5,5]]",
+      "expectedOutput": "[[],[4],[4,4],[4,4,5],[4,4,5,5],[4,5],[4,5,5],[5],[5,5]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 2]",
+        "output": "[[], [1], [2], [1, 2], [2, 2], [1, 2, 2]]",
+        "expectedOutput": "[[], [1], [2], [1, 2], [2, 2], [1, 2, 2]]",
+        "explanation": "the two 2's are indistinguishable, so subsets that only differ in which physical 2 was picked are the same subset"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 0]",
+        "output": "[[], [0], [0, 0]]",
+        "expectedOutput": "[[], [0], [0, 0]]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,2]]",
+        "output": "[[],[1],[2],[1,2],[2,2],[1,2,2]]",
+        "expectedOutput": "[[],[1],[2],[1,2],[2,2],[1,2,2]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0]]",
+        "output": "[[],[0],[0,0]]",
+        "expectedOutput": "[[],[0],[0,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5]]",
+        "output": "[[],[5]]",
+        "expectedOutput": "[[],[5]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1,2]]",
+        "output": "[[],[1],[2],[1,1],[1,2],[1,1,2]]",
+        "expectedOutput": "[[],[1],[2],[1,1],[1,2],[1,1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1,1]]",
+        "output": "[[],[1],[1,1],[1,1,1]]",
+        "expectedOutput": "[[],[1],[1,1],[1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[4,4,4,4]]",
+        "output": "[[],[4],[4,4],[4,4,4],[4,4,4,4]]",
+        "expectedOutput": "[[],[4],[4,4],[4,4,4],[4,4,4,4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3]]",
+        "output": "[[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]]",
+        "expectedOutput": "[[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,2,2]]",
+        "output": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+        "expectedOutput": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,1,2,1]]",
+        "output": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+        "expectedOutput": "[[],[1],[1,1],[1,1,2],[1,1,2,2],[1,2],[1,2,2],[2],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0]]",
+        "output": "[[],[0]]",
+        "expectedOutput": "[[],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-1,-1,0]]",
+        "output": "[[],[-1],[-1,-1],[-1,-1,0],[-1,0],[0]]",
+        "expectedOutput": "[[],[-1],[-1,-1],[-1,-1,0],[-1,0],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,2,3,3]]",
+        "output": "[[],[1],[1,2],[1,2,2],[1,2,2,3],[1,2,2,3,3],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,2],[2,2,3],[2,2,3,3],[2,3],[2,3,3],[3],[3,3]]",
+        "expectedOutput": "[[],[1],[1,2],[1,2,2],[1,2,2,3],[1,2,2,3,3],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,2],[2,2,3],[2,2,3,3],[2,3],[2,3,3],[3],[3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,3,3,3]]",
+        "output": "[[],[3],[3,3],[3,3,3],[3,3,3,3]]",
+        "expectedOutput": "[[],[3],[3,3],[3,3,3],[3,3,3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,1,2]]",
+        "output": "[[],[1],[1,1],[1,1,1],[1,1,1,2],[1,1,2],[1,2],[2]]",
+        "expectedOutput": "[[],[1],[1,1],[1,1,1],[1,1,1,2],[1,1,2],[1,2],[2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,5,6,6,7]]",
+        "output": "[[],[5],[5,5],[5,5,6],[5,5,6,6],[5,5,6,6,7],[5,5,6,7],[5,5,7],[5,6],[5,6,6],[5,6,6,7],[5,6,7],[5,7],[6],[6,6],[6,6,7],[6,7],[7]]",
+        "expectedOutput": "[[],[5],[5,5],[5,5,6],[5,5,6,6],[5,5,6,6,7],[5,5,6,7],[5,5,7],[5,6],[5,6,6],[5,6,6,7],[5,6,7],[5,7],[6],[6,6],[6,6,7],[6,7],[7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,3]]",
+        "output": "[[],[1],[1,2],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,3],[2,3,3],[3],[3,3]]",
+        "expectedOutput": "[[],[1],[1,2],[1,2,3],[1,2,3,3],[1,3],[1,3,3],[2],[2,3],[2,3,3],[3],[3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,2]]",
+        "output": "[[],[2],[2,2]]",
+        "expectedOutput": "[[],[2],[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,1,1,1]]",
+        "output": "[[],[1],[1,1],[1,1,1],[1,1,1,1]]",
+        "expectedOutput": "[[],[1],[1,1],[1,1,1],[1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[9,1,9]]",
+        "output": "[[],[1],[1,9],[1,9,9],[9],[9,9]]",
+        "expectedOutput": "[[],[1],[1,9],[1,9,9],[9],[9,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,5,4,5]]",
+        "output": "[[],[4],[4,4],[4,4,5],[4,4,5,5],[4,5],[4,5,5],[5],[5,5]]",
+        "expectedOutput": "[[],[4],[4,4],[4,4,5],[4,4,5,5],[4,5],[4,5,5],[5],[5,5]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def subsetsWithDup(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> subsetsWithDup(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] subsetsWithDup(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subsetsWithDup(nums: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subsetsWithDup(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def subsetsWithDup(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> subsetsWithDup(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] subsetsWithDup(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subsetsWithDup(nums: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subsetsWithDup(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def subsetsWithDup(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> subsetsWithDup(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] subsetsWithDup(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subsetsWithDup(nums: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subsetsWithDup(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def subsetsWithDup(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> subsetsWithDup(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] subsetsWithDup(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subsetsWithDup(nums: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subsetsWithDup(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * 2^n)",
+      "space": "O(n) recursion depth, excluding output",
+      "pattern": "backtracking with sorting first, skipping repeated values at the same recursion depth"
+    },
+    "bruteForce": {
+      "approach": "generate all 2^n subsets by index as in plain Subsets, then dedupe the results using a set of sorted tuples",
+      "time": "O(n * 2^n)",
+      "space": "O(2^n) for the dedup set"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking with sorting first, skipping repeated values at the same recursion depth",
+    "time": "O(n * 2^n)",
+    "space": "O(n) recursion depth, excluding output",
+    "hint_ladder": [
+      "sort nums first - now equal values are adjacent, which makes duplicates easy to detect",
+      "use the same include/exclude backtracking as plain Subsets, walking through sorted indices with a start pointer",
+      "the duplicate subsets come from choosing 'skip this value' at one occurrence but 'include it' at an identical later occurrence at the same decision point",
+      "at each recursive call, when looping over candidates to include next, skip a candidate if it equals the previous candidate you already tried and moved past at this same loop level"
+    ]
+  },
+  "bruteForce": {
+    "approach": "generate all 2^n subsets by index as in plain Subsets, then dedupe the results using a set of sorted tuples",
+    "time": "O(n * 2^n)",
+    "space": "O(2^n) for the dedup set"
+  },
+  "isIndex0": true,
+  "level": null
+}

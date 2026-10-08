@@ -1,0 +1,628 @@
+{
+  "id": "ugly-number-ii",
+  "questionId": "ugly-number-ii",
+  "slug": "ugly-number-ii",
+  "title": "Ugly Number II",
+  "difficulty": "Medium",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "min-heap",
+    "number theory"
+  ],
+  "lists": [],
+  "hints": [
+    "instead of testing every integer for ugliness, can you directly generate ugly numbers in increasing order?",
+    "every ugly number besides 1 is some smaller ugly number multiplied by 2, 3, or 5 - so the sequence can be built outward from 1",
+    "use a min-heap seeded with 1. repeatedly pop the smallest value, and push its products with 2, 3, and 5, skipping any value you've already generated to avoid duplicates (like 2*3 and 3*2 producing 6 twice)",
+    "the nth value popped from the heap is your answer - track a seen set (or check against the last popped value) to avoid processing the same ugly number more than once"
+  ],
+  "commonMistakes": [
+    "not deduplicating, so the same ugly number (like 6, reachable as 2*3 or 3*2) gets counted multiple times and throws off the count",
+    "starting the heap empty instead of seeded with 1, missing the first ugly number entirely",
+    "confusing 'nth ugly number' (1-indexed) with a 0-indexed position, off-by-one in the loop bound"
+  ],
+  "content": {
+    "problemStatement": "An ugly number is a positive integer whose only prime factors are 2, 3, and 5. You're given a number `n`.\n\n**Return the `n`th ugly number in ascending order.**\n\nNumbering is 1-indexed, so n = 1 returns 1. 1 counts as ugly, since it has no prime factors at all.\n",
+    "constraints": [
+      "1 <= n <= 1690",
+      "1 is considered the first ugly number"
+    ],
+    "notes": [
+      "n = 1, the smallest possible input",
+      "n large enough that the result exceeds the count of small ugly numbers you might enumerate by hand"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 10",
+        "output": "12",
+        "expectedOutput": "12",
+        "explanation": "the ugly numbers in order are 1, 2, 3, 4, 5, 6, 8, 9, 10, 12 - the 10th one is 12 (note 7 and 11 are skipped since they have prime factors other than 2, 3, 5)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "1 is defined as the first ugly number"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 15",
+        "output": "24",
+        "expectedOutput": "24",
+        "explanation": "the sequence continues 1,2,3,4,5,6,8,9,10,12,15,16,18,20,24 - the 15th value is 24"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[10]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[15]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[7]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[8]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[9]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[11]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[12]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[13]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[14]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[20]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[25]",
+        "output": "54",
+        "expectedOutput": "54",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[30]",
+        "output": "80",
+        "expectedOutput": "80",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[50]",
+        "output": "243",
+        "expectedOutput": "243",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[100]",
+        "output": "1536",
+        "expectedOutput": "1536",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 10",
+      "output": "12",
+      "expectedOutput": "12",
+      "explanation": "the ugly numbers in order are 1, 2, 3, 4, 5, 6, 8, 9, 10, 12 - the 10th one is 12 (note 7 and 11 are skipped since they have prime factors other than 2, 3, 5)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "1 is defined as the first ugly number"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 15",
+      "output": "24",
+      "expectedOutput": "24",
+      "explanation": "the sequence continues 1,2,3,4,5,6,8,9,10,12,15,16,18,20,24 - the 15th value is 24"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 10",
+      "output": "12",
+      "expectedOutput": "12",
+      "explanation": "the ugly numbers in order are 1, 2, 3, 4, 5, 6, 8, 9, 10, 12 - the 10th one is 12 (note 7 and 11 are skipped since they have prime factors other than 2, 3, 5)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "1 is defined as the first ugly number"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 15",
+      "output": "24",
+      "expectedOutput": "24",
+      "explanation": "the sequence continues 1,2,3,4,5,6,8,9,10,12,15,16,18,20,24 - the 15th value is 24"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[10]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[15]",
+      "output": "24",
+      "expectedOutput": "24",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[4]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[6]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[7]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[8]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[9]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[11]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[12]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[13]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[14]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[20]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[25]",
+      "output": "54",
+      "expectedOutput": "54",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[30]",
+      "output": "80",
+      "expectedOutput": "80",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[50]",
+      "output": "243",
+      "expectedOutput": "243",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[100]",
+      "output": "1536",
+      "expectedOutput": "1536",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 10",
+        "output": "12",
+        "expectedOutput": "12",
+        "explanation": "the ugly numbers in order are 1, 2, 3, 4, 5, 6, 8, 9, 10, 12 - the 10th one is 12 (note 7 and 11 are skipped since they have prime factors other than 2, 3, 5)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "1 is defined as the first ugly number"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 15",
+        "output": "24",
+        "expectedOutput": "24",
+        "explanation": "the sequence continues 1,2,3,4,5,6,8,9,10,12,15,16,18,20,24 - the 15th value is 24"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[10]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[15]",
+        "output": "24",
+        "expectedOutput": "24",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[4]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[7]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[8]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[9]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[11]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[12]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[13]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[14]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[20]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[25]",
+        "output": "54",
+        "expectedOutput": "54",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[30]",
+        "output": "80",
+        "expectedOutput": "80",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[50]",
+        "output": "243",
+        "expectedOutput": "243",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[100]",
+        "output": "1536",
+        "expectedOutput": "1536",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def nthUglyNumber(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int nthUglyNumber(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int nthUglyNumber(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nthUglyNumber(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nthUglyNumber(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def nthUglyNumber(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int nthUglyNumber(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int nthUglyNumber(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nthUglyNumber(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nthUglyNumber(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def nthUglyNumber(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int nthUglyNumber(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int nthUglyNumber(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nthUglyNumber(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nthUglyNumber(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def nthUglyNumber(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int nthUglyNumber(int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int nthUglyNumber(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun nthUglyNumber(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    nthUglyNumber(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(n)",
+      "pattern": "min-heap generating ugly numbers in order by multiplying known ugly numbers by 2, 3, and 5"
+    },
+    "bruteForce": {
+      "approach": "check every positive integer starting from 1, testing whether it's ugly by repeatedly dividing out factors of 2, 3, and 5 and seeing if 1 remains, counting until the nth one is found",
+      "time": "O(result_value * log(result_value))",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "min-heap generating ugly numbers in order by multiplying known ugly numbers by 2, 3, and 5",
+    "time": "O(n log n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "instead of testing every integer for ugliness, can you directly generate ugly numbers in increasing order?",
+      "every ugly number besides 1 is some smaller ugly number multiplied by 2, 3, or 5 - so the sequence can be built outward from 1",
+      "use a min-heap seeded with 1. repeatedly pop the smallest value, and push its products with 2, 3, and 5, skipping any value you've already generated to avoid duplicates (like 2*3 and 3*2 producing 6 twice)",
+      "the nth value popped from the heap is your answer - track a seen set (or check against the last popped value) to avoid processing the same ugly number more than once"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every positive integer starting from 1, testing whether it's ugly by repeatedly dividing out factors of 2, 3, and 5 and seeing if 1 remains, counting until the nth one is found",
+    "time": "O(result_value * log(result_value))",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,654 @@
+{
+  "id": "sequence-reconstruction",
+  "questionId": "sequence-reconstruction",
+  "slug": "sequence-reconstruction",
+  "title": "Unique Sequence Reconstruction",
+  "difficulty": "Medium",
+  "category": "Topological sort",
+  "patterns": [
+    "topological sort",
+    "graph",
+    "kahn's algorithm",
+    "uniqueness"
+  ],
+  "lists": [],
+  "hints": [
+    "for the order to be unique, there must never be a real choice - what would it mean, in terms of the zero-in-degree queue in Kahn's algorithm, for there to be a choice at some step?",
+    "run Kahn's algorithm, but at every step check how many items currently have zero remaining in-degree",
+    "if that count is ever anything other than exactly 1 before you've placed all n items, the ordering is either ambiguous (more than one candidate) or impossible (a cycle, zero candidates) - return false immediately",
+    "if exactly one candidate is available at every single step, you've built the one and only valid order - compare it to org for equality"
+  ],
+  "commonMistakes": [
+    "checking only whether org itself respects every edge, without verifying that no OTHER valid ordering also exists",
+    "treating a cycle (zero available items at some step) the same as success instead of immediately returning false",
+    "stopping the uniqueness check early instead of verifying it holds at every single step of the algorithm"
+  ],
+  "content": {
+    "problemStatement": "You're given `n` items, labeled 0 to n - 1, and a list of ordering\nconstraints (`edges`), where each edge `[a, b]` means `a` must come\nbefore `b` in any valid ordering. You're also given a candidate array\n`org`, which is always a permutation of 0 to n - 1.\n\n**Determine whether `org` is the one and only ordering of all n items that satisfies every constraint in `edges`, and return true if so, false otherwise.**\n\nReturn false whether because no valid ordering exists at all, because more than one valid ordering exists, or because org itself doesn't match the single valid ordering.\n",
+    "constraints": [
+      "1 <= n <= 10^4",
+      "each edge [a, b] has 0 <= a, b < n",
+      "org is always a permutation of 0 to n - 1"
+    ],
+    "notes": [
+      "a cycle among the constraints, making no valid ordering possible at all",
+      "more than one item with zero remaining constraints at some step (an ambiguous ordering), even if org still 'looks' plausible",
+      "org is a valid ordering that respects every constraint, but it isn't the unique one",
+      "n = 1 with no edges - trivially unique",
+      "no edges at all with n > 1 - always ambiguous unless n is 1"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 3, edges = [[0, 1], [1, 2]], org = [0, 1, 2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the constraints force the exact order 0, 1, 2 with no other option at any step"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, edges = [[0, 1]], org = [0, 1, 2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "item 2 has no constraint at all, so it could go anywhere - at the very first step, both 0 and 2 are available, which means the ordering is not unique"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 4, edges = [[0, 1], [0, 2], [1, 3], [2, 3]], org = [0, 1, 2, 3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "after placing 0, both 1 and 2 become available at the same time - either could legally come next, so the ordering is ambiguous"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[3,[[0,1],[1,2]],[0,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[[0,1]],[0,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,[[0,1],[0,2],[1,3],[2,3]],[0,1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[2,[[0,1],[1,0]],[0,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[],[0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3,[[0,1],[1,2]],[1,0,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6,[[0,1],[1,2],[2,3],[3,4],[4,5]],[0,1,2,3,4,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6,[[0,1],[1,2],[2,3],[3,4]],[0,1,2,3,4,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[5,[[0,1],[0,2],[1,3],[2,3],[3,4]],[0,1,2,3,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[4,[[0,1],[1,2],[2,0],[2,3]],[0,1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]],[0,1,2,3,4,5,6,7,8,9]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]],[9,8,7,6,5,4,3,2,1,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1,[],[0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[4,[],[0,1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[7,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]],[0,1,2,3,4,5,6]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[3,[],[0,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[6,[[0,1],[0,2],[1,3],[2,3],[3,4],[4,5]],[0,1,2,3,4,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[2,[[0,1]],[0,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]],[0,1,2,3,4,5,7,6]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[5,[[4,3],[3,2],[2,1],[1,0]],[4,3,2,1,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[12,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11]],[0,1,2,3,4,5,6,7,8,9,10,11]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 3, edges = [[0, 1], [1, 2]], org = [0, 1, 2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the constraints force the exact order 0, 1, 2 with no other option at any step"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, edges = [[0, 1]], org = [0, 1, 2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "item 2 has no constraint at all, so it could go anywhere - at the very first step, both 0 and 2 are available, which means the ordering is not unique"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 4, edges = [[0, 1], [0, 2], [1, 3], [2, 3]], org = [0, 1, 2, 3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "after placing 0, both 1 and 2 become available at the same time - either could legally come next, so the ordering is ambiguous"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 3, edges = [[0, 1], [1, 2]], org = [0, 1, 2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the constraints force the exact order 0, 1, 2 with no other option at any step"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, edges = [[0, 1]], org = [0, 1, 2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "item 2 has no constraint at all, so it could go anywhere - at the very first step, both 0 and 2 are available, which means the ordering is not unique"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 4, edges = [[0, 1], [0, 2], [1, 3], [2, 3]], org = [0, 1, 2, 3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "after placing 0, both 1 and 2 become available at the same time - either could legally come next, so the ordering is ambiguous"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[3,[[0,1],[1,2]],[0,1,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,[[0,1]],[0,1,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[4,[[0,1],[0,2],[1,3],[2,3]],[0,1,2,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[2,[[0,1],[1,0]],[0,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,[],[0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[3,[[0,1],[1,2]],[1,0,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[6,[[0,1],[1,2],[2,3],[3,4],[4,5]],[0,1,2,3,4,5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[6,[[0,1],[1,2],[2,3],[3,4]],[0,1,2,3,4,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[5,[[0,1],[0,2],[1,3],[2,3],[3,4]],[0,1,2,3,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[4,[[0,1],[1,2],[2,0],[2,3]],[0,1,2,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]],[0,1,2,3,4,5,6,7,8,9]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]],[9,8,7,6,5,4,3,2,1,0]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[1,[],[0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[4,[],[0,1,2,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[7,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]],[0,1,2,3,4,5,6]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[3,[],[0,1,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[6,[[0,1],[0,2],[1,3],[2,3],[3,4],[4,5]],[0,1,2,3,4,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[2,[[0,1]],[0,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]],[0,1,2,3,4,5,7,6]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[5,[[4,3],[3,2],[2,1],[1,0]],[4,3,2,1,0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[12,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11]],[0,1,2,3,4,5,6,7,8,9,10,11]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 3, edges = [[0, 1], [1, 2]], org = [0, 1, 2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the constraints force the exact order 0, 1, 2 with no other option at any step"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, edges = [[0, 1]], org = [0, 1, 2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "item 2 has no constraint at all, so it could go anywhere - at the very first step, both 0 and 2 are available, which means the ordering is not unique"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 4, edges = [[0, 1], [0, 2], [1, 3], [2, 3]], org = [0, 1, 2, 3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "after placing 0, both 1 and 2 become available at the same time - either could legally come next, so the ordering is ambiguous"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[3,[[0,1],[1,2]],[0,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[[0,1]],[0,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[4,[[0,1],[0,2],[1,3],[2,3]],[0,1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[2,[[0,1],[1,0]],[0,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[],[0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3,[[0,1],[1,2]],[1,0,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6,[[0,1],[1,2],[2,3],[3,4],[4,5]],[0,1,2,3,4,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[6,[[0,1],[1,2],[2,3],[3,4]],[0,1,2,3,4,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[5,[[0,1],[0,2],[1,3],[2,3],[3,4]],[0,1,2,3,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[4,[[0,1],[1,2],[2,0],[2,3]],[0,1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]],[0,1,2,3,4,5,6,7,8,9]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[10,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]],[9,8,7,6,5,4,3,2,1,0]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[1,[],[0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[4,[],[0,1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[7,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]],[0,1,2,3,4,5,6]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[3,[],[0,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[6,[[0,1],[0,2],[1,3],[2,3],[3,4],[4,5]],[0,1,2,3,4,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[2,[[0,1]],[0,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[8,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]],[0,1,2,3,4,5,7,6]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[5,[[4,3],[3,2],[2,1],[1,0]],[4,3,2,1,0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[12,[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11]],[0,1,2,3,4,5,6,7,8,9,10,11]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isUniqueOrder(self, n, edges, org):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isUniqueOrder(int n, vector<vector<int>>& edges, vector<int>& org) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isUniqueOrder(int n, int[][] edges, int[] org) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isUniqueOrder(n: Int, edges: Array<IntArray>, org: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isUniqueOrder(n, edges, org) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isUniqueOrder(self, n, edges, org):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isUniqueOrder(int n, vector<vector<int>>& edges, vector<int>& org) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isUniqueOrder(int n, int[][] edges, int[] org) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isUniqueOrder(n: Int, edges: Array<IntArray>, org: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isUniqueOrder(n, edges, org) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isUniqueOrder(self, n, edges, org):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isUniqueOrder(int n, vector<vector<int>>& edges, vector<int>& org) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isUniqueOrder(int n, int[][] edges, int[] org) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isUniqueOrder(n: Int, edges: Array<IntArray>, org: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isUniqueOrder(n, edges, org) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isUniqueOrder(self, n, edges, org):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isUniqueOrder(int n, vector<vector<int>>& edges, vector<int>& org) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isUniqueOrder(int n, int[][] edges, int[] org) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isUniqueOrder(n: Int, edges: Array<IntArray>, org: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isUniqueOrder(n, edges, org) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(V + E)",
+      "space": "O(V + E)",
+      "pattern": "run Kahn's algorithm and track the size of the zero-in-degree candidate set at every step"
+    },
+    "bruteForce": {
+      "approach": "generate every valid topological ordering by backtracking over the constraints, and check whether there is exactly one and it equals org",
+      "time": "O(n!)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "run Kahn's algorithm and track the size of the zero-in-degree candidate set at every step",
+    "time": "O(V + E)",
+    "space": "O(V + E)",
+    "hint_ladder": [
+      "for the order to be unique, there must never be a real choice - what would it mean, in terms of the zero-in-degree queue in Kahn's algorithm, for there to be a choice at some step?",
+      "run Kahn's algorithm, but at every step check how many items currently have zero remaining in-degree",
+      "if that count is ever anything other than exactly 1 before you've placed all n items, the ordering is either ambiguous (more than one candidate) or impossible (a cycle, zero candidates) - return false immediately",
+      "if exactly one candidate is available at every single step, you've built the one and only valid order - compare it to org for equality"
+    ]
+  },
+  "bruteForce": {
+    "approach": "generate every valid topological ordering by backtracking over the constraints, and check whether there is exactly one and it equals org",
+    "time": "O(n!)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

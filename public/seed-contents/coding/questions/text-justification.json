@@ -1,0 +1,680 @@
+{
+  "id": "text-justification",
+  "questionId": "text-justification",
+  "slug": "text-justification",
+  "title": "Text Justification",
+  "difficulty": "Hard",
+  "category": "Greedy",
+  "patterns": [
+    "strings",
+    "greedy",
+    "simulation"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "process words left to right and greedily add each one to the current line as long as it still fits, counting one mandatory single space before each word after the first",
+    "the moment the next word would no longer fit (current words + minimum one space each + next word > maxWidth), that line is done and a new line starts",
+    "for a finished line that is not the last line and has more than one word, compute total_spaces = maxWidth - (sum of word lengths), divide by (number of words - 1) gaps to get a base spacing, and give the remainder (extra spaces) to the leftmost gaps one at a time",
+    "a finished line with only a single word, or the very last line no matter how many words it has, is left-justified instead: join words with a single space, then pad the end with spaces up to maxWidth",
+    "build each line separately and only join all of them together at the very end, since the last line's rule is different from every other line's"
+  ],
+  "commonMistakes": [
+    "applying the full even-distribution justification rule to the last line instead of left-justifying it",
+    "applying the extra-space-to-leftmost-gaps rule instead of leftmost when the spaces don't divide evenly (or splitting evenly with fractional spaces, which isn't possible)",
+    "forgetting the single-word-line special case, where full justification has no gaps to stretch and must fall back to left-justify plus trailing padding",
+    "off-by-one errors in the greedy fit check, forgetting to count the mandatory single space between each already-placed word and the candidate next word",
+    "miscounting total_spaces as maxWidth minus the line length including single spaces already counted, instead of maxWidth minus the sum of raw word lengths only"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited string of `words` and an integer `maxWidth`.\n\n**Arrange the words into lines so that each line contains exactly `maxWidth` characters and is fully (left and right) justified, packing as many words as possible onto each line greedily, then return the resulting lines joined together into one string, using \"|\" as an explicit delimiter between lines.**\n\nPad each line with spaces between words so it is exactly `maxWidth` characters wide:\n\n- if a line has more than one word, distribute extra spaces as evenly as possible between the words, giving any leftover spaces to the leftmost gaps first\n- the last line, and any line that ends up with only a single word, is instead left justified with no extra space between words, padded with trailing spaces only\n- the \"|\" delimiter is not part of any line's actual content or width, and no word is longer than `maxWidth`\n",
+    "constraints": [
+      "1 <= words.length <= 300 (number of words after splitting)",
+      "1 <= each word's length <= maxWidth",
+      "1 <= maxWidth <= 100",
+      "words consists of English letters and punctuation, separated by single spaces in the input"
+    ],
+    "notes": [
+      "a line that ends up with exactly one word (left-justified, not stretched)",
+      "the final line, which is always left-justified regardless of word count",
+      "spaces that don't divide evenly between gaps, requiring extra spaces on the leftmost gaps",
+      "a single word exactly equal to maxWidth in length"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"This is an example of text justification.\", maxWidth = 16",
+        "output": "\"This    is    an|example  of text|justification.  \"",
+        "expectedOutput": "\"This    is    an|example  of text|justification.  \"",
+        "explanation": "each of the first two lines is exactly 16 characters with evenly distributed spaces; the last line is left-justified with trailing padding"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"a b c d e\", maxWidth = 3",
+        "output": "\"a b|c d|e  \"",
+        "expectedOutput": "\"a b|c d|e  \"",
+        "explanation": "each full line packs two words separated by one space; the final line has a single word, left-justified with trailing padding"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"Listen to many, speak to a few.\", maxWidth = 6",
+        "output": "\"Listen|to    |many, |speak |to   a|few.  \"",
+        "expectedOutput": "\"Listen|to    |many, |speak |to   a|few.  \"",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"This is an example of text justification.\",16]",
+        "output": "This    is    an|example  of text|justification.  ",
+        "expectedOutput": "This    is    an|example  of text|justification.  ",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"What must be acknowledged however is that the argument itself is not exactly unique\",16]",
+        "output": "What   must   be|acknowledged    |however  is that|the     argument|itself   is  not|exactly unique  ",
+        "expectedOutput": "What   must   be|acknowledged    |however  is that|the     argument|itself   is  not|exactly unique  ",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"Science is what we understand well enough to explain to a computer Art is everything else we do\",20]",
+        "output": "Science  is  what we|understand      well|enough to explain to|a  computer  Art  is|everything  else  we|do                  ",
+        "expectedOutput": "Science  is  what we|understand      well|enough to explain to|a  computer  Art  is|everything  else  we|do                  ",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"Listen to many, speak to a few.\",6]",
+        "output": "Listen|to    |many, |speak |to   a|few.  ",
+        "expectedOutput": "Listen|to    |many, |speak |to   a|few.  ",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",5]",
+        "output": "a    ",
+        "expectedOutput": "a    ",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a b c d e\",3]",
+        "output": "a b|c d|e  ",
+        "expectedOutput": "a b|c d|e  ",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ask not what your country can do for you ask what you can do for your country\",16]",
+        "output": "ask   not   what|your country can|do  for  you ask|what  you can do|for your country",
+        "expectedOutput": "ask   not   what|your country can|do  for  you ask|what  you can do|for your country",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"Given a text and a word find all occurrences\",12]",
+        "output": "Given a text|and  a  word|find     all|occurrences ",
+        "expectedOutput": "Given a text|and  a  word|find     all|occurrences ",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"Hello World\",12]",
+        "output": "Hello World ",
+        "expectedOutput": "Hello World ",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"The day began as still as the night abruptly lighted with brilliant flame\",25]",
+        "output": "The day began as still as|the     night    abruptly|lighted   with  brilliant|flame                    ",
+        "expectedOutput": "The day began as still as|the     night    abruptly|lighted   with  brilliant|flame                    ",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"Two words\",20]",
+        "output": "Two words           ",
+        "expectedOutput": "Two words           ",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"One\",4]",
+        "output": "One ",
+        "expectedOutput": "One ",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"cat dog bird fish\",4]",
+        "output": "cat |dog |bird|fish",
+        "expectedOutput": "cat |dog |bird|fish",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaa bb cc ddd ee\",5]",
+        "output": "aaa  |bb cc|ddd  |ee   ",
+        "expectedOutput": "aaa  |bb cc|ddd  |ee   ",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"egg ham egg\",4]",
+        "output": "egg |ham |egg ",
+        "expectedOutput": "egg |ham |egg ",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"I love programming and solving hard problems every day\",10]",
+        "output": "I     love|programming|and       |solving   |hard      |problems  |every day ",
+        "expectedOutput": "I     love|programming|and       |solving   |hard      |problems  |every day ",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"This is a test of the justification algorithm with many small words\",18]",
+        "output": "This  is a test of|the  justification|algorithm     with|many small words  ",
+        "expectedOutput": "This  is a test of|the  justification|algorithm     with|many small words  ",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"pack my box with five dozen liquor jugs\",11]",
+        "output": "pack my box|with   five|dozen      |liquor jugs",
+        "expectedOutput": "pack my box|with   five|dozen      |liquor jugs",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"she sells seashells by the seashore\",12]",
+        "output": "she    sells|seashells by|the seashore",
+        "expectedOutput": "she    sells|seashells by|the seashore",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"to be or not to be that is the question\",10]",
+        "output": "to  be  or|not  to be|that    is|the       |question  ",
+        "expectedOutput": "to  be  or|not  to be|that    is|the       |question  ",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"just one\",8]",
+        "output": "just one",
+        "expectedOutput": "just one",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"verylongword\",12]",
+        "output": "verylongword",
+        "expectedOutput": "verylongword",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"This is an example of text justification.\", maxWidth = 16",
+      "output": "\"This    is    an|example  of text|justification.  \"",
+      "expectedOutput": "\"This    is    an|example  of text|justification.  \"",
+      "explanation": "each of the first two lines is exactly 16 characters with evenly distributed spaces; the last line is left-justified with trailing padding"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"a b c d e\", maxWidth = 3",
+      "output": "\"a b|c d|e  \"",
+      "expectedOutput": "\"a b|c d|e  \"",
+      "explanation": "each full line packs two words separated by one space; the final line has a single word, left-justified with trailing padding"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"Listen to many, speak to a few.\", maxWidth = 6",
+      "output": "\"Listen|to    |many, |speak |to   a|few.  \"",
+      "expectedOutput": "\"Listen|to    |many, |speak |to   a|few.  \"",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"This is an example of text justification.\", maxWidth = 16",
+      "output": "\"This    is    an|example  of text|justification.  \"",
+      "expectedOutput": "\"This    is    an|example  of text|justification.  \"",
+      "explanation": "each of the first two lines is exactly 16 characters with evenly distributed spaces; the last line is left-justified with trailing padding"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"a b c d e\", maxWidth = 3",
+      "output": "\"a b|c d|e  \"",
+      "expectedOutput": "\"a b|c d|e  \"",
+      "explanation": "each full line packs two words separated by one space; the final line has a single word, left-justified with trailing padding"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"Listen to many, speak to a few.\", maxWidth = 6",
+      "output": "\"Listen|to    |many, |speak |to   a|few.  \"",
+      "expectedOutput": "\"Listen|to    |many, |speak |to   a|few.  \"",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"This is an example of text justification.\",16]",
+      "output": "This    is    an|example  of text|justification.  ",
+      "expectedOutput": "This    is    an|example  of text|justification.  ",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"What must be acknowledged however is that the argument itself is not exactly unique\",16]",
+      "output": "What   must   be|acknowledged    |however  is that|the     argument|itself   is  not|exactly unique  ",
+      "expectedOutput": "What   must   be|acknowledged    |however  is that|the     argument|itself   is  not|exactly unique  ",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"Science is what we understand well enough to explain to a computer Art is everything else we do\",20]",
+      "output": "Science  is  what we|understand      well|enough to explain to|a  computer  Art  is|everything  else  we|do                  ",
+      "expectedOutput": "Science  is  what we|understand      well|enough to explain to|a  computer  Art  is|everything  else  we|do                  ",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"Listen to many, speak to a few.\",6]",
+      "output": "Listen|to    |many, |speak |to   a|few.  ",
+      "expectedOutput": "Listen|to    |many, |speak |to   a|few.  ",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"a\",5]",
+      "output": "a    ",
+      "expectedOutput": "a    ",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a b c d e\",3]",
+      "output": "a b|c d|e  ",
+      "expectedOutput": "a b|c d|e  ",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ask not what your country can do for you ask what you can do for your country\",16]",
+      "output": "ask   not   what|your country can|do  for  you ask|what  you can do|for your country",
+      "expectedOutput": "ask   not   what|your country can|do  for  you ask|what  you can do|for your country",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"Given a text and a word find all occurrences\",12]",
+      "output": "Given a text|and  a  word|find     all|occurrences ",
+      "expectedOutput": "Given a text|and  a  word|find     all|occurrences ",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"Hello World\",12]",
+      "output": "Hello World ",
+      "expectedOutput": "Hello World ",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"The day began as still as the night abruptly lighted with brilliant flame\",25]",
+      "output": "The day began as still as|the     night    abruptly|lighted   with  brilliant|flame                    ",
+      "expectedOutput": "The day began as still as|the     night    abruptly|lighted   with  brilliant|flame                    ",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"Two words\",20]",
+      "output": "Two words           ",
+      "expectedOutput": "Two words           ",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"One\",4]",
+      "output": "One ",
+      "expectedOutput": "One ",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"cat dog bird fish\",4]",
+      "output": "cat |dog |bird|fish",
+      "expectedOutput": "cat |dog |bird|fish",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"aaa bb cc ddd ee\",5]",
+      "output": "aaa  |bb cc|ddd  |ee   ",
+      "expectedOutput": "aaa  |bb cc|ddd  |ee   ",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"egg ham egg\",4]",
+      "output": "egg |ham |egg ",
+      "expectedOutput": "egg |ham |egg ",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"I love programming and solving hard problems every day\",10]",
+      "output": "I     love|programming|and       |solving   |hard      |problems  |every day ",
+      "expectedOutput": "I     love|programming|and       |solving   |hard      |problems  |every day ",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"This is a test of the justification algorithm with many small words\",18]",
+      "output": "This  is a test of|the  justification|algorithm     with|many small words  ",
+      "expectedOutput": "This  is a test of|the  justification|algorithm     with|many small words  ",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"pack my box with five dozen liquor jugs\",11]",
+      "output": "pack my box|with   five|dozen      |liquor jugs",
+      "expectedOutput": "pack my box|with   five|dozen      |liquor jugs",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"she sells seashells by the seashore\",12]",
+      "output": "she    sells|seashells by|the seashore",
+      "expectedOutput": "she    sells|seashells by|the seashore",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"to be or not to be that is the question\",10]",
+      "output": "to  be  or|not  to be|that    is|the       |question  ",
+      "expectedOutput": "to  be  or|not  to be|that    is|the       |question  ",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"just one\",8]",
+      "output": "just one",
+      "expectedOutput": "just one",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"verylongword\",12]",
+      "output": "verylongword",
+      "expectedOutput": "verylongword",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"This is an example of text justification.\", maxWidth = 16",
+        "output": "\"This    is    an|example  of text|justification.  \"",
+        "expectedOutput": "\"This    is    an|example  of text|justification.  \"",
+        "explanation": "each of the first two lines is exactly 16 characters with evenly distributed spaces; the last line is left-justified with trailing padding"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"a b c d e\", maxWidth = 3",
+        "output": "\"a b|c d|e  \"",
+        "expectedOutput": "\"a b|c d|e  \"",
+        "explanation": "each full line packs two words separated by one space; the final line has a single word, left-justified with trailing padding"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"Listen to many, speak to a few.\", maxWidth = 6",
+        "output": "\"Listen|to    |many, |speak |to   a|few.  \"",
+        "expectedOutput": "\"Listen|to    |many, |speak |to   a|few.  \"",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"This is an example of text justification.\",16]",
+        "output": "This    is    an|example  of text|justification.  ",
+        "expectedOutput": "This    is    an|example  of text|justification.  ",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"What must be acknowledged however is that the argument itself is not exactly unique\",16]",
+        "output": "What   must   be|acknowledged    |however  is that|the     argument|itself   is  not|exactly unique  ",
+        "expectedOutput": "What   must   be|acknowledged    |however  is that|the     argument|itself   is  not|exactly unique  ",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"Science is what we understand well enough to explain to a computer Art is everything else we do\",20]",
+        "output": "Science  is  what we|understand      well|enough to explain to|a  computer  Art  is|everything  else  we|do                  ",
+        "expectedOutput": "Science  is  what we|understand      well|enough to explain to|a  computer  Art  is|everything  else  we|do                  ",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"Listen to many, speak to a few.\",6]",
+        "output": "Listen|to    |many, |speak |to   a|few.  ",
+        "expectedOutput": "Listen|to    |many, |speak |to   a|few.  ",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",5]",
+        "output": "a    ",
+        "expectedOutput": "a    ",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a b c d e\",3]",
+        "output": "a b|c d|e  ",
+        "expectedOutput": "a b|c d|e  ",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ask not what your country can do for you ask what you can do for your country\",16]",
+        "output": "ask   not   what|your country can|do  for  you ask|what  you can do|for your country",
+        "expectedOutput": "ask   not   what|your country can|do  for  you ask|what  you can do|for your country",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"Given a text and a word find all occurrences\",12]",
+        "output": "Given a text|and  a  word|find     all|occurrences ",
+        "expectedOutput": "Given a text|and  a  word|find     all|occurrences ",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"Hello World\",12]",
+        "output": "Hello World ",
+        "expectedOutput": "Hello World ",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"The day began as still as the night abruptly lighted with brilliant flame\",25]",
+        "output": "The day began as still as|the     night    abruptly|lighted   with  brilliant|flame                    ",
+        "expectedOutput": "The day began as still as|the     night    abruptly|lighted   with  brilliant|flame                    ",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"Two words\",20]",
+        "output": "Two words           ",
+        "expectedOutput": "Two words           ",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"One\",4]",
+        "output": "One ",
+        "expectedOutput": "One ",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"cat dog bird fish\",4]",
+        "output": "cat |dog |bird|fish",
+        "expectedOutput": "cat |dog |bird|fish",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaa bb cc ddd ee\",5]",
+        "output": "aaa  |bb cc|ddd  |ee   ",
+        "expectedOutput": "aaa  |bb cc|ddd  |ee   ",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"egg ham egg\",4]",
+        "output": "egg |ham |egg ",
+        "expectedOutput": "egg |ham |egg ",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"I love programming and solving hard problems every day\",10]",
+        "output": "I     love|programming|and       |solving   |hard      |problems  |every day ",
+        "expectedOutput": "I     love|programming|and       |solving   |hard      |problems  |every day ",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"This is a test of the justification algorithm with many small words\",18]",
+        "output": "This  is a test of|the  justification|algorithm     with|many small words  ",
+        "expectedOutput": "This  is a test of|the  justification|algorithm     with|many small words  ",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"pack my box with five dozen liquor jugs\",11]",
+        "output": "pack my box|with   five|dozen      |liquor jugs",
+        "expectedOutput": "pack my box|with   five|dozen      |liquor jugs",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"she sells seashells by the seashore\",12]",
+        "output": "she    sells|seashells by|the seashore",
+        "expectedOutput": "she    sells|seashells by|the seashore",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"to be or not to be that is the question\",10]",
+        "output": "to  be  or|not  to be|that    is|the       |question  ",
+        "expectedOutput": "to  be  or|not  to be|that    is|the       |question  ",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"just one\",8]",
+        "output": "just one",
+        "expectedOutput": "just one",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"verylongword\",12]",
+        "output": "verylongword",
+        "expectedOutput": "verylongword",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def fullJustify(self, words, maxWidth):\n",
+    "cpp": "#include <string>\n#include <vector>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string fullJustify(string words, int maxWidth) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String fullJustify(String words, int maxWidth) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun fullJustify(words: String, maxWidth: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    fullJustify(words, maxWidth) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def fullJustify(self, words, maxWidth):\n",
+    "cpp": "#include <string>\n#include <vector>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string fullJustify(string words, int maxWidth) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String fullJustify(String words, int maxWidth) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun fullJustify(words: String, maxWidth: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    fullJustify(words, maxWidth) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def fullJustify(self, words, maxWidth):\n",
+    "cpp": "#include <string>\n#include <vector>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string fullJustify(string words, int maxWidth) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String fullJustify(String words, int maxWidth) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun fullJustify(words: String, maxWidth: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    fullJustify(words, maxWidth) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def fullJustify(self, words, maxWidth):\n",
+    "cpp": "#include <string>\n#include <vector>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string fullJustify(string words, int maxWidth) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String fullJustify(String words, int maxWidth) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun fullJustify(words: String, maxWidth: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    fullJustify(words, maxWidth) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n) where n is the total number of characters across all words",
+      "space": "O(n) for the output",
+      "pattern": "greedy line packing, one pass, with careful space distribution per line"
+    },
+    "bruteForce": {
+      "approach": "there is really only one correct algorithm here, so 'brute force' means the same greedy line-packing but implemented naively, e.g. rebuilding and re-measuring the current line's total length from scratch after adding every single word instead of tracking a running length",
+      "time": "O(n) where n is the total number of characters, though a naive re-measuring implementation can degrade toward O(n^2)",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "greedy line packing, one pass, with careful space distribution per line",
+    "time": "O(n) where n is the total number of characters across all words",
+    "space": "O(n) for the output",
+    "hint_ladder": [
+      "process words left to right and greedily add each one to the current line as long as it still fits, counting one mandatory single space before each word after the first",
+      "the moment the next word would no longer fit (current words + minimum one space each + next word > maxWidth), that line is done and a new line starts",
+      "for a finished line that is not the last line and has more than one word, compute total_spaces = maxWidth - (sum of word lengths), divide by (number of words - 1) gaps to get a base spacing, and give the remainder (extra spaces) to the leftmost gaps one at a time",
+      "a finished line with only a single word, or the very last line no matter how many words it has, is left-justified instead: join words with a single space, then pad the end with spaces up to maxWidth",
+      "build each line separately and only join all of them together at the very end, since the last line's rule is different from every other line's"
+    ]
+  },
+  "bruteForce": {
+    "approach": "there is really only one correct algorithm here, so 'brute force' means the same greedy line-packing but implemented naively, e.g. rebuilding and re-measuring the current line's total length from scratch after adding every single word instead of tracking a running length",
+    "time": "O(n) where n is the total number of characters, though a naive re-measuring implementation can degrade toward O(n^2)",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

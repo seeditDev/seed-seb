@@ -1,0 +1,631 @@
+{
+  "id": "search-a-2d-matrix",
+  "questionId": "search-a-2d-matrix",
+  "slug": "search-a-2d-matrix",
+  "title": "Search a 2D Matrix",
+  "difficulty": "Medium",
+  "category": "Binary search",
+  "patterns": [
+    "binary search"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "because rows follow each other in sorted order end to end, the whole grid behaves like a single sorted array of rows*cols elements",
+    "you don't need to physically flatten it - if you know the number of columns, any flat index i maps to row i / cols and column i % cols",
+    "run a standard binary search over flat indices from 0 to rows*cols - 1, converting to (row, col) each time you need to read a value",
+    "compare the value at that (row, col) to target and shrink the flat-index range exactly like a normal binary search"
+  ],
+  "commonMistakes": [
+    "binary searching row by row (like the row-sorted-only variant) instead of treating the grid as one sorted sequence, missing the extra structure this problem guarantees",
+    "getting the row/col conversion backwards (row = i % cols, col = i / cols instead of the reverse)",
+    "off-by-one on the flat index bounds, using rows*cols instead of rows*cols - 1 as the max valid index"
+  ],
+  "content": {
+    "problemStatement": "You're given a 2D grid of integers with two properties: each row is\nsorted in ascending order, and the first element of every row is\ngreater than the last element of the row before it. Read row by row,\nleft to right, the values form one long sorted sequence.\n\n**Given a target value, determine whether it exists anywhere in the grid.**\n",
+    "constraints": [
+      "1 <= rows, cols <= 100",
+      "-10^4 <= matrix[i][j], target <= 10^4",
+      "each row is sorted in ascending order",
+      "the first integer of each row is greater than the last integer of the previous row"
+    ],
+    "notes": [
+      "target smaller than the very first element",
+      "target larger than the very last element",
+      "matrix with a single row or a single column"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "3 is in the first row"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 13",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "13 falls between 11 and 16 but doesn't actually appear"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "matrix = [[1]], target = 1",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],13]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1]],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1]],2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,3]],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],60]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],0]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],61]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1]],0]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,2,3,4,5]],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1],[2],[3],[4],[5]],4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1],[2],[3],[4],[5]],6]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[-5,-3],[0,2],[4,8]],-3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[-5,-3],[0,2],[4,8]],-4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[25,26,27,28,29]],17]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[25,26,27,28,29]],29]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[25,26,27,28,29]],30]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,3],[5,7],[9,11],[13,15]],7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,3],[5,7],[9,11],[13,15]],8]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "3 is in the first row"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 13",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "13 falls between 11 and 16 but doesn't actually appear"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "matrix = [[1]], target = 1",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "3 is in the first row"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 13",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "13 falls between 11 and 16 but doesn't actually appear"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "matrix = [[1]], target = 1",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],13]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1]],1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1]],2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,3]],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],60]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],0]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],61]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1]],0]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,2,3,4,5]],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1],[2],[3],[4],[5]],4]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1],[2],[3],[4],[5]],6]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[-5,-3],[0,2],[4,8]],-3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[-5,-3],[0,2],[4,8]],-4]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[25,26,27,28,29]],17]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[25,26,27,28,29]],29]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[25,26,27,28,29]],30]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,3],[5,7],[9,11],[13,15]],7]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,3],[5,7],[9,11],[13,15]],8]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "3 is in the first row"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 13",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "13 falls between 11 and 16 but doesn't actually appear"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "matrix = [[1]], target = 1",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],13]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1]],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1]],2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,3]],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],60]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],0]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,3,5,7],[10,11,16,20],[23,30,34,60]],61]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1]],0]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,2,3,4,5]],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1],[2],[3],[4],[5]],4]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1],[2],[3],[4],[5]],6]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[-5,-3],[0,2],[4,8]],-3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[-5,-3],[0,2],[4,8]],-4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[25,26,27,28,29]],17]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[25,26,27,28,29]],29]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[25,26,27,28,29]],30]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,3],[5,7],[9,11],[13,15]],7]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,3],[5,7],[9,11],[13,15]],8]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def searchMatrix(self, matrix, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool searchMatrix(vector<vector<int>>& matrix, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean searchMatrix(int[][] matrix, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchMatrix(matrix: Array<IntArray>, target: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchMatrix(matrix, target) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def searchMatrix(self, matrix, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool searchMatrix(vector<vector<int>>& matrix, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean searchMatrix(int[][] matrix, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchMatrix(matrix: Array<IntArray>, target: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchMatrix(matrix, target) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def searchMatrix(self, matrix, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool searchMatrix(vector<vector<int>>& matrix, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean searchMatrix(int[][] matrix, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchMatrix(matrix: Array<IntArray>, target: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchMatrix(matrix, target) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def searchMatrix(self, matrix, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool searchMatrix(vector<vector<int>>& matrix, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean searchMatrix(int[][] matrix, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchMatrix(matrix: Array<IntArray>, target: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchMatrix(matrix, target) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log(rows * cols))",
+      "space": "O(1)",
+      "pattern": "binary search over the matrix as if it were one flattened sorted array, converting a flat index back to (row, col)"
+    },
+    "bruteForce": {
+      "approach": "scan every element of every row one at a time, checking for a match",
+      "time": "O(rows * cols)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "binary search over the matrix as if it were one flattened sorted array, converting a flat index back to (row, col)",
+    "time": "O(log(rows * cols))",
+    "space": "O(1)",
+    "hint_ladder": [
+      "because rows follow each other in sorted order end to end, the whole grid behaves like a single sorted array of rows*cols elements",
+      "you don't need to physically flatten it - if you know the number of columns, any flat index i maps to row i / cols and column i % cols",
+      "run a standard binary search over flat indices from 0 to rows*cols - 1, converting to (row, col) each time you need to read a value",
+      "compare the value at that (row, col) to target and shrink the flat-index range exactly like a normal binary search"
+    ]
+  },
+  "bruteForce": {
+    "approach": "scan every element of every row one at a time, checking for a match",
+    "time": "O(rows * cols)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

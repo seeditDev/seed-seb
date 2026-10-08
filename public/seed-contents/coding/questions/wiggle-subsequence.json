@@ -1,0 +1,597 @@
+{
+  "id": "wiggle-subsequence",
+  "questionId": "wiggle-subsequence",
+  "slug": "wiggle-subsequence",
+  "title": "Wiggle Subsequence",
+  "difficulty": "Medium",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming",
+    "greedy"
+  ],
+  "lists": [],
+  "hints": [
+    "at each position, what actually matters isn't the exact value, just whether the most recent step (if any) went up or down",
+    "keep two running counts: the longest wiggle subsequence ending with an up-step, and the longest ending with a down-step",
+    "when the next number is greater than the previous one, it can extend any subsequence that last went down (turning it into one ending up)",
+    "up = down + 1 when nums[i] > nums[i-1]; down = up + 1 when nums[i] < nums[i-1]; equal values change neither - the answer is max(up, down) at the end"
+  ],
+  "commonMistakes": [
+    "trying to explicitly build subsequences instead of just tracking the two running lengths (ending-up and ending-down)",
+    "incrementing both up and down on every step instead of only the one that a strict rise or fall actually extends",
+    "not handling equal consecutive values, which should leave both running counts unchanged"
+  ],
+  "content": {
+    "problemStatement": "A sequence is called \"wiggly\" if consecutive differences strictly alternate between positive and negative (up, down, up, down, ... or down, up, down, up, ...); a sequence of fewer than two elements counts as wiggly by default. You're given a list of integers `nums`.\n\n**Find the length of the longest subsequence of `nums` that is wiggly, where elements may be skipped but their relative order kept.**\n",
+    "constraints": [
+      "nums.length >= 1",
+      "a wiggly sequence alternates strictly between rising and falling steps",
+      "equal consecutive values break the alternation (neither rising nor falling)"
+    ],
+    "notes": [
+      "a single element (length 1, trivially wiggly)",
+      "all elements equal (best possible is length 1, since no step ever wiggles)",
+      "a strictly monotonic sequence (best possible is length 2)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 7, 4, 9, 2, 5]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the differences are +6, -3, +5, -7, +3 - already alternating, so the whole array qualifies"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5, 6, 7, 8, 9]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the sequence is strictly increasing, so no differences alternate; the best you can do is any 2 elements"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,7,4,9,2,5]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,17,5,10,13,15,10,5,16,8]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5,6,7,8,9]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,3,3,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,5,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,8,0,0,0]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,3,3,2,5]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,3,2,4,3,5,4,6,5,7]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[10,20,30,40,50,40,30,20,10]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[44,66,63,58,50,53,56,53,61,29]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,4,2,4,2,4,2,4,2]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,5,3,7,2,9,4,8,6,10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,3,3,4,5,5,6]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,1,4,1,5,9,2,6,5,3,5,8,9,7,9]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 7, 4, 9, 2, 5]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the differences are +6, -3, +5, -7, +3 - already alternating, so the whole array qualifies"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5, 6, 7, 8, 9]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the sequence is strictly increasing, so no differences alternate; the best you can do is any 2 elements"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 7, 4, 9, 2, 5]",
+      "output": "6",
+      "expectedOutput": "6",
+      "explanation": "the differences are +6, -3, +5, -7, +3 - already alternating, so the whole array qualifies"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5, 6, 7, 8, 9]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the sequence is strictly increasing, so no differences alternate; the best you can do is any 2 elements"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,7,4,9,2,5]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,17,5,10,13,15,10,5,16,8]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3,4,5,6,7,8,9]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[3,3,3,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[2,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,5,5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,0,0,8,0,0,0]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[3,3,3,2,5]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,3,2,4,3,5,4,6,5,7]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[10,20,30,40,50,40,30,20,10]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4]]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[44,66,63,58,50,53,56,53,61,29]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[2,4,2,4,2,4,2,4,2]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,5,3,7,2,9,4,8,6,10]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,3,3,4,5,5,6]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[3,1,4,1,5,9,2,6,5,3,5,8,9,7,9]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 7, 4, 9, 2, 5]",
+        "output": "6",
+        "expectedOutput": "6",
+        "explanation": "the differences are +6, -3, +5, -7, +3 - already alternating, so the whole array qualifies"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5, 6, 7, 8, 9]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the sequence is strictly increasing, so no differences alternate; the best you can do is any 2 elements"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,7,4,9,2,5]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,17,5,10,13,15,10,5,16,8]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5,6,7,8,9]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,3,3,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,5,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,8,0,0,0]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,3,3,2,5]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,3,2,4,3,5,4,6,5,7]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[10,20,30,40,50,40,30,20,10]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4]]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[44,66,63,58,50,53,56,53,61,29]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,4,2,4,2,4,2,4,2]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,5,3,7,2,9,4,8,6,10]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,3,3,4,5,5,6]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,1,4,1,5,9,2,6,5,3,5,8,9,7,9]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def wiggleMaxLength(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int wiggleMaxLength(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int wiggleMaxLength(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wiggleMaxLength(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wiggleMaxLength(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def wiggleMaxLength(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int wiggleMaxLength(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int wiggleMaxLength(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wiggleMaxLength(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wiggleMaxLength(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def wiggleMaxLength(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int wiggleMaxLength(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int wiggleMaxLength(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wiggleMaxLength(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wiggleMaxLength(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def wiggleMaxLength(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int wiggleMaxLength(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int wiggleMaxLength(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wiggleMaxLength(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wiggleMaxLength(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "dynamic programming / greedy - track the longest wiggle subsequence ending in an 'up' step vs ending in a 'down' step"
+    },
+    "bruteForce": {
+      "approach": "recursively try including or excluding each element, tracking whether the last included step went up or down, and take the max valid subsequence length",
+      "time": "O(2^n)",
+      "space": "O(n) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "dynamic programming / greedy - track the longest wiggle subsequence ending in an 'up' step vs ending in a 'down' step",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "at each position, what actually matters isn't the exact value, just whether the most recent step (if any) went up or down",
+      "keep two running counts: the longest wiggle subsequence ending with an up-step, and the longest ending with a down-step",
+      "when the next number is greater than the previous one, it can extend any subsequence that last went down (turning it into one ending up)",
+      "up = down + 1 when nums[i] > nums[i-1]; down = up + 1 when nums[i] < nums[i-1]; equal values change neither - the answer is max(up, down) at the end"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try including or excluding each element, tracking whether the last included step went up or down, and take the max valid subsequence length",
+    "time": "O(2^n)",
+    "space": "O(n) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

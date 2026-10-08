@@ -1,0 +1,631 @@
+{
+  "id": "starting-courses",
+  "questionId": "starting-courses",
+  "slug": "starting-courses",
+  "title": "Courses You Can Start Immediately",
+  "difficulty": "Easy",
+  "category": "Topological sort",
+  "patterns": [
+    "topological sort",
+    "graph",
+    "in-degree"
+  ],
+  "lists": [],
+  "hints": [
+    "a course qualifies if it never shows up as the 'depends on something' side of a prerequisite pair - how would you track that efficiently?",
+    "make an array of size n initialized to zero, and for every prerequisite pair increment the count for the dependent course",
+    "after one pass over all edges, which indices still have a count of zero?",
+    "collect those indices in ascending order - a simple left-to-right scan over the in-degree array already visits them in order"
+  ],
+  "commonMistakes": [
+    "confusing which element of the pair is the dependent course and which is the prerequisite",
+    "forgetting that a self-loop prerequisite still counts as a prerequisite, excluding that course from the result",
+    "not returning the result in ascending order"
+  ],
+  "content": {
+    "problemStatement": "There are `n` courses, labeled 0 to n - 1, and a list of prerequisite\npairs, where each pair `[a, b]` means course `a` requires course `b` to\nbe completed first.\n\n**Return, in ascending order, every course that has no prerequisites at all, meaning it can be started immediately.**\n",
+    "constraints": [
+      "1 <= n <= 10^4",
+      "each prerequisite pair [a, b] has 0 <= a, b < n",
+      "the same prerequisite pair may appear more than once"
+    ],
+    "notes": [
+      "no prerequisite edges at all - every course is a starting course",
+      "a self-loop prerequisite like [0, 0] means that course is NOT a starting course, since it does require something (itself) first",
+      "duplicate prerequisite pairs listed more than once",
+      "a course that never appears anywhere in prereqs still counts as a starting course"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4, prereqs = [[1, 0], [2, 0], [3, 1]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": "courses 1, 2, and 3 each require something first; only course 0 needs nothing"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, prereqs = []",
+        "output": "[0, 1, 2]",
+        "expectedOutput": "[0, 1, 2]",
+        "explanation": "with no prerequisite pairs at all, every course can start immediately"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 5, prereqs = [[2, 0], [2, 1], [4, 3]]",
+        "output": "[0, 1, 3]",
+        "expectedOutput": "[0, 1, 3]",
+        "explanation": "only courses 2 and 4 require anything first"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[4,[[1,0],[2,0],[3,1]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[5,[[2,0],[2,1],[4,3]]]",
+        "output": "[0,1,3]",
+        "expectedOutput": "[0,1,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[3,[[0,0],[1,0]]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[10,[[1,0],[2,0],[3,1],[4,1],[5,2]]]",
+        "output": "[0,6,7,8,9]",
+        "expectedOutput": "[0,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6,[[0,0],[1,1],[2,2]]]",
+        "output": "[3,4,5]",
+        "expectedOutput": "[3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8,[[1,0],[1,0],[2,0],[3,2]]]",
+        "output": "[0,4,5,6,7]",
+        "expectedOutput": "[0,4,5,6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[20,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[1,[[0,0]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[15,[]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[3,[]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[9,[[1,0],[1,0],[2,0],[3,0],[4,3]]]",
+        "output": "[0,5,6,7,8]",
+        "expectedOutput": "[0,5,6,7,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[25,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18],[20,19],[21,20],[22,21],[23,22],[24,23]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[7,[[0,1],[2,3],[4,5]]]",
+        "output": "[1,3,5,6]",
+        "expectedOutput": "[1,3,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[4,[[0,0],[1,1],[2,2],[3,3]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[2,[[0,1]]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[12,[[6,5],[7,6],[8,7],[9,8],[10,9],[11,10]]]",
+        "output": "[0,1,2,3,4,5]",
+        "expectedOutput": "[0,1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[5,[[1,0],[2,0],[3,0],[4,0]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[16,[[3,1],[3,2],[7,5],[7,6],[11,9],[11,10]]]",
+        "output": "[0,1,2,4,5,6,8,9,10,12,13,14,15]",
+        "expectedOutput": "[0,1,2,4,5,6,8,9,10,12,13,14,15]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4, prereqs = [[1, 0], [2, 0], [3, 1]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": "courses 1, 2, and 3 each require something first; only course 0 needs nothing"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, prereqs = []",
+      "output": "[0, 1, 2]",
+      "expectedOutput": "[0, 1, 2]",
+      "explanation": "with no prerequisite pairs at all, every course can start immediately"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 5, prereqs = [[2, 0], [2, 1], [4, 3]]",
+      "output": "[0, 1, 3]",
+      "expectedOutput": "[0, 1, 3]",
+      "explanation": "only courses 2 and 4 require anything first"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4, prereqs = [[1, 0], [2, 0], [3, 1]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "explanation": "courses 1, 2, and 3 each require something first; only course 0 needs nothing"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, prereqs = []",
+      "output": "[0, 1, 2]",
+      "expectedOutput": "[0, 1, 2]",
+      "explanation": "with no prerequisite pairs at all, every course can start immediately"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 5, prereqs = [[2, 0], [2, 1], [4, 3]]",
+      "output": "[0, 1, 3]",
+      "expectedOutput": "[0, 1, 3]",
+      "explanation": "only courses 2 and 4 require anything first"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[4,[[1,0],[2,0],[3,1]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,[]]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[5,[[2,0],[2,1],[4,3]]]",
+      "output": "[0,1,3]",
+      "expectedOutput": "[0,1,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[3,[[0,0],[1,0]]]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[1,[]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[10,[[1,0],[2,0],[3,1],[4,1],[5,2]]]",
+      "output": "[0,6,7,8,9]",
+      "expectedOutput": "[0,6,7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[6,[[0,0],[1,1],[2,2]]]",
+      "output": "[3,4,5]",
+      "expectedOutput": "[3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[8,[[1,0],[1,0],[2,0],[3,2]]]",
+      "output": "[0,4,5,6,7]",
+      "expectedOutput": "[0,4,5,6,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[20,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[1,[[0,0]]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[15,[]]",
+      "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+      "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[3,[]]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[9,[[1,0],[1,0],[2,0],[3,0],[4,3]]]",
+      "output": "[0,5,6,7,8]",
+      "expectedOutput": "[0,5,6,7,8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[25,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18],[20,19],[21,20],[22,21],[23,22],[24,23]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[7,[[0,1],[2,3],[4,5]]]",
+      "output": "[1,3,5,6]",
+      "expectedOutput": "[1,3,5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[4,[[0,0],[1,1],[2,2],[3,3]]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[2,[[0,1]]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[12,[[6,5],[7,6],[8,7],[9,8],[10,9],[11,10]]]",
+      "output": "[0,1,2,3,4,5]",
+      "expectedOutput": "[0,1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[5,[[1,0],[2,0],[3,0],[4,0]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[16,[[3,1],[3,2],[7,5],[7,6],[11,9],[11,10]]]",
+      "output": "[0,1,2,4,5,6,8,9,10,12,13,14,15]",
+      "expectedOutput": "[0,1,2,4,5,6,8,9,10,12,13,14,15]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4, prereqs = [[1, 0], [2, 0], [3, 1]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "explanation": "courses 1, 2, and 3 each require something first; only course 0 needs nothing"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, prereqs = []",
+        "output": "[0, 1, 2]",
+        "expectedOutput": "[0, 1, 2]",
+        "explanation": "with no prerequisite pairs at all, every course can start immediately"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 5, prereqs = [[2, 0], [2, 1], [4, 3]]",
+        "output": "[0, 1, 3]",
+        "expectedOutput": "[0, 1, 3]",
+        "explanation": "only courses 2 and 4 require anything first"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[4,[[1,0],[2,0],[3,1]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[5,[[2,0],[2,1],[4,3]]]",
+        "output": "[0,1,3]",
+        "expectedOutput": "[0,1,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[3,[[0,0],[1,0]]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[1,[]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[10,[[1,0],[2,0],[3,1],[4,1],[5,2]]]",
+        "output": "[0,6,7,8,9]",
+        "expectedOutput": "[0,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6,[[0,0],[1,1],[2,2]]]",
+        "output": "[3,4,5]",
+        "expectedOutput": "[3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8,[[1,0],[1,0],[2,0],[3,2]]]",
+        "output": "[0,4,5,6,7]",
+        "expectedOutput": "[0,4,5,6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[20,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[1,[[0,0]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[15,[]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[3,[]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[9,[[1,0],[1,0],[2,0],[3,0],[4,3]]]",
+        "output": "[0,5,6,7,8]",
+        "expectedOutput": "[0,5,6,7,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[25,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18],[20,19],[21,20],[22,21],[23,22],[24,23]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[7,[[0,1],[2,3],[4,5]]]",
+        "output": "[1,3,5,6]",
+        "expectedOutput": "[1,3,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[4,[[0,0],[1,1],[2,2],[3,3]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[2,[[0,1]]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[12,[[6,5],[7,6],[8,7],[9,8],[10,9],[11,10]]]",
+        "output": "[0,1,2,3,4,5]",
+        "expectedOutput": "[0,1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[5,[[1,0],[2,0],[3,0],[4,0]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[16,[[3,1],[3,2],[7,5],[7,6],[11,9],[11,10]]]",
+        "output": "[0,1,2,4,5,6,8,9,10,12,13,14,15]",
+        "expectedOutput": "[0,1,2,4,5,6,8,9,10,12,13,14,15]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def startingCourses(self, n, prereqs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> startingCourses(int n, vector<vector<int>>& prereqs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] startingCourses(int n, int[][] prereqs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun startingCourses(n: Int, prereqs: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    startingCourses(n, prereqs) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def startingCourses(self, n, prereqs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> startingCourses(int n, vector<vector<int>>& prereqs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] startingCourses(int n, int[][] prereqs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun startingCourses(n: Int, prereqs: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    startingCourses(n, prereqs) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def startingCourses(self, n, prereqs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> startingCourses(int n, vector<vector<int>>& prereqs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] startingCourses(int n, int[][] prereqs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun startingCourses(n: Int, prereqs: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    startingCourses(n, prereqs) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def startingCourses(self, n, prereqs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> startingCourses(int n, vector<vector<int>>& prereqs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] startingCourses(int n, int[][] prereqs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun startingCourses(n: Int, prereqs: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    startingCourses(n, prereqs) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + m)",
+      "space": "O(n)",
+      "pattern": "one pass to build an in-degree count array, then collect every index with in-degree 0"
+    },
+    "bruteForce": {
+      "approach": "for every course, scan the entire prereqs list to check whether it ever appears as the dependent (first) element of a pair",
+      "time": "O(n * m)",
+      "space": "O(1) beyond the output"
+    }
+  },
+  "optimal": {
+    "pattern": "one pass to build an in-degree count array, then collect every index with in-degree 0",
+    "time": "O(n + m)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "a course qualifies if it never shows up as the 'depends on something' side of a prerequisite pair - how would you track that efficiently?",
+      "make an array of size n initialized to zero, and for every prerequisite pair increment the count for the dependent course",
+      "after one pass over all edges, which indices still have a count of zero?",
+      "collect those indices in ascending order - a simple left-to-right scan over the in-degree array already visits them in order"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every course, scan the entire prereqs list to check whether it ever appears as the dependent (first) element of a pair",
+    "time": "O(n * m)",
+    "space": "O(1) beyond the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

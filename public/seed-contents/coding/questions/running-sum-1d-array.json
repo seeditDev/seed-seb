@@ -1,0 +1,623 @@
+{
+  "id": "running-sum-1d-array",
+  "questionId": "running-sum-1d-array",
+  "slug": "running-sum-1d-array",
+  "title": "Running Sum of 1D Array",
+  "difficulty": "Easy",
+  "category": "Prefix sum",
+  "patterns": [
+    "prefix sum"
+  ],
+  "lists": [],
+  "hints": [
+    "each running sum only differs from the previous one by a single new element - do you need to recompute the whole sum each time?",
+    "keep a running total variable, add the current element to it, and place the result in the output array",
+    "you can even build the result in place if the language allows overwriting the input"
+  ],
+  "commonMistakes": [
+    "recomputing the sum from scratch at each index instead of carrying a running total",
+    "off-by-one on the starting index of the running total"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers.\n\n**Return a new array where each position holds the sum of all elements up to and including that position in the original array.**\n",
+    "constraints": [
+      "1 <= nums.length <= 1000",
+      "-10^6 <= nums[i] <= 10^6"
+    ],
+    "notes": [
+      "a single element array (result equals the input)",
+      "an array containing negative numbers"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "[1, 3, 6, 10]",
+        "expectedOutput": "[1, 3, 6, 10]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 1, 1]",
+        "output": "[1, 2, 3, 4, 5]",
+        "expectedOutput": "[1, 2, 3, 4, 5]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [3, 1, 2, 10, 1]",
+        "output": "[3, 4, 6, 16, 17]",
+        "expectedOutput": "[3, 4, 6, 16, 17]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4]]",
+        "output": "[1,3,6,10]",
+        "expectedOutput": "[1,3,6,10]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,1,1,1,1]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[3,1,2,10,1]]",
+        "output": "[3,4,6,16,17]",
+        "expectedOutput": "[3,4,6,16,17]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-5]]",
+        "output": "[-5]",
+        "expectedOutput": "[-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1,-2,-3]]",
+        "output": "[-1,-3,-6]",
+        "expectedOutput": "[-1,-3,-6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,-1,1,-1]]",
+        "output": "[1,0,1,0]",
+        "expectedOutput": "[1,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-5,-2,-9,-5,-4,-1,10,-1,6,-4,-1,4,6,-5,-2]]",
+        "output": "[-5,-7,-16,-21,-25,-26,-16,-17,-11,-15,-16,-12,-6,-11,-13]",
+        "expectedOutput": "[-5,-7,-16,-21,-25,-26,-16,-17,-11,-15,-16,-12,-6,-11,-13]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[100,-50,25]]",
+        "output": "[100,50,75]",
+        "expectedOutput": "[100,50,75]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "[1,3,6,10,15,21,28,36,45,55,66,78,91,105,120,136,153,171,190,210]",
+        "expectedOutput": "[1,3,6,10,15,21,28,36,45,55,66,78,91,105,120,136,153,171,190,210]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]",
+        "output": "[-1,-2,-3,-4,-5,-6,-7,-8,-9,-10]",
+        "expectedOutput": "[-1,-2,-3,-4,-5,-6,-7,-8,-9,-10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,5,5,5,5,5,5,5,5,5]]",
+        "output": "[5,10,15,20,25,30,35,40,45,50]",
+        "expectedOutput": "[5,10,15,20,25,30,35,40,45,50]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,-3,4,-5,6,-7,8,-9,10]]",
+        "output": "[1,3,0,4,-1,5,-2,6,-3,7]",
+        "expectedOutput": "[1,3,0,4,-1,5,-2,6,-3,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,-19,-4,-18,-20,-19,12,15,-8,12,10,-5,8,-14,7,11,14,5,12,-1]]",
+        "output": "[2,-17,-21,-39,-59,-78,-66,-51,-59,-47,-37,-42,-34,-48,-41,-30,-16,-11,1,0]",
+        "expectedOutput": "[2,-17,-21,-39,-59,-78,-66,-51,-59,-47,-37,-42,-34,-48,-41,-30,-16,-11,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1000000,-1000000]]",
+        "output": "[1000000,0]",
+        "expectedOutput": "[1000000,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,1,0,-1,0]]",
+        "output": "[0,1,1,0,0]",
+        "expectedOutput": "[0,1,1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-10,20,-30,40,-50]]",
+        "output": "[-10,10,-20,20,-30]",
+        "expectedOutput": "[-10,10,-20,20,-30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[7,-7,7,-7,7,-7,7]]",
+        "output": "[7,0,7,0,7,0,7]",
+        "expectedOutput": "[7,0,7,0,7,0,7]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "[1, 3, 6, 10]",
+      "expectedOutput": "[1, 3, 6, 10]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 1, 1]",
+      "output": "[1, 2, 3, 4, 5]",
+      "expectedOutput": "[1, 2, 3, 4, 5]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [3, 1, 2, 10, 1]",
+      "output": "[3, 4, 6, 16, 17]",
+      "expectedOutput": "[3, 4, 6, 16, 17]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "[1, 3, 6, 10]",
+      "expectedOutput": "[1, 3, 6, 10]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 1, 1]",
+      "output": "[1, 2, 3, 4, 5]",
+      "expectedOutput": "[1, 2, 3, 4, 5]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [3, 1, 2, 10, 1]",
+      "output": "[3, 4, 6, 16, 17]",
+      "expectedOutput": "[3, 4, 6, 16, 17]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4]]",
+      "output": "[1,3,6,10]",
+      "expectedOutput": "[1,3,6,10]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,1,1,1,1]]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[3,1,2,10,1]]",
+      "output": "[3,4,6,16,17]",
+      "expectedOutput": "[3,4,6,16,17]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5]]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[0]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-5]]",
+      "output": "[-5]",
+      "expectedOutput": "[-5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[-1,-2,-3]]",
+      "output": "[-1,-3,-6]",
+      "expectedOutput": "[-1,-3,-6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,0,0]]",
+      "output": "[0,0,0]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,-1,1,-1]]",
+      "output": "[1,0,1,0]",
+      "expectedOutput": "[1,0,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-5,-2,-9,-5,-4,-1,10,-1,6,-4,-1,4,6,-5,-2]]",
+      "output": "[-5,-7,-16,-21,-25,-26,-16,-17,-11,-15,-16,-12,-6,-11,-13]",
+      "expectedOutput": "[-5,-7,-16,-21,-25,-26,-16,-17,-11,-15,-16,-12,-6,-11,-13]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[100,-50,25]]",
+      "output": "[100,50,75]",
+      "expectedOutput": "[100,50,75]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "[1,3,6,10,15,21,28,36,45,55,66,78,91,105,120,136,153,171,190,210]",
+      "expectedOutput": "[1,3,6,10,15,21,28,36,45,55,66,78,91,105,120,136,153,171,190,210]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]",
+      "output": "[-1,-2,-3,-4,-5,-6,-7,-8,-9,-10]",
+      "expectedOutput": "[-1,-2,-3,-4,-5,-6,-7,-8,-9,-10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[5,5,5,5,5,5,5,5,5,5]]",
+      "output": "[5,10,15,20,25,30,35,40,45,50]",
+      "expectedOutput": "[5,10,15,20,25,30,35,40,45,50]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,-3,4,-5,6,-7,8,-9,10]]",
+      "output": "[1,3,0,4,-1,5,-2,6,-3,7]",
+      "expectedOutput": "[1,3,0,4,-1,5,-2,6,-3,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[2,-19,-4,-18,-20,-19,12,15,-8,12,10,-5,8,-14,7,11,14,5,12,-1]]",
+      "output": "[2,-17,-21,-39,-59,-78,-66,-51,-59,-47,-37,-42,-34,-48,-41,-30,-16,-11,1,0]",
+      "expectedOutput": "[2,-17,-21,-39,-59,-78,-66,-51,-59,-47,-37,-42,-34,-48,-41,-30,-16,-11,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1000000,-1000000]]",
+      "output": "[1000000,0]",
+      "expectedOutput": "[1000000,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[0,1,0,-1,0]]",
+      "output": "[0,1,1,0,0]",
+      "expectedOutput": "[0,1,1,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-10,20,-30,40,-50]]",
+      "output": "[-10,10,-20,20,-30]",
+      "expectedOutput": "[-10,10,-20,20,-30]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[7,-7,7,-7,7,-7,7]]",
+      "output": "[7,0,7,0,7,0,7]",
+      "expectedOutput": "[7,0,7,0,7,0,7]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "[1, 3, 6, 10]",
+        "expectedOutput": "[1, 3, 6, 10]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 1, 1]",
+        "output": "[1, 2, 3, 4, 5]",
+        "expectedOutput": "[1, 2, 3, 4, 5]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [3, 1, 2, 10, 1]",
+        "output": "[3, 4, 6, 16, 17]",
+        "expectedOutput": "[3, 4, 6, 16, 17]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4]]",
+        "output": "[1,3,6,10]",
+        "expectedOutput": "[1,3,6,10]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,1,1,1,1]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[3,1,2,10,1]]",
+        "output": "[3,4,6,16,17]",
+        "expectedOutput": "[3,4,6,16,17]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-5]]",
+        "output": "[-5]",
+        "expectedOutput": "[-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1,-2,-3]]",
+        "output": "[-1,-3,-6]",
+        "expectedOutput": "[-1,-3,-6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,-1,1,-1]]",
+        "output": "[1,0,1,0]",
+        "expectedOutput": "[1,0,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-5,-2,-9,-5,-4,-1,10,-1,6,-4,-1,4,6,-5,-2]]",
+        "output": "[-5,-7,-16,-21,-25,-26,-16,-17,-11,-15,-16,-12,-6,-11,-13]",
+        "expectedOutput": "[-5,-7,-16,-21,-25,-26,-16,-17,-11,-15,-16,-12,-6,-11,-13]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[100,-50,25]]",
+        "output": "[100,50,75]",
+        "expectedOutput": "[100,50,75]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "[1,3,6,10,15,21,28,36,45,55,66,78,91,105,120,136,153,171,190,210]",
+        "expectedOutput": "[1,3,6,10,15,21,28,36,45,55,66,78,91,105,120,136,153,171,190,210]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]",
+        "output": "[-1,-2,-3,-4,-5,-6,-7,-8,-9,-10]",
+        "expectedOutput": "[-1,-2,-3,-4,-5,-6,-7,-8,-9,-10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,5,5,5,5,5,5,5,5,5]]",
+        "output": "[5,10,15,20,25,30,35,40,45,50]",
+        "expectedOutput": "[5,10,15,20,25,30,35,40,45,50]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,-3,4,-5,6,-7,8,-9,10]]",
+        "output": "[1,3,0,4,-1,5,-2,6,-3,7]",
+        "expectedOutput": "[1,3,0,4,-1,5,-2,6,-3,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,-19,-4,-18,-20,-19,12,15,-8,12,10,-5,8,-14,7,11,14,5,12,-1]]",
+        "output": "[2,-17,-21,-39,-59,-78,-66,-51,-59,-47,-37,-42,-34,-48,-41,-30,-16,-11,1,0]",
+        "expectedOutput": "[2,-17,-21,-39,-59,-78,-66,-51,-59,-47,-37,-42,-34,-48,-41,-30,-16,-11,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1000000,-1000000]]",
+        "output": "[1000000,0]",
+        "expectedOutput": "[1000000,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,1,0,-1,0]]",
+        "output": "[0,1,1,0,0]",
+        "expectedOutput": "[0,1,1,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-10,20,-30,40,-50]]",
+        "output": "[-10,10,-20,20,-30]",
+        "expectedOutput": "[-10,10,-20,20,-30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[7,-7,7,-7,7,-7,7]]",
+        "output": "[7,0,7,0,7,0,7]",
+        "expectedOutput": "[7,0,7,0,7,0,7]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def runningSum(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> runningSum(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] runningSum(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun runningSum(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    runningSum(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def runningSum(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> runningSum(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] runningSum(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun runningSum(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    runningSum(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def runningSum(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> runningSum(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] runningSum(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun runningSum(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    runningSum(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def runningSum(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> runningSum(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] runningSum(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun runningSum(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    runningSum(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the result (O(1) extra beyond it)",
+      "pattern": "prefix sum - keep a running total as you scan once"
+    },
+    "bruteForce": {
+      "approach": "for each position, sum every element from the start up to it",
+      "time": "O(n^2)",
+      "space": "O(n) for the result"
+    }
+  },
+  "optimal": {
+    "pattern": "prefix sum - keep a running total as you scan once",
+    "time": "O(n)",
+    "space": "O(n) for the result (O(1) extra beyond it)",
+    "hint_ladder": [
+      "each running sum only differs from the previous one by a single new element - do you need to recompute the whole sum each time?",
+      "keep a running total variable, add the current element to it, and place the result in the output array",
+      "you can even build the result in place if the language allows overwriting the input"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each position, sum every element from the start up to it",
+    "time": "O(n^2)",
+    "space": "O(n) for the result"
+  },
+  "isIndex0": true,
+  "level": null
+}

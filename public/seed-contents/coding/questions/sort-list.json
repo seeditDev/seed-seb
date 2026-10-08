@@ -1,0 +1,653 @@
+{
+  "id": "sort-list",
+  "questionId": "sort-list",
+  "slug": "sort-list",
+  "title": "Sort List",
+  "difficulty": "Hard",
+  "category": "Fast slow pointers",
+  "patterns": [
+    "fast & slow pointers",
+    "linked list",
+    "merge sort"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "an array can be merge-sorted by splitting at the midpoint - what's the linked-list-native way to find that midpoint without random access to indices?",
+    "use fast/slow pointers to split the list into two roughly equal halves, being careful to actually cut the link between them",
+    "recursively sort each half the same way, down to base cases of length 0 or 1, which are already sorted",
+    "merge the two sorted halves the same way you'd merge two sorted arrays: repeatedly take the smaller of the two current front values"
+  ],
+  "commonMistakes": [
+    "using an O(n^2) approach (like repeated insertion or selection sort) when O(n log n) is required",
+    "forgetting to actually cut the link between the two halves after finding the middle, which can cause the recursion to never terminate or the merge to misbehave",
+    "getting the merge step's tie-breaking or termination wrong, dropping the tail of whichever half runs out last"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]`\nis the value of the i-th node in order.\n\n**Sort the list's values in ascending order and return the resulting list's values in order, in O(n log n) time.**\n",
+    "constraints": [
+      "0 <= nums.length <= 5 * 10^4",
+      "-10^5 <= nums[i] <= 10^5"
+    ],
+    "notes": [
+      "an empty list",
+      "a single-node list",
+      "a list that is already sorted, or sorted in reverse",
+      "duplicate values"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [4, 2, 1, 3]",
+        "output": "[1, 2, 3, 4]",
+        "expectedOutput": "[1, 2, 3, 4]",
+        "explanation": "sorted ascending"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1, 5, 3, 4, 0]",
+        "output": "[-1, 0, 3, 4, 5]",
+        "expectedOutput": "[-1, 0, 3, 4, 5]",
+        "explanation": "sorted ascending, including a negative value"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = []",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "an empty list is already sorted"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[4,2,1,3]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,5,3,4,0]]",
+        "output": "[-1,0,3,4,5]",
+        "expectedOutput": "[-1,0,3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,3,1,2,2]]",
+        "output": "[1,2,2,3,3]",
+        "expectedOutput": "[1,2,2,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[9]]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,1]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1]]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-1,-3,-2,-4]]",
+        "output": "[-5,-4,-3,-2,-1]",
+        "expectedOutput": "[-5,-4,-3,-2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]]",
+        "output": "[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]",
+        "expectedOutput": "[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[14,47,-28,14,-37,30,-12,31,14,27,-25,-31,-3,47,-30,19,49,17,-50,26,-9,12,-48,-36,-4]]",
+        "output": "[-50,-48,-37,-36,-31,-30,-28,-25,-12,-9,-4,-3,12,14,14,14,17,19,26,27,30,31,47,47,49]",
+        "expectedOutput": "[-50,-48,-37,-36,-31,-30,-28,-25,-12,-9,-4,-3,12,14,14,14,17,19,26,27,30,31,47,47,49]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-11,-20,-43,-20,22,-40,-40,43,12,-42,47,18,48,-34,-34,34,10,20,-29,-17,17,27,4,-23,19,46,43,38,-25,41]]",
+        "output": "[-43,-42,-40,-40,-34,-34,-29,-25,-23,-20,-20,-17,-11,4,10,12,17,18,19,20,22,27,34,38,41,43,43,46,47,48]",
+        "expectedOutput": "[-43,-42,-40,-40,-34,-34,-29,-25,-23,-20,-20,-17,-11,4,10,12,17,18,19,20,22,27,34,38,41,43,43,46,47,48]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-1,1,-1,1,-1,1]]",
+        "output": "[-1,-1,-1,1,1,1]",
+        "expectedOutput": "[-1,-1,-1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[100,-100,50,-50,0]]",
+        "output": "[-100,-50,0,50,100]",
+        "expectedOutput": "[-100,-50,0,50,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,2,1]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,3,2]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-30,-26,15,10,-27,-16,-26,27,-28,25,-9,-26,2,-15,-13,12,1,-17]]",
+        "output": "[-30,-28,-27,-26,-26,-26,-17,-16,-15,-13,-9,1,2,10,12,15,25,27]",
+        "expectedOutput": "[-30,-28,-27,-26,-26,-26,-17,-16,-15,-13,-9,1,2,10,12,15,25,27]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [4, 2, 1, 3]",
+      "output": "[1, 2, 3, 4]",
+      "expectedOutput": "[1, 2, 3, 4]",
+      "explanation": "sorted ascending"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1, 5, 3, 4, 0]",
+      "output": "[-1, 0, 3, 4, 5]",
+      "expectedOutput": "[-1, 0, 3, 4, 5]",
+      "explanation": "sorted ascending, including a negative value"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = []",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "an empty list is already sorted"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [4, 2, 1, 3]",
+      "output": "[1, 2, 3, 4]",
+      "expectedOutput": "[1, 2, 3, 4]",
+      "explanation": "sorted ascending"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1, 5, 3, 4, 0]",
+      "output": "[-1, 0, 3, 4, 5]",
+      "expectedOutput": "[-1, 0, 3, 4, 5]",
+      "explanation": "sorted ascending, including a negative value"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = []",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "an empty list is already sorted"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[4,2,1,3]]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-1,5,3,4,0]]",
+      "output": "[-1,0,3,4,5]",
+      "expectedOutput": "[-1,0,3,4,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[3,3,1,2,2]]",
+      "output": "[1,2,2,3,3]",
+      "expectedOutput": "[1,2,2,3,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[9]]",
+      "output": "[9]",
+      "expectedOutput": "[9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[2,1]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,1,1]]",
+      "output": "[1,1,1]",
+      "expectedOutput": "[1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-5,-1,-3,-2,-4]]",
+      "output": "[-5,-4,-3,-2,-1]",
+      "expectedOutput": "[-5,-4,-3,-2,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]]",
+      "output": "[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]",
+      "expectedOutput": "[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[14,47,-28,14,-37,30,-12,31,14,27,-25,-31,-3,47,-30,19,49,17,-50,26,-9,12,-48,-36,-4]]",
+      "output": "[-50,-48,-37,-36,-31,-30,-28,-25,-12,-9,-4,-3,12,14,14,14,17,19,26,27,30,31,47,47,49]",
+      "expectedOutput": "[-50,-48,-37,-36,-31,-30,-28,-25,-12,-9,-4,-3,12,14,14,14,17,19,26,27,30,31,47,47,49]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-11,-20,-43,-20,22,-40,-40,43,12,-42,47,18,48,-34,-34,34,10,20,-29,-17,17,27,4,-23,19,46,43,38,-25,41]]",
+      "output": "[-43,-42,-40,-40,-34,-34,-29,-25,-23,-20,-20,-17,-11,4,10,12,17,18,19,20,22,27,34,38,41,43,43,46,47,48]",
+      "expectedOutput": "[-43,-42,-40,-40,-34,-34,-29,-25,-23,-20,-20,-17,-11,4,10,12,17,18,19,20,22,27,34,38,41,43,43,46,47,48]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[0]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[-1,1,-1,1,-1,1]]",
+      "output": "[-1,-1,-1,1,1,1]",
+      "expectedOutput": "[-1,-1,-1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[100,-100,50,-50,0]]",
+      "output": "[-100,-50,0,50,100]",
+      "expectedOutput": "[-100,-50,0,50,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[3,2,1]]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,3,2]]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[-30,-26,15,10,-27,-16,-26,27,-28,25,-9,-26,2,-15,-13,12,1,-17]]",
+      "output": "[-30,-28,-27,-26,-26,-26,-17,-16,-15,-13,-9,1,2,10,12,15,25,27]",
+      "expectedOutput": "[-30,-28,-27,-26,-26,-26,-17,-16,-15,-13,-9,1,2,10,12,15,25,27]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [4, 2, 1, 3]",
+        "output": "[1, 2, 3, 4]",
+        "expectedOutput": "[1, 2, 3, 4]",
+        "explanation": "sorted ascending"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1, 5, 3, 4, 0]",
+        "output": "[-1, 0, 3, 4, 5]",
+        "expectedOutput": "[-1, 0, 3, 4, 5]",
+        "explanation": "sorted ascending, including a negative value"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = []",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "an empty list is already sorted"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[4,2,1,3]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,5,3,4,0]]",
+        "output": "[-1,0,3,4,5]",
+        "expectedOutput": "[-1,0,3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,3,1,2,2]]",
+        "output": "[1,2,2,3,3]",
+        "expectedOutput": "[1,2,2,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[9]]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,1]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1]]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-1,-3,-2,-4]]",
+        "output": "[-5,-4,-3,-2,-1]",
+        "expectedOutput": "[-5,-4,-3,-2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]]",
+        "output": "[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]",
+        "expectedOutput": "[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[14,47,-28,14,-37,30,-12,31,14,27,-25,-31,-3,47,-30,19,49,17,-50,26,-9,12,-48,-36,-4]]",
+        "output": "[-50,-48,-37,-36,-31,-30,-28,-25,-12,-9,-4,-3,12,14,14,14,17,19,26,27,30,31,47,47,49]",
+        "expectedOutput": "[-50,-48,-37,-36,-31,-30,-28,-25,-12,-9,-4,-3,12,14,14,14,17,19,26,27,30,31,47,47,49]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-11,-20,-43,-20,22,-40,-40,43,12,-42,47,18,48,-34,-34,34,10,20,-29,-17,17,27,4,-23,19,46,43,38,-25,41]]",
+        "output": "[-43,-42,-40,-40,-34,-34,-29,-25,-23,-20,-20,-17,-11,4,10,12,17,18,19,20,22,27,34,38,41,43,43,46,47,48]",
+        "expectedOutput": "[-43,-42,-40,-40,-34,-34,-29,-25,-23,-20,-20,-17,-11,4,10,12,17,18,19,20,22,27,34,38,41,43,43,46,47,48]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[-1,1,-1,1,-1,1]]",
+        "output": "[-1,-1,-1,1,1,1]",
+        "expectedOutput": "[-1,-1,-1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[100,-100,50,-50,0]]",
+        "output": "[-100,-50,0,50,100]",
+        "expectedOutput": "[-100,-50,0,50,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,2,1]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,3,2]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[10,9,8,7,6,5,4,3,2,1]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[-30,-26,15,10,-27,-16,-26,27,-28,25,-9,-26,2,-15,-13,12,1,-17]]",
+        "output": "[-30,-28,-27,-26,-26,-26,-17,-16,-15,-13,-9,1,2,10,12,15,25,27]",
+        "expectedOutput": "[-30,-28,-27,-26,-26,-26,-17,-16,-15,-13,-9,1,2,10,12,15,25,27]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def sortLinkedList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sortLinkedList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sortLinkedList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sortLinkedList(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sortLinkedList(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def sortLinkedList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sortLinkedList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sortLinkedList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sortLinkedList(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sortLinkedList(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def sortLinkedList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sortLinkedList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sortLinkedList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sortLinkedList(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sortLinkedList(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def sortLinkedList(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> sortLinkedList(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] sortLinkedList(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sortLinkedList(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sortLinkedList(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(log n) for the recursion stack (O(1) extra besides that and the output)",
+      "pattern": "merge sort on the linked list: find the middle with fast/slow pointers, recursively sort each half, then merge the two sorted halves"
+    },
+    "bruteForce": {
+      "approach": "copy the values into an array and use a general-purpose sort, or repeatedly find and move the minimum remaining node (selection sort style)",
+      "time": "O(n log n) with a general sort, or O(n^2) with selection sort",
+      "space": "O(n) for the copy, or O(1) extra for in-place selection sort on the array"
+    }
+  },
+  "optimal": {
+    "pattern": "merge sort on the linked list: find the middle with fast/slow pointers, recursively sort each half, then merge the two sorted halves",
+    "time": "O(n log n)",
+    "space": "O(log n) for the recursion stack (O(1) extra besides that and the output)",
+    "hint_ladder": [
+      "an array can be merge-sorted by splitting at the midpoint - what's the linked-list-native way to find that midpoint without random access to indices?",
+      "use fast/slow pointers to split the list into two roughly equal halves, being careful to actually cut the link between them",
+      "recursively sort each half the same way, down to base cases of length 0 or 1, which are already sorted",
+      "merge the two sorted halves the same way you'd merge two sorted arrays: repeatedly take the smaller of the two current front values"
+    ]
+  },
+  "bruteForce": {
+    "approach": "copy the values into an array and use a general-purpose sort, or repeatedly find and move the minimum remaining node (selection sort style)",
+    "time": "O(n log n) with a general sort, or O(n^2) with selection sort",
+    "space": "O(n) for the copy, or O(1) extra for in-place selection sort on the array"
+  },
+  "isIndex0": true,
+  "level": null
+}

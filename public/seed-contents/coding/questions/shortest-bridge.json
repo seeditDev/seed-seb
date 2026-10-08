@@ -1,0 +1,631 @@
+{
+  "id": "shortest-bridge",
+  "questionId": "shortest-bridge",
+  "slug": "shortest-bridge",
+  "title": "Shortest Bridge",
+  "difficulty": "Hard",
+  "category": "Graphs",
+  "patterns": [
+    "graph dfs/bfs",
+    "multi-source bfs",
+    "grid traversal"
+  ],
+  "lists": [],
+  "hints": [
+    "first, find and mark every cell belonging to one of the two islands using DFS or BFS (any island works, just pick one, e.g. the first 1 you scan)",
+    "now treat every cell of that island as a level-0 source for a fresh multi-source BFS that expands outward through water cells",
+    "each BFS layer represents flipping one more ring of water cells; expand layer by layer, counting steps",
+    "the moment the BFS reaches a cell belonging to the other island, the number of layers expanded through water so far is your answer"
+  ],
+  "commonMistakes": [
+    "starting the second BFS from only one cell of the first island instead of all of its cells at once, which gives an incorrect shortest distance",
+    "off-by-one errors between counting grid cells crossed versus counting water cells flipped",
+    "not first identifying which cells belong to which island, and accidentally treating both islands as a single search boundary"
+  ],
+  "content": {
+    "problemStatement": "You're given a grid of 0s and 1s containing exactly two islands (each\nisland is a group of 1s connected horizontally or vertically, and the\ntwo islands are not connected to each other).\n\n**You may change any number of 0s to 1s to build a bridge connecting the two islands. Return the minimum number of 0s that must be flipped to connect them.**\n",
+    "constraints": [
+      "1 <= grid.length, grid[i].length <= 100",
+      "grid[i][j] is 0 or 1",
+      "the grid contains exactly two islands (4-directionally connected groups of 1s)"
+    ],
+    "notes": [
+      "the two islands are diagonal neighbors, one cell apart",
+      "the two islands are far apart with a long stretch of water between them",
+      "islands of different sizes and shapes",
+      "the closest cells of each island are not obvious from the islands' bounding boxes"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[0,1],[1,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the two single-cell islands are diagonal neighbors; flipping either of the two water cells between them connects them"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[1,1,0,0,0],[1,1,0,0,0],[0,0,0,1,1],[0,0,0,1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the closest points of the two 2x2 islands are two water cells apart"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[1,0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single water cell separates the two islands"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1,0,0,0],[1,1,0,0,0],[0,0,0,1,1],[0,0,0,1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,0,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,0,0,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,0,0],[0,0,0],[0,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,0,0,0,0,0,0,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,1,1,0,0,0],[1,0,0,0,0,0],[0,0,0,0,1,0],[0,0,0,0,0,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,0,0,0],[1,0,0,0,0],[0,0,0,0,0],[0,0,0,0,1],[0,0,0,1,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,1,0,0,0,0,0,0],[1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1],[0,0,0,0,0,0,1,1]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1],[0],[0],[1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,0,0,0],[0,0,0,0],[0,0,0,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0,0,0,0],[0,1,1,0,0],[0,1,1,0,0],[0,0,0,1,1],[0,0,0,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,1,0,0,0,0,1,1],[1,1,0,0,0,0,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,0],[0,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,0,0],[0,0,0],[0,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,1,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,1,1,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,0,1,0,0],[0,0,0,0,0],[1,0,0,0,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,1,0],[0,0,0,0,0,0,1,1,0],[0,0,0,0,0,0,0,0,0]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,1,1,1,1,0,0,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,0,1],[0,0,0],[1,0,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[0,1],[1,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the two single-cell islands are diagonal neighbors; flipping either of the two water cells between them connects them"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[1,1,0,0,0],[1,1,0,0,0],[0,0,0,1,1],[0,0,0,1,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the closest points of the two 2x2 islands are two water cells apart"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[1,0,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single water cell separates the two islands"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[0,1],[1,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the two single-cell islands are diagonal neighbors; flipping either of the two water cells between them connects them"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[1,1,0,0,0],[1,1,0,0,0],[0,0,0,1,1],[0,0,0,1,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the closest points of the two 2x2 islands are two water cells apart"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[1,0,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "a single water cell separates the two islands"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[0,1],[1,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,1,0,0,0],[1,1,0,0,0],[0,0,0,1,1],[0,0,0,1,1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,0,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,0,0,1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,0,0],[0,0,0],[0,0,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,0,0,0,0,0,0,1]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,1,1,0,0,0],[1,0,0,0,0,0],[0,0,0,0,1,0],[0,0,0,0,0,0]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,1,0,0,0],[1,0,0,0,0],[0,0,0,0,0],[0,0,0,0,1],[0,0,0,1,1]]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,1,0,0,0,0,0,0],[1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1],[0,0,0,0,0,0,1,1]]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1],[0],[0],[1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,0,0,0],[0,0,0,0],[0,0,0,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,0,0,0,0],[0,1,1,0,0],[0,1,1,0,0],[0,0,0,1,1],[0,0,0,1,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,1,0,0,0,0,1,1],[1,1,0,0,0,0,1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,0],[0,1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,0,0],[0,0,0],[0,0,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,1,1,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,1,1,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[0,0,1,0,0],[0,0,0,0,0],[1,0,0,0,0]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,1,0],[0,0,0,0,0,0,1,1,0],[0,0,0,0,0,0,0,0,0]]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,1,1,1,1,1,0,0,0,1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[0,0,1],[0,0,0],[1,0,0]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[0,1],[1,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the two single-cell islands are diagonal neighbors; flipping either of the two water cells between them connects them"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[1,1,0,0,0],[1,1,0,0,0],[0,0,0,1,1],[0,0,0,1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the closest points of the two 2x2 islands are two water cells apart"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[1,0,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "a single water cell separates the two islands"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,1,0,0,0],[1,1,0,0,0],[0,0,0,1,1],[0,0,0,1,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,0,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,0,0,1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,0,0],[0,0,0],[0,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,0,0,0,0,0,0,1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,1,1,0,0,0],[1,0,0,0,0,0],[0,0,0,0,1,0],[0,0,0,0,0,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,1,0,0,0],[1,0,0,0,0],[0,0,0,0,0],[0,0,0,0,1],[0,0,0,1,1]]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,1,0,0,0,0,0,0],[1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1],[0,0,0,0,0,0,1,1]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1],[0],[0],[1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,0,0,0],[0,0,0,0],[0,0,0,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0,0,0,0],[0,1,1,0,0],[0,1,1,0,0],[0,0,0,1,1],[0,0,0,1,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,1,0,0,0,0,1,1],[1,1,0,0,0,0,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,0],[0,1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,0,0],[0,0,0],[0,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,1,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,1,1,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0,0,1,0,0],[0,0,0,0,0],[1,0,0,0,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,0,0,0,0,0,0,0,0],[0,1,1,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,1,0],[0,0,0,0,0,0,1,1,0],[0,0,0,0,0,0,0,0,0]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,1,1,1,1,0,0,0,1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,0,1],[0,0,0],[1,0,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def shortestBridge(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int shortestBridge(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int shortestBridge(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun shortestBridge(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    shortestBridge(grid) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def shortestBridge(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int shortestBridge(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int shortestBridge(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun shortestBridge(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    shortestBridge(grid) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def shortestBridge(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int shortestBridge(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int shortestBridge(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun shortestBridge(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    shortestBridge(grid) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def shortestBridge(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int shortestBridge(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int shortestBridge(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun shortestBridge(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    shortestBridge(grid) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(rows * cols)",
+      "space": "O(rows * cols)",
+      "pattern": "graph dfs to find the first island, then multi-source graph bfs expanding outward from it to find the second"
+    },
+    "bruteForce": {
+      "approach": "try every possible subset of water cells to flip and check whether the islands become connected, then keep the smallest such subset",
+      "time": "exponential in the number of water cells",
+      "space": "O(rows * cols)"
+    }
+  },
+  "optimal": {
+    "pattern": "graph dfs to find the first island, then multi-source graph bfs expanding outward from it to find the second",
+    "time": "O(rows * cols)",
+    "space": "O(rows * cols)",
+    "hint_ladder": [
+      "first, find and mark every cell belonging to one of the two islands using DFS or BFS (any island works, just pick one, e.g. the first 1 you scan)",
+      "now treat every cell of that island as a level-0 source for a fresh multi-source BFS that expands outward through water cells",
+      "each BFS layer represents flipping one more ring of water cells; expand layer by layer, counting steps",
+      "the moment the BFS reaches a cell belonging to the other island, the number of layers expanded through water so far is your answer"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every possible subset of water cells to flip and check whether the islands become connected, then keep the smallest such subset",
+    "time": "exponential in the number of water cells",
+    "space": "O(rows * cols)"
+  },
+  "isIndex0": true,
+  "level": null
+}

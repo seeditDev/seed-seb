@@ -1,0 +1,629 @@
+{
+  "id": "swap-nodes-in-pairs",
+  "questionId": "swap-nodes-in-pairs",
+  "slug": "swap-nodes-in-pairs",
+  "title": "Swap Nodes in Pairs",
+  "difficulty": "Medium",
+  "category": "Fast slow pointers",
+  "patterns": [
+    "fast & slow pointers",
+    "linked list",
+    "two pointers"
+  ],
+  "lists": [],
+  "hints": [
+    "swapping values by index is straightforward with an array - the more interesting version of this problem is doing it by relinking actual next pointers, which is what the fast/slow style two-pointer walk is practicing",
+    "keep a pointer to the node just before the current pair, so you can relink it to point at the second node of the pair once swapped",
+    "for each pair, rewire: prev -> second -> first -> (rest of the list), then advance prev to what is now the end of this pair (the first node)",
+    "handle the leftover single node at the end (if the list length is odd) by simply leaving it linked as-is when there's no second node to pair it with"
+  ],
+  "commonMistakes": [
+    "losing the reference to the rest of the list while relinking a pair, breaking the chain",
+    "not leaving a trailing unpaired node in place on odd-length lists",
+    "swapping values in place with a temp variable when the point of the exercise is pointer manipulation (works for this problem's I/O, but doesn't build the intended skill)"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]` is the value of the i-th node in order.\n\n**Swap every two adjacent nodes' values and return the resulting list's values in order.**\n\nIf the list has an odd number of nodes, leave the final unpaired node in place.\n",
+    "constraints": [
+      "0 <= nums.length <= 100",
+      "the number of nodes may be odd or even"
+    ],
+    "notes": [
+      "an empty list",
+      "a single-node list",
+      "an odd-length list where the last node is left unpaired"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "[2, 1, 4, 3]",
+        "expectedOutput": "[2, 1, 4, 3]",
+        "explanation": "swap (1,2) and (3,4)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "[2, 1, 3]",
+        "expectedOutput": "[2, 1, 3]",
+        "explanation": "swap (1,2), the trailing node 3 has no pair so it stays put"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = []",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "an empty list has nothing to swap"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4]]",
+        "output": "[2,1,4,3]",
+        "expectedOutput": "[2,1,4,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3]]",
+        "output": "[2,1,3]",
+        "expectedOutput": "[2,1,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "[2,1,4,3,6,5]",
+        "expectedOutput": "[2,1,4,3,6,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[9]]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2]]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[2,1,4,3,5]",
+        "expectedOutput": "[2,1,4,3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-1,-2,-3,-4]]",
+        "output": "[-2,-1,-4,-3]",
+        "expectedOutput": "[-2,-1,-4,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,0]]",
+        "output": "[0,0,0,0]",
+        "expectedOutput": "[0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]]",
+        "output": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15]",
+        "expectedOutput": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]]",
+        "output": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15,17]",
+        "expectedOutput": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15,17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,5,5,5,5,5]]",
+        "output": "[5,5,5,5,5,5]",
+        "expectedOutput": "[5,5,5,5,5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[10,20,30,40,50,60,70,80]]",
+        "output": "[20,10,40,30,60,50,80,70]",
+        "expectedOutput": "[20,10,40,30,60,50,80,70]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9]]",
+        "output": "[-9,-10,-7,-8,-5,-6,-3,-4,-1,-2,1,0,3,2,5,4,7,6,9,8]",
+        "expectedOutput": "[-9,-10,-7,-8,-5,-6,-3,-4,-1,-2,1,0,3,2,5,4,7,6,9,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[7,8,9]]",
+        "output": "[8,7,9]",
+        "expectedOutput": "[8,7,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[2,1,4,3,6,5,7]",
+        "expectedOutput": "[2,1,4,3,6,5,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[4,3,2,1]]",
+        "output": "[3,4,1,2]",
+        "expectedOutput": "[3,4,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[11,12]]",
+        "output": "[12,11]",
+        "expectedOutput": "[12,11]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100,200,300,400,500,600,700,800,900,1000]]",
+        "output": "[200,100,400,300,600,500,800,700,1000,900]",
+        "expectedOutput": "[200,100,400,300,600,500,800,700,1000,900]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "[2, 1, 4, 3]",
+      "expectedOutput": "[2, 1, 4, 3]",
+      "explanation": "swap (1,2) and (3,4)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "[2, 1, 3]",
+      "expectedOutput": "[2, 1, 3]",
+      "explanation": "swap (1,2), the trailing node 3 has no pair so it stays put"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = []",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "an empty list has nothing to swap"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4]",
+      "output": "[2, 1, 4, 3]",
+      "expectedOutput": "[2, 1, 4, 3]",
+      "explanation": "swap (1,2) and (3,4)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3]",
+      "output": "[2, 1, 3]",
+      "expectedOutput": "[2, 1, 3]",
+      "explanation": "swap (1,2), the trailing node 3 has no pair so it stays put"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = []",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "an empty list has nothing to swap"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4]]",
+      "output": "[2,1,4,3]",
+      "expectedOutput": "[2,1,4,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3]]",
+      "output": "[2,1,3]",
+      "expectedOutput": "[2,1,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3,4,5,6]]",
+      "output": "[2,1,4,3,6,5]",
+      "expectedOutput": "[2,1,4,3,6,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[9]]",
+      "output": "[9]",
+      "expectedOutput": "[9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2]]",
+      "output": "[2,1]",
+      "expectedOutput": "[2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5]]",
+      "output": "[2,1,4,3,5]",
+      "expectedOutput": "[2,1,4,3,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-1,-2,-3,-4]]",
+      "output": "[-2,-1,-4,-3]",
+      "expectedOutput": "[-2,-1,-4,-3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,0,0,0]]",
+      "output": "[0,0,0,0]",
+      "expectedOutput": "[0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]]",
+      "output": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15]",
+      "expectedOutput": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]]",
+      "output": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15,17]",
+      "expectedOutput": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15,17]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[5,5,5,5,5,5]]",
+      "output": "[5,5,5,5,5,5]",
+      "expectedOutput": "[5,5,5,5,5,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[10,20,30,40,50,60,70,80]]",
+      "output": "[20,10,40,30,60,50,80,70]",
+      "expectedOutput": "[20,10,40,30,60,50,80,70]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9]]",
+      "output": "[-9,-10,-7,-8,-5,-6,-3,-4,-1,-2,1,0,3,2,5,4,7,6,9,8]",
+      "expectedOutput": "[-9,-10,-7,-8,-5,-6,-3,-4,-1,-2,1,0,3,2,5,4,7,6,9,8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[7,8,9]]",
+      "output": "[8,7,9]",
+      "expectedOutput": "[8,7,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "[2,1,4,3,6,5,7]",
+      "expectedOutput": "[2,1,4,3,6,5,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[4,3,2,1]]",
+      "output": "[3,4,1,2]",
+      "expectedOutput": "[3,4,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[11,12]]",
+      "output": "[12,11]",
+      "expectedOutput": "[12,11]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[100,200,300,400,500,600,700,800,900,1000]]",
+      "output": "[200,100,400,300,600,500,800,700,1000,900]",
+      "expectedOutput": "[200,100,400,300,600,500,800,700,1000,900]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4]",
+        "output": "[2, 1, 4, 3]",
+        "expectedOutput": "[2, 1, 4, 3]",
+        "explanation": "swap (1,2) and (3,4)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3]",
+        "output": "[2, 1, 3]",
+        "expectedOutput": "[2, 1, 3]",
+        "explanation": "swap (1,2), the trailing node 3 has no pair so it stays put"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = []",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "an empty list has nothing to swap"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4]]",
+        "output": "[2,1,4,3]",
+        "expectedOutput": "[2,1,4,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3]]",
+        "output": "[2,1,3]",
+        "expectedOutput": "[2,1,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5,6]]",
+        "output": "[2,1,4,3,6,5]",
+        "expectedOutput": "[2,1,4,3,6,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[9]]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2]]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5]]",
+        "output": "[2,1,4,3,5]",
+        "expectedOutput": "[2,1,4,3,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-1,-2,-3,-4]]",
+        "output": "[-2,-1,-4,-3]",
+        "expectedOutput": "[-2,-1,-4,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,0]]",
+        "output": "[0,0,0,0]",
+        "expectedOutput": "[0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]]",
+        "output": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15]",
+        "expectedOutput": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]]",
+        "output": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15,17]",
+        "expectedOutput": "[2,1,4,3,6,5,8,7,10,9,12,11,14,13,16,15,17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,5,5,5,5,5]]",
+        "output": "[5,5,5,5,5,5]",
+        "expectedOutput": "[5,5,5,5,5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[10,20,30,40,50,60,70,80]]",
+        "output": "[20,10,40,30,60,50,80,70]",
+        "expectedOutput": "[20,10,40,30,60,50,80,70]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9]]",
+        "output": "[-9,-10,-7,-8,-5,-6,-3,-4,-1,-2,1,0,3,2,5,4,7,6,9,8]",
+        "expectedOutput": "[-9,-10,-7,-8,-5,-6,-3,-4,-1,-2,1,0,3,2,5,4,7,6,9,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[7,8,9]]",
+        "output": "[8,7,9]",
+        "expectedOutput": "[8,7,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[2,1,4,3,6,5,7]",
+        "expectedOutput": "[2,1,4,3,6,5,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[4,3,2,1]]",
+        "output": "[3,4,1,2]",
+        "expectedOutput": "[3,4,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[11,12]]",
+        "output": "[12,11]",
+        "expectedOutput": "[12,11]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100,200,300,400,500,600,700,800,900,1000]]",
+        "output": "[200,100,400,300,600,500,800,700,1000,900]",
+        "expectedOutput": "[200,100,400,300,600,500,800,700,1000,900]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def swapPairs(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> swapPairs(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] swapPairs(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun swapPairs(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    swapPairs(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def swapPairs(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> swapPairs(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] swapPairs(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun swapPairs(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    swapPairs(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def swapPairs(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> swapPairs(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] swapPairs(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun swapPairs(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    swapPairs(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def swapPairs(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> swapPairs(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] swapPairs(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun swapPairs(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    swapPairs(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra besides the output",
+      "pattern": "two pointers walking the list two nodes at a time, relinking each pair as you pass through"
+    },
+    "bruteForce": {
+      "approach": "copy values into an array, then swap each adjacent pair by index",
+      "time": "O(n)",
+      "space": "O(n) for the copy, or O(1) if swapping in place within the array"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers walking the list two nodes at a time, relinking each pair as you pass through",
+    "time": "O(n)",
+    "space": "O(1) extra besides the output",
+    "hint_ladder": [
+      "swapping values by index is straightforward with an array - the more interesting version of this problem is doing it by relinking actual next pointers, which is what the fast/slow style two-pointer walk is practicing",
+      "keep a pointer to the node just before the current pair, so you can relink it to point at the second node of the pair once swapped",
+      "for each pair, rewire: prev -> second -> first -> (rest of the list), then advance prev to what is now the end of this pair (the first node)",
+      "handle the leftover single node at the end (if the list length is odd) by simply leaving it linked as-is when there's no second node to pair it with"
+    ]
+  },
+  "bruteForce": {
+    "approach": "copy values into an array, then swap each adjacent pair by index",
+    "time": "O(n)",
+    "space": "O(n) for the copy, or O(1) if swapping in place within the array"
+  },
+  "isIndex0": true,
+  "level": null
+}

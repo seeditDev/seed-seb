@@ -1,0 +1,631 @@
+{
+  "id": "short-encoding-of-words",
+  "questionId": "short-encoding-of-words",
+  "slug": "short-encoding-of-words",
+  "title": "Short Encoding of Words",
+  "difficulty": "Hard",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "'word A is a suffix of word B' is the same as 'reverse(A) is a prefix of reverse(B)' - reversing turns a suffix relationship into a familiar prefix relationship",
+    "reverse every word, and insert all the reversed words into a trie",
+    "after inserting everything, a word needs to be KEPT only if its reversed form ends at a leaf node (a node with no children) - if it has children, some other longer word's reversal passes through it, meaning the original word is a suffix of that other word and can be dropped",
+    "sum (word length + 1) over exactly the kept words - the '+1' accounts for the '#' separator after each one",
+    "watch out for duplicate words: insert them as normal, but only count a given distinct word once toward the final sum, even if it appears multiple times in the input list"
+  ],
+  "commonMistakes": [
+    "checking prefixes instead of suffixes (forgetting to reverse the words first)",
+    "double-counting duplicate words in the final length sum",
+    "using 'is a leaf' incorrectly - a node can be both end-of-word AND have children if one word's reversal is itself a proper prefix of another's; only leaf nodes (no children at all) correspond to words that must be kept"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited string of lowercase words. You want to\nbuild a single \"reference string\" made of some of these words joined by\n'#' characters (with a trailing '#'), such that every word in the list\nappears as a suffix of the reference string ending right before one of\nthose '#' markers.\n\n**Return the minimum possible length of such a reference string.**\n\nA word can be dropped from the reference string entirely if it is already a suffix of some other included word, since that word's encoding already covers it.\n",
+    "constraints": [
+      "1 <= number of words <= 2000",
+      "1 <= length of each word <= 7",
+      "words consist only of lowercase English letters, separated by single spaces"
+    ],
+    "notes": [
+      "duplicate words in the list (only counted once toward the final length)",
+      "a word that is a suffix of another word but shares no prefix with it, e.g. 'bell' and 'ell'",
+      "no word is a suffix of any other word (every word must be kept)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"time me bell\"",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "\"me\" is a suffix of \"time\", so it can be dropped; the reference string is \"time#bell#\" (4+1 + 4+1 = 10)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"time atime botime\"",
+        "output": "13",
+        "expectedOutput": "13",
+        "explanation": "\"time\" is a suffix of both \"atime\" and \"botime\", so it is dropped; reference string covers \"atime#botime#\" (5+1 + 6+1 = 13)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"abc bc c\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "\"bc\" is a suffix of \"abc\", and \"c\" is a suffix of \"abc\" too, so only \"abc\" is needed: \"abc#\" (3+1 = 4)"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"time me bell\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"time atime botime\"]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a a\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc bc c\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"apple app\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a b c\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"word\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"cat scat\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ell bell dell yell shell\"]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaa aa a\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"hello world hello\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"run runner\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"at cat bat rat mat\"]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"z zz zzz zzzz zzzzz\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"same same same\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"xy y yx x\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"programming ming ing\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdef bcdef cdef def ef f\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"goose moose loose\"]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"time me bell\"",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "\"me\" is a suffix of \"time\", so it can be dropped; the reference string is \"time#bell#\" (4+1 + 4+1 = 10)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"time atime botime\"",
+      "output": "13",
+      "expectedOutput": "13",
+      "explanation": "\"time\" is a suffix of both \"atime\" and \"botime\", so it is dropped; reference string covers \"atime#botime#\" (5+1 + 6+1 = 13)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"abc bc c\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "\"bc\" is a suffix of \"abc\", and \"c\" is a suffix of \"abc\" too, so only \"abc\" is needed: \"abc#\" (3+1 = 4)"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"time me bell\"",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "\"me\" is a suffix of \"time\", so it can be dropped; the reference string is \"time#bell#\" (4+1 + 4+1 = 10)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"time atime botime\"",
+      "output": "13",
+      "expectedOutput": "13",
+      "explanation": "\"time\" is a suffix of both \"atime\" and \"botime\", so it is dropped; reference string covers \"atime#botime#\" (5+1 + 6+1 = 13)"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"abc bc c\"",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "\"bc\" is a suffix of \"abc\", and \"c\" is a suffix of \"abc\" too, so only \"abc\" is needed: \"abc#\" (3+1 = 4)"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"time me bell\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"time atime botime\"]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a a\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"abc bc c\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"apple app\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"a b c\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"word\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"cat scat\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"ell bell dell yell shell\"]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aaa aa a\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"hello world hello\"]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"run runner\"]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"at cat bat rat mat\"]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"z zz zzz zzzz zzzzz\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"same same same\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"xy y yx x\"]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"programming ming ing\"]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abcdef bcdef cdef def ef f\"]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"goose moose loose\"]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"time me bell\"",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "\"me\" is a suffix of \"time\", so it can be dropped; the reference string is \"time#bell#\" (4+1 + 4+1 = 10)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"time atime botime\"",
+        "output": "13",
+        "expectedOutput": "13",
+        "explanation": "\"time\" is a suffix of both \"atime\" and \"botime\", so it is dropped; reference string covers \"atime#botime#\" (5+1 + 6+1 = 13)"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"abc bc c\"",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "\"bc\" is a suffix of \"abc\", and \"c\" is a suffix of \"abc\" too, so only \"abc\" is needed: \"abc#\" (3+1 = 4)"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"time me bell\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"time atime botime\"]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a a\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abc bc c\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"apple app\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a b c\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"word\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"cat scat\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"ell bell dell yell shell\"]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaa aa a\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"hello world hello\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"run runner\"]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"at cat bat rat mat\"]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"z zz zzz zzzz zzzzz\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"same same same\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"xy y yx x\"]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"programming ming ing\"]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdef bcdef cdef def ef f\"]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"goose moose loose\"]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minimumEncodingLength(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <unordered_set>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumEncodingLength(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumEncodingLength(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumEncodingLength(words: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumEncodingLength(words) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minimumEncodingLength(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <unordered_set>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumEncodingLength(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumEncodingLength(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumEncodingLength(words: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumEncodingLength(words) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minimumEncodingLength(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <unordered_set>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumEncodingLength(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumEncodingLength(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumEncodingLength(words: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumEncodingLength(words) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minimumEncodingLength(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <unordered_set>\n#include <sstream>\n#include <algorithm>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumEncodingLength(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumEncodingLength(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumEncodingLength(words: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumEncodingLength(words) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(total characters) to build the trie and check every word",
+      "space": "O(total characters)",
+      "pattern": "reverse every word and insert the reversed strings into a trie; a word can be dropped exactly when its reversed form is a strict prefix of some other reversed word's path in the trie, which is equivalent to that word's trie node NOT being a leaf (having at least one child)"
+    },
+    "bruteForce": {
+      "approach": "dedupe the words, then for each word check whether it is a suffix of any OTHER word in the list; keep only the words that are not a suffix of anything else, and sum (length + 1) over the kept words",
+      "time": "O(n^2 * m) checking every pair for the suffix relationship",
+      "space": "O(n * m)"
+    }
+  },
+  "optimal": {
+    "pattern": "reverse every word and insert the reversed strings into a trie; a word can be dropped exactly when its reversed form is a strict prefix of some other reversed word's path in the trie, which is equivalent to that word's trie node NOT being a leaf (having at least one child)",
+    "time": "O(total characters) to build the trie and check every word",
+    "space": "O(total characters)",
+    "hint_ladder": [
+      "'word A is a suffix of word B' is the same as 'reverse(A) is a prefix of reverse(B)' - reversing turns a suffix relationship into a familiar prefix relationship",
+      "reverse every word, and insert all the reversed words into a trie",
+      "after inserting everything, a word needs to be KEPT only if its reversed form ends at a leaf node (a node with no children) - if it has children, some other longer word's reversal passes through it, meaning the original word is a suffix of that other word and can be dropped",
+      "sum (word length + 1) over exactly the kept words - the '+1' accounts for the '#' separator after each one",
+      "watch out for duplicate words: insert them as normal, but only count a given distinct word once toward the final sum, even if it appears multiple times in the input list"
+    ]
+  },
+  "bruteForce": {
+    "approach": "dedupe the words, then for each word check whether it is a suffix of any OTHER word in the list; keep only the words that are not a suffix of anything else, and sum (length + 1) over the kept words",
+    "time": "O(n^2 * m) checking every pair for the suffix relationship",
+    "space": "O(n * m)"
+  },
+  "isIndex0": true,
+  "level": null
+}

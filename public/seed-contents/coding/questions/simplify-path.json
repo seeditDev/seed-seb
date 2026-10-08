@@ -1,0 +1,630 @@
+{
+  "id": "simplify-path",
+  "questionId": "simplify-path",
+  "slug": "simplify-path",
+  "title": "Simplify Path",
+  "difficulty": "Medium",
+  "category": "Stack",
+  "patterns": [
+    "stack"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "split the path on '/' to get individual components; empty strings from consecutive slashes and single-dot components can just be skipped",
+    "\"..\" means 'undo the most recently entered directory' - what structure naturally supports undoing the most recent addition?",
+    "keep a stack of real directory names: push a name when you see one, and pop (if non-empty) when you see \"..\"",
+    "at the end, join the stack's contents with '/' and prefix with a leading '/'; if the stack is empty, the answer is just \"/\""
+  ],
+  "commonMistakes": [
+    "popping from an empty stack on \"..\" instead of treating it as a no-op at the root",
+    "not filtering out empty strings produced by consecutive slashes when splitting the path",
+    "forgetting the special case where the final simplified path is just the root, producing an empty string instead of \"/\""
+  ],
+  "content": {
+    "problemStatement": "You're given a string representing an absolute Unix-style file path,\nstarting with '/'. The path may contain single dots (\".\", meaning stay\nin the current directory), double dots (\"..\", meaning move up to the\nparent directory), multiple consecutive slashes, and a trailing slash.\n\n**Return the simplified canonical path.**\n\nThe result must start with a single '/', use exactly one '/' between directory names, contain no trailing slash (unless the whole path is just the root \"/\"), and must not contain any \".\" or \"..\" components. Attempting to go above the root simply stays at the root.\n",
+    "constraints": [
+      "1 <= path.length <= 3000",
+      "path consists of English letters, digits, '.', '/', or '_'",
+      "path is a valid absolute Unix-style path starting with '/'"
+    ],
+    "notes": [
+      "\"..\" that would go above the root directory (stays at root)",
+      "a path that simplifies all the way down to just \"/\"",
+      "many consecutive slashes in a row"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "path = \"/home/\"",
+        "output": "\"/home\"",
+        "expectedOutput": "\"/home\"",
+        "explanation": "trailing slash is removed"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "path = \"/home//foo/\"",
+        "output": "\"/home/foo\"",
+        "expectedOutput": "\"/home/foo\"",
+        "explanation": "consecutive slashes collapse into one separator"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "path = \"/a/./b/../../c/\"",
+        "output": "\"/c\"",
+        "expectedOutput": "\"/c\"",
+        "explanation": "\".\" is a no-op, and each \"..\" pops one directory: a -> a/b -> a (via ..) -> empty (via ..) -> c"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"/home/\"]",
+        "output": "/home",
+        "expectedOutput": "/home",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"/home//foo/\"]",
+        "output": "/home/foo",
+        "expectedOutput": "/home/foo",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"/a/./b/../../c/\"]",
+        "output": "/c",
+        "expectedOutput": "/c",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"/../\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"/a/../../b/../c//.//\"]",
+        "output": "/c",
+        "expectedOutput": "/c",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"/\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"/..\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"/...\"]",
+        "output": "/...",
+        "expectedOutput": "/...",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"/a/\"]",
+        "output": "/a",
+        "expectedOutput": "/a",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"/a/b/c/d/e\"]",
+        "output": "/a/b/c/d/e",
+        "expectedOutput": "/a/b/c/d/e",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"//a//b//c//\"]",
+        "output": "/a/b/c",
+        "expectedOutput": "/a/b/c",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"/a/./b/./c/./d/\"]",
+        "output": "/a/b/c/d",
+        "expectedOutput": "/a/b/c/d",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"/a/../../../../b\"]",
+        "output": "/b",
+        "expectedOutput": "/b",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"/x/y/z/../../../../..\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"/./\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"/a//b////c/d//././/..\"]",
+        "output": "/a/b/c",
+        "expectedOutput": "/a/b/c",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"/home/user/../user2/./docs/\"]",
+        "output": "/home/user2/docs",
+        "expectedOutput": "/home/user2/docs",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"/..hidden/.file/\"]",
+        "output": "/..hidden/.file",
+        "expectedOutput": "/..hidden/.file",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"/a/b/../../../../\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"/a/b/c/../../..\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "path = \"/home/\"",
+      "output": "\"/home\"",
+      "expectedOutput": "\"/home\"",
+      "explanation": "trailing slash is removed"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "path = \"/home//foo/\"",
+      "output": "\"/home/foo\"",
+      "expectedOutput": "\"/home/foo\"",
+      "explanation": "consecutive slashes collapse into one separator"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "path = \"/a/./b/../../c/\"",
+      "output": "\"/c\"",
+      "expectedOutput": "\"/c\"",
+      "explanation": "\".\" is a no-op, and each \"..\" pops one directory: a -> a/b -> a (via ..) -> empty (via ..) -> c"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "path = \"/home/\"",
+      "output": "\"/home\"",
+      "expectedOutput": "\"/home\"",
+      "explanation": "trailing slash is removed"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "path = \"/home//foo/\"",
+      "output": "\"/home/foo\"",
+      "expectedOutput": "\"/home/foo\"",
+      "explanation": "consecutive slashes collapse into one separator"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "path = \"/a/./b/../../c/\"",
+      "output": "\"/c\"",
+      "expectedOutput": "\"/c\"",
+      "explanation": "\".\" is a no-op, and each \"..\" pops one directory: a -> a/b -> a (via ..) -> empty (via ..) -> c"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"/home/\"]",
+      "output": "/home",
+      "expectedOutput": "/home",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"/home//foo/\"]",
+      "output": "/home/foo",
+      "expectedOutput": "/home/foo",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"/a/./b/../../c/\"]",
+      "output": "/c",
+      "expectedOutput": "/c",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"/../\"]",
+      "output": "/",
+      "expectedOutput": "/",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"/a/../../b/../c//.//\"]",
+      "output": "/c",
+      "expectedOutput": "/c",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"/\"]",
+      "output": "/",
+      "expectedOutput": "/",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"/..\"]",
+      "output": "/",
+      "expectedOutput": "/",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"/...\"]",
+      "output": "/...",
+      "expectedOutput": "/...",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"/a/\"]",
+      "output": "/a",
+      "expectedOutput": "/a",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"/a/b/c/d/e\"]",
+      "output": "/a/b/c/d/e",
+      "expectedOutput": "/a/b/c/d/e",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"//a//b//c//\"]",
+      "output": "/a/b/c",
+      "expectedOutput": "/a/b/c",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"/a/./b/./c/./d/\"]",
+      "output": "/a/b/c/d",
+      "expectedOutput": "/a/b/c/d",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"/a/../../../../b\"]",
+      "output": "/b",
+      "expectedOutput": "/b",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"/x/y/z/../../../../..\"]",
+      "output": "/",
+      "expectedOutput": "/",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"/./\"]",
+      "output": "/",
+      "expectedOutput": "/",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"/a//b////c/d//././/..\"]",
+      "output": "/a/b/c",
+      "expectedOutput": "/a/b/c",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"/home/user/../user2/./docs/\"]",
+      "output": "/home/user2/docs",
+      "expectedOutput": "/home/user2/docs",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"/..hidden/.file/\"]",
+      "output": "/..hidden/.file",
+      "expectedOutput": "/..hidden/.file",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"/a/b/../../../../\"]",
+      "output": "/",
+      "expectedOutput": "/",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"/a/b/c/../../..\"]",
+      "output": "/",
+      "expectedOutput": "/",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "path = \"/home/\"",
+        "output": "\"/home\"",
+        "expectedOutput": "\"/home\"",
+        "explanation": "trailing slash is removed"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "path = \"/home//foo/\"",
+        "output": "\"/home/foo\"",
+        "expectedOutput": "\"/home/foo\"",
+        "explanation": "consecutive slashes collapse into one separator"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "path = \"/a/./b/../../c/\"",
+        "output": "\"/c\"",
+        "expectedOutput": "\"/c\"",
+        "explanation": "\".\" is a no-op, and each \"..\" pops one directory: a -> a/b -> a (via ..) -> empty (via ..) -> c"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"/home/\"]",
+        "output": "/home",
+        "expectedOutput": "/home",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"/home//foo/\"]",
+        "output": "/home/foo",
+        "expectedOutput": "/home/foo",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"/a/./b/../../c/\"]",
+        "output": "/c",
+        "expectedOutput": "/c",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"/../\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"/a/../../b/../c//.//\"]",
+        "output": "/c",
+        "expectedOutput": "/c",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"/\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"/..\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"/...\"]",
+        "output": "/...",
+        "expectedOutput": "/...",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"/a/\"]",
+        "output": "/a",
+        "expectedOutput": "/a",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"/a/b/c/d/e\"]",
+        "output": "/a/b/c/d/e",
+        "expectedOutput": "/a/b/c/d/e",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"//a//b//c//\"]",
+        "output": "/a/b/c",
+        "expectedOutput": "/a/b/c",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"/a/./b/./c/./d/\"]",
+        "output": "/a/b/c/d",
+        "expectedOutput": "/a/b/c/d",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"/a/../../../../b\"]",
+        "output": "/b",
+        "expectedOutput": "/b",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"/x/y/z/../../../../..\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"/./\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"/a//b////c/d//././/..\"]",
+        "output": "/a/b/c",
+        "expectedOutput": "/a/b/c",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"/home/user/../user2/./docs/\"]",
+        "output": "/home/user2/docs",
+        "expectedOutput": "/home/user2/docs",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"/..hidden/.file/\"]",
+        "output": "/..hidden/.file",
+        "expectedOutput": "/..hidden/.file",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"/a/b/../../../../\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"/a/b/c/../../..\"]",
+        "output": "/",
+        "expectedOutput": "/",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def simplifyPath(self, path):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string simplifyPath(string path) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String simplifyPath(String path) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun simplifyPath(path: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    simplifyPath(path) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def simplifyPath(self, path):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string simplifyPath(string path) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String simplifyPath(String path) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun simplifyPath(path: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    simplifyPath(path) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def simplifyPath(self, path):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string simplifyPath(string path) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String simplifyPath(String path) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun simplifyPath(path: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    simplifyPath(path) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def simplifyPath(self, path):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string simplifyPath(string path) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String simplifyPath(String path) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun simplifyPath(path: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    simplifyPath(path) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n)",
+      "pattern": "stack of directory name components"
+    },
+    "bruteForce": {
+      "approach": "same as the optimal approach - splitting on slashes and using a stack of directory names is already the simplest way to resolve this correctly",
+      "time": "O(n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "stack of directory name components",
+    "time": "O(n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "split the path on '/' to get individual components; empty strings from consecutive slashes and single-dot components can just be skipped",
+      "\"..\" means 'undo the most recently entered directory' - what structure naturally supports undoing the most recent addition?",
+      "keep a stack of real directory names: push a name when you see one, and pop (if non-empty) when you see \"..\"",
+      "at the end, join the stack's contents with '/' and prefix with a leading '/'; if the stack is empty, the answer is just \"/\""
+    ]
+  },
+  "bruteForce": {
+    "approach": "same as the optimal approach - splitting on slashes and using a stack of directory names is already the simplest way to resolve this correctly",
+    "time": "O(n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

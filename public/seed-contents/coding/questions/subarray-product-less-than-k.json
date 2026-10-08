@@ -1,0 +1,597 @@
+{
+  "id": "subarray-product-less-than-k",
+  "questionId": "subarray-product-less-than-k",
+  "slug": "subarray-product-less-than-k",
+  "title": "Subarray Product Less Than K",
+  "difficulty": "Medium",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "variable-size window"
+  ],
+  "lists": [],
+  "hints": [
+    "since all numbers are positive, if a window's product is already under k, what do you know about every subarray ending at the same right edge but starting further right?",
+    "grow the window to the right, multiplying into a running product",
+    "if the product ever reaches k or more, shrink from the left (dividing out), until the product is under k again",
+    "here's the key trick: once a window [left, right] is valid, every subarray ending at 'right' and starting anywhere from 'left' to 'right' is also valid - that's (right - left + 1) new subarrays to add to your count, not just 1"
+  ],
+  "commonMistakes": [
+    "only counting the window itself as one valid subarray, instead of counting all sub-windows ending at the current right edge",
+    "not handling k <= 1 as an immediate zero, since a product can never be negative or less than 1 with positive integers other than through an empty product",
+    "using division to shrink the window in a language/context where the product could overflow before the check happens"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of positive integers and an integer `k`.\n\n**Count how many contiguous subarrays have a product strictly less than k.**\n",
+    "constraints": [
+      "1 <= nums.length <= 3 * 10^4",
+      "1 <= nums[i] <= 1000",
+      "0 <= k <= 10^6"
+    ],
+    "notes": [
+      "k = 0 or k = 1 (no subarray can have a product that small, since all elements are positive integers)",
+      "k larger than the product of the whole array (every subarray counts)",
+      "a single element array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [10, 5, 2, 6], k = 100",
+        "output": "8",
+        "expectedOutput": "8",
+        "explanation": "the 8 subarrays are [10], [5], [2], [6], [10,5], [5,2], [2,6], [5,2,6] - all with product < 100"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], k = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "no product can be less than 0 since all numbers are positive"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[10,5,2,6],100]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1],2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[100],100]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5],5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[2,2,2,2],1000]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,1,1,1,1,1,1],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1],2]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,4,8,16],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,3,3],27]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],50]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[10,9,10,4,3,8,3,3,6,2,10,10,9,3],19]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,3,5,7,11],1000]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],100]",
+        "output": "120",
+        "expectedOutput": "120",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,2,2,2,2,2,2,2,2,2],1024]",
+        "output": "54",
+        "expectedOutput": "54",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,1,2,1,2,1,2,1,2],3]",
+        "output": "23",
+        "expectedOutput": "23",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[7,3,1,9,2,8,4,6,5],30]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,2,3,1,5,2,3,1,4,2],20]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [10, 5, 2, 6], k = 100",
+      "output": "8",
+      "expectedOutput": "8",
+      "explanation": "the 8 subarrays are [10], [5], [2], [6], [10,5], [5,2], [2,6], [5,2,6] - all with product < 100"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], k = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "no product can be less than 0 since all numbers are positive"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [10, 5, 2, 6], k = 100",
+      "output": "8",
+      "expectedOutput": "8",
+      "explanation": "the 8 subarrays are [10], [5], [2], [6], [10,5], [5,2], [2,6], [5,2,6] - all with product < 100"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], k = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "no product can be less than 0 since all numbers are positive"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[10,5,2,6],100]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3],0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,1,1],2]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[100],100]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1],1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[5],5]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[2,2,2,2],1000]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,1,1,1,1,1,1,1],1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,1,1,1,1,1,1,1],2]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,4,8,16],1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[3,3,3],27]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],50]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[10,9,10,4,3,8,3,3,6,2,10,10,9,3],19]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,3,5,7,11],1000]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],100]",
+      "output": "120",
+      "expectedOutput": "120",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[2,2,2,2,2,2,2,2,2,2],1024]",
+      "output": "54",
+      "expectedOutput": "54",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,1,2,1,2,1,2,1,2],3]",
+      "output": "23",
+      "expectedOutput": "23",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[7,3,1,9,2,8,4,6,5],30]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[4,2,3,1,5,2,3,1,4,2],20]",
+      "output": "25",
+      "expectedOutput": "25",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [10, 5, 2, 6], k = 100",
+        "output": "8",
+        "expectedOutput": "8",
+        "explanation": "the 8 subarrays are [10], [5], [2], [6], [10,5], [5,2], [2,6], [5,2,6] - all with product < 100"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], k = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "no product can be less than 0 since all numbers are positive"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[10,5,2,6],100]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3],0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,1,1],2]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[100],100]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5],5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[2,2,2,2],1000]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,1,1,1,1,1,1,1],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1],2]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,4,8,16],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[3,3,3],27]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],50]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[10,9,10,4,3,8,3,3,6,2,10,10,9,3],19]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,3,5,7,11],1000]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],100]",
+        "output": "120",
+        "expectedOutput": "120",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,2,2,2,2,2,2,2,2,2],1024]",
+        "output": "54",
+        "expectedOutput": "54",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,1,2,1,2,1,2,1,2],3]",
+        "output": "23",
+        "expectedOutput": "23",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[7,3,1,9,2,8,4,6,5],30]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[4,2,3,1,5,2,3,1,4,2],20]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def numSubarrayProductLessThanK(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numSubarrayProductLessThanK(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numSubarrayProductLessThanK(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numSubarrayProductLessThanK(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numSubarrayProductLessThanK(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def numSubarrayProductLessThanK(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numSubarrayProductLessThanK(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numSubarrayProductLessThanK(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numSubarrayProductLessThanK(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numSubarrayProductLessThanK(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def numSubarrayProductLessThanK(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numSubarrayProductLessThanK(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numSubarrayProductLessThanK(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numSubarrayProductLessThanK(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numSubarrayProductLessThanK(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def numSubarrayProductLessThanK(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int numSubarrayProductLessThanK(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int numSubarrayProductLessThanK(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun numSubarrayProductLessThanK(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    numSubarrayProductLessThanK(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "variable-size sliding window, using the window's length to count all valid subarrays ending at the current right edge"
+    },
+    "bruteForce": {
+      "approach": "for every starting index, extend forward multiplying, counting each subarray whose running product stays under k",
+      "time": "O(n^2)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "variable-size sliding window, using the window's length to count all valid subarrays ending at the current right edge",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "since all numbers are positive, if a window's product is already under k, what do you know about every subarray ending at the same right edge but starting further right?",
+      "grow the window to the right, multiplying into a running product",
+      "if the product ever reaches k or more, shrink from the left (dividing out), until the product is under k again",
+      "here's the key trick: once a window [left, right] is valid, every subarray ending at 'right' and starting anywhere from 'left' to 'right' is also valid - that's (right - left + 1) new subarrays to add to your count, not just 1"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every starting index, extend forward multiplying, counting each subarray whose running product stays under k",
+    "time": "O(n^2)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

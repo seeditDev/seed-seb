@@ -1,0 +1,631 @@
+{
+  "id": "reverse-bits",
+  "questionId": "reverse-bits",
+  "slug": "reverse-bits",
+  "title": "Reverse Bits",
+  "difficulty": "Medium",
+  "category": "Bit manipulation",
+  "patterns": [
+    "bit manipulation"
+  ],
+  "lists": [
+    "blind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "you need to move the lowest bit of n to become the highest bit of the result, the second-lowest to become the second-highest, and so on - can you do this in a single pass?",
+    "at each of the 32 steps, grab n's current lowest bit with n & 1, then remove it from n by shifting n right by 1",
+    "build up the result by shifting it left by 1 first (to make room), then OR-ing in the bit you just grabbed from n",
+    "after 32 iterations of 'shift result left, OR in n's lowest bit, shift n right', result holds n's bits fully reversed - remember to treat both n and result as unsigned 32-bit values so the sign bit doesn't cause issues in languages with signed integers"
+  ],
+  "commonMistakes": [
+    "forgetting to treat the value as unsigned, causing incorrect results in languages (like Java or C++) where plain int is signed and the high bit means negative",
+    "looping fewer or more than exactly 32 times",
+    "shifting result before OR-ing in the new bit versus after, and getting the bit order backwards"
+  ],
+  "content": {
+    "problemStatement": "You're given an integer `n` representing the bit pattern of a 32-bit\nunsigned integer.\n\n**Return the integer whose 32-bit pattern is `n`'s bits reversed (the most significant bit becomes the least significant bit, and so on).**\n",
+    "constraints": [
+      "0 <= n <= 2^32 - 1",
+      "n is given as a 32-bit unsigned integer",
+      "0 <= result <= 2^32 - 1"
+    ],
+    "notes": [
+      "n = 0 (reverses to 0)",
+      "n has only its lowest bit set (reverses to only its highest bit set)",
+      "n uses the full 32-bit range, producing a result larger than 2^31 - 1"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 43261596",
+        "output": "964176192",
+        "expectedOutput": "964176192",
+        "explanation": "00000010100101000001111010011100 reversed is 00111001011110000010100101000000"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "2147483648",
+        "expectedOutput": "2147483648",
+        "explanation": "00000000000000000000000000000001 reversed is 10000000000000000000000000000000"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[43261596]",
+        "output": "964176192",
+        "expectedOutput": "964176192",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[4294967293]",
+        "output": "3221225471",
+        "expectedOutput": "3221225471",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1]",
+        "output": "2147483648",
+        "expectedOutput": "2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "1073741824",
+        "expectedOutput": "1073741824",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "3221225472",
+        "expectedOutput": "3221225472",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[4]",
+        "output": "536870912",
+        "expectedOutput": "536870912",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[2147483648]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[2147483647]",
+        "output": "4294967294",
+        "expectedOutput": "4294967294",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[3221225471]",
+        "output": "4294967293",
+        "expectedOutput": "4294967293",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[1431655765]",
+        "output": "2863311530",
+        "expectedOutput": "2863311530",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[2863311530]",
+        "output": "1431655765",
+        "expectedOutput": "1431655765",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[4294967295]",
+        "output": "4294967295",
+        "expectedOutput": "4294967295",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[8]",
+        "output": "268435456",
+        "expectedOutput": "268435456",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[16]",
+        "output": "134217728",
+        "expectedOutput": "134217728",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[256]",
+        "output": "8388608",
+        "expectedOutput": "8388608",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[65536]",
+        "output": "32768",
+        "expectedOutput": "32768",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[1073741824]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[32768]",
+        "output": "65536",
+        "expectedOutput": "65536",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[4096]",
+        "output": "524288",
+        "expectedOutput": "524288",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 43261596",
+      "output": "964176192",
+      "expectedOutput": "964176192",
+      "explanation": "00000010100101000001111010011100 reversed is 00111001011110000010100101000000"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "2147483648",
+      "expectedOutput": "2147483648",
+      "explanation": "00000000000000000000000000000001 reversed is 10000000000000000000000000000000"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 43261596",
+      "output": "964176192",
+      "expectedOutput": "964176192",
+      "explanation": "00000010100101000001111010011100 reversed is 00111001011110000010100101000000"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 1",
+      "output": "2147483648",
+      "expectedOutput": "2147483648",
+      "explanation": "00000000000000000000000000000001 reversed is 10000000000000000000000000000000"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[43261596]",
+      "output": "964176192",
+      "expectedOutput": "964176192",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[4294967293]",
+      "output": "3221225471",
+      "expectedOutput": "3221225471",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[1]",
+      "output": "2147483648",
+      "expectedOutput": "2147483648",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[2]",
+      "output": "1073741824",
+      "expectedOutput": "1073741824",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[3]",
+      "output": "3221225472",
+      "expectedOutput": "3221225472",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[4]",
+      "output": "536870912",
+      "expectedOutput": "536870912",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[2147483648]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[2147483647]",
+      "output": "4294967294",
+      "expectedOutput": "4294967294",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[3221225471]",
+      "output": "4294967293",
+      "expectedOutput": "4294967293",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[1431655765]",
+      "output": "2863311530",
+      "expectedOutput": "2863311530",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[2863311530]",
+      "output": "1431655765",
+      "expectedOutput": "1431655765",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[4294967295]",
+      "output": "4294967295",
+      "expectedOutput": "4294967295",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[8]",
+      "output": "268435456",
+      "expectedOutput": "268435456",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[16]",
+      "output": "134217728",
+      "expectedOutput": "134217728",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[256]",
+      "output": "8388608",
+      "expectedOutput": "8388608",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[65536]",
+      "output": "32768",
+      "expectedOutput": "32768",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[1073741824]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[32768]",
+      "output": "65536",
+      "expectedOutput": "65536",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[4096]",
+      "output": "524288",
+      "expectedOutput": "524288",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 43261596",
+        "output": "964176192",
+        "expectedOutput": "964176192",
+        "explanation": "00000010100101000001111010011100 reversed is 00111001011110000010100101000000"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 1",
+        "output": "2147483648",
+        "expectedOutput": "2147483648",
+        "explanation": "00000000000000000000000000000001 reversed is 10000000000000000000000000000000"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[43261596]",
+        "output": "964176192",
+        "expectedOutput": "964176192",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[4294967293]",
+        "output": "3221225471",
+        "expectedOutput": "3221225471",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1]",
+        "output": "2147483648",
+        "expectedOutput": "2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2]",
+        "output": "1073741824",
+        "expectedOutput": "1073741824",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[3]",
+        "output": "3221225472",
+        "expectedOutput": "3221225472",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[4]",
+        "output": "536870912",
+        "expectedOutput": "536870912",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[2147483648]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[2147483647]",
+        "output": "4294967294",
+        "expectedOutput": "4294967294",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[3221225471]",
+        "output": "4294967293",
+        "expectedOutput": "4294967293",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[1431655765]",
+        "output": "2863311530",
+        "expectedOutput": "2863311530",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[2863311530]",
+        "output": "1431655765",
+        "expectedOutput": "1431655765",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[4294967295]",
+        "output": "4294967295",
+        "expectedOutput": "4294967295",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[8]",
+        "output": "268435456",
+        "expectedOutput": "268435456",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[16]",
+        "output": "134217728",
+        "expectedOutput": "134217728",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[256]",
+        "output": "8388608",
+        "expectedOutput": "8388608",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[65536]",
+        "output": "32768",
+        "expectedOutput": "32768",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[1073741824]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[32768]",
+        "output": "65536",
+        "expectedOutput": "65536",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[4096]",
+        "output": "524288",
+        "expectedOutput": "524288",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def reverseBits(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    unsigned int reverseBits(unsigned int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int reverseBits(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseBits(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseBits(n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def reverseBits(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    unsigned int reverseBits(unsigned int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int reverseBits(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseBits(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseBits(n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def reverseBits(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    unsigned int reverseBits(unsigned int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int reverseBits(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseBits(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseBits(n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def reverseBits(self, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    unsigned int reverseBits(unsigned int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int reverseBits(int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseBits(n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseBits(n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(32) = O(1)",
+      "space": "O(1)",
+      "pattern": "bit manipulation (build the result bit by bit while shifting through n)"
+    },
+    "bruteForce": {
+      "approach": "convert n to a 32-character binary string (padded with leading zeros), reverse the string, then parse it back into an integer",
+      "time": "O(32) = O(1)",
+      "space": "O(32) = O(1) for the string"
+    }
+  },
+  "optimal": {
+    "pattern": "bit manipulation (build the result bit by bit while shifting through n)",
+    "time": "O(32) = O(1)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "you need to move the lowest bit of n to become the highest bit of the result, the second-lowest to become the second-highest, and so on - can you do this in a single pass?",
+      "at each of the 32 steps, grab n's current lowest bit with n & 1, then remove it from n by shifting n right by 1",
+      "build up the result by shifting it left by 1 first (to make room), then OR-ing in the bit you just grabbed from n",
+      "after 32 iterations of 'shift result left, OR in n's lowest bit, shift n right', result holds n's bits fully reversed - remember to treat both n and result as unsigned 32-bit values so the sign bit doesn't cause issues in languages with signed integers"
+    ]
+  },
+  "bruteForce": {
+    "approach": "convert n to a 32-character binary string (padded with leading zeros), reverse the string, then parse it back into an integer",
+    "time": "O(32) = O(1)",
+    "space": "O(32) = O(1) for the string"
+  },
+  "isIndex0": true,
+  "level": null
+}

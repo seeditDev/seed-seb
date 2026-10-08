@@ -1,0 +1,633 @@
+{
+  "id": "remove-nth-node-from-end-of-list",
+  "questionId": "remove-nth-node-from-end-of-list",
+  "slug": "remove-nth-node-from-end-of-list",
+  "title": "Remove Nth Node From End of List",
+  "difficulty": "Easy",
+  "category": "Fast slow pointers",
+  "patterns": [
+    "fast & slow pointers",
+    "linked list",
+    "two pointers"
+  ],
+  "lists": [
+    "blind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "you could count the length first and compute the index directly - can you find the same node in a single pass instead?",
+    "what if you started one pointer n steps ahead of another, then moved both forward at the same speed?",
+    "advance a 'fast' pointer n steps from the head first, then start moving both fast and a 'slow' pointer one step at a time together",
+    "when fast reaches the end of the list, slow is right before the node that needs to be removed - unlink it (or, in array terms, skip that index when building the result)"
+  ],
+  "commonMistakes": [
+    "off-by-one when advancing the lead pointer n steps, ending up pointing at the wrong node",
+    "not handling the case where the node to remove is the head (n equals the list length)",
+    "forgetting that removing the only node should return an empty list"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]`\nis the value of the i-th node in order, along with an integer `n`.\n\n**Remove the n-th node counting from the end of the list (n = 1 means the last node) and return the resulting list's values in order.**\n",
+    "constraints": [
+      "1 <= nums.length <= 30",
+      "-100 <= nums[i] <= 100",
+      "1 <= n <= nums.length"
+    ],
+    "notes": [
+      "removing the head (n equals the list length)",
+      "removing the tail (n = 1)",
+      "a single-node list"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5], n = 2",
+        "output": "[1, 2, 3, 5]",
+        "expectedOutput": "[1, 2, 3, 5]",
+        "explanation": "the 2nd node from the end is 4, removing it leaves [1,2,3,5]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1], n = 1",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "removing the only node leaves an empty list"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2], n = 1",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": "the last node (2) is removed"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5],2]",
+        "output": "[1,2,3,5]",
+        "expectedOutput": "[1,2,3,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2],1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2],2]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3],3]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[2,3,4,5]",
+        "expectedOutput": "[2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],1]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3],1]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],1]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],20]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,-2,-3,-4,-5],3]",
+        "output": "[-1,-2,-4,-5]",
+        "expectedOutput": "[-1,-2,-4,-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[7,7,7,7,7],2]",
+        "output": "[7,7,7,7]",
+        "expectedOutput": "[7,7,7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],8]",
+        "output": "[1,2,3,4,5,6,7,9,10,11,12,13,14,15]",
+        "expectedOutput": "[1,2,3,4,5,6,7,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2],1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2],2]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[9,8,7],2]",
+        "output": "[9,7]",
+        "expectedOutput": "[9,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "[1,2,3,4,5,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,1],2]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5], n = 2",
+      "output": "[1, 2, 3, 5]",
+      "expectedOutput": "[1, 2, 3, 5]",
+      "explanation": "the 2nd node from the end is 4, removing it leaves [1,2,3,5]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1], n = 1",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "removing the only node leaves an empty list"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2], n = 1",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": "the last node (2) is removed"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5], n = 2",
+      "output": "[1, 2, 3, 5]",
+      "expectedOutput": "[1, 2, 3, 5]",
+      "explanation": "the 2nd node from the end is 4, removing it leaves [1,2,3,5]"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1], n = 1",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "removing the only node leaves an empty list"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2], n = 1",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": "the last node (2) is removed"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4,5],2]",
+      "output": "[1,2,3,5]",
+      "expectedOutput": "[1,2,3,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1],1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2],1]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2],2]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3],3]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5],5]",
+      "output": "[2,3,4,5]",
+      "expectedOutput": "[2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5],1]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5],1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3],1]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],1]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],20]",
+      "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-1,-2,-3,-4,-5],3]",
+      "output": "[-1,-2,-4,-5]",
+      "expectedOutput": "[-1,-2,-4,-5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[7,7,7,7,7],2]",
+      "output": "[7,7,7,7]",
+      "expectedOutput": "[7,7,7,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],8]",
+      "output": "[1,2,3,4,5,6,7,9,10,11,12,13,14,15]",
+      "expectedOutput": "[1,2,3,4,5,6,7,9,10,11,12,13,14,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2],1]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2],2]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[9,8,7],2]",
+      "output": "[9,7]",
+      "expectedOutput": "[9,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+      "output": "[1,2,3,4,5,7,8,9,10]",
+      "expectedOutput": "[1,2,3,4,5,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[3,1],2]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5], n = 2",
+        "output": "[1, 2, 3, 5]",
+        "expectedOutput": "[1, 2, 3, 5]",
+        "explanation": "the 2nd node from the end is 4, removing it leaves [1,2,3,5]"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1], n = 1",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "removing the only node leaves an empty list"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2], n = 1",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": "the last node (2) is removed"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5],2]",
+        "output": "[1,2,3,5]",
+        "expectedOutput": "[1,2,3,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2],1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2],2]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3],3]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[2,3,4,5]",
+        "expectedOutput": "[2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],1]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3],1]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],1]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],20]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],10]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,-2,-3,-4,-5],3]",
+        "output": "[-1,-2,-4,-5]",
+        "expectedOutput": "[-1,-2,-4,-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[7,7,7,7,7],2]",
+        "output": "[7,7,7,7]",
+        "expectedOutput": "[7,7,7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],8]",
+        "output": "[1,2,3,4,5,6,7,9,10,11,12,13,14,15]",
+        "expectedOutput": "[1,2,3,4,5,6,7,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2],1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2],2]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[9,8,7],2]",
+        "output": "[9,7]",
+        "expectedOutput": "[9,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "[1,2,3,4,5,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,5,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[3,1],2]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def removeNthFromEnd(self, nums, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeNthFromEnd(vector<int>& nums, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeNthFromEnd(int[] nums, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeNthFromEnd(nums: IntArray, n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeNthFromEnd(nums, n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def removeNthFromEnd(self, nums, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeNthFromEnd(vector<int>& nums, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeNthFromEnd(int[] nums, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeNthFromEnd(nums: IntArray, n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeNthFromEnd(nums, n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def removeNthFromEnd(self, nums, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeNthFromEnd(vector<int>& nums, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeNthFromEnd(int[] nums, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeNthFromEnd(nums: IntArray, n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeNthFromEnd(nums, n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def removeNthFromEnd(self, nums, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeNthFromEnd(vector<int>& nums, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeNthFromEnd(int[] nums, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeNthFromEnd(nums: IntArray, n: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeNthFromEnd(nums, n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n), single pass",
+      "space": "O(n) for the output (O(1) extra besides it)",
+      "pattern": "two pointers kept n nodes apart, moved together until the leading one hits the end"
+    },
+    "bruteForce": {
+      "approach": "count the list length, compute the index to remove from the front (length - n), then rebuild the list skipping that index",
+      "time": "O(n)",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers kept n nodes apart, moved together until the leading one hits the end",
+    "time": "O(n), single pass",
+    "space": "O(n) for the output (O(1) extra besides it)",
+    "hint_ladder": [
+      "you could count the length first and compute the index directly - can you find the same node in a single pass instead?",
+      "what if you started one pointer n steps ahead of another, then moved both forward at the same speed?",
+      "advance a 'fast' pointer n steps from the head first, then start moving both fast and a 'slow' pointer one step at a time together",
+      "when fast reaches the end of the list, slow is right before the node that needs to be removed - unlink it (or, in array terms, skip that index when building the result)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "count the list length, compute the index to remove from the front (length - n), then rebuild the list skipping that index",
+    "time": "O(n)",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

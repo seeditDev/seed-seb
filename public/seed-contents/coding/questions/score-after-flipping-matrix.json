@@ -1,0 +1,601 @@
+{
+  "id": "score-after-flipping-matrix",
+  "questionId": "score-after-flipping-matrix",
+  "slug": "score-after-flipping-matrix",
+  "title": "Score After Flipping Matrix",
+  "difficulty": "Medium",
+  "category": "Greedy",
+  "patterns": [
+    "greedy",
+    "matrix",
+    "bit manipulation"
+  ],
+  "lists": [],
+  "hints": [
+    "in binary, the leftmost bit of a row is worth more than all the other bits in that row combined - so what's the very first thing you should guarantee about every row?",
+    "flip any row whose first element is 0, so that every row starts with 1 - this is always correct because row flips are independent of each other and each row's leading 1 alone outweighs anything a different leading bit could contribute",
+    "after fixing the leading column, does the order you flip the remaining columns in matter? no - column flips don't interact with each other's contribution to the total sum, only with how many 1s vs 0s that specific column has",
+    "for every column after the first, count how many 1s versus 0s it has (after the row flips) - if 0s outnumber 1s, flipping that whole column increases the total sum, so flip it; otherwise leave it",
+    "why does this two-phase greedy reach the true global optimum? because row flips and column flips are independent choices - fixing the leading bit maximizes the most significant, highest-weight bit of every row, and then each remaining column's flip decision only affects that column's own bit position across all rows, so maximizing each column's 1-count independently maximizes the total"
+  ],
+  "commonMistakes": [
+    "trying to jointly optimize row and column flips at the same time instead of realizing the leading-bit row flip should always be decided first and independently",
+    "flipping a column whenever it has any 0s at all, instead of only when 0s strictly outnumber 1s in that column",
+    "forgetting that flipping a row after column flips have been decided can undo the column optimization - the row-flip decision must be locked in before evaluating columns"
+  ],
+  "content": {
+    "problemStatement": "You're given a grid of 0s and 1s. In one move, you may choose any single\nrow or any single column and flip every value in it (0 becomes 1, 1\nbecomes 0). You may make as many moves as you like, in any order.\n\n**After all moves, read every row left to right as a binary number, sum all the row values, and return the largest possible sum achievable.**\n",
+    "constraints": [
+      "1 <= grid.length <= 20",
+      "1 <= grid[i].length <= 20",
+      "grid[i][j] is 0 or 1"
+    ],
+    "notes": [
+      "a single cell grid",
+      "a grid that already has every row starting with 1 and every column majority 1 (no flips needed)",
+      "a single row (only row/column flips on one row matter)",
+      "a single column (each row is a single bit, maximize count of 1s)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[0,0,1,1],[1,0,1,0],[1,1,0,0]]",
+        "output": "39",
+        "expectedOutput": "39",
+        "explanation": "flip row 0 so every row starts with 1, then flip columns 2 and 3 so every column has more 1s than 0s, producing rows 1111, 1001, 1111 which sum to 15+9+15=39"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "flipping the single cell from 0 to 1 gives the row value 1"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,0,1,1],[1,0,1,0],[1,1,0,0]]]",
+        "output": "39",
+        "expectedOutput": "39",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,0,0],[1,0,0]]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,1,1],[1,1,1]]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0],[1],[0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,0,1,0,1]]]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,1,1,0],[1,0,0,1],[0,0,1,1],[1,1,0,0]]]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,1,1,0,0,1,1,1],[0,0,1,1,0,1,0,1],[0,1,0,0,0,0,0,0],[1,0,1,1,1,0,0,0],[1,0,1,0,0,0,0,0],[0,1,1,1,1,0,1,1],[0,0,0,0,0,0,1,1],[1,1,1,1,0,0,0,0],[0,1,0,1,0,1,1,1],[1,1,1,0,0,0,1,0]]]",
+        "output": "2067",
+        "expectedOutput": "2067",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,1,1,1,0,0],[0,0,1,0,0,1],[0,1,1,1,1,1],[1,1,0,0,0,0],[0,1,0,0,0,0],[1,0,0,0,1,0],[1,0,1,1,1,0],[0,1,1,1,1,0],[1,1,0,1,1,1],[0,0,0,1,1,1],[0,1,1,0,0,0],[0,1,0,1,1,0],[1,0,1,1,1,0],[1,0,0,0,0,0],[1,1,1,1,0,0]]]",
+        "output": "769",
+        "expectedOutput": "769",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,1],[1,1],[1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,0,0,0]]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,1,1]]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1],[1],[1],[1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0],[0],[0],[0]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,0],[0,1],[1,0],[0,1]]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,1,0],[1,0,1],[0,1,0],[1,0,1],[0,1,0]]]",
+        "output": "35",
+        "expectedOutput": "35",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[0,0,1,1],[1,0,1,0],[1,1,0,0]]",
+      "output": "39",
+      "expectedOutput": "39",
+      "explanation": "flip row 0 so every row starts with 1, then flip columns 2 and 3 so every column has more 1s than 0s, producing rows 1111, 1001, 1111 which sum to 15+9+15=39"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "flipping the single cell from 0 to 1 gives the row value 1"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[0,0,1,1],[1,0,1,0],[1,1,0,0]]",
+      "output": "39",
+      "expectedOutput": "39",
+      "explanation": "flip row 0 so every row starts with 1, then flip columns 2 and 3 so every column has more 1s than 0s, producing rows 1111, 1001, 1111 which sum to 15+9+15=39"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "flipping the single cell from 0 to 1 gives the row value 1"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[0,0,1,1],[1,0,1,0],[1,1,0,0]]]",
+      "output": "39",
+      "expectedOutput": "39",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,0,0],[1,0,0]]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[0,1],[1,0]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[0,0],[0,0]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,1,1],[1,1,1]]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[0],[1],[0]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,0,1,0,1]]]",
+      "output": "31",
+      "expectedOutput": "31",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[0,1,1,0],[1,0,0,1],[0,0,1,1],[1,1,0,0]]]",
+      "output": "50",
+      "expectedOutput": "50",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[0,1,1,0,0,1,1,1],[0,0,1,1,0,1,0,1],[0,1,0,0,0,0,0,0],[1,0,1,1,1,0,0,0],[1,0,1,0,0,0,0,0],[0,1,1,1,1,0,1,1],[0,0,0,0,0,0,1,1],[1,1,1,1,0,0,0,0],[0,1,0,1,0,1,1,1],[1,1,1,0,0,0,1,0]]]",
+      "output": "2067",
+      "expectedOutput": "2067",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,1,1,1,0,0],[0,0,1,0,0,1],[0,1,1,1,1,1],[1,1,0,0,0,0],[0,1,0,0,0,0],[1,0,0,0,1,0],[1,0,1,1,1,0],[0,1,1,1,1,0],[1,1,0,1,1,1],[0,0,0,1,1,1],[0,1,1,0,0,0],[0,1,0,1,1,0],[1,0,1,1,1,0],[1,0,0,0,0,0],[1,1,1,1,0,0]]]",
+      "output": "769",
+      "expectedOutput": "769",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,1],[1,1],[1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0,0,0,0]]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,1,1,1]]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1],[1],[1],[1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[0],[0],[0],[0]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,0],[0,1],[1,0],[0,1]]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[0,1,0],[1,0,1],[0,1,0],[1,0,1],[0,1,0]]]",
+      "output": "35",
+      "expectedOutput": "35",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[0,0,1,1],[1,0,1,0],[1,1,0,0]]",
+        "output": "39",
+        "expectedOutput": "39",
+        "explanation": "flip row 0 so every row starts with 1, then flip columns 2 and 3 so every column has more 1s than 0s, producing rows 1111, 1001, 1111 which sum to 15+9+15=39"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "flipping the single cell from 0 to 1 gives the row value 1"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,0,1,1],[1,0,1,0],[1,1,0,0]]]",
+        "output": "39",
+        "expectedOutput": "39",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,0,0],[1,0,0]]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,1,1],[1,1,1]]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0],[1],[0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,0,1,0,1]]]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,1,1,0],[1,0,0,1],[0,0,1,1],[1,1,0,0]]]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,1,1,0,0,1,1,1],[0,0,1,1,0,1,0,1],[0,1,0,0,0,0,0,0],[1,0,1,1,1,0,0,0],[1,0,1,0,0,0,0,0],[0,1,1,1,1,0,1,1],[0,0,0,0,0,0,1,1],[1,1,1,1,0,0,0,0],[0,1,0,1,0,1,1,1],[1,1,1,0,0,0,1,0]]]",
+        "output": "2067",
+        "expectedOutput": "2067",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,1,1,1,0,0],[0,0,1,0,0,1],[0,1,1,1,1,1],[1,1,0,0,0,0],[0,1,0,0,0,0],[1,0,0,0,1,0],[1,0,1,1,1,0],[0,1,1,1,1,0],[1,1,0,1,1,1],[0,0,0,1,1,1],[0,1,1,0,0,0],[0,1,0,1,1,0],[1,0,1,1,1,0],[1,0,0,0,0,0],[1,1,1,1,0,0]]]",
+        "output": "769",
+        "expectedOutput": "769",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,1],[1,1],[1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,0,0,0]]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,1,1,1]]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1],[1],[1],[1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0],[0],[0],[0]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,0],[0,1],[1,0],[0,1]]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,1,0],[1,0,1],[0,1,0],[1,0,1],[0,1,0]]]",
+        "output": "35",
+        "expectedOutput": "35",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def matrixScore(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int matrixScore(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int matrixScore(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun matrixScore(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    matrixScore(grid) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def matrixScore(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int matrixScore(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int matrixScore(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun matrixScore(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    matrixScore(grid) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def matrixScore(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int matrixScore(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int matrixScore(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun matrixScore(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    matrixScore(grid) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def matrixScore(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int matrixScore(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int matrixScore(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun matrixScore(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    matrixScore(grid) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(rows * cols)",
+      "space": "O(1)",
+      "pattern": "since the leading bit of every row dominates the row's value, force every row to start with 1 first, then greedily maximize each remaining column independently"
+    },
+    "bruteForce": {
+      "approach": "try every combination of which rows and columns to flip (2^(rows+cols) possibilities), compute the resulting score each time, keep the max",
+      "time": "O(2^(rows+cols) * rows * cols)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "since the leading bit of every row dominates the row's value, force every row to start with 1 first, then greedily maximize each remaining column independently",
+    "time": "O(rows * cols)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "in binary, the leftmost bit of a row is worth more than all the other bits in that row combined - so what's the very first thing you should guarantee about every row?",
+      "flip any row whose first element is 0, so that every row starts with 1 - this is always correct because row flips are independent of each other and each row's leading 1 alone outweighs anything a different leading bit could contribute",
+      "after fixing the leading column, does the order you flip the remaining columns in matter? no - column flips don't interact with each other's contribution to the total sum, only with how many 1s vs 0s that specific column has",
+      "for every column after the first, count how many 1s versus 0s it has (after the row flips) - if 0s outnumber 1s, flipping that whole column increases the total sum, so flip it; otherwise leave it",
+      "why does this two-phase greedy reach the true global optimum? because row flips and column flips are independent choices - fixing the leading bit maximizes the most significant, highest-weight bit of every row, and then each remaining column's flip decision only affects that column's own bit position across all rows, so maximizing each column's 1-count independently maximizes the total"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every combination of which rows and columns to flip (2^(rows+cols) possibilities), compute the resulting score each time, keep the max",
+    "time": "O(2^(rows+cols) * rows * cols)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

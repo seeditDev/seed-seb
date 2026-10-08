@@ -1,0 +1,652 @@
+{
+  "id": "word-pattern",
+  "questionId": "word-pattern",
+  "slug": "word-pattern",
+  "title": "Word Pattern",
+  "difficulty": "Easy",
+  "category": "Hash map",
+  "patterns": [
+    "hash map"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "if you squint, a 'letter' and a 'word' are just two kinds of tokens that need a consistent one-to-one mapping - which other problem does this remind you of?",
+    "first split s on spaces, and check the word count matches the pattern length - if not, you're done immediately",
+    "keep two maps: letter -> word, and word -> letter. walk through both sequences together, one position at a time",
+    "at each position, if either map already has an entry, check it matches; if not, record it in both maps - any mismatch means the pattern doesn't hold"
+  ],
+  "commonMistakes": [
+    "forgetting to check that the word count matches the pattern length before comparing",
+    "only mapping letter to word and not the reverse, missing cases where two letters map to the same word",
+    "not splitting on whitespace correctly, or mishandling extra spaces"
+  ],
+  "content": {
+    "problemStatement": "You're given a `pattern` string of letters and a string `s` of space-separated words.\n\n**Determine whether `s` follows the same pattern, meaning there's a consistent one-to-one mapping between each letter in `pattern` and each word in `s`, in both directions.**\n",
+    "constraints": [
+      "1 <= pattern.length <= 300",
+      "1 <= s.length <= 3000",
+      "pattern consists of lowercase English letters",
+      "s consists of lowercase English letters and single spaces, with no leading or trailing spaces"
+    ],
+    "notes": [
+      "different letter count vs word count (always false)",
+      "two different letters mapping to the same word",
+      "a single letter and a single word"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "pattern = \"abba\", s = \"dog cat cat dog\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "pattern = \"abba\", s = \"dog cat cat fish\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "pattern = \"aaaa\", s = \"dog cat cat dog\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "a maps to dog, then to cat, then to dog again - inconsistent"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abba\",\"dog cat cat dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abba\",\"dog cat cat fish\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aaaa\",\"dog cat cat dog\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abba\",\"dog dog dog dog\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",\"dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"dog cat\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab\",\"dog dog\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ab\",\"dog cat\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc\",\"dog cat fish\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aba\",\"dog cat dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aba\",\"dog cat cat\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abcabc\",\"dog cat fish dog cat fish\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcabc\",\"dog cat fish dog cat bird\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaa\",\"dog dog dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aaa\",\"dog dog cat\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"xyzxyzxyz\",\"a b c a b c a b c\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abab\",\"red blue red blue\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abab\",\"red blue blue red\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"pqrs\",\"one two three four\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aabb\",\"x x y y\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabb\",\"x y x y\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "pattern = \"abba\", s = \"dog cat cat dog\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "pattern = \"abba\", s = \"dog cat cat fish\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "pattern = \"aaaa\", s = \"dog cat cat dog\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "a maps to dog, then to cat, then to dog again - inconsistent"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "pattern = \"abba\", s = \"dog cat cat dog\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "pattern = \"abba\", s = \"dog cat cat fish\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "pattern = \"aaaa\", s = \"dog cat cat dog\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "a maps to dog, then to cat, then to dog again - inconsistent"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abba\",\"dog cat cat dog\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"abba\",\"dog cat cat fish\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"aaaa\",\"dog cat cat dog\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"abba\",\"dog dog dog dog\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"a\",\"dog\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"dog cat\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ab\",\"dog dog\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"ab\",\"dog cat\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abc\",\"dog cat fish\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aba\",\"dog cat dog\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aba\",\"dog cat cat\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"abcabc\",\"dog cat fish dog cat fish\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"abcabc\",\"dog cat fish dog cat bird\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"aaa\",\"dog dog dog\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"aaa\",\"dog dog cat\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"xyzxyzxyz\",\"a b c a b c a b c\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"abab\",\"red blue red blue\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"abab\",\"red blue blue red\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"pqrs\",\"one two three four\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"aabb\",\"x x y y\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"aabb\",\"x y x y\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "pattern = \"abba\", s = \"dog cat cat dog\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "pattern = \"abba\", s = \"dog cat cat fish\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "pattern = \"aaaa\", s = \"dog cat cat dog\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "a maps to dog, then to cat, then to dog again - inconsistent"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abba\",\"dog cat cat dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abba\",\"dog cat cat fish\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aaaa\",\"dog cat cat dog\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"abba\",\"dog dog dog dog\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",\"dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"dog cat\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab\",\"dog dog\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ab\",\"dog cat\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abc\",\"dog cat fish\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aba\",\"dog cat dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aba\",\"dog cat cat\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abcabc\",\"dog cat fish dog cat fish\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"abcabc\",\"dog cat fish dog cat bird\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaa\",\"dog dog dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aaa\",\"dog dog cat\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"xyzxyzxyz\",\"a b c a b c a b c\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"abab\",\"red blue red blue\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"abab\",\"red blue blue red\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"pqrs\",\"one two three four\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aabb\",\"x x y y\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"aabb\",\"x y x y\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def wordPattern(self, pattern, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordPattern(string pattern, string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordPattern(String pattern, String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordPattern(pattern: String, s: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordPattern(pattern, s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def wordPattern(self, pattern, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordPattern(string pattern, string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordPattern(String pattern, String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordPattern(pattern: String, s: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordPattern(pattern, s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def wordPattern(self, pattern, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordPattern(string pattern, string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordPattern(String pattern, String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordPattern(pattern: String, s: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordPattern(pattern, s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def wordPattern(self, pattern, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordPattern(string pattern, string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordPattern(String pattern, String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordPattern(pattern: String, s: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordPattern(pattern, s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the maps and split words",
+      "pattern": "same shape as Isomorphic Strings - two hash maps tracking the letter-to-word mapping in both directions"
+    },
+    "bruteForce": {
+      "approach": "split s into words, then for every pair of positions with the same pattern letter, check the words also match, and vice versa",
+      "time": "O(n^2)",
+      "space": "O(n) for the split words"
+    }
+  },
+  "optimal": {
+    "pattern": "same shape as Isomorphic Strings - two hash maps tracking the letter-to-word mapping in both directions",
+    "time": "O(n)",
+    "space": "O(n) for the maps and split words",
+    "hint_ladder": [
+      "if you squint, a 'letter' and a 'word' are just two kinds of tokens that need a consistent one-to-one mapping - which other problem does this remind you of?",
+      "first split s on spaces, and check the word count matches the pattern length - if not, you're done immediately",
+      "keep two maps: letter -> word, and word -> letter. walk through both sequences together, one position at a time",
+      "at each position, if either map already has an entry, check it matches; if not, record it in both maps - any mismatch means the pattern doesn't hold"
+    ]
+  },
+  "bruteForce": {
+    "approach": "split s into words, then for every pair of positions with the same pattern letter, check the words also match, and vice versa",
+    "time": "O(n^2)",
+    "space": "O(n) for the split words"
+  },
+  "isIndex0": true,
+  "level": null
+}

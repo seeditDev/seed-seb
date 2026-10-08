@@ -1,0 +1,658 @@
+{
+  "id": "time-based-key-value-store",
+  "questionId": "time-based-key-value-store",
+  "slug": "time-based-key-value-store",
+  "title": "Time Based Key-Value Store",
+  "difficulty": "Medium",
+  "category": "Binary search",
+  "patterns": [
+    "binary search",
+    "hash map",
+    "design"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "since timestamps for a given key only ever increase across set calls, each key's history is naturally already sorted by timestamp - no separate sort step needed",
+    "a get is asking: among this key's recorded timestamps, find the largest one that is <= the query timestamp",
+    "'largest value at or below a target, in a sorted list' is exactly what binary search is built for",
+    "binary search for the rightmost timestamp <= the query; if none exists (the query is smaller than every recorded timestamp for that key), return -1",
+    "keep a hash map of key -> list of (timestamp, value) pairs appended in order as sets arrive, and binary search that list on each get"
+  ],
+  "commonMistakes": [
+    "scanning linearly for the right timestamp instead of binary searching, which is correct but misses the intended O(log n) approach",
+    "returning the closest timestamp instead of specifically the largest one that does not exceed the query",
+    "forgetting to return -1 when the query timestamp is smaller than every timestamp ever set for that key",
+    "conflating two different keys' histories instead of keeping a separate, independently sorted list per key"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited sequence of operations `ops` against a time-based key-value store, where keys and values are small integers. Each token is one of:\n\n- `set_<key>_<value>_<timestamp>` - store value for key at the given timestamp, no return value\n- `get_<key>_<timestamp>` - return the value that was set for key at the largest recorded timestamp less than or equal to the given timestamp, or -1 if no such value exists\n\n**Simulate the operations in order on an initially empty store, and return a list containing the result of every \"get\" operation, in the order they occurred.**\n\nFor any single key, every set call for that key arrives with a strictly increasing timestamp.\n",
+    "constraints": [
+      "1 <= number of operations <= 2 * 10^5",
+      "0 <= key, value <= 10^6",
+      "1 <= timestamp <= 10^7",
+      "for any single key, all set calls for that key use strictly increasing timestamps"
+    ],
+    "notes": [
+      "get called on a key that was never set (always -1)",
+      "get with a timestamp earlier than every set recorded for that key (-1)",
+      "get with a timestamp exactly matching a recorded set timestamp",
+      "get with a timestamp far later than the latest set for that key (returns the latest value)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"set_1_100_1 get_1_1 get_1_3 set_1_200_4 get_1_4 get_1_5\"",
+        "output": "[100, 100, 200, 200]",
+        "expectedOutput": "[100, 100, 200, 200]",
+        "explanation": "at timestamp 3, the latest set for key 1 at or before it is still timestamp 1 (value 100); at timestamp 4 and 5, it's timestamp 4 (value 200)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"set_2_50_5 get_2_1 get_2_5 get_2_10\"",
+        "output": "[-1, 50, 50]",
+        "expectedOutput": "[-1, 50, 50]",
+        "explanation": "get_2_1 queries before key 2's only set (timestamp 5), so it returns -1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"set_3_9_2 set_3_8_4 set_3_7_6 get_3_3 get_3_5 get_3_7\"",
+        "output": "[9, 8, 7]",
+        "expectedOutput": "[9, 8, 7]",
+        "explanation": "each get lands strictly between two set timestamps and returns the value from the most recent one at or before the query"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"set_1_100_1 get_1_1 get_1_3 set_1_200_4 get_1_4 get_1_5\"]",
+        "output": "[100,100,200,200]",
+        "expectedOutput": "[100,100,200,200]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"get_1_1\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"set_2_50_5 get_2_1 get_2_5 get_2_10\"]",
+        "output": "[-1,50,50]",
+        "expectedOutput": "[-1,50,50]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"set_1_10_1 set_2_20_2 get_1_2 get_2_1 get_1_1 get_2_2\"]",
+        "output": "[10,-1,10,20]",
+        "expectedOutput": "[10,-1,10,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"set_5_1_1 set_5_2_2 set_5_3_3 get_5_1 get_5_2 get_5_3 get_5_100 get_5_0\"]",
+        "output": "[1,2,3,3,-1]",
+        "expectedOutput": "[1,2,3,3,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"set_1_7_10 get_1_5 get_1_10 get_1_15\"]",
+        "output": "[-1,7,7]",
+        "expectedOutput": "[-1,7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"set_3_9_2 set_3_8_4 set_3_7_6 get_3_3 get_3_5 get_3_7 get_3_1\"]",
+        "output": "[9,8,7,-1]",
+        "expectedOutput": "[9,8,7,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"set_1_1_1 get_1_1000000000\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"set_1_11_1 set_2_22_1 set_3_33_1 get_1_1 get_2_1 get_3_1 get_4_1\"]",
+        "output": "[11,22,33,-1]",
+        "expectedOutput": "[11,22,33,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"set_1_0_1 get_1_1\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"set_1_5_1 set_1_6_2 set_1_7_3 set_1_8_4 set_1_9_5 get_1_1 get_1_2 get_1_3 get_1_4 get_1_5\"]",
+        "output": "[5,6,7,8,9]",
+        "expectedOutput": "[5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"set_9_100_100 get_9_50 get_9_99 get_9_100 get_9_101\"]",
+        "output": "[-1,-1,100,100]",
+        "expectedOutput": "[-1,-1,100,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"set_1_1_5 set_2_2_5 get_1_5 get_2_5 get_1_4 get_2_4\"]",
+        "output": "[1,2,-1,-1]",
+        "expectedOutput": "[1,2,-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"set_1_100_1 set_1_200_5 set_1_300_10 get_1_3 get_1_7 get_1_12\"]",
+        "output": "[100,200,300]",
+        "expectedOutput": "[100,200,300]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"get_1_1 get_2_2 get_3_3\"]",
+        "output": "[-1,-1,-1]",
+        "expectedOutput": "[-1,-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"set_1_42_1 get_1_1 get_1_1 get_1_1\"]",
+        "output": "[42,42,42]",
+        "expectedOutput": "[42,42,42]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"set_1_1_1 set_1_2_2 set_1_3_3 set_1_4_4 set_1_5_5 get_1_0 get_1_6\"]",
+        "output": "[-1,5]",
+        "expectedOutput": "[-1,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"set_1_10_2 set_2_20_2 set_1_15_4 set_2_25_4 get_1_3 get_2_3 get_1_5 get_2_5\"]",
+        "output": "[10,20,15,25]",
+        "expectedOutput": "[10,20,15,25]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"set_100_1_1 get_100_1\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"set_1_5_3 get_1_3 get_1_2\"]",
+        "output": "[5,-1]",
+        "expectedOutput": "[5,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"set_2_1_1 set_2_2_2 set_2_3_3 set_2_4_4 set_2_5_5 set_2_6_6 get_2_6 get_2_1 get_2_3\"]",
+        "output": "[6,1,3]",
+        "expectedOutput": "[6,1,3]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"set_1_100_1 get_1_1 get_1_3 set_1_200_4 get_1_4 get_1_5\"",
+      "output": "[100, 100, 200, 200]",
+      "expectedOutput": "[100, 100, 200, 200]",
+      "explanation": "at timestamp 3, the latest set for key 1 at or before it is still timestamp 1 (value 100); at timestamp 4 and 5, it's timestamp 4 (value 200)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"set_2_50_5 get_2_1 get_2_5 get_2_10\"",
+      "output": "[-1, 50, 50]",
+      "expectedOutput": "[-1, 50, 50]",
+      "explanation": "get_2_1 queries before key 2's only set (timestamp 5), so it returns -1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"set_3_9_2 set_3_8_4 set_3_7_6 get_3_3 get_3_5 get_3_7\"",
+      "output": "[9, 8, 7]",
+      "expectedOutput": "[9, 8, 7]",
+      "explanation": "each get lands strictly between two set timestamps and returns the value from the most recent one at or before the query"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"set_1_100_1 get_1_1 get_1_3 set_1_200_4 get_1_4 get_1_5\"",
+      "output": "[100, 100, 200, 200]",
+      "expectedOutput": "[100, 100, 200, 200]",
+      "explanation": "at timestamp 3, the latest set for key 1 at or before it is still timestamp 1 (value 100); at timestamp 4 and 5, it's timestamp 4 (value 200)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"set_2_50_5 get_2_1 get_2_5 get_2_10\"",
+      "output": "[-1, 50, 50]",
+      "expectedOutput": "[-1, 50, 50]",
+      "explanation": "get_2_1 queries before key 2's only set (timestamp 5), so it returns -1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"set_3_9_2 set_3_8_4 set_3_7_6 get_3_3 get_3_5 get_3_7\"",
+      "output": "[9, 8, 7]",
+      "expectedOutput": "[9, 8, 7]",
+      "explanation": "each get lands strictly between two set timestamps and returns the value from the most recent one at or before the query"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"set_1_100_1 get_1_1 get_1_3 set_1_200_4 get_1_4 get_1_5\"]",
+      "output": "[100,100,200,200]",
+      "expectedOutput": "[100,100,200,200]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"get_1_1\"]",
+      "output": "[-1]",
+      "expectedOutput": "[-1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"set_2_50_5 get_2_1 get_2_5 get_2_10\"]",
+      "output": "[-1,50,50]",
+      "expectedOutput": "[-1,50,50]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"set_1_10_1 set_2_20_2 get_1_2 get_2_1 get_1_1 get_2_2\"]",
+      "output": "[10,-1,10,20]",
+      "expectedOutput": "[10,-1,10,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"set_5_1_1 set_5_2_2 set_5_3_3 get_5_1 get_5_2 get_5_3 get_5_100 get_5_0\"]",
+      "output": "[1,2,3,3,-1]",
+      "expectedOutput": "[1,2,3,3,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"set_1_7_10 get_1_5 get_1_10 get_1_15\"]",
+      "output": "[-1,7,7]",
+      "expectedOutput": "[-1,7,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"set_3_9_2 set_3_8_4 set_3_7_6 get_3_3 get_3_5 get_3_7 get_3_1\"]",
+      "output": "[9,8,7,-1]",
+      "expectedOutput": "[9,8,7,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"set_1_1_1 get_1_1000000000\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"set_1_11_1 set_2_22_1 set_3_33_1 get_1_1 get_2_1 get_3_1 get_4_1\"]",
+      "output": "[11,22,33,-1]",
+      "expectedOutput": "[11,22,33,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"set_1_0_1 get_1_1\"]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"set_1_5_1 set_1_6_2 set_1_7_3 set_1_8_4 set_1_9_5 get_1_1 get_1_2 get_1_3 get_1_4 get_1_5\"]",
+      "output": "[5,6,7,8,9]",
+      "expectedOutput": "[5,6,7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"set_9_100_100 get_9_50 get_9_99 get_9_100 get_9_101\"]",
+      "output": "[-1,-1,100,100]",
+      "expectedOutput": "[-1,-1,100,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"set_1_1_5 set_2_2_5 get_1_5 get_2_5 get_1_4 get_2_4\"]",
+      "output": "[1,2,-1,-1]",
+      "expectedOutput": "[1,2,-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"set_1_100_1 set_1_200_5 set_1_300_10 get_1_3 get_1_7 get_1_12\"]",
+      "output": "[100,200,300]",
+      "expectedOutput": "[100,200,300]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"get_1_1 get_2_2 get_3_3\"]",
+      "output": "[-1,-1,-1]",
+      "expectedOutput": "[-1,-1,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"set_1_42_1 get_1_1 get_1_1 get_1_1\"]",
+      "output": "[42,42,42]",
+      "expectedOutput": "[42,42,42]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"set_1_1_1 set_1_2_2 set_1_3_3 set_1_4_4 set_1_5_5 get_1_0 get_1_6\"]",
+      "output": "[-1,5]",
+      "expectedOutput": "[-1,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"set_1_10_2 set_2_20_2 set_1_15_4 set_2_25_4 get_1_3 get_2_3 get_1_5 get_2_5\"]",
+      "output": "[10,20,15,25]",
+      "expectedOutput": "[10,20,15,25]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"set_100_1_1 get_100_1\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"set_1_5_3 get_1_3 get_1_2\"]",
+      "output": "[5,-1]",
+      "expectedOutput": "[5,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"set_2_1_1 set_2_2_2 set_2_3_3 set_2_4_4 set_2_5_5 set_2_6_6 get_2_6 get_2_1 get_2_3\"]",
+      "output": "[6,1,3]",
+      "expectedOutput": "[6,1,3]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"set_1_100_1 get_1_1 get_1_3 set_1_200_4 get_1_4 get_1_5\"",
+        "output": "[100, 100, 200, 200]",
+        "expectedOutput": "[100, 100, 200, 200]",
+        "explanation": "at timestamp 3, the latest set for key 1 at or before it is still timestamp 1 (value 100); at timestamp 4 and 5, it's timestamp 4 (value 200)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"set_2_50_5 get_2_1 get_2_5 get_2_10\"",
+        "output": "[-1, 50, 50]",
+        "expectedOutput": "[-1, 50, 50]",
+        "explanation": "get_2_1 queries before key 2's only set (timestamp 5), so it returns -1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"set_3_9_2 set_3_8_4 set_3_7_6 get_3_3 get_3_5 get_3_7\"",
+        "output": "[9, 8, 7]",
+        "expectedOutput": "[9, 8, 7]",
+        "explanation": "each get lands strictly between two set timestamps and returns the value from the most recent one at or before the query"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"set_1_100_1 get_1_1 get_1_3 set_1_200_4 get_1_4 get_1_5\"]",
+        "output": "[100,100,200,200]",
+        "expectedOutput": "[100,100,200,200]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"get_1_1\"]",
+        "output": "[-1]",
+        "expectedOutput": "[-1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"set_2_50_5 get_2_1 get_2_5 get_2_10\"]",
+        "output": "[-1,50,50]",
+        "expectedOutput": "[-1,50,50]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"set_1_10_1 set_2_20_2 get_1_2 get_2_1 get_1_1 get_2_2\"]",
+        "output": "[10,-1,10,20]",
+        "expectedOutput": "[10,-1,10,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"set_5_1_1 set_5_2_2 set_5_3_3 get_5_1 get_5_2 get_5_3 get_5_100 get_5_0\"]",
+        "output": "[1,2,3,3,-1]",
+        "expectedOutput": "[1,2,3,3,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"set_1_7_10 get_1_5 get_1_10 get_1_15\"]",
+        "output": "[-1,7,7]",
+        "expectedOutput": "[-1,7,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"set_3_9_2 set_3_8_4 set_3_7_6 get_3_3 get_3_5 get_3_7 get_3_1\"]",
+        "output": "[9,8,7,-1]",
+        "expectedOutput": "[9,8,7,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"set_1_1_1 get_1_1000000000\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"set_1_11_1 set_2_22_1 set_3_33_1 get_1_1 get_2_1 get_3_1 get_4_1\"]",
+        "output": "[11,22,33,-1]",
+        "expectedOutput": "[11,22,33,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"set_1_0_1 get_1_1\"]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"set_1_5_1 set_1_6_2 set_1_7_3 set_1_8_4 set_1_9_5 get_1_1 get_1_2 get_1_3 get_1_4 get_1_5\"]",
+        "output": "[5,6,7,8,9]",
+        "expectedOutput": "[5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"set_9_100_100 get_9_50 get_9_99 get_9_100 get_9_101\"]",
+        "output": "[-1,-1,100,100]",
+        "expectedOutput": "[-1,-1,100,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"set_1_1_5 set_2_2_5 get_1_5 get_2_5 get_1_4 get_2_4\"]",
+        "output": "[1,2,-1,-1]",
+        "expectedOutput": "[1,2,-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"set_1_100_1 set_1_200_5 set_1_300_10 get_1_3 get_1_7 get_1_12\"]",
+        "output": "[100,200,300]",
+        "expectedOutput": "[100,200,300]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"get_1_1 get_2_2 get_3_3\"]",
+        "output": "[-1,-1,-1]",
+        "expectedOutput": "[-1,-1,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"set_1_42_1 get_1_1 get_1_1 get_1_1\"]",
+        "output": "[42,42,42]",
+        "expectedOutput": "[42,42,42]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"set_1_1_1 set_1_2_2 set_1_3_3 set_1_4_4 set_1_5_5 get_1_0 get_1_6\"]",
+        "output": "[-1,5]",
+        "expectedOutput": "[-1,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"set_1_10_2 set_2_20_2 set_1_15_4 set_2_25_4 get_1_3 get_2_3 get_1_5 get_2_5\"]",
+        "output": "[10,20,15,25]",
+        "expectedOutput": "[10,20,15,25]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"set_100_1_1 get_100_1\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"set_1_5_3 get_1_3 get_1_2\"]",
+        "output": "[5,-1]",
+        "expectedOutput": "[5,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"set_2_1_1 set_2_2_2 set_2_3_3 set_2_4_4 set_2_5_5 set_2_6_6 get_2_6 get_2_1 get_2_3\"]",
+        "output": "[6,1,3]",
+        "expectedOutput": "[6,1,3]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def timeMapResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> timeMapResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] timeMapResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun timeMapResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    timeMapResults(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def timeMapResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> timeMapResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] timeMapResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun timeMapResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    timeMapResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def timeMapResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> timeMapResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] timeMapResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun timeMapResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    timeMapResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def timeMapResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> timeMapResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] timeMapResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun timeMapResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    timeMapResults(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(1) for set, O(log n) for get, where n is the number of sets recorded for that key",
+      "space": "O(total number of set operations)",
+      "pattern": "hash map from key to a list of (timestamp, value) pairs kept in increasing timestamp order (guaranteed by the input), then binary search that list for each get"
+    },
+    "bruteForce": {
+      "approach": "store every (timestamp, value) pair for a key in an unsorted list; for each get, scan the whole list for the key and track the largest timestamp not exceeding the query",
+      "time": "O(n) per get, where n is the number of sets recorded for that key",
+      "space": "O(total number of set operations)"
+    }
+  },
+  "optimal": {
+    "pattern": "hash map from key to a list of (timestamp, value) pairs kept in increasing timestamp order (guaranteed by the input), then binary search that list for each get",
+    "time": "O(1) for set, O(log n) for get, where n is the number of sets recorded for that key",
+    "space": "O(total number of set operations)",
+    "hint_ladder": [
+      "since timestamps for a given key only ever increase across set calls, each key's history is naturally already sorted by timestamp - no separate sort step needed",
+      "a get is asking: among this key's recorded timestamps, find the largest one that is <= the query timestamp",
+      "'largest value at or below a target, in a sorted list' is exactly what binary search is built for",
+      "binary search for the rightmost timestamp <= the query; if none exists (the query is smaller than every recorded timestamp for that key), return -1",
+      "keep a hash map of key -> list of (timestamp, value) pairs appended in order as sets arrive, and binary search that list on each get"
+    ]
+  },
+  "bruteForce": {
+    "approach": "store every (timestamp, value) pair for a key in an unsorted list; for each get, scan the whole list for the key and track the largest timestamp not exceeding the query",
+    "time": "O(n) per get, where n is the number of sets recorded for that key",
+    "space": "O(total number of set operations)"
+  },
+  "isIndex0": true,
+  "level": null
+}

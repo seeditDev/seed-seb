@@ -1,0 +1,700 @@
+{
+  "id": "substring-with-concatenation-of-all-words",
+  "questionId": "substring-with-concatenation-of-all-words",
+  "slug": "substring-with-concatenation-of-all-words",
+  "title": "Substring with Concatenation of All Words",
+  "difficulty": "Hard",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "hash map",
+    "string"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "split words on spaces first - every word has the same fixed length, and the total concatenation length is always number_of_words * word_length, so any valid match has to span exactly that many characters",
+    "build a frequency map of word -> how many times it appears in words, since words can repeat",
+    "instead of re-scanning from scratch at every index, slide a window word-length at a time: add the new word's count and remove the leftmost word's count, shrinking from the left whenever a word doesn't belong or exceeds its needed count",
+    "because you're stepping by whole words, run the sliding window starting from each of the word_length possible offsets (0, 1, ..., word_length - 1) so you don't miss alignments that don't start on a multiple of word_length",
+    "collect every index where the window's word counts exactly match the target frequency map, then sort the collected indices and join them with commas (or return the empty string if none were found)"
+  ],
+  "commonMistakes": [
+    "only checking window starts that are multiples of word_length, missing valid concatenations that start at other offsets",
+    "using substring equality checks that don't account for words with duplicate counts, undercounting or overcounting a repeated word",
+    "forgetting to reset or properly shrink the window when an out-of-vocabulary chunk appears, instead of just skipping past it correctly",
+    "returning indices in traversal order instead of sorted ascending order, or forgetting to return the empty string (not a list marker) when nothing matches"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s` and a space-delimited string `words`, where\nevery word in `words` has the same length and words may repeat.\n\n**Find every starting index in `s` where the substring starting there is exactly a concatenation of all the words in words, each used exactly as many times as it appears in words, in any order, with nothing in between.**\n\nReturn the starting indices sorted in ascending order, formatted as a single string of comma-separated integers (e.g. \"0,9\"). If no valid starting index exists, return the empty string.\n",
+    "constraints": [
+      "1 <= length of s <= 10^4",
+      "1 <= number of words <= 5000",
+      "every word in words has the same length, between 1 and 30 characters",
+      "s and every word consist of lowercase English letters only"
+    ],
+    "notes": [
+      "words contains duplicate words, which must each be matched that many times",
+      "no valid concatenation exists anywhere in s (return empty string)",
+      "the total concatenation length equals the length of s exactly (only one possible starting index to check)",
+      "a single word in words (degenerates to finding every occurrence of that one word)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"barfoothefoobarman\", words = \"foo bar\"",
+        "output": "\"0,9\"",
+        "expectedOutput": "\"0,9\"",
+        "explanation": "s[0:6] = \"barfoo\" is \"bar\"+\"foo\", and s[9:15] = \"foobar\" is \"foo\"+\"bar\", both valid concatenations in some order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"wordgoodgoodgoodbestword\", words = \"word good best word\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "no substring uses \"word\" exactly twice, \"good\" once and \"best\" once contiguously"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"barfoofoobarthefoobarman\", words = \"bar foo the\"",
+        "output": "\"6,9,12\"",
+        "expectedOutput": "\"6,9,12\"",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"barfoothefoobarman\",\"foo bar\"]",
+        "output": "0,9",
+        "expectedOutput": "0,9",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"wordgoodgoodgoodbestword\",\"word good best word\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"barfoofoobarthefoobarman\",\"bar foo the\"]",
+        "output": "6,9,12",
+        "expectedOutput": "6,9,12",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"aaaaaaaa\",\"aa aa\"]",
+        "output": "0,1,2,3,4",
+        "expectedOutput": "0,1,2,3,4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"abcabc\",\"abc\"]",
+        "output": "0,3",
+        "expectedOutput": "0,3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ababab\",\"ab ab\"]",
+        "output": "0,2",
+        "expectedOutput": "0,2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"wordgoodgoodgoodbestword\",\"word good best good\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"foobarfoobar\",\"foo bar\"]",
+        "output": "0,3,6",
+        "expectedOutput": "0,3,6",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"lingmindraboofooowingdingbarrwingmonkeypoundcake\",\"fooo barr wing ding mon\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abababab\",\"ab ab ab\"]",
+        "output": "0,2",
+        "expectedOutput": "0,2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"zzzzzzzz\",\"zz zz\"]",
+        "output": "0,1,2,3,4",
+        "expectedOutput": "0,1,2,3,4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"catcatgoocatgoo\",\"cat goo\"]",
+        "output": "3,6,9",
+        "expectedOutput": "3,6,9",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"catgoocatgoo\",\"cat goo\"]",
+        "output": "0,3,6",
+        "expectedOutput": "0,3,6",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"xyzxyzxyzxyz\",\"xyz xyz\"]",
+        "output": "0,3,6",
+        "expectedOutput": "0,3,6",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abcdabcdabcd\",\"cd ab\"]",
+        "output": "0,2,4,6,8",
+        "expectedOutput": "0,2,4,6,8",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaa\",\"a a\"]",
+        "output": "0,1",
+        "expectedOutput": "0,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"bcabc\",\"bc ab\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"nomatchhere\",\"xyz\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aabb\",\"ab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"abcabcabcabc\",\"abc abc\"]",
+        "output": "0,3,6",
+        "expectedOutput": "0,3,6",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"oneword\",\"oneword\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"wordwordtwoword\",\"word two\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"barfoothefoobarman\", words = \"foo bar\"",
+      "output": "\"0,9\"",
+      "expectedOutput": "\"0,9\"",
+      "explanation": "s[0:6] = \"barfoo\" is \"bar\"+\"foo\", and s[9:15] = \"foobar\" is \"foo\"+\"bar\", both valid concatenations in some order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"wordgoodgoodgoodbestword\", words = \"word good best word\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "no substring uses \"word\" exactly twice, \"good\" once and \"best\" once contiguously"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"barfoofoobarthefoobarman\", words = \"bar foo the\"",
+      "output": "\"6,9,12\"",
+      "expectedOutput": "\"6,9,12\"",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"barfoothefoobarman\", words = \"foo bar\"",
+      "output": "\"0,9\"",
+      "expectedOutput": "\"0,9\"",
+      "explanation": "s[0:6] = \"barfoo\" is \"bar\"+\"foo\", and s[9:15] = \"foobar\" is \"foo\"+\"bar\", both valid concatenations in some order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"wordgoodgoodgoodbestword\", words = \"word good best word\"",
+      "output": "\"\"",
+      "expectedOutput": "\"\"",
+      "explanation": "no substring uses \"word\" exactly twice, \"good\" once and \"best\" once contiguously"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"barfoofoobarthefoobarman\", words = \"bar foo the\"",
+      "output": "\"6,9,12\"",
+      "expectedOutput": "\"6,9,12\"",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"barfoothefoobarman\",\"foo bar\"]",
+      "output": "0,9",
+      "expectedOutput": "0,9",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"wordgoodgoodgoodbestword\",\"word good best word\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"barfoofoobarthefoobarman\",\"bar foo the\"]",
+      "output": "6,9,12",
+      "expectedOutput": "6,9,12",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"aaaaaaaa\",\"aa aa\"]",
+      "output": "0,1,2,3,4",
+      "expectedOutput": "0,1,2,3,4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"abcabc\",\"abc\"]",
+      "output": "0,3",
+      "expectedOutput": "0,3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"a\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ababab\",\"ab ab\"]",
+      "output": "0,2",
+      "expectedOutput": "0,2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"wordgoodgoodgoodbestword\",\"word good best good\"]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"foobarfoobar\",\"foo bar\"]",
+      "output": "0,3,6",
+      "expectedOutput": "0,3,6",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"lingmindraboofooowingdingbarrwingmonkeypoundcake\",\"fooo barr wing ding mon\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"abababab\",\"ab ab ab\"]",
+      "output": "0,2",
+      "expectedOutput": "0,2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"zzzzzzzz\",\"zz zz\"]",
+      "output": "0,1,2,3,4",
+      "expectedOutput": "0,1,2,3,4",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"catcatgoocatgoo\",\"cat goo\"]",
+      "output": "3,6,9",
+      "expectedOutput": "3,6,9",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"catgoocatgoo\",\"cat goo\"]",
+      "output": "0,3,6",
+      "expectedOutput": "0,3,6",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"xyzxyzxyzxyz\",\"xyz xyz\"]",
+      "output": "0,3,6",
+      "expectedOutput": "0,3,6",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"abcdabcdabcd\",\"cd ab\"]",
+      "output": "0,2,4,6,8",
+      "expectedOutput": "0,2,4,6,8",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"aaa\",\"a a\"]",
+      "output": "0,1",
+      "expectedOutput": "0,1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"bcabc\",\"bc ab\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"nomatchhere\",\"xyz\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"aabb\",\"ab\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"abcabcabcabc\",\"abc abc\"]",
+      "output": "0,3,6",
+      "expectedOutput": "0,3,6",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"oneword\",\"oneword\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[\"wordwordtwoword\",\"word two\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"barfoothefoobarman\", words = \"foo bar\"",
+        "output": "\"0,9\"",
+        "expectedOutput": "\"0,9\"",
+        "explanation": "s[0:6] = \"barfoo\" is \"bar\"+\"foo\", and s[9:15] = \"foobar\" is \"foo\"+\"bar\", both valid concatenations in some order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"wordgoodgoodgoodbestword\", words = \"word good best word\"",
+        "output": "\"\"",
+        "expectedOutput": "\"\"",
+        "explanation": "no substring uses \"word\" exactly twice, \"good\" once and \"best\" once contiguously"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"barfoofoobarthefoobarman\", words = \"bar foo the\"",
+        "output": "\"6,9,12\"",
+        "expectedOutput": "\"6,9,12\"",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"barfoothefoobarman\",\"foo bar\"]",
+        "output": "0,9",
+        "expectedOutput": "0,9",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"wordgoodgoodgoodbestword\",\"word good best word\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"barfoofoobarthefoobarman\",\"bar foo the\"]",
+        "output": "6,9,12",
+        "expectedOutput": "6,9,12",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"aaaaaaaa\",\"aa aa\"]",
+        "output": "0,1,2,3,4",
+        "expectedOutput": "0,1,2,3,4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"abcabc\",\"abc\"]",
+        "output": "0,3",
+        "expectedOutput": "0,3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"a\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ababab\",\"ab ab\"]",
+        "output": "0,2",
+        "expectedOutput": "0,2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"wordgoodgoodgoodbestword\",\"word good best good\"]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"foobarfoobar\",\"foo bar\"]",
+        "output": "0,3,6",
+        "expectedOutput": "0,3,6",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"lingmindraboofooowingdingbarrwingmonkeypoundcake\",\"fooo barr wing ding mon\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abababab\",\"ab ab ab\"]",
+        "output": "0,2",
+        "expectedOutput": "0,2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"zzzzzzzz\",\"zz zz\"]",
+        "output": "0,1,2,3,4",
+        "expectedOutput": "0,1,2,3,4",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"catcatgoocatgoo\",\"cat goo\"]",
+        "output": "3,6,9",
+        "expectedOutput": "3,6,9",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"catgoocatgoo\",\"cat goo\"]",
+        "output": "0,3,6",
+        "expectedOutput": "0,3,6",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"xyzxyzxyzxyz\",\"xyz xyz\"]",
+        "output": "0,3,6",
+        "expectedOutput": "0,3,6",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"abcdabcdabcd\",\"cd ab\"]",
+        "output": "0,2,4,6,8",
+        "expectedOutput": "0,2,4,6,8",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"aaa\",\"a a\"]",
+        "output": "0,1",
+        "expectedOutput": "0,1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"bcabc\",\"bc ab\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"nomatchhere\",\"xyz\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"aabb\",\"ab\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"abcabcabcabc\",\"abc abc\"]",
+        "output": "0,3,6",
+        "expectedOutput": "0,3,6",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"oneword\",\"oneword\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"wordwordtwoword\",\"word two\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findSubstring(self, s, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string findSubstring(string s, string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String findSubstring(String s, String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findSubstring(s: String, words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findSubstring(s, words) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findSubstring(self, s, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string findSubstring(string s, string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String findSubstring(String s, String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findSubstring(s: String, words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findSubstring(s, words) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findSubstring(self, s, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string findSubstring(string s, string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String findSubstring(String s, String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findSubstring(s: String, words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findSubstring(s, words) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findSubstring(self, s, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string findSubstring(string s, string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String findSubstring(String s, String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findSubstring(s: String, words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findSubstring(s, words) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * w) where n is length of s and w is word length",
+      "space": "O(k) for the word frequency map, where k is the number of distinct words",
+      "pattern": "sliding window of fixed total length, using a hash map of word -> remaining count, run once per possible window-start offset (0 to word_len - 1) to keep each character visited a constant number of times"
+    },
+    "bruteForce": {
+      "approach": "for every starting index i in s, slice off word_count * word_len characters, cut that slice into word_len-sized chunks, and check whether the multiset of chunks matches the multiset of words exactly",
+      "time": "O(n * k * w) where n is length of s, k is number of words, w is word length",
+      "space": "O(k) for the frequency map per starting index"
+    }
+  },
+  "optimal": {
+    "pattern": "sliding window of fixed total length, using a hash map of word -> remaining count, run once per possible window-start offset (0 to word_len - 1) to keep each character visited a constant number of times",
+    "time": "O(n * w) where n is length of s and w is word length",
+    "space": "O(k) for the word frequency map, where k is the number of distinct words",
+    "hint_ladder": [
+      "split words on spaces first - every word has the same fixed length, and the total concatenation length is always number_of_words * word_length, so any valid match has to span exactly that many characters",
+      "build a frequency map of word -> how many times it appears in words, since words can repeat",
+      "instead of re-scanning from scratch at every index, slide a window word-length at a time: add the new word's count and remove the leftmost word's count, shrinking from the left whenever a word doesn't belong or exceeds its needed count",
+      "because you're stepping by whole words, run the sliding window starting from each of the word_length possible offsets (0, 1, ..., word_length - 1) so you don't miss alignments that don't start on a multiple of word_length",
+      "collect every index where the window's word counts exactly match the target frequency map, then sort the collected indices and join them with commas (or return the empty string if none were found)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every starting index i in s, slice off word_count * word_len characters, cut that slice into word_len-sized chunks, and check whether the multiset of chunks matches the multiset of words exactly",
+    "time": "O(n * k * w) where n is length of s, k is number of words, w is word length",
+    "space": "O(k) for the frequency map per starting index"
+  },
+  "isIndex0": true,
+  "level": null
+}

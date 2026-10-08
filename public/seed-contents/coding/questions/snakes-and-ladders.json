@@ -1,0 +1,641 @@
+{
+  "id": "snakes-and-ladders",
+  "questionId": "snakes-and-ladders",
+  "slug": "snakes-and-ladders",
+  "title": "Snakes and Ladders",
+  "difficulty": "Medium",
+  "category": "Graphs",
+  "patterns": [
+    "graph",
+    "bfs",
+    "shortest path",
+    "simulation"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "first solve the coordinate conversion in isolation: given a square number 1..n*n, how do you find its (row, col) in the 2D board, given the boustrophedon back-and-forth numbering?",
+    "once you can map any square number to a board cell, this becomes a shortest-path problem over a simple linear graph of squares 1..n*n, where square s connects to s+1 through s+6",
+    "BFS explores squares in order of number of rolls - what should you enqueue, and how do you avoid revisiting the same square with more rolls than necessary?",
+    "when you land on a square, check its board value immediately: if it's not -1, you're actually arriving at the destination square instead, so enqueue that destination, not the square you rolled onto",
+    "run BFS from square 1, and return the roll-count the first time you dequeue square n*n; if the queue empties without reaching it, return -1"
+  ],
+  "commonMistakes": [
+    "getting the boustrophedon row/column mapping backwards, especially flipping which rows go left-to-right versus right-to-left, or forgetting the board array's row 0 is the top of the board while square 1 is the bottom",
+    "treating a snake/ladder destination as just another square to potentially apply a second snake/ladder to, when the destination is guaranteed to be plain",
+    "not capping dice rolls at n*n, causing out-of-bounds square lookups when close to the end",
+    "using DFS and returning the first path found instead of the shortest, or forgetting to track visited squares and looping forever",
+    "forgetting the n = 1 trivial case where the start square is already the final square"
+  ],
+  "content": {
+    "problemStatement": "You're given an n x n board for a snakes-and-ladders style game. The\nsquares are numbered 1 to n*n, but not row by row in the usual reading\norder - instead they follow a boustrophedon (back-and-forth) path:\n\n- square 1 is the bottom-left cell of the board\n- numbering proceeds left to right across the bottom row\n- then right to left across the row above it\n- then left to right again, alternating direction row by row as you move up, until square n*n is reached\n\nWorked example for a 3x3 board (rows given top to bottom as they'd appear\nin the board array, row 0 first):\n\n```\nrow0 (top):     7  8  9\nrow1 (middle):  6  5  4\nrow2 (bottom):  1  2  3\n```\n\nSo board[2][0] = square 1, board[1][2] = square 4, board[0][0] = square 7 -\nthe middle row runs right to left (squares 4, 5, 6 land as [6, 5, 4]),\nwhile the bottom and top rows run left to right.\n\nEach cell of the board array holds -1 if that square has no snake or\nladder, or otherwise the destination square number the snake or ladder\nleads to. Squares 1 and n*n never have a snake or ladder. You start on\nsquare 1.\n\n**On each turn you roll a die that can land on any value from 1 to 6, and you advance that many squares along the numbered path (never past n*n); return the minimum number of dice rolls needed to reach square n*n starting from square 1, or -1 if it's impossible.**\n\nIf the square you land on has a snake or ladder, you immediately move to its destination square. You cannot choose to ignore it, but a snake or ladder's destination square is never itself another snake or ladder.\n",
+    "constraints": [
+      "2 <= n <= 20 (with n = 1 also allowed as a trivial edge case)",
+      "board.length == n, board[i].length == n",
+      "board[i][j] is either -1 or a valid square number between 1 and n*n",
+      "square 1 and square n*n never have a snake or ladder",
+      "a snake or ladder's destination square is itself guaranteed to not have another snake or ladder"
+    ],
+    "notes": [
+      "n = 1, where the start is already the end",
+      "a board with no snakes or ladders at all, pure dice-roll BFS",
+      "a ladder placed right after the start that jumps straight to (or near) the final square",
+      "a snake that sends you backward, which the shortest path should simply route around",
+      "no possible path exists, so the answer is -1"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "board = [[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,35,-1,-1,13,-1],[-1,-1,-1,-1,-1,-1],[-1,15,-1,-1,-1,-1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "one shortest path is roll to square 4, then square 14, taking the ladder to 35, then square 36, taking 4 total rolls"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "board = [[-1,-1],[-1,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "n*n is 4, and a single roll of 3 from square 1 lands directly on square 4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "board = [[-1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "n = 1, so square 1 is already square n*n, no rolls needed"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,35,-1,-1,13,-1],[-1,-1,-1,-1,-1,-1],[-1,15,-1,-1,-1,-1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[-1,-1],[-1,3]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[-1]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[-1,-1],[-1,-1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[-1,-1,-1],[-1,-1,-1],[-1,9,-1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[-1,-1,-1],[-1,1,-1],[-1,-1,-1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[-1,-1,-1,-1],[-1,-1,-1,-1],[16,-1,-1,-1],[-1,8,-1,-1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,2,-1,-1],[-1,-1,-1,-1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,20,-1,-1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[-1,-1,36,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[-1,-1,-1],[-1,-1,9],[-1,-1,-1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[-1,1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1,-1],[1,1,1],[-1,1,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "board = [[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,35,-1,-1,13,-1],[-1,-1,-1,-1,-1,-1],[-1,15,-1,-1,-1,-1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "one shortest path is roll to square 4, then square 14, taking the ladder to 35, then square 36, taking 4 total rolls"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "board = [[-1,-1],[-1,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "n*n is 4, and a single roll of 3 from square 1 lands directly on square 4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "board = [[-1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "n = 1, so square 1 is already square n*n, no rolls needed"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "board = [[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,35,-1,-1,13,-1],[-1,-1,-1,-1,-1,-1],[-1,15,-1,-1,-1,-1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "one shortest path is roll to square 4, then square 14, taking the ladder to 35, then square 36, taking 4 total rolls"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "board = [[-1,-1],[-1,3]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "n*n is 4, and a single roll of 3 from square 1 lands directly on square 4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "board = [[-1]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "n = 1, so square 1 is already square n*n, no rolls needed"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,35,-1,-1,13,-1],[-1,-1,-1,-1,-1,-1],[-1,15,-1,-1,-1,-1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[-1,-1],[-1,3]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[-1]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[-1,-1],[-1,-1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1]]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1]]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[-1,-1,-1],[-1,-1,-1],[-1,9,-1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[-1,-1,-1],[-1,1,-1],[-1,-1,-1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[-1,-1,-1,-1],[-1,-1,-1,-1],[16,-1,-1,-1],[-1,8,-1,-1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,2,-1,-1],[-1,-1,-1,-1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,20,-1,-1]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[-1,-1,36,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1]]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]]",
+      "output": "17",
+      "expectedOutput": "17",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[-1,-1,-1],[-1,-1,9],[-1,-1,-1]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[-1,1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,1,-1],[1,1,1],[-1,1,1]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "board = [[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,35,-1,-1,13,-1],[-1,-1,-1,-1,-1,-1],[-1,15,-1,-1,-1,-1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "one shortest path is roll to square 4, then square 14, taking the ladder to 35, then square 36, taking 4 total rolls"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "board = [[-1,-1],[-1,3]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "n*n is 4, and a single roll of 3 from square 1 lands directly on square 4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "board = [[-1]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "n = 1, so square 1 is already square n*n, no rolls needed"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,35,-1,-1,13,-1],[-1,-1,-1,-1,-1,-1],[-1,15,-1,-1,-1,-1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[-1,-1],[-1,3]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[-1]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[-1,-1],[-1,-1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[-1,-1,-1],[-1,-1,-1],[-1,-1,-1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1]]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[-1,-1,-1],[-1,-1,-1],[-1,9,-1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[-1,-1,-1],[-1,1,-1],[-1,-1,-1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[-1,-1,-1,-1],[-1,-1,-1,-1],[16,-1,-1,-1],[-1,8,-1,-1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,2,-1,-1],[-1,-1,-1,-1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1],[-1,-1,20,-1,-1]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[-1,-1,36,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1]]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]]]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[-1,-1,-1],[-1,-1,9],[-1,-1,-1]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[-1,1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1,-1],[1,1,1],[-1,1,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def snakesAndLadders(self, board):\n",
+    "cpp": "#include <vector>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int snakesAndLadders(vector<vector<int>>& board) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int snakesAndLadders(int[][] board) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun snakesAndLadders(board: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    snakesAndLadders(board) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def snakesAndLadders(self, board):\n",
+    "cpp": "#include <vector>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int snakesAndLadders(vector<vector<int>>& board) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int snakesAndLadders(int[][] board) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun snakesAndLadders(board: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    snakesAndLadders(board) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def snakesAndLadders(self, board):\n",
+    "cpp": "#include <vector>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int snakesAndLadders(vector<vector<int>>& board) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int snakesAndLadders(int[][] board) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun snakesAndLadders(board: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    snakesAndLadders(board) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def snakesAndLadders(self, board):\n",
+    "cpp": "#include <vector>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int snakesAndLadders(vector<vector<int>>& board) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int snakesAndLadders(int[][] board) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun snakesAndLadders(board: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    snakesAndLadders(board) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2) since there are n*n squares and each is processed once with 6 constant-time transitions",
+      "space": "O(n^2) for the visited array, the queue, and the square-to-(row, col) mapping",
+      "pattern": "BFS shortest path over an implicit graph where each square 1..n*n is a node, and each node has up to 6 outgoing edges (one per die value), collapsing through snake/ladder destinations"
+    },
+    "bruteForce": {
+      "approach": "explore all reachable squares from square 1 via DFS/backtracking over every possible sequence of dice rolls, tracking the number of rolls used and keeping the minimum that reaches n*n",
+      "time": "O(6^(n*n)) in the worst case, exponential due to redundant re-exploration of the same squares",
+      "space": "O(n*n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "BFS shortest path over an implicit graph where each square 1..n*n is a node, and each node has up to 6 outgoing edges (one per die value), collapsing through snake/ladder destinations",
+    "time": "O(n^2) since there are n*n squares and each is processed once with 6 constant-time transitions",
+    "space": "O(n^2) for the visited array, the queue, and the square-to-(row, col) mapping",
+    "hint_ladder": [
+      "first solve the coordinate conversion in isolation: given a square number 1..n*n, how do you find its (row, col) in the 2D board, given the boustrophedon back-and-forth numbering?",
+      "once you can map any square number to a board cell, this becomes a shortest-path problem over a simple linear graph of squares 1..n*n, where square s connects to s+1 through s+6",
+      "BFS explores squares in order of number of rolls - what should you enqueue, and how do you avoid revisiting the same square with more rolls than necessary?",
+      "when you land on a square, check its board value immediately: if it's not -1, you're actually arriving at the destination square instead, so enqueue that destination, not the square you rolled onto",
+      "run BFS from square 1, and return the roll-count the first time you dequeue square n*n; if the queue empties without reaching it, return -1"
+    ]
+  },
+  "bruteForce": {
+    "approach": "explore all reachable squares from square 1 via DFS/backtracking over every possible sequence of dice rolls, tracking the number of rolls used and keeping the minimum that reaches n*n",
+    "time": "O(6^(n*n)) in the worst case, exponential due to redundant re-exploration of the same squares",
+    "space": "O(n*n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

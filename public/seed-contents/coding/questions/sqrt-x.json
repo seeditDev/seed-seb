@@ -1,0 +1,689 @@
+{
+  "id": "sqrt-x",
+  "questionId": "sqrt-x",
+  "slug": "sqrt-x",
+  "title": "Integer Square Root",
+  "difficulty": "Easy",
+  "category": "Binary search",
+  "patterns": [
+    "binary search"
+  ],
+  "lists": [],
+  "hints": [
+    "you don't need to try every candidate answer one at a time - the candidates themselves are sorted in a useful way",
+    "as i increases, i * i increases too - that monotonic relationship is exactly what binary search needs",
+    "binary search over possible answers from 0 to x: for a candidate mid, is mid * mid too big, too small, or just right",
+    "keep the largest mid found so far where mid * mid <= x, shrinking the search space each time; watch for overflow when squaring large mid values"
+  ],
+  "commonMistakes": [
+    "using a built-in sqrt/pow function despite the constraint against it",
+    "overflow when computing mid * mid for large x in fixed-width integer languages (use a wider type or divide instead of multiply)",
+    "off-by-one, returning the first i where i * i exceeds x instead of the last i where it doesn't"
+  ],
+  "content": {
+    "problemStatement": "You're given a non-negative integer `x`.\n\n**Return the integer square root of x, the largest integer whose square is less than or equal to x.**\n\nYou may not use a built-in square root function.\n",
+    "constraints": [
+      "0 <= x <= 2^31 - 1"
+    ],
+    "notes": [
+      "x = 0 or x = 1 (answer equals x)",
+      "x is a perfect square",
+      "x is a large number, so the search range and mid-point math must avoid overflow"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "x = 4",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "2 * 2 = 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "x = 8",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the real square root is about 2.83, and the floor of that is 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "x = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[8]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2147395600]",
+        "output": "46340",
+        "expectedOutput": "46340",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[3]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[6]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[7]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[9]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[10]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[15]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[16]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[17]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[99]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[100]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[101]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[999999999]",
+        "output": "31622",
+        "expectedOutput": "31622",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1000000]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[10000]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[999]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[2147483647]",
+        "output": "46340",
+        "expectedOutput": "46340",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "x = 4",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "2 * 2 = 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "x = 8",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the real square root is about 2.83, and the floor of that is 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "x = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "x = 4",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "2 * 2 = 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "x = 8",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "the real square root is about 2.83, and the floor of that is 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "x = 0",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[4]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[8]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[2147395600]",
+      "output": "46340",
+      "expectedOutput": "46340",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[3]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[5]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[6]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[7]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[9]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[10]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[15]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[16]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[17]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[99]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[100]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[101]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[999999999]",
+      "output": "31622",
+      "expectedOutput": "31622",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[1000000]",
+      "output": "1000",
+      "expectedOutput": "1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[10000]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[999]",
+      "output": "31",
+      "expectedOutput": "31",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[2147483647]",
+      "output": "46340",
+      "expectedOutput": "46340",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "x = 4",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "2 * 2 = 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "x = 8",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "the real square root is about 2.83, and the floor of that is 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "x = 0",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[4]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[8]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[2147395600]",
+        "output": "46340",
+        "expectedOutput": "46340",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[3]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[5]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[6]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[7]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[9]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[10]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[15]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[16]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[17]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[99]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[100]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[101]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[999999999]",
+        "output": "31622",
+        "expectedOutput": "31622",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[1000000]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[10000]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[999]",
+        "output": "31",
+        "expectedOutput": "31",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[2147483647]",
+        "output": "46340",
+        "expectedOutput": "46340",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def mySqrt(self, x):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int mySqrt(int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int mySqrt(int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mySqrt(x: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mySqrt(x) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def mySqrt(self, x):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int mySqrt(int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int mySqrt(int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mySqrt(x: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mySqrt(x) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def mySqrt(self, x):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int mySqrt(int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int mySqrt(int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mySqrt(x: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mySqrt(x) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def mySqrt(self, x):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int mySqrt(int x) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int mySqrt(int x) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun mySqrt(x: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    mySqrt(x) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log x)",
+      "space": "O(1)",
+      "pattern": "binary search over the answer space [0, x] for the largest i with i * i <= x"
+    },
+    "bruteForce": {
+      "approach": "try i = 0, 1, 2, ... incrementing until i * i > x, then return i - 1",
+      "time": "O(sqrt(x))",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "binary search over the answer space [0, x] for the largest i with i * i <= x",
+    "time": "O(log x)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "you don't need to try every candidate answer one at a time - the candidates themselves are sorted in a useful way",
+      "as i increases, i * i increases too - that monotonic relationship is exactly what binary search needs",
+      "binary search over possible answers from 0 to x: for a candidate mid, is mid * mid too big, too small, or just right",
+      "keep the largest mid found so far where mid * mid <= x, shrinking the search space each time; watch for overflow when squaring large mid values"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try i = 0, 1, 2, ... incrementing until i * i > x, then return i - 1",
+    "time": "O(sqrt(x))",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

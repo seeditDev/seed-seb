@@ -1,0 +1,632 @@
+{
+  "id": "reverse-linked-list-ii",
+  "questionId": "reverse-linked-list-ii",
+  "slug": "reverse-linked-list-ii",
+  "title": "Reverse Linked List II",
+  "difficulty": "Medium",
+  "category": "Linked list",
+  "patterns": [
+    "linked list",
+    "in-place reversal"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you only need to touch the nodes from left to right - can you avoid rebuilding the parts before and after?",
+    "walk to just before position left and remember that node - everything before it never moves",
+    "within the sublist, repeatedly take the node right after your reversal point and move it to the very front of the sublist (a technique sometimes called 'head insertion')",
+    "do this (right - left) times, then reconnect: the node before position left should now point to what was originally the node at position right"
+  ],
+  "commonMistakes": [
+    "losing track of the node just before position left, which is needed to reconnect the reversed sublist",
+    "off-by-one errors converting 1-indexed left/right into how many swaps or moves are needed",
+    "forgetting to reconnect the tail of the reversed sublist to whatever originally followed position right"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]`\nis the value of the i-th node in order, along with two positions `left`\nand `right`.\n\n**Reverse only the sublist that runs from position `left` to position `right`, inclusive (1-indexed), leaving the rest of the list untouched, and return the resulting full list's values in order.**\n",
+    "constraints": [
+      "1 <= nums.length <= 500",
+      "-500 <= nums[i] <= 500",
+      "1 <= left <= right <= nums.length"
+    ],
+    "notes": [
+      "left equals right (single node, no visible change)",
+      "left = 1 (reversal starts at the head)",
+      "right = nums.length (reversal ends at the tail)",
+      "left = 1 and right = nums.length (reverse the whole list)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5], left = 2, right = 4",
+        "output": "[1, 4, 3, 2, 5]",
+        "expectedOutput": "[1, 4, 3, 2, 5]",
+        "explanation": "positions 2 through 4 (values 2, 3, 4) are reversed to 4, 3, 2; positions 1 and 5 stay put"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [5], left = 1, right = 1",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "explanation": "reversing a single node changes nothing"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5], left = 1, right = 5",
+        "output": "[5, 4, 3, 2, 1]",
+        "expectedOutput": "[5, 4, 3, 2, 1]",
+        "explanation": "reversing the entire list is the same as full reversal"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5],2,4]",
+        "output": "[1,4,3,2,5]",
+        "expectedOutput": "[1,4,3,2,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5],1,1]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5],1,5]",
+        "output": "[5,4,3,2,1]",
+        "expectedOutput": "[5,4,3,2,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3],1,2]",
+        "output": "[2,1,3]",
+        "expectedOutput": "[2,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3],2,3]",
+        "output": "[1,3,2]",
+        "expectedOutput": "[1,3,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5,6],2,5]",
+        "output": "[1,5,4,3,2,6]",
+        "expectedOutput": "[1,5,4,3,2,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[9,8,7,6,5],1,3]",
+        "output": "[7,8,9,6,5]",
+        "expectedOutput": "[7,8,9,6,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],8,8]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4],1,4]",
+        "output": "[4,3,2,1]",
+        "expectedOutput": "[4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7],4,7]",
+        "output": "[1,2,3,7,6,5,4]",
+        "expectedOutput": "[1,2,3,7,6,5,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7],2,6]",
+        "output": "[1,6,5,4,3,2,7]",
+        "expectedOutput": "[1,6,5,4,3,2,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3],1,3]",
+        "output": "[3,2,1]",
+        "expectedOutput": "[3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,4,3,2,1],2,4]",
+        "output": "[5,2,3,4,1]",
+        "expectedOutput": "[5,2,3,4,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],3,9]",
+        "output": "[1,2,9,8,7,6,5,4,3,10]",
+        "expectedOutput": "[1,2,9,8,7,6,5,4,3,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4],2,3]",
+        "output": "[1,3,2,4]",
+        "expectedOutput": "[1,3,2,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[7,8,9,10,11,12],3,4]",
+        "output": "[7,8,10,9,11,12]",
+        "expectedOutput": "[7,8,10,9,11,12]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5],4,5]",
+        "output": "[1,2,3,5,4]",
+        "expectedOutput": "[1,2,3,5,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[9,9,9],1,1]",
+        "output": "[9,9,9]",
+        "expectedOutput": "[9,9,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8],1,8]",
+        "output": "[8,7,6,5,4,3,2,1]",
+        "expectedOutput": "[8,7,6,5,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,9],5,9]",
+        "output": "[1,2,3,4,9,8,7,6,5]",
+        "expectedOutput": "[1,2,3,4,9,8,7,6,5]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5], left = 2, right = 4",
+      "output": "[1, 4, 3, 2, 5]",
+      "expectedOutput": "[1, 4, 3, 2, 5]",
+      "explanation": "positions 2 through 4 (values 2, 3, 4) are reversed to 4, 3, 2; positions 1 and 5 stay put"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [5], left = 1, right = 1",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "explanation": "reversing a single node changes nothing"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5], left = 1, right = 5",
+      "output": "[5, 4, 3, 2, 1]",
+      "expectedOutput": "[5, 4, 3, 2, 1]",
+      "explanation": "reversing the entire list is the same as full reversal"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5], left = 2, right = 4",
+      "output": "[1, 4, 3, 2, 5]",
+      "expectedOutput": "[1, 4, 3, 2, 5]",
+      "explanation": "positions 2 through 4 (values 2, 3, 4) are reversed to 4, 3, 2; positions 1 and 5 stay put"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [5], left = 1, right = 1",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "explanation": "reversing a single node changes nothing"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5], left = 1, right = 5",
+      "output": "[5, 4, 3, 2, 1]",
+      "expectedOutput": "[5, 4, 3, 2, 1]",
+      "explanation": "reversing the entire list is the same as full reversal"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4,5],2,4]",
+      "output": "[1,4,3,2,5]",
+      "expectedOutput": "[1,4,3,2,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[5],1,1]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3,4,5],1,5]",
+      "output": "[5,4,3,2,1]",
+      "expectedOutput": "[5,4,3,2,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3],1,2]",
+      "output": "[2,1,3]",
+      "expectedOutput": "[2,1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3],2,3]",
+      "output": "[1,3,2]",
+      "expectedOutput": "[1,3,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5,6],2,5]",
+      "output": "[1,5,4,3,2,6]",
+      "expectedOutput": "[1,5,4,3,2,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[9,8,7,6,5],1,3]",
+      "output": "[7,8,9,6,5]",
+      "expectedOutput": "[7,8,9,6,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],8,8]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4],1,4]",
+      "output": "[4,3,2,1]",
+      "expectedOutput": "[4,3,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5,6,7],4,7]",
+      "output": "[1,2,3,7,6,5,4]",
+      "expectedOutput": "[1,2,3,7,6,5,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7],2,6]",
+      "output": "[1,6,5,4,3,2,7]",
+      "expectedOutput": "[1,6,5,4,3,2,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3],1,3]",
+      "output": "[3,2,1]",
+      "expectedOutput": "[3,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[5,4,3,2,1],2,4]",
+      "output": "[5,2,3,4,1]",
+      "expectedOutput": "[5,2,3,4,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],3,9]",
+      "output": "[1,2,9,8,7,6,5,4,3,10]",
+      "expectedOutput": "[1,2,9,8,7,6,5,4,3,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4],2,3]",
+      "output": "[1,3,2,4]",
+      "expectedOutput": "[1,3,2,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[7,8,9,10,11,12],3,4]",
+      "output": "[7,8,10,9,11,12]",
+      "expectedOutput": "[7,8,10,9,11,12]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5],4,5]",
+      "output": "[1,2,3,5,4]",
+      "expectedOutput": "[1,2,3,5,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[9,9,9],1,1]",
+      "output": "[9,9,9]",
+      "expectedOutput": "[9,9,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8],1,8]",
+      "output": "[8,7,6,5,4,3,2,1]",
+      "expectedOutput": "[8,7,6,5,4,3,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,4,5,6,7,8,9],5,9]",
+      "output": "[1,2,3,4,9,8,7,6,5]",
+      "expectedOutput": "[1,2,3,4,9,8,7,6,5]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5], left = 2, right = 4",
+        "output": "[1, 4, 3, 2, 5]",
+        "expectedOutput": "[1, 4, 3, 2, 5]",
+        "explanation": "positions 2 through 4 (values 2, 3, 4) are reversed to 4, 3, 2; positions 1 and 5 stay put"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [5], left = 1, right = 1",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "explanation": "reversing a single node changes nothing"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5], left = 1, right = 5",
+        "output": "[5, 4, 3, 2, 1]",
+        "expectedOutput": "[5, 4, 3, 2, 1]",
+        "explanation": "reversing the entire list is the same as full reversal"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5],2,4]",
+        "output": "[1,4,3,2,5]",
+        "expectedOutput": "[1,4,3,2,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5],1,1]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3,4,5],1,5]",
+        "output": "[5,4,3,2,1]",
+        "expectedOutput": "[5,4,3,2,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3],1,2]",
+        "output": "[2,1,3]",
+        "expectedOutput": "[2,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3],2,3]",
+        "output": "[1,3,2]",
+        "expectedOutput": "[1,3,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5,6],2,5]",
+        "output": "[1,5,4,3,2,6]",
+        "expectedOutput": "[1,5,4,3,2,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[9,8,7,6,5],1,3]",
+        "output": "[7,8,9,6,5]",
+        "expectedOutput": "[7,8,9,6,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],8,8]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4],1,4]",
+        "output": "[4,3,2,1]",
+        "expectedOutput": "[4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6,7],4,7]",
+        "output": "[1,2,3,7,6,5,4]",
+        "expectedOutput": "[1,2,3,7,6,5,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7],2,6]",
+        "output": "[1,6,5,4,3,2,7]",
+        "expectedOutput": "[1,6,5,4,3,2,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3],1,3]",
+        "output": "[3,2,1]",
+        "expectedOutput": "[3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,4,3,2,1],2,4]",
+        "output": "[5,2,3,4,1]",
+        "expectedOutput": "[5,2,3,4,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],3,9]",
+        "output": "[1,2,9,8,7,6,5,4,3,10]",
+        "expectedOutput": "[1,2,9,8,7,6,5,4,3,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4],2,3]",
+        "output": "[1,3,2,4]",
+        "expectedOutput": "[1,3,2,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[7,8,9,10,11,12],3,4]",
+        "output": "[7,8,10,9,11,12]",
+        "expectedOutput": "[7,8,10,9,11,12]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5],4,5]",
+        "output": "[1,2,3,5,4]",
+        "expectedOutput": "[1,2,3,5,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[9,9,9],1,1]",
+        "output": "[9,9,9]",
+        "expectedOutput": "[9,9,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8],1,8]",
+        "output": "[8,7,6,5,4,3,2,1]",
+        "expectedOutput": "[8,7,6,5,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,9],5,9]",
+        "output": "[1,2,3,4,9,8,7,6,5]",
+        "expectedOutput": "[1,2,3,4,9,8,7,6,5]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def reverseBetween(self, nums, left, right):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> reverseBetween(vector<int>& nums, int left, int right) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] reverseBetween(int[] nums, int left, int right) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseBetween(nums: IntArray, left: Int, right: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseBetween(nums, left, right) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def reverseBetween(self, nums, left, right):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> reverseBetween(vector<int>& nums, int left, int right) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] reverseBetween(int[] nums, int left, int right) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseBetween(nums: IntArray, left: Int, right: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseBetween(nums, left, right) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def reverseBetween(self, nums, left, right):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> reverseBetween(vector<int>& nums, int left, int right) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] reverseBetween(int[] nums, int left, int right) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseBetween(nums: IntArray, left: Int, right: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseBetween(nums, left, right) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def reverseBetween(self, nums, left, right):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> reverseBetween(vector<int>& nums, int left, int right) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] reverseBetween(int[] nums, int left, int right) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseBetween(nums: IntArray, left: Int, right: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseBetween(nums, left, right) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n), single pass",
+      "space": "O(1) extra besides the output",
+      "pattern": "one pass in-place reversal - walk to position left-1, then repeatedly move the next node to the front of the sublist being reversed"
+    },
+    "bruteForce": {
+      "approach": "slice out the [left, right] sub-range, reverse that slice separately, and splice it back between the untouched prefix and suffix",
+      "time": "O(n)",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "one pass in-place reversal - walk to position left-1, then repeatedly move the next node to the front of the sublist being reversed",
+    "time": "O(n), single pass",
+    "space": "O(1) extra besides the output",
+    "hint_ladder": [
+      "you only need to touch the nodes from left to right - can you avoid rebuilding the parts before and after?",
+      "walk to just before position left and remember that node - everything before it never moves",
+      "within the sublist, repeatedly take the node right after your reversal point and move it to the very front of the sublist (a technique sometimes called 'head insertion')",
+      "do this (right - left) times, then reconnect: the node before position left should now point to what was originally the node at position right"
+    ]
+  },
+  "bruteForce": {
+    "approach": "slice out the [left, right] sub-range, reverse that slice separately, and splice it back between the untouched prefix and suffix",
+    "time": "O(n)",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

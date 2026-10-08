@@ -1,0 +1,629 @@
+{
+  "id": "split-linked-list-in-parts",
+  "questionId": "split-linked-list-in-parts",
+  "slug": "split-linked-list-in-parts",
+  "title": "Split Linked List in Parts",
+  "difficulty": "Medium",
+  "category": "Linked list",
+  "patterns": [
+    "linked list",
+    "simulation"
+  ],
+  "lists": [],
+  "hints": [
+    "if you know n and k, can you figure out every part's exact size before doing any splitting?",
+    "base size is n // k, and the remainder n % k tells you how many parts need one extra node",
+    "the first (n % k) parts get size (n // k) + 1, and the rest get size n // k",
+    "walk nums once, and for each part, take the number of elements dictated by its computed size (some sizes may be 0 if k > n)"
+  ],
+  "commonMistakes": [
+    "giving every part a fixed size of ceil(n/k) or floor(n/k) instead of distributing the remainder to the first parts only",
+    "forgetting to emit empty arrays for parts beyond the list length when k > n",
+    "off-by-one errors in computing which parts get the extra node"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]`\nis the value of the i-th node in order.\n\n**Split it into k consecutive parts, where every part is a contiguous run of the original list, and return the parts as an array of arrays, in order.**\n\nThe part sizes must be as equal as possible: if the length n doesn't divide evenly by k, the earlier parts get one extra node each, and earlier parts are never smaller than later ones. If k is greater than n, the extra parts at the end are empty.\n",
+    "constraints": [
+      "0 <= nums.length <= 1000",
+      "1 <= k <= 50"
+    ],
+    "notes": [
+      "an empty list",
+      "k greater than the list length (trailing empty parts)",
+      "k = 1 (a single part containing everything)",
+      "the length divides evenly by k"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], k = 5",
+        "output": "[[1], [2], [3], [], []]",
+        "expectedOutput": "[[1], [2], [3], [], []]",
+        "explanation": "only 3 nodes for 5 parts, so the first 3 parts get one node each and the last 2 are empty"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], k = 3",
+        "output": "[[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]",
+        "expectedOutput": "[[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]",
+        "explanation": "10 nodes into 3 parts: 10 / 3 = 3 remainder 1, so the first part gets the extra node (size 4), the rest get size 3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [], k = 3",
+        "output": "[[], [], []]",
+        "expectedOutput": "[[], [], []]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3],5]",
+        "output": "[[1],[2],[3],[],[]]",
+        "expectedOutput": "[[1],[2],[3],[],[]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],3]",
+        "output": "[[1,2,3,4],[5,6,7],[8,9,10]]",
+        "expectedOutput": "[[1,2,3,4],[5,6,7],[8,9,10]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],3]",
+        "output": "[[],[],[]]",
+        "expectedOutput": "[[],[],[]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2],1]",
+        "output": "[[1,2]]",
+        "expectedOutput": "[[1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],1]",
+        "output": "[[1]]",
+        "expectedOutput": "[[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5,6,7,8],3]",
+        "output": "[[1,2,3],[4,5,6],[7,8]]",
+        "expectedOutput": "[[1,2,3],[4,5,6],[7,8]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3],2]",
+        "output": "[[1,2],[3]]",
+        "expectedOutput": "[[1,2],[3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49],6]",
+        "output": "[[1,2,3,4,5,6,7,8,9],[10,11,12,13,14,15,16,17],[18,19,20,21,22,23,24,25],[26,27,28,29,30,31,32,33],[34,35,36,37,38,39,40,41],[42,43,44,45,46,47,48,49]]",
+        "expectedOutput": "[[1,2,3,4,5,6,7,8,9],[10,11,12,13,14,15,16,17],[18,19,20,21,22,23,24,25],[26,27,28,29,30,31,32,33],[34,35,36,37,38,39,40,41],[42,43,44,45,46,47,48,49]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[[1],[2],[3],[4],[5]]",
+        "expectedOutput": "[[1],[2],[3],[4],[5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6],4]",
+        "output": "[[1,2],[3,4],[5],[6]]",
+        "expectedOutput": "[[1,2],[3,4],[5],[6]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9],4]",
+        "output": "[[1,2,3],[4,5],[6,7],[8,9]]",
+        "expectedOutput": "[[1,2,3],[4,5],[6,7],[8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4],3]",
+        "output": "[[1,2],[3],[4]]",
+        "expectedOutput": "[[1,2],[3],[4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6],6]",
+        "output": "[[1],[2],[3],[4],[5],[6]]",
+        "expectedOutput": "[[1],[2],[3],[4],[5],[6]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6],7]",
+        "output": "[[1],[2],[3],[4],[5],[6],[]]",
+        "expectedOutput": "[[1],[2],[3],[4],[5],[6],[]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11],3]",
+        "output": "[[1,2,3,4],[5,6,7,8],[9,10,11]]",
+        "expectedOutput": "[[1,2,3,4],[5,6,7,8],[9,10,11]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1],2]",
+        "output": "[[1],[]]",
+        "expectedOutput": "[[1],[]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[],5]",
+        "output": "[[],[],[],[],[]]",
+        "expectedOutput": "[[],[],[],[],[]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5]",
+        "output": "[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]]",
+        "expectedOutput": "[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7],5]",
+        "output": "[[1,2],[3,4],[5],[6],[7]]",
+        "expectedOutput": "[[1,2],[3,4],[5],[6],[7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35],8]",
+        "output": "[[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19],[20,21,22,23],[24,25,26,27],[28,29,30,31],[32,33,34,35]]",
+        "expectedOutput": "[[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19],[20,21,22,23],[24,25,26,27],[28,29,30,31],[32,33,34,35]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], k = 5",
+      "output": "[[1], [2], [3], [], []]",
+      "expectedOutput": "[[1], [2], [3], [], []]",
+      "explanation": "only 3 nodes for 5 parts, so the first 3 parts get one node each and the last 2 are empty"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], k = 3",
+      "output": "[[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]",
+      "expectedOutput": "[[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]",
+      "explanation": "10 nodes into 3 parts: 10 / 3 = 3 remainder 1, so the first part gets the extra node (size 4), the rest get size 3"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [], k = 3",
+      "output": "[[], [], []]",
+      "expectedOutput": "[[], [], []]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], k = 5",
+      "output": "[[1], [2], [3], [], []]",
+      "expectedOutput": "[[1], [2], [3], [], []]",
+      "explanation": "only 3 nodes for 5 parts, so the first 3 parts get one node each and the last 2 are empty"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], k = 3",
+      "output": "[[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]",
+      "expectedOutput": "[[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]",
+      "explanation": "10 nodes into 3 parts: 10 / 3 = 3 remainder 1, so the first part gets the extra node (size 4), the rest get size 3"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [], k = 3",
+      "output": "[[], [], []]",
+      "expectedOutput": "[[], [], []]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3],5]",
+      "output": "[[1],[2],[3],[],[]]",
+      "expectedOutput": "[[1],[2],[3],[],[]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],3]",
+      "output": "[[1,2,3,4],[5,6,7],[8,9,10]]",
+      "expectedOutput": "[[1,2,3,4],[5,6,7],[8,9,10]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[],3]",
+      "output": "[[],[],[]]",
+      "expectedOutput": "[[],[],[]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2],1]",
+      "output": "[[1,2]]",
+      "expectedOutput": "[[1,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],1]",
+      "output": "[[1]]",
+      "expectedOutput": "[[1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5,6,7,8],3]",
+      "output": "[[1,2,3],[4,5,6],[7,8]]",
+      "expectedOutput": "[[1,2,3],[4,5,6],[7,8]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3],2]",
+      "output": "[[1,2],[3]]",
+      "expectedOutput": "[[1,2],[3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49],6]",
+      "output": "[[1,2,3,4,5,6,7,8,9],[10,11,12,13,14,15,16,17],[18,19,20,21,22,23,24,25],[26,27,28,29,30,31,32,33],[34,35,36,37,38,39,40,41],[42,43,44,45,46,47,48,49]]",
+      "expectedOutput": "[[1,2,3,4,5,6,7,8,9],[10,11,12,13,14,15,16,17],[18,19,20,21,22,23,24,25],[26,27,28,29,30,31,32,33],[34,35,36,37,38,39,40,41],[42,43,44,45,46,47,48,49]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5],5]",
+      "output": "[[1],[2],[3],[4],[5]]",
+      "expectedOutput": "[[1],[2],[3],[4],[5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5,6],4]",
+      "output": "[[1,2],[3,4],[5],[6]]",
+      "expectedOutput": "[[1,2],[3,4],[5],[6]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6,7,8,9],4]",
+      "output": "[[1,2,3],[4,5],[6,7],[8,9]]",
+      "expectedOutput": "[[1,2,3],[4,5],[6,7],[8,9]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4],3]",
+      "output": "[[1,2],[3],[4]]",
+      "expectedOutput": "[[1,2],[3],[4]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6],6]",
+      "output": "[[1],[2],[3],[4],[5],[6]]",
+      "expectedOutput": "[[1],[2],[3],[4],[5],[6]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6],7]",
+      "output": "[[1],[2],[3],[4],[5],[6],[]]",
+      "expectedOutput": "[[1],[2],[3],[4],[5],[6],[]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11],3]",
+      "output": "[[1,2,3,4],[5,6,7,8],[9,10,11]]",
+      "expectedOutput": "[[1,2,3,4],[5,6,7,8],[9,10,11]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1],2]",
+      "output": "[[1],[]]",
+      "expectedOutput": "[[1],[]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[],5]",
+      "output": "[[],[],[],[],[]]",
+      "expectedOutput": "[[],[],[],[],[]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5]",
+      "output": "[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]]",
+      "expectedOutput": "[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7],5]",
+      "output": "[[1,2],[3,4],[5],[6],[7]]",
+      "expectedOutput": "[[1,2],[3,4],[5],[6],[7]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35],8]",
+      "output": "[[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19],[20,21,22,23],[24,25,26,27],[28,29,30,31],[32,33,34,35]]",
+      "expectedOutput": "[[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19],[20,21,22,23],[24,25,26,27],[28,29,30,31],[32,33,34,35]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], k = 5",
+        "output": "[[1], [2], [3], [], []]",
+        "expectedOutput": "[[1], [2], [3], [], []]",
+        "explanation": "only 3 nodes for 5 parts, so the first 3 parts get one node each and the last 2 are empty"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], k = 3",
+        "output": "[[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]",
+        "expectedOutput": "[[1, 2, 3, 4], [5, 6, 7], [8, 9, 10]]",
+        "explanation": "10 nodes into 3 parts: 10 / 3 = 3 remainder 1, so the first part gets the extra node (size 4), the rest get size 3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [], k = 3",
+        "output": "[[], [], []]",
+        "expectedOutput": "[[], [], []]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3],5]",
+        "output": "[[1],[2],[3],[],[]]",
+        "expectedOutput": "[[1],[2],[3],[],[]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],3]",
+        "output": "[[1,2,3,4],[5,6,7],[8,9,10]]",
+        "expectedOutput": "[[1,2,3,4],[5,6,7],[8,9,10]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],3]",
+        "output": "[[],[],[]]",
+        "expectedOutput": "[[],[],[]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2],1]",
+        "output": "[[1,2]]",
+        "expectedOutput": "[[1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],1]",
+        "output": "[[1]]",
+        "expectedOutput": "[[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5,6,7,8],3]",
+        "output": "[[1,2,3],[4,5,6],[7,8]]",
+        "expectedOutput": "[[1,2,3],[4,5,6],[7,8]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3],2]",
+        "output": "[[1,2],[3]]",
+        "expectedOutput": "[[1,2],[3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49],6]",
+        "output": "[[1,2,3,4,5,6,7,8,9],[10,11,12,13,14,15,16,17],[18,19,20,21,22,23,24,25],[26,27,28,29,30,31,32,33],[34,35,36,37,38,39,40,41],[42,43,44,45,46,47,48,49]]",
+        "expectedOutput": "[[1,2,3,4,5,6,7,8,9],[10,11,12,13,14,15,16,17],[18,19,20,21,22,23,24,25],[26,27,28,29,30,31,32,33],[34,35,36,37,38,39,40,41],[42,43,44,45,46,47,48,49]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[[1],[2],[3],[4],[5]]",
+        "expectedOutput": "[[1],[2],[3],[4],[5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5,6],4]",
+        "output": "[[1,2],[3,4],[5],[6]]",
+        "expectedOutput": "[[1,2],[3,4],[5],[6]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6,7,8,9],4]",
+        "output": "[[1,2,3],[4,5],[6,7],[8,9]]",
+        "expectedOutput": "[[1,2,3],[4,5],[6,7],[8,9]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4],3]",
+        "output": "[[1,2],[3],[4]]",
+        "expectedOutput": "[[1,2],[3],[4]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6],6]",
+        "output": "[[1],[2],[3],[4],[5],[6]]",
+        "expectedOutput": "[[1],[2],[3],[4],[5],[6]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6],7]",
+        "output": "[[1],[2],[3],[4],[5],[6],[]]",
+        "expectedOutput": "[[1],[2],[3],[4],[5],[6],[]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11],3]",
+        "output": "[[1,2,3,4],[5,6,7,8],[9,10,11]]",
+        "expectedOutput": "[[1,2,3,4],[5,6,7,8],[9,10,11]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1],2]",
+        "output": "[[1],[]]",
+        "expectedOutput": "[[1],[]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[],5]",
+        "output": "[[],[],[],[],[]]",
+        "expectedOutput": "[[],[],[],[],[]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],5]",
+        "output": "[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]]",
+        "expectedOutput": "[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16],[17,18,19,20]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7],5]",
+        "output": "[[1,2],[3,4],[5],[6],[7]]",
+        "expectedOutput": "[[1,2],[3,4],[5],[6],[7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35],8]",
+        "output": "[[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19],[20,21,22,23],[24,25,26,27],[28,29,30,31],[32,33,34,35]]",
+        "expectedOutput": "[[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15],[16,17,18,19],[20,21,22,23],[24,25,26,27],[28,29,30,31],[32,33,34,35]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def splitListToParts(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> splitListToParts(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] splitListToParts(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun splitListToParts(nums: IntArray, k: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    splitListToParts(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def splitListToParts(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> splitListToParts(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] splitListToParts(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun splitListToParts(nums: IntArray, k: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    splitListToParts(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def splitListToParts(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> splitListToParts(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] splitListToParts(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun splitListToParts(nums: IntArray, k: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    splitListToParts(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def splitListToParts(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> splitListToParts(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] splitListToParts(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun splitListToParts(nums: IntArray, k: Int): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    splitListToParts(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + k)",
+      "space": "O(n) for the output",
+      "pattern": "compute base size and remainder upfront, then take one pass through the list handing out nodes to each part"
+    },
+    "bruteForce": {
+      "approach": "walk the list to find its length, then re-walk it part by part, deciding each part's size from a hardcoded rule and slicing accordingly",
+      "time": "O(n + k)",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "compute base size and remainder upfront, then take one pass through the list handing out nodes to each part",
+    "time": "O(n + k)",
+    "space": "O(n) for the output",
+    "hint_ladder": [
+      "if you know n and k, can you figure out every part's exact size before doing any splitting?",
+      "base size is n // k, and the remainder n % k tells you how many parts need one extra node",
+      "the first (n % k) parts get size (n // k) + 1, and the rest get size n // k",
+      "walk nums once, and for each part, take the number of elements dictated by its computed size (some sizes may be 0 if k > n)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "walk the list to find its length, then re-walk it part by part, deciding each part's size from a hardcoded rule and slicing accordingly",
+    "time": "O(n + k)",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

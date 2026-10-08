@@ -1,0 +1,598 @@
+{
+  "id": "sliding-window-maximum",
+  "questionId": "sliding-window-maximum",
+  "slug": "sliding-window-maximum",
+  "title": "Sliding Window Maximum",
+  "difficulty": "Hard",
+  "category": "Sliding window",
+  "patterns": [
+    "sliding window",
+    "monotonic deque",
+    "fixed-size window"
+  ],
+  "lists": [],
+  "hints": [
+    "rescanning all k elements for every window wastes work - if you already knew the max of the previous window, could you avoid recomputing it from scratch?",
+    "what if you kept a running list of 'still possibly the max' candidates, and threw away any candidate that could never win again? if a number is smaller than a number to its right, can it ever be the max of a window that contains both?",
+    "keep a deque of indices with decreasing values: before adding a new index, pop from the back any indices whose values are smaller than the new one (they can never be the max again)",
+    "the front of the deque is always the current window's max - just also remember to pop it from the front once it slides outside the window's left edge"
+  ],
+  "commonMistakes": [
+    "storing values in the deque instead of indices, making it impossible to tell when the max has slid out of the window",
+    "forgetting to remove the front of the deque when its index falls outside the current window",
+    "popping in the wrong direction, or not maintaining the decreasing order invariant when inserting a new index"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers and a window size `k`.\n\n**As the window of size k slides from the start of the array to the end, one step at a time, return the maximum value inside the window at each position.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5",
+      "-10^4 <= nums[i] <= 10^4",
+      "1 <= k <= nums.length"
+    ],
+    "notes": [
+      "k equals the array length (only one window, its own max)",
+      "k = 1 (the answer is just the array itself)",
+      "strictly increasing or strictly decreasing values"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 3, -1, -3, 5, 3, 6, 7], k = 3",
+        "output": "[3, 3, 5, 5, 6, 7]",
+        "expectedOutput": "[3, 3, 5, 5, 6, 7]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1], k = 1",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,3,-1,-3,5,3,6,7],3]",
+        "output": "[3,3,5,5,6,7]",
+        "expectedOutput": "[3,3,5,5,6,7]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1],1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[9,11],2]",
+        "output": "[11]",
+        "expectedOutput": "[11]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[4,-2],2]",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,4,3,2,1],1]",
+        "output": "[5,4,3,2,1]",
+        "expectedOutput": "[5,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1],3]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-2,-3,-4],2]",
+        "output": "[-1,-2,-3]",
+        "expectedOutput": "[-1,-2,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[7],1]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,3,1,2,0,5],3]",
+        "output": "[3,3,2,5]",
+        "expectedOutput": "[3,3,2,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[9,8,7,6,5,4,3,2,1],4]",
+        "output": "[9,8,7,6,5,4]",
+        "expectedOutput": "[9,8,7,6,5,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9],3]",
+        "output": "[3,4,5,6,7,8,9]",
+        "expectedOutput": "[3,4,5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[4,4,4,4,4,4,4,4],2]",
+        "output": "[4,4,4,4,4,4,4]",
+        "expectedOutput": "[4,4,4,4,4,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-5,-1,-3,-2,-6,-4],3]",
+        "output": "[-1,-1,-2,-2]",
+        "expectedOutput": "[-1,-1,-2,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,-1,2,-2,3,-3,4,-4,5,-5],4]",
+        "output": "[2,3,3,4,4,5,5]",
+        "expectedOutput": "[2,3,3,4,4,5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1],5]",
+        "output": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5]",
+        "expectedOutput": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[3,3,1,1,3,3,1,1,3,3,1,1,3,3,1,1],4]",
+        "output": "[3,3,3,3,3,3,3,3,3,3,3,3,3]",
+        "expectedOutput": "[3,3,3,3,3,3,3,3,3,3,3,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,9,8,7,6,5,4,3,2,1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "[10,9,8,7,6,5,4,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[10,9,8,7,6,5,4,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,1,2,1,2,1,2,1,2,1,2,1,2,1,2],6]",
+        "output": "[2,2,2,2,2,2,2,2,2,2]",
+        "expectedOutput": "[2,2,2,2,2,2,2,2,2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[5,3,8,1,9,2,7,4,6,0,3,8,2,5,1],4]",
+        "output": "[8,9,9,9,9,7,7,6,8,8,8,8]",
+        "expectedOutput": "[8,9,9,9,9,7,7,6,8,8,8,8]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 3, -1, -3, 5, 3, 6, 7], k = 3",
+      "output": "[3, 3, 5, 5, 6, 7]",
+      "expectedOutput": "[3, 3, 5, 5, 6, 7]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1], k = 1",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 3, -1, -3, 5, 3, 6, 7], k = 3",
+      "output": "[3, 3, 5, 5, 6, 7]",
+      "expectedOutput": "[3, 3, 5, 5, 6, 7]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1], k = 1",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,3,-1,-3,5,3,6,7],3]",
+      "output": "[3,3,5,5,6,7]",
+      "expectedOutput": "[3,3,5,5,6,7]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1],1]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[9,11],2]",
+      "output": "[11]",
+      "expectedOutput": "[11]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[4,-2],2]",
+      "output": "[4]",
+      "expectedOutput": "[4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3,4,5],5]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[5,4,3,2,1],1]",
+      "output": "[5,4,3,2,1]",
+      "expectedOutput": "[5,4,3,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,1,1,1],3]",
+      "output": "[1,1,1]",
+      "expectedOutput": "[1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-1,-2,-3,-4],2]",
+      "output": "[-1,-2,-3]",
+      "expectedOutput": "[-1,-2,-3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[7],1]",
+      "output": "[7]",
+      "expectedOutput": "[7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,3,1,2,0,5],3]",
+      "output": "[3,3,2,5]",
+      "expectedOutput": "[3,3,2,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[9,8,7,6,5,4,3,2,1],4]",
+      "output": "[9,8,7,6,5,4]",
+      "expectedOutput": "[9,8,7,6,5,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9],3]",
+      "output": "[3,4,5,6,7,8,9]",
+      "expectedOutput": "[3,4,5,6,7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[4,4,4,4,4,4,4,4],2]",
+      "output": "[4,4,4,4,4,4,4]",
+      "expectedOutput": "[4,4,4,4,4,4,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-5,-1,-3,-2,-6,-4],3]",
+      "output": "[-1,-1,-2,-2]",
+      "expectedOutput": "[-1,-1,-2,-2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,-1,2,-2,3,-3,4,-4,5,-5],4]",
+      "output": "[2,3,3,4,4,5,5]",
+      "expectedOutput": "[2,3,3,4,4,5,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1],5]",
+      "output": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5]",
+      "expectedOutput": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[3,3,1,1,3,3,1,1,3,3,1,1,3,3,1,1],4]",
+      "output": "[3,3,3,3,3,3,3,3,3,3,3,3,3]",
+      "expectedOutput": "[3,3,3,3,3,3,3,3,3,3,3,3,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[10,9,8,7,6,5,4,3,2,1,2,3,4,5,6,7,8,9,10],5]",
+      "output": "[10,9,8,7,6,5,4,3,4,5,6,7,8,9,10]",
+      "expectedOutput": "[10,9,8,7,6,5,4,3,4,5,6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,1,2,1,2,1,2,1,2,1,2,1,2,1,2],6]",
+      "output": "[2,2,2,2,2,2,2,2,2,2]",
+      "expectedOutput": "[2,2,2,2,2,2,2,2,2,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[5,3,8,1,9,2,7,4,6,0,3,8,2,5,1],4]",
+      "output": "[8,9,9,9,9,7,7,6,8,8,8,8]",
+      "expectedOutput": "[8,9,9,9,9,7,7,6,8,8,8,8]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 3, -1, -3, 5, 3, 6, 7], k = 3",
+        "output": "[3, 3, 5, 5, 6, 7]",
+        "expectedOutput": "[3, 3, 5, 5, 6, 7]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1], k = 1",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,3,-1,-3,5,3,6,7],3]",
+        "output": "[3,3,5,5,6,7]",
+        "expectedOutput": "[3,3,5,5,6,7]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1],1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[9,11],2]",
+        "output": "[11]",
+        "expectedOutput": "[11]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[4,-2],2]",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,4,3,2,1],1]",
+        "output": "[5,4,3,2,1]",
+        "expectedOutput": "[5,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1],3]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-2,-3,-4],2]",
+        "output": "[-1,-2,-3]",
+        "expectedOutput": "[-1,-2,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[7],1]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,3,1,2,0,5],3]",
+        "output": "[3,3,2,5]",
+        "expectedOutput": "[3,3,2,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[9,8,7,6,5,4,3,2,1],4]",
+        "output": "[9,8,7,6,5,4]",
+        "expectedOutput": "[9,8,7,6,5,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9],3]",
+        "output": "[3,4,5,6,7,8,9]",
+        "expectedOutput": "[3,4,5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[4,4,4,4,4,4,4,4],2]",
+        "output": "[4,4,4,4,4,4,4]",
+        "expectedOutput": "[4,4,4,4,4,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-5,-1,-3,-2,-6,-4],3]",
+        "output": "[-1,-1,-2,-2]",
+        "expectedOutput": "[-1,-1,-2,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,-1,2,-2,3,-3,4,-4,5,-5],4]",
+        "output": "[2,3,3,4,4,5,5]",
+        "expectedOutput": "[2,3,3,4,4,5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1],5]",
+        "output": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5]",
+        "expectedOutput": "[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[3,3,1,1,3,3,1,1,3,3,1,1,3,3,1,1],4]",
+        "output": "[3,3,3,3,3,3,3,3,3,3,3,3,3]",
+        "expectedOutput": "[3,3,3,3,3,3,3,3,3,3,3,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,9,8,7,6,5,4,3,2,1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "[10,9,8,7,6,5,4,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[10,9,8,7,6,5,4,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,1,2,1,2,1,2,1,2,1,2,1,2,1,2],6]",
+        "output": "[2,2,2,2,2,2,2,2,2,2]",
+        "expectedOutput": "[2,2,2,2,2,2,2,2,2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[5,3,8,1,9,2,7,4,6,0,3,8,2,5,1],4]",
+        "output": "[8,9,9,9,9,7,7,6,8,8,8,8]",
+        "expectedOutput": "[8,9,9,9,9,7,7,6,8,8,8,8]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def maxSlidingWindow(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> maxSlidingWindow(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] maxSlidingWindow(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSlidingWindow(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSlidingWindow(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def maxSlidingWindow(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> maxSlidingWindow(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] maxSlidingWindow(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSlidingWindow(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSlidingWindow(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def maxSlidingWindow(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> maxSlidingWindow(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] maxSlidingWindow(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSlidingWindow(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSlidingWindow(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def maxSlidingWindow(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> maxSlidingWindow(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] maxSlidingWindow(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun maxSlidingWindow(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    maxSlidingWindow(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n) - each index is pushed and popped from the deque at most once",
+      "space": "O(k) for the deque",
+      "pattern": "a monotonic deque holding candidate indices in decreasing order of value"
+    },
+    "bruteForce": {
+      "approach": "for each window position, scan all k elements inside it to find the max",
+      "time": "O(n * k)",
+      "space": "O(1) beyond the output"
+    }
+  },
+  "optimal": {
+    "pattern": "a monotonic deque holding candidate indices in decreasing order of value",
+    "time": "O(n) - each index is pushed and popped from the deque at most once",
+    "space": "O(k) for the deque",
+    "hint_ladder": [
+      "rescanning all k elements for every window wastes work - if you already knew the max of the previous window, could you avoid recomputing it from scratch?",
+      "what if you kept a running list of 'still possibly the max' candidates, and threw away any candidate that could never win again? if a number is smaller than a number to its right, can it ever be the max of a window that contains both?",
+      "keep a deque of indices with decreasing values: before adding a new index, pop from the back any indices whose values are smaller than the new one (they can never be the max again)",
+      "the front of the deque is always the current window's max - just also remember to pop it from the front once it slides outside the window's left edge"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each window position, scan all k elements inside it to find the max",
+    "time": "O(n * k)",
+    "space": "O(1) beyond the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

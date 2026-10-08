@@ -1,0 +1,630 @@
+{
+  "id": "smallest-missing-positive-after-k-increments",
+  "questionId": "smallest-missing-positive-after-k-increments",
+  "slug": "smallest-missing-positive-after-k-increments",
+  "title": "First Missing Positive After Marking Range",
+  "difficulty": "Hard",
+  "category": "Cyclic sort",
+  "patterns": [
+    "cyclic sort",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "the smallest missing positive after removal can never exceed n + 1 where n is the length of nums, since there are only n slots. that bounds the range of values worth tracking to [1, n+1]",
+    "build a count array indexed by value (for values in [1, n+1]), initialized by counting occurrences in nums, ignoring anything outside that range - similar to how cyclic sort placement only cares about values within the known bounded range",
+    "for each value in toRemove, if it falls within [1, n+1] and its count is greater than zero, decrement the count array at that value, since removing one occurrence lowers availability by one",
+    "scan the count array starting at index 1 upward. the first index whose count is zero (or was never present) is your answer, since that positive integer no longer has any occurrence left"
+  ],
+  "commonMistakes": [
+    "removing all occurrences of a value in toRemove instead of just one occurrence per entry, when a value repeats in toRemove intending multiple removals",
+    "not bounding the count array to [1, n+1] and instead using a value that appears in nums but far exceeds the useful range, wasting space or causing index errors",
+    "forgetting that toRemove entries with no matching remaining occurrence should simply be ignored rather than causing an error"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of positive integers `nums`, and a second array\n`toRemove` listing values to conceptually remove from `nums`. For every\nvalue in `toRemove`, remove one occurrence of it from `nums` if present\n(removing all listed occurrences, one removal per entry in toRemove).\n\n**After performing all the removals, return the smallest positive integer that is missing from what remains of `nums`.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5",
+      "1 <= nums[i] <= 10^5",
+      "0 <= toRemove.length <= 10^5",
+      "1 <= toRemove[i] <= 10^5"
+    ],
+    "notes": [
+      "toRemove empties out every occurrence of 1, 2, 3, ... consecutively",
+      "toRemove is empty (answer is just the first missing positive of nums as given)",
+      "nums has duplicates of the same value, only some of which get removed"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4], toRemove = [1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "after removing one 1, nums becomes [2, 3, 4], and 1 is now missing, making it the smallest missing positive"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], toRemove = [1, 2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "after removing 1 and 2, nums becomes [3], and 1 is missing"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [2, 3, 4], toRemove = [5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "5 isn't in nums so nothing is removed. nums stays [2, 3, 4], and 1 was never present, so it's the smallest missing positive"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4],[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3],[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,3,4],[5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,4,5],[3,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],[]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1],[1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3],[]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,3,4,5],[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1],[1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,2,3],[2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,4,3,2,1],[1,2,3,4,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],[1,3,5,7,9]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,2,2,3,3,4,4,5,5,1,1,2,2,3,3,4,4,5,5],[1,1,2,2,3]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[100,200]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,2,3],[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,2,3,3,4,4],[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7],[1,2,3,4,5,6,7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,4,5],[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,7,8,9],[6]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4], toRemove = [1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "after removing one 1, nums becomes [2, 3, 4], and 1 is now missing, making it the smallest missing positive"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], toRemove = [1, 2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "after removing 1 and 2, nums becomes [3], and 1 is missing"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [2, 3, 4], toRemove = [5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "5 isn't in nums so nothing is removed. nums stays [2, 3, 4], and 1 was never present, so it's the smallest missing positive"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4], toRemove = [1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "after removing one 1, nums becomes [2, 3, 4], and 1 is now missing, making it the smallest missing positive"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], toRemove = [1, 2]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "after removing 1 and 2, nums becomes [3], and 1 is missing"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [2, 3, 4], toRemove = [5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "5 isn't in nums so nothing is removed. nums stays [2, 3, 4], and 1 was never present, so it's the smallest missing positive"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4],[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3],[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[2,3,4],[5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3,4,5],[3,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1],[]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1],[1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3],[]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,3,4,5],[]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,1,1],[1,1]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,2,3],[2]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[5,4,3,2,1],[1,2,3,4,5]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],[1,3,5,7,9]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,1,2,2,3,3,4,4,5,5,1,1,2,2,3,3,4,4,5,5],[1,1,2,2,3]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[100,200]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1,2,3],[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[2,2,3,3,4,4],[]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5,6,7],[1,2,3,4,5,6,7]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[3,4,5],[1,2]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[6,7,8,9],[6]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4], toRemove = [1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "after removing one 1, nums becomes [2, 3, 4], and 1 is now missing, making it the smallest missing positive"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], toRemove = [1, 2]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "after removing 1 and 2, nums becomes [3], and 1 is missing"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [2, 3, 4], toRemove = [5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "5 isn't in nums so nothing is removed. nums stays [2, 3, 4], and 1 was never present, so it's the smallest missing positive"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4],[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3],[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,3,4],[5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,4,5],[3,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],[]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1],[1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3],[]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,3,4,5],[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1],[1,1]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,2,3],[2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,4,3,2,1],[1,2,3,4,5]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],[1,3,5,7,9]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,1,2,2,3,3,4,4,5,5,1,1,2,2,3,3,4,4,5,5],[1,1,2,2,3]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[100,200]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,2,3],[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,2,3,3,4,4],[]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7],[1,2,3,4,5,6,7]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,4,5],[1,2]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[6,7,8,9],[6]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def firstMissingAfterRemoval(self, nums, toRemove):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstMissingAfterRemoval(vector<int>& nums, vector<int>& toRemove) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstMissingAfterRemoval(int[] nums, int[] toRemove) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstMissingAfterRemoval(nums: IntArray, toRemove: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstMissingAfterRemoval(nums, toRemove) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def firstMissingAfterRemoval(self, nums, toRemove):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstMissingAfterRemoval(vector<int>& nums, vector<int>& toRemove) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstMissingAfterRemoval(int[] nums, int[] toRemove) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstMissingAfterRemoval(nums: IntArray, toRemove: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstMissingAfterRemoval(nums, toRemove) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def firstMissingAfterRemoval(self, nums, toRemove):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstMissingAfterRemoval(vector<int>& nums, vector<int>& toRemove) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstMissingAfterRemoval(int[] nums, int[] toRemove) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstMissingAfterRemoval(nums: IntArray, toRemove: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstMissingAfterRemoval(nums, toRemove) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def firstMissingAfterRemoval(self, nums, toRemove):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int firstMissingAfterRemoval(vector<int>& nums, vector<int>& toRemove) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int firstMissingAfterRemoval(int[] nums, int[] toRemove) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun firstMissingAfterRemoval(nums: IntArray, toRemove: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    firstMissingAfterRemoval(nums, toRemove) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + m)",
+      "space": "O(n) for the count array",
+      "pattern": "cyclic sort style bounded counting: since only values in the range [1, n+1] can possibly be the answer, build a count array over that bounded range (an application of the same 'known small range means direct indexing' idea as cyclic sort), decrement it for removals, then scan for the first index whose count drops to zero"
+    },
+    "bruteForce": {
+      "approach": "build a frequency map of nums, decrement counts for each value in toRemove (if present and count > 0), then scan positive integers from 1 upward checking a hash set of remaining values until one is missing",
+      "time": "O(n + m)",
+      "space": "O(n) for the frequency map"
+    }
+  },
+  "optimal": {
+    "pattern": "cyclic sort style bounded counting: since only values in the range [1, n+1] can possibly be the answer, build a count array over that bounded range (an application of the same 'known small range means direct indexing' idea as cyclic sort), decrement it for removals, then scan for the first index whose count drops to zero",
+    "time": "O(n + m)",
+    "space": "O(n) for the count array",
+    "hint_ladder": [
+      "the smallest missing positive after removal can never exceed n + 1 where n is the length of nums, since there are only n slots. that bounds the range of values worth tracking to [1, n+1]",
+      "build a count array indexed by value (for values in [1, n+1]), initialized by counting occurrences in nums, ignoring anything outside that range - similar to how cyclic sort placement only cares about values within the known bounded range",
+      "for each value in toRemove, if it falls within [1, n+1] and its count is greater than zero, decrement the count array at that value, since removing one occurrence lowers availability by one",
+      "scan the count array starting at index 1 upward. the first index whose count is zero (or was never present) is your answer, since that positive integer no longer has any occurrence left"
+    ]
+  },
+  "bruteForce": {
+    "approach": "build a frequency map of nums, decrement counts for each value in toRemove (if present and count > 0), then scan positive integers from 1 upward checking a hash set of remaining values until one is missing",
+    "time": "O(n + m)",
+    "space": "O(n) for the frequency map"
+  },
+  "isIndex0": true,
+  "level": null
+}

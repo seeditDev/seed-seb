@@ -1,0 +1,597 @@
+{
+  "id": "subarray-sums-divisible-by-k",
+  "questionId": "subarray-sums-divisible-by-k",
+  "slug": "subarray-sums-divisible-by-k",
+  "title": "Subarray Sums Divisible by K",
+  "difficulty": "Medium",
+  "category": "Prefix sum",
+  "patterns": [
+    "prefix sum",
+    "hash map"
+  ],
+  "lists": [],
+  "hints": [
+    "a subarray's sum is divisible by k exactly when its two boundary prefix sums have the SAME remainder mod k - why?",
+    "because (prefixSum[j] - prefixSum[i]) mod k == 0 exactly when prefixSum[j] mod k == prefixSum[i] mod k",
+    "keep a hash map counting how many times each remainder has appeared among prefix sums so far (seed remainder 0 with count 1, for the empty prefix)",
+    "at each step, compute the current remainder, add however many times that remainder has been seen before to your answer, then increment its count"
+  ],
+  "commonMistakes": [
+    "not handling negative sums correctly when computing the remainder (in some languages, negative mod needs normalizing into [0, k))",
+    "forgetting to seed the remainder map with 0 occurring once before any elements are processed",
+    "confusing 'count of subarrays with sum divisible by k' with 'longest subarray divisible by k', which needs first-occurrence indices instead of counts"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers and an integer `k`.\n\n**Return the number of contiguous subarrays whose sum is divisible by k.**\n",
+    "constraints": [
+      "1 <= nums.length <= 3 * 10^4",
+      "-10^4 <= nums[i] <= 10^4",
+      "1 <= k <= 10^4"
+    ],
+    "notes": [
+      "no subarray is divisible by k",
+      "the entire array itself is divisible by k",
+      "an array containing a zero (a subarray of just that zero is always divisible)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [4, 5, 0, -2, -3, 1], k = 5",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [5], k = 9",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[4,5,0,-2,-3,1],5]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5],9]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0,0,0],1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-5,-5,-5],5]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1,1],5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-4,-3,0,-4,10,-6,2,1,-9,-6,-10,-8,10,-2,3],4]",
+        "output": "33",
+        "expectedOutput": "33",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,3,3,3,3,3],3]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,-2,2,-2],2]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0],7]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],3]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-1,2,9,4,5],3]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-10,-14,-13,6,11,-3,12,1,6,-6,4,-8,7,-6,-14,-1,-10,-10,-7,-1],6]",
+        "output": "33",
+        "expectedOutput": "33",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,10,10,10],10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-3,-1,-4,-1,-5,-9,-2,-6],5]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[6],6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-9,-1,2,1,8,1,-2,-8,0,-3,2,-4,-9,1,3,-7,6,-1],9]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [4, 5, 0, -2, -3, 1], k = 5",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [5], k = 9",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [4, 5, 0, -2, -3, 1], k = 5",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [5], k = 9",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[4,5,0,-2,-3,1],5]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[5],9]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[0,0,0],1]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[0],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3],3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[-5,-5,-5],5]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,1,1,1,1],5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-4,-3,0,-4,10,-6,2,1,-9,-6,-10,-8,10,-2,3],4]",
+      "output": "33",
+      "expectedOutput": "33",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[3,3,3,3,3,3],3]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,-2,2,-2],2]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,0,0,0,0],7]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],3]",
+      "output": "27",
+      "expectedOutput": "27",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-1,2,9,4,5],3]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-10,-14,-13,6,11,-3,12,1,6,-6,4,-8,7,-6,-14,-1,-10,-10,-7,-1],6]",
+      "output": "33",
+      "expectedOutput": "33",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[10,10,10,10],10]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+      "output": "17",
+      "expectedOutput": "17",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-3,-1,-4,-1,-5,-9,-2,-6],5]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[6],6]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-9,-1,2,1,8,1,-2,-8,0,-3,2,-4,-9,1,3,-7,6,-1],9]",
+      "output": "22",
+      "expectedOutput": "22",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [4, 5, 0, -2, -3, 1], k = 5",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [5], k = 9",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[4,5,0,-2,-3,1],5]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[5],9]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0,0,0],1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-5,-5,-5],5]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1,1],5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-4,-3,0,-4,10,-6,2,1,-9,-6,-10,-8,10,-2,3],4]",
+        "output": "33",
+        "expectedOutput": "33",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[3,3,3,3,3,3],3]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,-2,2,-2],2]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0],7]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],3]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-1,2,9,4,5],3]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-10,-14,-13,6,11,-3,12,1,6,-6,4,-8,7,-6,-14,-1,-10,-10,-7,-1],6]",
+        "output": "33",
+        "expectedOutput": "33",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,10,10,10],10]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-3,-1,-4,-1,-5,-9,-2,-6],5]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[6],6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-9,-1,2,1,8,1,-2,-8,0,-3,2,-4,-9,1,3,-7,6,-1],9]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def subarraysDivByK(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int subarraysDivByK(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int subarraysDivByK(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subarraysDivByK(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subarraysDivByK(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def subarraysDivByK(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int subarraysDivByK(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int subarraysDivByK(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subarraysDivByK(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subarraysDivByK(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def subarraysDivByK(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int subarraysDivByK(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int subarraysDivByK(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subarraysDivByK(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subarraysDivByK(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def subarraysDivByK(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int subarraysDivByK(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int subarraysDivByK(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subarraysDivByK(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subarraysDivByK(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(k)",
+      "pattern": "prefix sum remainders - two prefix sums with the same remainder mod k mean the subarray between them is divisible by k, so count subarrays via a frequency map of remainders"
+    },
+    "bruteForce": {
+      "approach": "check every subarray's sum directly (or with a prefix sum array) and count how many are divisible by k",
+      "time": "O(n^2)",
+      "space": "O(n) if using a prefix sum array"
+    }
+  },
+  "optimal": {
+    "pattern": "prefix sum remainders - two prefix sums with the same remainder mod k mean the subarray between them is divisible by k, so count subarrays via a frequency map of remainders",
+    "time": "O(n)",
+    "space": "O(k)",
+    "hint_ladder": [
+      "a subarray's sum is divisible by k exactly when its two boundary prefix sums have the SAME remainder mod k - why?",
+      "because (prefixSum[j] - prefixSum[i]) mod k == 0 exactly when prefixSum[j] mod k == prefixSum[i] mod k",
+      "keep a hash map counting how many times each remainder has appeared among prefix sums so far (seed remainder 0 with count 1, for the empty prefix)",
+      "at each step, compute the current remainder, add however many times that remainder has been seen before to your answer, then increment its count"
+    ]
+  },
+  "bruteForce": {
+    "approach": "check every subarray's sum directly (or with a prefix sum array) and count how many are divisible by k",
+    "time": "O(n^2)",
+    "space": "O(n) if using a prefix sum array"
+  },
+  "isIndex0": true,
+  "level": null
+}

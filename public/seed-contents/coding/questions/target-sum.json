@@ -1,0 +1,633 @@
+{
+  "id": "target-sum",
+  "questionId": "target-sum",
+  "slug": "target-sum",
+  "title": "Target Sum",
+  "difficulty": "Medium",
+  "category": "Knapsack",
+  "patterns": [
+    "knapsack",
+    "subset sum",
+    "dynamic programming"
+  ],
+  "lists": [],
+  "hints": [
+    "every number ends up in one of two groups: the ones that got a plus sign (call their sum P) and the ones that got a minus sign (call their sum N) - what equation relates P, N, the total sum of nums, and target?",
+    "P + N = totalSum and P - N = target, so solving those two equations gives P = (totalSum + target) / 2 - this turns the problem into: how many subsets of nums sum to exactly P?",
+    "if (totalSum + target) is odd, or negative, no valid P exists at all - that's an immediate 0",
+    "this is now the same 0/1 subset-sum counting problem as before: define dp[s] as the number of subsets summing to exactly s, with dp[0] = 1, and update dp[s] += dp[s - num] for each num, iterating s from high to low",
+    "the answer is dp[P] - the subtlety with a 0 in nums is naturally handled by this formulation, since a 0 can join either group without changing any sum, and the DP counts that correctly as long as you don't special-case it incorrectly"
+  ],
+  "commonMistakes": [
+    "trying to solve this directly as +/- assignment counting instead of reducing it to the P = (totalSum + target) / 2 subset-sum count, missing the key algebraic insight",
+    "not checking that totalSum + target is non-negative and even before dividing by 2, leading to a bogus target that quietly returns wrong answers instead of 0",
+    "treating dp[s] as a boolean reachability table (like plain subset sum) instead of a count, losing the multiplicity of ways"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of non-negative integers `nums` and a `target` value. In front of each number you must place either a plus sign or a minus sign, then sum the entire resulting expression.\n\n**Return the number of different ways to assign signs so that the resulting sum equals exactly `target`.**\n",
+    "constraints": [
+      "1 <= nums.length <= 20",
+      "0 <= nums[i] <= 1000",
+      "0 <= sum(nums) <= 1000",
+      "-1000 <= target <= 1000"
+    ],
+    "notes": [
+      "nums contains a 0 (both signs on it are distinct assignments but contribute the same sum)",
+      "target is unreachable by any sign assignment (return 0)",
+      "a single-element nums list"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 1, 1], target = 3",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "there are 5 ways to choose which two of the five 1s get a minus sign so the total comes out to 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1], target = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the only way is +1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 0], target = 1",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "+1+0 and +1-0 both sum to 1, since -0 and +0 are treated as distinct sign assignments even though they contribute the same value"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,1,1,1],3]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,0],1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3],0]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0],0]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1,1,1],0]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,3,5,7],3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1],100]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5],-5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5],5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,1],0]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3],6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3],-6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,7,4,3,9],8]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,1],1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,3,3,3,3],3]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,1,1,1,1,1],0]",
+        "output": "252",
+        "expectedOutput": "252",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7],4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 1, 1], target = 3",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "there are 5 ways to choose which two of the five 1s get a minus sign so the total comes out to 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1], target = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the only way is +1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 0], target = 1",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "+1+0 and +1-0 both sum to 1, since -0 and +0 are treated as distinct sign assignments even though they contribute the same value"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 1, 1], target = 3",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "there are 5 ways to choose which two of the five 1s get a minus sign so the total comes out to 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1], target = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "the only way is +1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 0], target = 1",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "+1+0 and +1-0 both sum to 1, since -0 and +0 are treated as distinct sign assignments even though they contribute the same value"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,1,1,1,1],3]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,0],1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3],0]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[0],0]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0,0],0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5],3]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,1,1,1,1,1],0]",
+      "output": "20",
+      "expectedOutput": "20",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,3,5,7],3]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,1,1,1],100]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5],-5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[5],5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,1],0]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3],6]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3],-6]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,7,4,3,9],8]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[0,1],1]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[3,3,3,3,3],3]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,1,1,1,1,1,1,1,1,1],0]",
+      "output": "252",
+      "expectedOutput": "252",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,4,5,6,7],4]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 1, 1], target = 3",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "there are 5 ways to choose which two of the five 1s get a minus sign so the total comes out to 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1], target = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "the only way is +1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 0], target = 1",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "+1+0 and +1-0 both sum to 1, since -0 and +0 are treated as distinct sign assignments even though they contribute the same value"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,1,1,1],3]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,0],1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3],0]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0],0]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],3]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1,1,1],0]",
+        "output": "20",
+        "expectedOutput": "20",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,3,5,7],3]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1],100]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5],-5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5],5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,1],0]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3],6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3],-6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,7,4,3,9],8]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,1],1]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[3,3,3,3,3],3]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,1,1,1,1,1,1,1,1,1],0]",
+        "output": "252",
+        "expectedOutput": "252",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7],4]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findTargetSumWays(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findTargetSumWays(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findTargetSumWays(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findTargetSumWays(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findTargetSumWays(nums, target) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findTargetSumWays(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findTargetSumWays(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findTargetSumWays(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findTargetSumWays(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findTargetSumWays(nums, target) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findTargetSumWays(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findTargetSumWays(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findTargetSumWays(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findTargetSumWays(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findTargetSumWays(nums, target) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findTargetSumWays(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int findTargetSumWays(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int findTargetSumWays(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findTargetSumWays(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findTargetSumWays(nums, target) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * totalSum)",
+      "space": "O(totalSum)",
+      "pattern": "knapsack (0/1 subset sum in disguise - split nums into a 'positive' group P and 'negative' group N, then count subsets achieving a derived target)"
+    },
+    "bruteForce": {
+      "approach": "recursively try both + and - for each number in turn, summing along the way, and count the leaves of the recursion tree whose final sum equals target",
+      "time": "O(2^n)",
+      "space": "O(n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "knapsack (0/1 subset sum in disguise - split nums into a 'positive' group P and 'negative' group N, then count subsets achieving a derived target)",
+    "time": "O(n * totalSum)",
+    "space": "O(totalSum)",
+    "hint_ladder": [
+      "every number ends up in one of two groups: the ones that got a plus sign (call their sum P) and the ones that got a minus sign (call their sum N) - what equation relates P, N, the total sum of nums, and target?",
+      "P + N = totalSum and P - N = target, so solving those two equations gives P = (totalSum + target) / 2 - this turns the problem into: how many subsets of nums sum to exactly P?",
+      "if (totalSum + target) is odd, or negative, no valid P exists at all - that's an immediate 0",
+      "this is now the same 0/1 subset-sum counting problem as before: define dp[s] as the number of subsets summing to exactly s, with dp[0] = 1, and update dp[s] += dp[s - num] for each num, iterating s from high to low",
+      "the answer is dp[P] - the subtlety with a 0 in nums is naturally handled by this formulation, since a 0 can join either group without changing any sum, and the DP counts that correctly as long as you don't special-case it incorrectly"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try both + and - for each number in turn, summing along the way, and count the leaves of the recursion tree whose final sum equals target",
+    "time": "O(2^n)",
+    "space": "O(n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

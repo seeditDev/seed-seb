@@ -1,0 +1,632 @@
+{
+  "id": "rotate-list",
+  "questionId": "rotate-list",
+  "slug": "rotate-list",
+  "title": "Rotate List",
+  "difficulty": "Medium",
+  "category": "Linked list",
+  "patterns": [
+    "linked list",
+    "cyclic shift"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "k can be much larger than the list length - what's the actual effective rotation amount?",
+    "reduce k modulo the list length first, since rotating by the full length is a no-op",
+    "if you connected the tail back to the head to form a cycle, where would you need to 'cut' it to get the rotated list?",
+    "the new tail is at index (n - k % n - 1) and the new head is right after it - walk to that point and reassemble, or equivalently slice and concatenate the array"
+  ],
+  "commonMistakes": [
+    "not reducing k modulo the list length, causing unnecessary work or wrong results when k is huge",
+    "off-by-one when computing the split point for the new head/tail",
+    "not handling an empty list or a list of length 1, where k has no effect"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]`\nis the value of the i-th node in order, along with an integer `k`.\n\n**Rotate the list to the right by `k` places, meaning each node moves `k` positions toward the end, with nodes that fall off the end wrapping around to the front, and return the values of the resulting list in order.**\n",
+    "constraints": [
+      "0 <= nums.length <= 500",
+      "-1000 <= nums[i] <= 1000",
+      "0 <= k <= 2 * 10^9"
+    ],
+    "notes": [
+      "an empty list",
+      "a single-node list (any k leaves it unchanged)",
+      "k larger than the length of the list (k should effectively be reduced modulo the length)",
+      "k equal to a multiple of the list's length (no visible change)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5], k = 2",
+        "output": "[4, 5, 1, 2, 3]",
+        "expectedOutput": "[4, 5, 1, 2, 3]",
+        "explanation": "the last 2 values wrap around to the front"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1, 2], k = 4",
+        "output": "[2, 0, 1]",
+        "expectedOutput": "[2, 0, 1]",
+        "explanation": "k = 4 is equivalent to k = 1 for a list of length 3, since rotating by the full length changes nothing"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [], k = 0",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5],2]",
+        "output": "[4,5,1,2,3]",
+        "expectedOutput": "[4,5,1,2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1,2],4]",
+        "output": "[2,0,1]",
+        "expectedOutput": "[2,0,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],0]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],5]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2],1]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2],2]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4],4]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+        "output": "[15,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "expectedOutput": "[15,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],14]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[7,14,21,28,35,42],3]",
+        "output": "[28,35,42,7,14,21]",
+        "expectedOutput": "[28,35,42,7,14,21]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6],1]",
+        "output": "[6,1,2,3,4,5]",
+        "expectedOutput": "[6,1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6],6]",
+        "output": "[1,2,3,4,5,6]",
+        "expectedOutput": "[1,2,3,4,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6],7]",
+        "output": "[6,1,2,3,4,5]",
+        "expectedOutput": "[6,1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],9]",
+        "output": "[2,3,4,5,6,7,8,9,10,1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1],0]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3],2]",
+        "output": "[2,3,1]",
+        "expectedOutput": "[2,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35],20]",
+        "output": "[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "expectedOutput": "[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,200,300],1000000000]",
+        "output": "[300,100,200]",
+        "expectedOutput": "[300,100,200]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7],3]",
+        "output": "[5,6,7,1,2,3,4]",
+        "expectedOutput": "[5,6,7,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9],1]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5], k = 2",
+      "output": "[4, 5, 1, 2, 3]",
+      "expectedOutput": "[4, 5, 1, 2, 3]",
+      "explanation": "the last 2 values wrap around to the front"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1, 2], k = 4",
+      "output": "[2, 0, 1]",
+      "expectedOutput": "[2, 0, 1]",
+      "explanation": "k = 4 is equivalent to k = 1 for a list of length 3, since rotating by the full length changes nothing"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [], k = 0",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5], k = 2",
+      "output": "[4, 5, 1, 2, 3]",
+      "expectedOutput": "[4, 5, 1, 2, 3]",
+      "explanation": "the last 2 values wrap around to the front"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0, 1, 2], k = 4",
+      "output": "[2, 0, 1]",
+      "expectedOutput": "[2, 0, 1]",
+      "explanation": "k = 4 is equivalent to k = 1 for a list of length 3, since rotating by the full length changes nothing"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [], k = 0",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4,5],2]",
+      "output": "[4,5,1,2,3]",
+      "expectedOutput": "[4,5,1,2,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,1,2],4]",
+      "output": "[2,0,1]",
+      "expectedOutput": "[2,0,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[],0]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1],5]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2],1]",
+      "output": "[2,1]",
+      "expectedOutput": "[2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2],2]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4],4]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+      "output": "[15,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+      "expectedOutput": "[15,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],14]",
+      "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,1]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[7,14,21,28,35,42],3]",
+      "output": "[28,35,42,7,14,21]",
+      "expectedOutput": "[28,35,42,7,14,21]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5,6],1]",
+      "output": "[6,1,2,3,4,5]",
+      "expectedOutput": "[6,1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6],6]",
+      "output": "[1,2,3,4,5,6]",
+      "expectedOutput": "[1,2,3,4,5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6],7]",
+      "output": "[6,1,2,3,4,5]",
+      "expectedOutput": "[6,1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],9]",
+      "output": "[2,3,4,5,6,7,8,9,10,1]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1],0]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3],2]",
+      "output": "[2,3,1]",
+      "expectedOutput": "[2,3,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35],20]",
+      "output": "[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+      "expectedOutput": "[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[100,200,300],1000000000]",
+      "output": "[300,100,200]",
+      "expectedOutput": "[300,100,200]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7],3]",
+      "output": "[5,6,7,1,2,3,4]",
+      "expectedOutput": "[5,6,7,1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[9],1]",
+      "output": "[9]",
+      "expectedOutput": "[9]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5], k = 2",
+        "output": "[4, 5, 1, 2, 3]",
+        "expectedOutput": "[4, 5, 1, 2, 3]",
+        "explanation": "the last 2 values wrap around to the front"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0, 1, 2], k = 4",
+        "output": "[2, 0, 1]",
+        "expectedOutput": "[2, 0, 1]",
+        "explanation": "k = 4 is equivalent to k = 1 for a list of length 3, since rotating by the full length changes nothing"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [], k = 0",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5],2]",
+        "output": "[4,5,1,2,3]",
+        "expectedOutput": "[4,5,1,2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1,2],4]",
+        "output": "[2,0,1]",
+        "expectedOutput": "[2,0,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],0]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],5]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2],1]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2],2]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4],4]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+        "output": "[15,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "expectedOutput": "[15,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],14]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[7,14,21,28,35,42],3]",
+        "output": "[28,35,42,7,14,21]",
+        "expectedOutput": "[28,35,42,7,14,21]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5,6],1]",
+        "output": "[6,1,2,3,4,5]",
+        "expectedOutput": "[6,1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6],6]",
+        "output": "[1,2,3,4,5,6]",
+        "expectedOutput": "[1,2,3,4,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6],7]",
+        "output": "[6,1,2,3,4,5]",
+        "expectedOutput": "[6,1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],9]",
+        "output": "[2,3,4,5,6,7,8,9,10,1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1],0]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3],2]",
+        "output": "[2,3,1]",
+        "expectedOutput": "[2,3,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35],20]",
+        "output": "[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "expectedOutput": "[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[100,200,300],1000000000]",
+        "output": "[300,100,200]",
+        "expectedOutput": "[300,100,200]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7],3]",
+        "output": "[5,6,7,1,2,3,4]",
+        "expectedOutput": "[5,6,7,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9],1]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def rotateRight(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rotateRight(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rotateRight(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rotateRight(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rotateRight(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def rotateRight(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rotateRight(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rotateRight(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rotateRight(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rotateRight(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def rotateRight(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rotateRight(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rotateRight(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rotateRight(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rotateRight(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def rotateRight(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rotateRight(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rotateRight(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rotateRight(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rotateRight(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the output",
+      "pattern": "close the list into a cycle, then break it at the right point"
+    },
+    "bruteForce": {
+      "approach": "rotate the array one step at a time, k times (taking k modulo length first to avoid unnecessary work)",
+      "time": "O(n * (k mod n))",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "close the list into a cycle, then break it at the right point",
+    "time": "O(n)",
+    "space": "O(n) for the output",
+    "hint_ladder": [
+      "k can be much larger than the list length - what's the actual effective rotation amount?",
+      "reduce k modulo the list length first, since rotating by the full length is a no-op",
+      "if you connected the tail back to the head to form a cycle, where would you need to 'cut' it to get the rotated list?",
+      "the new tail is at index (n - k % n - 1) and the new head is right after it - walk to that point and reassemble, or equivalently slice and concatenate the array"
+    ]
+  },
+  "bruteForce": {
+    "approach": "rotate the array one step at a time, k times (taking k modulo length first to avoid unnecessary work)",
+    "time": "O(n * (k mod n))",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

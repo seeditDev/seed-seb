@@ -1,0 +1,634 @@
+{
+  "id": "shopping-offers",
+  "questionId": "shopping-offers",
+  "slug": "shopping-offers",
+  "title": "Shopping Offers",
+  "difficulty": "Hard",
+  "category": "Knapsack",
+  "patterns": [
+    "knapsack",
+    "bounded knapsack",
+    "dynamic programming"
+  ],
+  "lists": [],
+  "hints": [
+    "at any point, your state is 'how many of each item do I still need' - the baseline cost from that state is always available: buy everything left individually at regular price",
+    "from that same state, you can also try applying any special offer that doesn't overshoot any item's remaining need, moving you to a smaller needs state plus the offer's price",
+    "define cost(needs) as the minimum spend to satisfy a given needs vector, starting with cost(needs) = sum(needs[i] * price[i]) as the no-offers baseline",
+    "then for each special offer, if applying it keeps every resulting need non-negative, compare offer's price + cost(needs after applying it) against the current best, and keep the minimum",
+    "cache cost(needs) by the needs vector itself (e.g. as a tuple key) so that identical remaining-needs states reached via different offer orders aren't recomputed - this is what keeps the bounded-knapsack recursion efficient in practice"
+  ],
+  "commonMistakes": [
+    "allowing an offer to be applied when it would push some item's remaining need below zero, which represents buying more than needed and is not allowed",
+    "forgetting the always-available baseline of buying everything individually, especially when no offer is strictly better",
+    "not memoizing on the needs vector, causing the same state to be recomputed repeatedly through different combinations of offers"
+  ],
+  "content": {
+    "problemStatement": "You want to buy a set of items:\n\n- `needs[i]` is how many of item i you need\n- `price[i]` is the regular price of one unit of item i\n- there's also a list of special offers; each offer is a list where the last element is the offer's total price, and every element before that is how many units of each item the offer provides, in the same item order as `price` and `needs`\n\n**Return the minimum total amount you must spend to end up with exactly the needed quantity of every item.**\n\nYou can use any offer any number of times, but never so many times that it would give you more of an item than you still need. Any remaining leftover units are bought at regular price.\n",
+    "constraints": [
+      "1 <= price.length <= 6",
+      "0 <= price[i] <= 100",
+      "0 <= special.length <= 10",
+      "special[i].length == price.length + 1, with 0 <= special[i][j] <= 50",
+      "0 <= needs[i] <= 10"
+    ],
+    "notes": [
+      "special is empty (no offers exist, must buy everything at regular price)",
+      "an offer's price is not actually cheaper than buying its items individually (it should simply never be used)",
+      "an offer that would overshoot needs for some item and therefore cannot be applied"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "price = [2, 5], special = [[3, 0, 5], [1, 2, 10]], needs = [3, 2]",
+        "output": "14",
+        "expectedOutput": "14",
+        "explanation": "using the offer [1, 2, 10] once (1 unit of item 0, 2 units of item 1, for 10) leaves 2 more units of item 0 needed, bought individually for 2*2=4, totaling 14"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "price = [2, 3, 4], special = [[1, 1, 0, 4], [2, 2, 1, 9]], needs = [1, 2, 1]",
+        "output": "11",
+        "expectedOutput": "11",
+        "explanation": "using the offer [1, 1, 0, 4] once leaves needs of [0, 1, 1], bought individually for 3+4=7, totaling 11"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "price = [3], special = [], needs = [4]",
+        "output": "12",
+        "expectedOutput": "12",
+        "explanation": "with no special offers available, everything is bought at regular price: 4 * 3 = 12"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,5],[[3,0,5],[1,2,10]],[3,2]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,3,4],[[1,1,0,4],[2,2,1,9]],[1,2,1]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5],[[2,8]],[3]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[3],[],[4]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],[],[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],[[1,1]],[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,1],[[1,1,1]],[2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2],[],[3,4]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,3,4],[],[0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,3],[[1,1,4],[0,2,5]],[2,3]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1],[[1,0,1],[0,1,1]],[2,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[4],[[1,3]],[2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3],[[1,1,1,5]],[2,2,2]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[10],[[2,15]],[3]]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,5],[[3,0,5],[1,2,10]],[3,0]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2],[[1,0,2],[0,1,1]],[5,5]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3],[[2,1,0,3],[0,1,2,4]],[3,3,3]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[6,5],[[2,0,7],[0,3,9]],[4,4]]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1],[[5,4]],[10]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,2,2],[[1,1,1,3]],[2,2,2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "price = [2, 5], special = [[3, 0, 5], [1, 2, 10]], needs = [3, 2]",
+      "output": "14",
+      "expectedOutput": "14",
+      "explanation": "using the offer [1, 2, 10] once (1 unit of item 0, 2 units of item 1, for 10) leaves 2 more units of item 0 needed, bought individually for 2*2=4, totaling 14"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "price = [2, 3, 4], special = [[1, 1, 0, 4], [2, 2, 1, 9]], needs = [1, 2, 1]",
+      "output": "11",
+      "expectedOutput": "11",
+      "explanation": "using the offer [1, 1, 0, 4] once leaves needs of [0, 1, 1], bought individually for 3+4=7, totaling 11"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "price = [3], special = [], needs = [4]",
+      "output": "12",
+      "expectedOutput": "12",
+      "explanation": "with no special offers available, everything is bought at regular price: 4 * 3 = 12"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "price = [2, 5], special = [[3, 0, 5], [1, 2, 10]], needs = [3, 2]",
+      "output": "14",
+      "expectedOutput": "14",
+      "explanation": "using the offer [1, 2, 10] once (1 unit of item 0, 2 units of item 1, for 10) leaves 2 more units of item 0 needed, bought individually for 2*2=4, totaling 14"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "price = [2, 3, 4], special = [[1, 1, 0, 4], [2, 2, 1, 9]], needs = [1, 2, 1]",
+      "output": "11",
+      "expectedOutput": "11",
+      "explanation": "using the offer [1, 1, 0, 4] once leaves needs of [0, 1, 1], bought individually for 3+4=7, totaling 11"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "price = [3], special = [], needs = [4]",
+      "output": "12",
+      "expectedOutput": "12",
+      "explanation": "with no special offers available, everything is bought at regular price: 4 * 3 = 12"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,5],[[3,0,5],[1,2,10]],[3,2]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[2,3,4],[[1,1,0,4],[2,2,1,9]],[1,2,1]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[5],[[2,8]],[3]]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[3],[],[4]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],[],[0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1],[[1,1]],[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[2,1],[[1,1,1]],[2,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2],[],[3,4]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[2,3,4],[],[0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[5,3],[[1,1,4],[0,2,5]],[2,3]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,1],[[1,0,1],[0,1,1]],[2,2]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[4],[[1,3]],[2]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3],[[1,1,1,5]],[2,2,2]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[10],[[2,15]],[3]]",
+      "output": "25",
+      "expectedOutput": "25",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,5],[[3,0,5],[1,2,10]],[3,0]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2],[[1,0,2],[0,1,1]],[5,5]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3],[[2,1,0,3],[0,1,2,4]],[3,3,3]]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[6,5],[[2,0,7],[0,3,9]],[4,4]]",
+      "output": "28",
+      "expectedOutput": "28",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1],[[5,4]],[10]]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[2,2,2],[[1,1,1,3]],[2,2,2]]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "price = [2, 5], special = [[3, 0, 5], [1, 2, 10]], needs = [3, 2]",
+        "output": "14",
+        "expectedOutput": "14",
+        "explanation": "using the offer [1, 2, 10] once (1 unit of item 0, 2 units of item 1, for 10) leaves 2 more units of item 0 needed, bought individually for 2*2=4, totaling 14"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "price = [2, 3, 4], special = [[1, 1, 0, 4], [2, 2, 1, 9]], needs = [1, 2, 1]",
+        "output": "11",
+        "expectedOutput": "11",
+        "explanation": "using the offer [1, 1, 0, 4] once leaves needs of [0, 1, 1], bought individually for 3+4=7, totaling 11"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "price = [3], special = [], needs = [4]",
+        "output": "12",
+        "expectedOutput": "12",
+        "explanation": "with no special offers available, everything is bought at regular price: 4 * 3 = 12"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,5],[[3,0,5],[1,2,10]],[3,2]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[2,3,4],[[1,1,0,4],[2,2,1,9]],[1,2,1]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5],[[2,8]],[3]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[3],[],[4]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],[],[0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1],[[1,1]],[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,1],[[1,1,1]],[2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2],[],[3,4]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[2,3,4],[],[0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,3],[[1,1,4],[0,2,5]],[2,3]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1],[[1,0,1],[0,1,1]],[2,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[4],[[1,3]],[2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3],[[1,1,1,5]],[2,2,2]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[10],[[2,15]],[3]]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,5],[[3,0,5],[1,2,10]],[3,0]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2],[[1,0,2],[0,1,1]],[5,5]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3],[[2,1,0,3],[0,1,2,4]],[3,3,3]]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[6,5],[[2,0,7],[0,3,9]],[4,4]]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1],[[5,4]],[10]]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,2,2],[[1,1,1,3]],[2,2,2]]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def shoppingOffers(self, price, special, needs):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int shoppingOffers(vector<int>& price, vector<vector<int>>& special, vector<int>& needs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int shoppingOffers(int[] price, int[][] special, int[] needs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun shoppingOffers(price: IntArray, special: Array<IntArray>, needs: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    shoppingOffers(price, special, needs) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def shoppingOffers(self, price, special, needs):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int shoppingOffers(vector<int>& price, vector<vector<int>>& special, vector<int>& needs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int shoppingOffers(int[] price, int[][] special, int[] needs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun shoppingOffers(price: IntArray, special: Array<IntArray>, needs: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    shoppingOffers(price, special, needs) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def shoppingOffers(self, price, special, needs):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int shoppingOffers(vector<int>& price, vector<vector<int>>& special, vector<int>& needs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int shoppingOffers(int[] price, int[][] special, int[] needs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun shoppingOffers(price: IntArray, special: Array<IntArray>, needs: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    shoppingOffers(price, special, needs) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def shoppingOffers(self, price, special, needs):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int shoppingOffers(vector<int>& price, vector<vector<int>>& special, vector<int>& needs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int shoppingOffers(int[] price, int[][] special, int[] needs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun shoppingOffers(price: IntArray, special: Array<IntArray>, needs: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    shoppingOffers(price, special, needs) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "exponential in the worst case, but effectively small since item quantities are bounded and typically few distinct states are reachable, memoized over the needs vector",
+      "space": "proportional to the number of distinct reachable needs states",
+      "pattern": "knapsack (bounded - each offer is an 'item' usable a limited number of times, capped naturally by how many units of each product are still needed, with the state being the current needs vector)"
+    },
+    "bruteForce": {
+      "approach": "recursively try, from the current remaining needs, either applying each special offer that fits (reducing needs accordingly) or stopping and buying everything left at regular price, taking the minimum cost across all branches",
+      "time": "exponential in the number of offers and item quantities without memoization",
+      "space": "proportional to recursion depth, bounded by total items needed"
+    }
+  },
+  "optimal": {
+    "pattern": "knapsack (bounded - each offer is an 'item' usable a limited number of times, capped naturally by how many units of each product are still needed, with the state being the current needs vector)",
+    "time": "exponential in the worst case, but effectively small since item quantities are bounded and typically few distinct states are reachable, memoized over the needs vector",
+    "space": "proportional to the number of distinct reachable needs states",
+    "hint_ladder": [
+      "at any point, your state is 'how many of each item do I still need' - the baseline cost from that state is always available: buy everything left individually at regular price",
+      "from that same state, you can also try applying any special offer that doesn't overshoot any item's remaining need, moving you to a smaller needs state plus the offer's price",
+      "define cost(needs) as the minimum spend to satisfy a given needs vector, starting with cost(needs) = sum(needs[i] * price[i]) as the no-offers baseline",
+      "then for each special offer, if applying it keeps every resulting need non-negative, compare offer's price + cost(needs after applying it) against the current best, and keep the minimum",
+      "cache cost(needs) by the needs vector itself (e.g. as a tuple key) so that identical remaining-needs states reached via different offer orders aren't recomputed - this is what keeps the bounded-knapsack recursion efficient in practice"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try, from the current remaining needs, either applying each special offer that fits (reducing needs accordingly) or stopping and buying everything left at regular price, taking the minimum cost across all branches",
+    "time": "exponential in the number of offers and item quantities without memoization",
+    "space": "proportional to recursion depth, bounded by total items needed"
+  },
+  "isIndex0": true,
+  "level": null
+}

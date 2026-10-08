@@ -1,0 +1,636 @@
+{
+  "id": "running-median-of-a-data-stream",
+  "questionId": "running-median-of-a-data-stream",
+  "slug": "running-median-of-a-data-stream",
+  "title": "Running Median of a Data Stream",
+  "difficulty": "Medium",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "two heaps",
+    "median",
+    "streaming"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "re-sorting from scratch after every insertion is wasteful - you only need access to the middle value(s), not a full ordering",
+    "split the numbers into two halves: a 'lower half' holding the smaller values and an 'upper half' holding the larger values, kept the same size (or off by one)",
+    "use a max-heap for the lower half (so its largest value, the top, is instantly available) and a min-heap for the upper half (so its smallest value is instantly available)",
+    "on each insertion, add the new value to the appropriate heap based on comparison with the lower half's max, then rebalance so the heap sizes differ by at most one. the doubled median is either 2x the larger heap's top (if sizes are unequal) or the sum of both heaps' tops (if sizes are equal)"
+  ],
+  "commonMistakes": [
+    "letting the two heaps drift out of balance by more than one element, which breaks the median calculation",
+    "inserting a new value into the wrong heap without first comparing it against the lower half's current maximum",
+    "computing the true fractional median and then flooring or rounding it instead of returning the exact doubled integer sum"
+  ],
+  "content": {
+    "problemStatement": "Numbers arrive one at a time, given as a list `nums` in arrival order.\nAfter each number is inserted, you need the median of all numbers seen\nso far (the middle value when sorted; for an even count, the average of\nthe two middle values). Since a median can be a fractional value like\n1.5, and our numbers must stay integers, return double the median\ninstead. This is always a whole number, because for an odd count it's\n2 times the single middle value, and for an even count it's the sum of\nthe two middle values (which equals 2 times their average).\n\n**Return an array where the ith entry is 2x the median after the first i+1 numbers have been inserted.**\n",
+    "constraints": [
+      "1 <= nums.length <= 10^4",
+      "-10^5 <= nums[i] <= 10^5",
+      "the returned array has exactly nums.length elements, one for each running median"
+    ],
+    "notes": [
+      "a single number inserted",
+      "many duplicate values inserted",
+      "a strictly increasing or strictly decreasing stream",
+      "negative numbers mixed with positive ones"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 1, 5]",
+        "output": "[4, 3, 4]",
+        "expectedOutput": "[4, 3, 4]",
+        "explanation": "after [2] the median is 2, doubled is 4; after [2,1] sorted is [1,2], median 1.5, doubled is 3; after [2,1,5] sorted is [1,2,5], median 2, doubled is 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [6, 10, 2, 6, 5]",
+        "output": "[12, 16, 12, 12, 12]",
+        "expectedOutput": "[12, 16, 12, 12, 12]",
+        "explanation": "after [6]: median 6, doubled 12; after [6,10]: sorted [6,10], median 8, doubled 16; after [6,10,2]: sorted [2,6,10], median 6, doubled 12; after [6,10,2,6]: sorted [2,6,6,10], median 6, doubled 12; after all five: sorted [2,5,6,6,10], median 6, doubled 12"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[2,1,5]]",
+        "output": "[4,3,4]",
+        "expectedOutput": "[4,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[6,10,2,6,5]]",
+        "output": "[12,16,12,12,12]",
+        "expectedOutput": "[12,16,12,12,12]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,3]]",
+        "output": "[10,8]",
+        "expectedOutput": "[10,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-1,-2,-3]]",
+        "output": "[-2,-3,-4]",
+        "expectedOutput": "[-2,-3,-4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5,5,5,5]]",
+        "output": "[10,10,10,10]",
+        "expectedOutput": "[10,10,10,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,-1,1,-1]]",
+        "output": "[2,0,2,0]",
+        "expectedOutput": "[2,0,2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[10,20,30,40,50]]",
+        "output": "[20,30,40,50,60]",
+        "expectedOutput": "[20,30,40,50,60]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[50,40,30,20,10]]",
+        "output": "[100,90,80,70,60]",
+        "expectedOutput": "[100,90,80,70,60]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,1,4,1,5,9,2,6]]",
+        "output": "[6,4,6,4,6,7,6,7]",
+        "expectedOutput": "[6,4,6,4,6,7,6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-5,5,-5,5,0]]",
+        "output": "[-10,0,-10,0,0]",
+        "expectedOutput": "[-10,0,-10,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[2,3,4,5,6,7,8,9,10,11]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[7,7,7,7,7,7,7]]",
+        "output": "[14,14,14,14,14,14,14]",
+        "expectedOutput": "[14,14,14,14,14,14,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,-100]]",
+        "output": "[200,0]",
+        "expectedOutput": "[200,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,2,2,1,1,1,3,3,3]]",
+        "output": "[4,4,4,4,4,3,4,4,4]",
+        "expectedOutput": "[4,4,4,4,4,3,4,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-3,-3,-3,-3]]",
+        "output": "[-6,-6,-6,-6]",
+        "expectedOutput": "[-6,-6,-6,-6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,100,2,99,3,98]]",
+        "output": "[2,101,4,101,6,101]",
+        "expectedOutput": "[2,101,4,101,6,101]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "output": "[0,0,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0,0,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 1, 5]",
+      "output": "[4, 3, 4]",
+      "expectedOutput": "[4, 3, 4]",
+      "explanation": "after [2] the median is 2, doubled is 4; after [2,1] sorted is [1,2], median 1.5, doubled is 3; after [2,1,5] sorted is [1,2,5], median 2, doubled is 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [6, 10, 2, 6, 5]",
+      "output": "[12, 16, 12, 12, 12]",
+      "expectedOutput": "[12, 16, 12, 12, 12]",
+      "explanation": "after [6]: median 6, doubled 12; after [6,10]: sorted [6,10], median 8, doubled 16; after [6,10,2]: sorted [2,6,10], median 6, doubled 12; after [6,10,2,6]: sorted [2,6,6,10], median 6, doubled 12; after all five: sorted [2,5,6,6,10], median 6, doubled 12"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [2, 1, 5]",
+      "output": "[4, 3, 4]",
+      "expectedOutput": "[4, 3, 4]",
+      "explanation": "after [2] the median is 2, doubled is 4; after [2,1] sorted is [1,2], median 1.5, doubled is 3; after [2,1,5] sorted is [1,2,5], median 2, doubled is 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [6, 10, 2, 6, 5]",
+      "output": "[12, 16, 12, 12, 12]",
+      "expectedOutput": "[12, 16, 12, 12, 12]",
+      "explanation": "after [6]: median 6, doubled 12; after [6,10]: sorted [6,10], median 8, doubled 16; after [6,10,2]: sorted [2,6,10], median 6, doubled 12; after [6,10,2,6]: sorted [2,6,6,10], median 6, doubled 12; after all five: sorted [2,5,6,6,10], median 6, doubled 12"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[2,1,5]]",
+      "output": "[4,3,4]",
+      "expectedOutput": "[4,3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[6,10,2,6,5]]",
+      "output": "[12,16,12,12,12]",
+      "expectedOutput": "[12,16,12,12,12]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5,3]]",
+      "output": "[10,8]",
+      "expectedOutput": "[10,8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[0]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-1,-2,-3]]",
+      "output": "[-2,-3,-4]",
+      "expectedOutput": "[-2,-3,-4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[5,5,5,5]]",
+      "output": "[10,10,10,10]",
+      "expectedOutput": "[10,10,10,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,-1,1,-1]]",
+      "output": "[2,0,2,0]",
+      "expectedOutput": "[2,0,2,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[10,20,30,40,50]]",
+      "output": "[20,30,40,50,60]",
+      "expectedOutput": "[20,30,40,50,60]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[50,40,30,20,10]]",
+      "output": "[100,90,80,70,60]",
+      "expectedOutput": "[100,90,80,70,60]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[3,1,4,1,5,9,2,6]]",
+      "output": "[6,4,6,4,6,7,6,7]",
+      "expectedOutput": "[6,4,6,4,6,7,6,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-5,5,-5,5,0]]",
+      "output": "[-10,0,-10,0,0]",
+      "expectedOutput": "[-10,0,-10,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+      "output": "[2,3,4,5,6,7,8,9,10,11]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,11]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[7,7,7,7,7,7,7]]",
+      "output": "[14,14,14,14,14,14,14]",
+      "expectedOutput": "[14,14,14,14,14,14,14]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[100,-100]]",
+      "output": "[200,0]",
+      "expectedOutput": "[200,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[2,2,2,1,1,1,3,3,3]]",
+      "output": "[4,4,4,4,4,3,4,4,4]",
+      "expectedOutput": "[4,4,4,4,4,3,4,4,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-3,-3,-3,-3]]",
+      "output": "[-6,-6,-6,-6]",
+      "expectedOutput": "[-6,-6,-6,-6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,100,2,99,3,98]]",
+      "output": "[2,101,4,101,6,101]",
+      "expectedOutput": "[2,101,4,101,6,101]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[0,0,0,0,0,0,0]]",
+      "output": "[0,0,0,0,0,0,0]",
+      "expectedOutput": "[0,0,0,0,0,0,0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [2, 1, 5]",
+        "output": "[4, 3, 4]",
+        "expectedOutput": "[4, 3, 4]",
+        "explanation": "after [2] the median is 2, doubled is 4; after [2,1] sorted is [1,2], median 1.5, doubled is 3; after [2,1,5] sorted is [1,2,5], median 2, doubled is 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [6, 10, 2, 6, 5]",
+        "output": "[12, 16, 12, 12, 12]",
+        "expectedOutput": "[12, 16, 12, 12, 12]",
+        "explanation": "after [6]: median 6, doubled 12; after [6,10]: sorted [6,10], median 8, doubled 16; after [6,10,2]: sorted [2,6,10], median 6, doubled 12; after [6,10,2,6]: sorted [2,6,6,10], median 6, doubled 12; after all five: sorted [2,5,6,6,10], median 6, doubled 12"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[2,1,5]]",
+        "output": "[4,3,4]",
+        "expectedOutput": "[4,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[6,10,2,6,5]]",
+        "output": "[12,16,12,12,12]",
+        "expectedOutput": "[12,16,12,12,12]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,3]]",
+        "output": "[10,8]",
+        "expectedOutput": "[10,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-1,-2,-3]]",
+        "output": "[-2,-3,-4]",
+        "expectedOutput": "[-2,-3,-4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5,5,5,5]]",
+        "output": "[10,10,10,10]",
+        "expectedOutput": "[10,10,10,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,-1,1,-1]]",
+        "output": "[2,0,2,0]",
+        "expectedOutput": "[2,0,2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[10,20,30,40,50]]",
+        "output": "[20,30,40,50,60]",
+        "expectedOutput": "[20,30,40,50,60]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[50,40,30,20,10]]",
+        "output": "[100,90,80,70,60]",
+        "expectedOutput": "[100,90,80,70,60]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,1,4,1,5,9,2,6]]",
+        "output": "[6,4,6,4,6,7,6,7]",
+        "expectedOutput": "[6,4,6,4,6,7,6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-5,5,-5,5,0]]",
+        "output": "[-10,0,-10,0,0]",
+        "expectedOutput": "[-10,0,-10,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[2,3,4,5,6,7,8,9,10,11]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[7,7,7,7,7,7,7]]",
+        "output": "[14,14,14,14,14,14,14]",
+        "expectedOutput": "[14,14,14,14,14,14,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,-100]]",
+        "output": "[200,0]",
+        "expectedOutput": "[200,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,2,2,1,1,1,3,3,3]]",
+        "output": "[4,4,4,4,4,3,4,4,4]",
+        "expectedOutput": "[4,4,4,4,4,3,4,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-3,-3,-3,-3]]",
+        "output": "[-6,-6,-6,-6]",
+        "expectedOutput": "[-6,-6,-6,-6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,100,2,99,3,98]]",
+        "output": "[2,101,4,101,6,101]",
+        "expectedOutput": "[2,101,4,101,6,101]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0,0,0,0,0,0,0]]",
+        "output": "[0,0,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0,0,0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def runningMedian(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> runningMedian(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] runningMedian(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun runningMedian(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    runningMedian(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def runningMedian(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> runningMedian(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] runningMedian(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun runningMedian(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    runningMedian(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def runningMedian(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> runningMedian(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] runningMedian(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun runningMedian(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    runningMedian(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def runningMedian(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> runningMedian(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] runningMedian(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun runningMedian(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    runningMedian(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n), O(log n) per insertion",
+      "space": "O(n)",
+      "pattern": "two heaps - a max-heap for the lower half of values and a min-heap for the upper half, kept balanced in size"
+    },
+    "bruteForce": {
+      "approach": "after each insertion, sort every number seen so far and compute the median directly from the sorted list",
+      "time": "O(n^2 log n) across all insertions",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "two heaps - a max-heap for the lower half of values and a min-heap for the upper half, kept balanced in size",
+    "time": "O(n log n), O(log n) per insertion",
+    "space": "O(n)",
+    "hint_ladder": [
+      "re-sorting from scratch after every insertion is wasteful - you only need access to the middle value(s), not a full ordering",
+      "split the numbers into two halves: a 'lower half' holding the smaller values and an 'upper half' holding the larger values, kept the same size (or off by one)",
+      "use a max-heap for the lower half (so its largest value, the top, is instantly available) and a min-heap for the upper half (so its smallest value is instantly available)",
+      "on each insertion, add the new value to the appropriate heap based on comparison with the lower half's max, then rebalance so the heap sizes differ by at most one. the doubled median is either 2x the larger heap's top (if sizes are unequal) or the sum of both heaps' tops (if sizes are equal)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "after each insertion, sort every number seen so far and compute the median directly from the sorted list",
+    "time": "O(n^2 log n) across all insertions",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

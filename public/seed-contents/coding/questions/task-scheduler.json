@@ -1,0 +1,633 @@
+{
+  "id": "task-scheduler",
+  "questionId": "task-scheduler",
+  "slug": "task-scheduler",
+  "title": "Task Scheduler",
+  "difficulty": "Medium",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "max-heap",
+    "greedy"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "the most frequent task type is the real bottleneck - it dictates how much idle time gets forced in",
+    "count how many times each task type appears, and always try to schedule the currently most frequent remaining type first, since delaying it risks more forced idling later",
+    "use a max-heap of remaining counts. process tasks in rounds of n + 1 slots: repeatedly pop up to n + 1 distinct task types from the heap, run one of each, and decrement their counts",
+    "if a round has fewer than n + 1 available distinct types left with remaining work, the leftover slots in that round are idle time; push any tasks with remaining count back onto the heap for the next round, and keep going until the heap is empty"
+  ],
+  "commonMistakes": [
+    "using the closed-form formula (maxFreq - 1) * (n + 1) + countOfMaxFreq without realizing it can undercount when there are many distinct task types filling every gap - comparing it against tasks.length and taking the max is required",
+    "not accounting for multiple task types tied at the same maximum frequency, which each need their own trailing slot",
+    "forgetting that once all task counts hit zero, no further idle time should be added even if the round isn't complete"
+  ],
+  "content": {
+    "problemStatement": "A CPU must run a list of `tasks`, where each task is represented by an integer task type id. Running any single task takes one unit of time. After running a task of a given type, the CPU must wait at least `n` units of time before running another task of that same type again, though it may run a different type in the meantime, or sit idle if nothing else is available.\n\n**Return the minimum total number of time units needed to finish all the tasks.**\n\nTasks can be run in any order, and idle units count toward the total.\n",
+    "constraints": [
+      "1 <= tasks.length <= 10^4",
+      "0 <= tasks[i] <= 25",
+      "0 <= n <= 100"
+    ],
+    "notes": [
+      "n = 0, meaning no cooldown restriction at all",
+      "every task is the same type, forcing maximum idling",
+      "all tasks are distinct types, needing no idle time",
+      "single task in the list"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tasks = [0, 0, 0, 1, 1, 1], n = 2",
+        "output": "8",
+        "expectedOutput": "8",
+        "explanation": "one valid schedule is 0,1,idle,0,1,idle,0,1, taking 8 units because after each type-0 or type-1 task there must be a 2-unit cooldown before repeating it"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tasks = [0, 0, 0, 1, 2, 3], n = 2",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "one valid schedule is 0,1,2,0,3,idle,0, taking 7 units; type 0 needs its cooldown but the other types fill the gaps"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tasks = [0, 0, 1, 1], n = 0",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "no cooldown is required, so the 4 tasks can just run back to back"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[0,0,0,1,1,1],2]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0,0,1,2,3],2]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0,1,2,3],2]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,0,1,1],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0],5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0],0]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,0],5]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,1,2,3,4,5],0]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,0,0,0,0,0,1,1],2]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,0],3]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,0,1,1,2,2],1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0,0,0,0,0,0],5]",
+        "output": "55",
+        "expectedOutput": "55",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[0,1,0,1,0,1,0],2]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,1,1,1,2,2,2],3]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,0,0,0,1,1],2]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,1,2,3,4,5,6,7,8,9],3]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,0,0,0,0],4]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,1],10]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],1]",
+        "output": "39",
+        "expectedOutput": "39",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0,1,2,3],1]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tasks = [0, 0, 0, 1, 1, 1], n = 2",
+      "output": "8",
+      "expectedOutput": "8",
+      "explanation": "one valid schedule is 0,1,idle,0,1,idle,0,1, taking 8 units because after each type-0 or type-1 task there must be a 2-unit cooldown before repeating it"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tasks = [0, 0, 0, 1, 2, 3], n = 2",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "one valid schedule is 0,1,2,0,3,idle,0, taking 7 units; type 0 needs its cooldown but the other types fill the gaps"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tasks = [0, 0, 1, 1], n = 0",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "no cooldown is required, so the 4 tasks can just run back to back"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tasks = [0, 0, 0, 1, 1, 1], n = 2",
+      "output": "8",
+      "expectedOutput": "8",
+      "explanation": "one valid schedule is 0,1,idle,0,1,idle,0,1, taking 8 units because after each type-0 or type-1 task there must be a 2-unit cooldown before repeating it"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tasks = [0, 0, 0, 1, 2, 3], n = 2",
+      "output": "7",
+      "expectedOutput": "7",
+      "explanation": "one valid schedule is 0,1,2,0,3,idle,0, taking 7 units; type 0 needs its cooldown but the other types fill the gaps"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tasks = [0, 0, 1, 1], n = 0",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "no cooldown is required, so the 4 tasks can just run back to back"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[0,0,0,1,1,1],2]",
+      "output": "8",
+      "expectedOutput": "8",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,0,0,1,2,3],2]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[0,1,2,3],2]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[0,0,1,1],0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[0],5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[0,0],0]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0,0],5]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,1,2,3,4,5],0]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[0,0,0,0,0,0,1,1],2]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,0,0,0],3]",
+      "output": "13",
+      "expectedOutput": "13",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[0,0,1,1,2,2],1]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[0,0,0,0,0,0,0,0,0,0],5]",
+      "output": "55",
+      "expectedOutput": "55",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[0,1,0,1,0,1,0],2]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[0,0,0,1,1,1,2,2,2],3]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[0,0,0,0,1,1],2]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[0,1,2,3,4,5,6,7,8,9],3]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[0,0,0,0,0],4]",
+      "output": "21",
+      "expectedOutput": "21",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[0,1],10]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],1]",
+      "output": "39",
+      "expectedOutput": "39",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[0,1,2,3],1]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tasks = [0, 0, 0, 1, 1, 1], n = 2",
+        "output": "8",
+        "expectedOutput": "8",
+        "explanation": "one valid schedule is 0,1,idle,0,1,idle,0,1, taking 8 units because after each type-0 or type-1 task there must be a 2-unit cooldown before repeating it"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tasks = [0, 0, 0, 1, 2, 3], n = 2",
+        "output": "7",
+        "expectedOutput": "7",
+        "explanation": "one valid schedule is 0,1,2,0,3,idle,0, taking 7 units; type 0 needs its cooldown but the other types fill the gaps"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tasks = [0, 0, 1, 1], n = 0",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "no cooldown is required, so the 4 tasks can just run back to back"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[0,0,0,1,1,1],2]",
+        "output": "8",
+        "expectedOutput": "8",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,0,0,1,2,3],2]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[0,1,2,3],2]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[0,0,1,1],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[0],5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[0,0],0]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,0],5]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,1,2,3,4,5],0]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[0,0,0,0,0,0,1,1],2]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,0],3]",
+        "output": "13",
+        "expectedOutput": "13",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,0,1,1,2,2],1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[0,0,0,0,0,0,0,0,0,0],5]",
+        "output": "55",
+        "expectedOutput": "55",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[0,1,0,1,0,1,0],2]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[0,0,0,1,1,1,2,2,2],3]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,0,0,0,1,1],2]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0,1,2,3,4,5,6,7,8,9],3]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[0,0,0,0,0],4]",
+        "output": "21",
+        "expectedOutput": "21",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[0,1],10]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],1]",
+        "output": "39",
+        "expectedOutput": "39",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0,1,2,3],1]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def leastInterval(self, tasks, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int leastInterval(vector<int>& tasks, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int leastInterval(int[] tasks, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun leastInterval(tasks: IntArray, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    leastInterval(tasks, n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def leastInterval(self, tasks, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int leastInterval(vector<int>& tasks, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int leastInterval(int[] tasks, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun leastInterval(tasks: IntArray, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    leastInterval(tasks, n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def leastInterval(self, tasks, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int leastInterval(vector<int>& tasks, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int leastInterval(int[] tasks, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun leastInterval(tasks: IntArray, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    leastInterval(tasks, n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def leastInterval(self, tasks, n):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int leastInterval(vector<int>& tasks, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int leastInterval(int[] tasks, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun leastInterval(tasks: IntArray, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    leastInterval(tasks, n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(total_time * log(number_of_task_types))",
+      "space": "O(number_of_task_types)",
+      "pattern": "max-heap of task type frequencies, processed in rounds of size n + 1"
+    },
+    "bruteForce": {
+      "approach": "simulate minute by minute, at each free minute scanning every task type to pick an available one greedily and checking its cooldown, redoing the scan repeatedly",
+      "time": "O(total_time * number_of_task_types)",
+      "space": "O(number_of_task_types)"
+    }
+  },
+  "optimal": {
+    "pattern": "max-heap of task type frequencies, processed in rounds of size n + 1",
+    "time": "O(total_time * log(number_of_task_types))",
+    "space": "O(number_of_task_types)",
+    "hint_ladder": [
+      "the most frequent task type is the real bottleneck - it dictates how much idle time gets forced in",
+      "count how many times each task type appears, and always try to schedule the currently most frequent remaining type first, since delaying it risks more forced idling later",
+      "use a max-heap of remaining counts. process tasks in rounds of n + 1 slots: repeatedly pop up to n + 1 distinct task types from the heap, run one of each, and decrement their counts",
+      "if a round has fewer than n + 1 available distinct types left with remaining work, the leftover slots in that round are idle time; push any tasks with remaining count back onto the heap for the next round, and keep going until the heap is empty"
+    ]
+  },
+  "bruteForce": {
+    "approach": "simulate minute by minute, at each free minute scanning every task type to pick an available one greedily and checking its cooldown, redoing the scan repeatedly",
+    "time": "O(total_time * number_of_task_types)",
+    "space": "O(number_of_task_types)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,636 @@
+{
+  "id": "rotate-array",
+  "questionId": "rotate-array",
+  "slug": "rotate-array",
+  "title": "Rotate Array",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "array rotation",
+    "in-place transformation"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "what happens if k is bigger than the array length? think about what actually changes after rotating by exactly n steps",
+    "reduce k to k mod n first, since a full lap around the array is a no-op",
+    "one clean approach: the last k elements end up first, and the first n-k elements end up right after them, in their original relative order - can you slice and concatenate?",
+    "a constant-extra-space approach: reverse the entire array, then reverse just the first k elements, then reverse just the remaining n-k elements",
+    "double check your reverse-based approach on a small example by hand, it's easy to reverse the wrong segment or the wrong number of elements"
+  ],
+  "commonMistakes": [
+    "forgetting to take k modulo the array length, causing wasted work or out-of-bounds slicing when k exceeds nums.length",
+    "rotating left instead of right (the last k elements should move to the front, not the first k elements move to the back)",
+    "off-by-one errors when slicing at index n - k versus n - k - 1",
+    "mutating the input while still reading from it in a naive in-place shift, corrupting later reads"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers and a non-negative number of steps `k`.\n\n**Rotate the list to the right by `k` positions, meaning each element moves `k` spots toward the end, wrapping around to the front when it runs off the end, and return the rotated list.**\n\nIf `k` is larger than the length of the list, treat it as if you rotated by `k` modulo the length (rotating a full lap brings you back to where you started).\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5",
+      "-2^31 <= nums[i] <= 2^31 - 1",
+      "0 <= k <= 10^5",
+      "k can be larger than nums.length, in which case only k mod nums.length steps actually matter"
+    ],
+    "notes": [
+      "k equal to 0 (no rotation)",
+      "k equal to nums.length or a multiple of it (rotation is a full lap, array unchanged)",
+      "k greater than nums.length (must wrap using k mod length)",
+      "a single-element array (any k leaves it unchanged)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1,2,3,4,5,6,7], k = 3",
+        "output": "[5,6,7,1,2,3,4]",
+        "expectedOutput": "[5,6,7,1,2,3,4]",
+        "explanation": "the last 3 elements (5,6,7) wrap around to the front, and the rest shift right by 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1,-100,3,99], k = 2",
+        "output": "[3,99,-1,-100]",
+        "expectedOutput": "[3,99,-1,-100]",
+        "explanation": "the last 2 elements move to the front, pushing the first 2 to the back"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1,2,3], k = 0",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "explanation": "rotating by 0 steps leaves the array unchanged"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5,6,7],3]",
+        "output": "[5,6,7,1,2,3,4]",
+        "expectedOutput": "[5,6,7,1,2,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,-100,3,99],2]",
+        "output": "[3,99,-1,-100]",
+        "expectedOutput": "[3,99,-1,-100]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],0]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2],3]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3],0]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],1]",
+        "output": "[5,1,2,3,4]",
+        "expectedOutput": "[5,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,4,3,2,1],2]",
+        "output": "[2,1,5,4,3]",
+        "expectedOutput": "[2,1,5,4,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4],4]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4],6]",
+        "output": "[3,4,1,2]",
+        "expectedOutput": "[3,4,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,0,0,1],1]",
+        "output": "[1,0,0,0]",
+        "expectedOutput": "[1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6],7]",
+        "output": "[6,1,2,3,4,5]",
+        "expectedOutput": "[6,1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-5,-4,-3,-2,-1],3]",
+        "output": "[-3,-2,-1,-5,-4]",
+        "expectedOutput": "[-3,-2,-1,-5,-4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[10,20,30,40,50,60,70,80,90,100],10]",
+        "output": "[10,20,30,40,50,60,70,80,90,100]",
+        "expectedOutput": "[10,20,30,40,50,60,70,80,90,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[10,20,30,40,50,60,70,80,90,100],0]",
+        "output": "[10,20,30,40,50,60,70,80,90,100]",
+        "expectedOutput": "[10,20,30,40,50,60,70,80,90,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],9]",
+        "output": "[2,3,4,5,6,7,8,9,10,1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,2,2,2],2]",
+        "output": "[2,2,2,2]",
+        "expectedOutput": "[2,2,2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,-1],1]",
+        "output": "[-1,1]",
+        "expectedOutput": "[-1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[100],5]",
+        "output": "[100]",
+        "expectedOutput": "[100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8],3]",
+        "output": "[6,7,8,1,2,3,4,5]",
+        "expectedOutput": "[6,7,8,1,2,3,4,5]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1,2,3,4,5,6,7], k = 3",
+      "output": "[5,6,7,1,2,3,4]",
+      "expectedOutput": "[5,6,7,1,2,3,4]",
+      "explanation": "the last 3 elements (5,6,7) wrap around to the front, and the rest shift right by 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1,-100,3,99], k = 2",
+      "output": "[3,99,-1,-100]",
+      "expectedOutput": "[3,99,-1,-100]",
+      "explanation": "the last 2 elements move to the front, pushing the first 2 to the back"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1,2,3], k = 0",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "explanation": "rotating by 0 steps leaves the array unchanged"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1,2,3,4,5,6,7], k = 3",
+      "output": "[5,6,7,1,2,3,4]",
+      "expectedOutput": "[5,6,7,1,2,3,4]",
+      "explanation": "the last 3 elements (5,6,7) wrap around to the front, and the rest shift right by 3"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1,-100,3,99], k = 2",
+      "output": "[3,99,-1,-100]",
+      "expectedOutput": "[3,99,-1,-100]",
+      "explanation": "the last 2 elements move to the front, pushing the first 2 to the back"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1,2,3], k = 0",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "explanation": "rotating by 0 steps leaves the array unchanged"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3,4,5,6,7],3]",
+      "output": "[5,6,7,1,2,3,4]",
+      "expectedOutput": "[5,6,7,1,2,3,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-1,-100,3,99],2]",
+      "output": "[3,99,-1,-100]",
+      "expectedOutput": "[3,99,-1,-100]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1],0]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2],3]",
+      "output": "[2,1]",
+      "expectedOutput": "[2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,2,3],0]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5],5]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5],1]",
+      "output": "[5,1,2,3,4]",
+      "expectedOutput": "[5,1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,4,3,2,1],2]",
+      "output": "[2,1,5,4,3]",
+      "expectedOutput": "[2,1,5,4,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4],4]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4],6]",
+      "output": "[3,4,1,2]",
+      "expectedOutput": "[3,4,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[0,0,0,1],1]",
+      "output": "[1,0,0,0]",
+      "expectedOutput": "[1,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6],7]",
+      "output": "[6,1,2,3,4,5]",
+      "expectedOutput": "[6,1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-5,-4,-3,-2,-1],3]",
+      "output": "[-3,-2,-1,-5,-4]",
+      "expectedOutput": "[-3,-2,-1,-5,-4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[10,20,30,40,50,60,70,80,90,100],10]",
+      "output": "[10,20,30,40,50,60,70,80,90,100]",
+      "expectedOutput": "[10,20,30,40,50,60,70,80,90,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[10,20,30,40,50,60,70,80,90,100],0]",
+      "output": "[10,20,30,40,50,60,70,80,90,100]",
+      "expectedOutput": "[10,20,30,40,50,60,70,80,90,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],9]",
+      "output": "[2,3,4,5,6,7,8,9,10,1]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[2,2,2,2],2]",
+      "output": "[2,2,2,2]",
+      "expectedOutput": "[2,2,2,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,-1],1]",
+      "output": "[-1,1]",
+      "expectedOutput": "[-1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[100],5]",
+      "output": "[100]",
+      "expectedOutput": "[100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,4,5,6,7,8],3]",
+      "output": "[6,7,8,1,2,3,4,5]",
+      "expectedOutput": "[6,7,8,1,2,3,4,5]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1,2,3,4,5,6,7], k = 3",
+        "output": "[5,6,7,1,2,3,4]",
+        "expectedOutput": "[5,6,7,1,2,3,4]",
+        "explanation": "the last 3 elements (5,6,7) wrap around to the front, and the rest shift right by 3"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1,-100,3,99], k = 2",
+        "output": "[3,99,-1,-100]",
+        "expectedOutput": "[3,99,-1,-100]",
+        "explanation": "the last 2 elements move to the front, pushing the first 2 to the back"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1,2,3], k = 0",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "explanation": "rotating by 0 steps leaves the array unchanged"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3,4,5,6,7],3]",
+        "output": "[5,6,7,1,2,3,4]",
+        "expectedOutput": "[5,6,7,1,2,3,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,-100,3,99],2]",
+        "output": "[3,99,-1,-100]",
+        "expectedOutput": "[3,99,-1,-100]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],0]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2],3]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,2,3],0]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5],1]",
+        "output": "[5,1,2,3,4]",
+        "expectedOutput": "[5,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,4,3,2,1],2]",
+        "output": "[2,1,5,4,3]",
+        "expectedOutput": "[2,1,5,4,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4],4]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4],6]",
+        "output": "[3,4,1,2]",
+        "expectedOutput": "[3,4,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,0,0,1],1]",
+        "output": "[1,0,0,0]",
+        "expectedOutput": "[1,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6],7]",
+        "output": "[6,1,2,3,4,5]",
+        "expectedOutput": "[6,1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-5,-4,-3,-2,-1],3]",
+        "output": "[-3,-2,-1,-5,-4]",
+        "expectedOutput": "[-3,-2,-1,-5,-4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[10,20,30,40,50,60,70,80,90,100],10]",
+        "output": "[10,20,30,40,50,60,70,80,90,100]",
+        "expectedOutput": "[10,20,30,40,50,60,70,80,90,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[10,20,30,40,50,60,70,80,90,100],0]",
+        "output": "[10,20,30,40,50,60,70,80,90,100]",
+        "expectedOutput": "[10,20,30,40,50,60,70,80,90,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],9]",
+        "output": "[2,3,4,5,6,7,8,9,10,1]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[2,2,2,2],2]",
+        "output": "[2,2,2,2]",
+        "expectedOutput": "[2,2,2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,-1],1]",
+        "output": "[-1,1]",
+        "expectedOutput": "[-1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[100],5]",
+        "output": "[100]",
+        "expectedOutput": "[100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,4,5,6,7,8],3]",
+        "output": "[6,7,8,1,2,3,4,5]",
+        "expectedOutput": "[6,7,8,1,2,3,4,5]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def rotate(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rotate(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rotate(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rotate(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rotate(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def rotate(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rotate(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rotate(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rotate(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rotate(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def rotate(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rotate(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rotate(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rotate(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rotate(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def rotate(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> rotate(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] rotate(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun rotate(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    rotate(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra if reversing in place, O(n) if building a new output array by slicing",
+      "pattern": "reduce k modulo length, then use the reverse trick: reverse the whole array, then reverse the first k and last n-k segments separately"
+    },
+    "bruteForce": {
+      "approach": "rotate one step at a time, k times: on each step, pop the last element and insert it at the front",
+      "time": "O(n * k)",
+      "space": "O(1) extra if done in place, though popping from the end and inserting at the front is O(n) per step in most array representations"
+    }
+  },
+  "optimal": {
+    "pattern": "reduce k modulo length, then use the reverse trick: reverse the whole array, then reverse the first k and last n-k segments separately",
+    "time": "O(n)",
+    "space": "O(1) extra if reversing in place, O(n) if building a new output array by slicing",
+    "hint_ladder": [
+      "what happens if k is bigger than the array length? think about what actually changes after rotating by exactly n steps",
+      "reduce k to k mod n first, since a full lap around the array is a no-op",
+      "one clean approach: the last k elements end up first, and the first n-k elements end up right after them, in their original relative order - can you slice and concatenate?",
+      "a constant-extra-space approach: reverse the entire array, then reverse just the first k elements, then reverse just the remaining n-k elements",
+      "double check your reverse-based approach on a small example by hand, it's easy to reverse the wrong segment or the wrong number of elements"
+    ]
+  },
+  "bruteForce": {
+    "approach": "rotate one step at a time, k times: on each step, pop the last element and insert it at the front",
+    "time": "O(n * k)",
+    "space": "O(1) extra if done in place, though popping from the end and inserting at the front is O(n) per step in most array representations"
+  },
+  "isIndex0": true,
+  "level": null
+}

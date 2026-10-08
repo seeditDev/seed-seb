@@ -1,0 +1,630 @@
+{
+  "id": "sum-of-subarray-minimums",
+  "questionId": "sum-of-subarray-minimums",
+  "slug": "sum-of-subarray-minimums",
+  "title": "Sum of Subarray Minimums",
+  "difficulty": "Medium",
+  "category": "Monotonic stack",
+  "patterns": [
+    "monotonic stack",
+    "array",
+    "contribution technique"
+  ],
+  "lists": [],
+  "hints": [
+    "instead of summing minimums subarray by subarray, what if you flipped the question: for each individual element, how many subarrays is IT the minimum of? then its contribution to the total is (that count) * (its value)",
+    "an element at index i is the minimum of a subarray exactly when that subarray doesn't cross any element smaller than it. so you need, for each i, the distance to the nearest smaller element on the left and on the right",
+    "use a monotonic increasing stack to compute, for every index, the index of the previous strictly smaller element and the index of the next smaller-or-equal element (careful with the tie-breaking direction to avoid double counting equal elements)",
+    "for index i with left boundary distance L (i - prevSmallerIndex) and right boundary distance R (nextSmallerIndex - i), the number of subarrays where arr[i] is the minimum is L * R; sum arr[i] * L * R over all i, modulo 1,000,000,007"
+  ],
+  "commonMistakes": [
+    "double-counting subarrays when there are duplicate values, by using strictly-less-than on both sides instead of breaking ties consistently on one side",
+    "forgetting to take the sum modulo 1,000,000,007, or taking the modulo only at the very end after overflow already happened",
+    "off-by-one errors when previous/next smaller indices don't exist, which should default to -1 and n respectively"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers `arr`. Consider every contiguous\nsubarray of arr, and for each one take its minimum value.\n\n**Return the sum of all these minimums, taken modulo 1,000,000,007.**\n",
+    "constraints": [
+      "1 <= arr.length",
+      "the answer must be returned modulo 1,000,000,007",
+      "consider every contiguous subarray, not just maximal or distinct ones"
+    ],
+    "notes": [
+      "a single element (only one subarray, itself)",
+      "all elements equal (every subarray's minimum is that same value)",
+      "a strictly increasing or strictly decreasing array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arr = [3, 1, 2, 4]",
+        "output": "17",
+        "expectedOutput": "17",
+        "explanation": "the subarray minimums are 3, 1, 1, 1, 1, 1, 1, 2, 2, 4 for the ten contiguous subarrays, which sum to 17"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arr = [11, 81, 94, 43, 3]",
+        "output": "444",
+        "expectedOutput": "444",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "arr = [1, 2, 3]",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "minimums are 1, 2, 3, 1, 2, 1 for the six subarrays, summing to 10"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,1,2,4]]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[11,81,94,43,3]]",
+        "output": "444",
+        "expectedOutput": "444",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,5]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "1540",
+        "expectedOutput": "1540",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "1540",
+        "expectedOutput": "1540",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[391,341,237,171,924,936,395,592,918,707,291,567,284,393,873,750,782,591,10,800,256,678,860,19,450,972,159,154,741,327,172,264,671,708,636]]",
+        "output": "77825",
+        "expectedOutput": "77825",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+        "output": "110",
+        "expectedOutput": "110",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,3,1,3,1,3,1,3]]",
+        "output": "44",
+        "expectedOutput": "44",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[11443,28594,76521,52135,82014,23128,80542,68489,23239,43320,37445,24199,83510,55331,7645,88608,95230,79261,56611,17098,3198,61689,56179,98698,44488,59129,77108,30060,19570,45498,24022,56328,15133,41999,30924,84927,56006,69435,64028,23864]]",
+        "output": "10440189",
+        "expectedOutput": "10440189",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "820",
+        "expectedOutput": "820",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000]]",
+        "output": "999999622",
+        "expectedOutput": "999999622",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,1,2,1,2,1,2,1,2]]",
+        "output": "60",
+        "expectedOutput": "60",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,4,3,2,1,2,3,4,5]]",
+        "output": "85",
+        "expectedOutput": "85",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,8,7,6,5,4,3,2,1,1,2,3,4,5,6,7,8,9]]",
+        "output": "411",
+        "expectedOutput": "411",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arr = [3, 1, 2, 4]",
+      "output": "17",
+      "expectedOutput": "17",
+      "explanation": "the subarray minimums are 3, 1, 1, 1, 1, 1, 1, 2, 2, 4 for the ten contiguous subarrays, which sum to 17"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arr = [11, 81, 94, 43, 3]",
+      "output": "444",
+      "expectedOutput": "444",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "arr = [1, 2, 3]",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "minimums are 1, 2, 3, 1, 2, 1 for the six subarrays, summing to 10"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arr = [3, 1, 2, 4]",
+      "output": "17",
+      "expectedOutput": "17",
+      "explanation": "the subarray minimums are 3, 1, 1, 1, 1, 1, 1, 2, 2, 4 for the ten contiguous subarrays, which sum to 17"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arr = [11, 81, 94, 43, 3]",
+      "output": "444",
+      "expectedOutput": "444",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "arr = [1, 2, 3]",
+      "output": "10",
+      "expectedOutput": "10",
+      "explanation": "minimums are 1, 2, 3, 1, 2, 1 for the six subarrays, summing to 10"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,1,2,4]]",
+      "output": "17",
+      "expectedOutput": "17",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[11,81,94,43,3]]",
+      "output": "444",
+      "expectedOutput": "444",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[5,5]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,1,1,1]]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+      "output": "1540",
+      "expectedOutput": "1540",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+      "output": "1540",
+      "expectedOutput": "1540",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[391,341,237,171,924,936,395,592,918,707,291,567,284,393,873,750,782,591,10,800,256,678,860,19,450,972,159,154,741,327,172,264,671,708,636]]",
+      "output": "77825",
+      "expectedOutput": "77825",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+      "output": "110",
+      "expectedOutput": "110",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,3,1,3,1,3,1,3]]",
+      "output": "44",
+      "expectedOutput": "44",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[2,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[11443,28594,76521,52135,82014,23128,80542,68489,23239,43320,37445,24199,83510,55331,7645,88608,95230,79261,56611,17098,3198,61689,56179,98698,44488,59129,77108,30060,19570,45498,24022,56328,15133,41999,30924,84927,56006,69435,64028,23864]]",
+      "output": "10440189",
+      "expectedOutput": "10440189",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "output": "820",
+      "expectedOutput": "820",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000]]",
+      "output": "999999622",
+      "expectedOutput": "999999622",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,1,2,1,2,1,2,1,2]]",
+      "output": "60",
+      "expectedOutput": "60",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[5,4,3,2,1,2,3,4,5]]",
+      "output": "85",
+      "expectedOutput": "85",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[9,8,7,6,5,4,3,2,1,1,2,3,4,5,6,7,8,9]]",
+      "output": "411",
+      "expectedOutput": "411",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arr = [3, 1, 2, 4]",
+        "output": "17",
+        "expectedOutput": "17",
+        "explanation": "the subarray minimums are 3, 1, 1, 1, 1, 1, 1, 2, 2, 4 for the ten contiguous subarrays, which sum to 17"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arr = [11, 81, 94, 43, 3]",
+        "output": "444",
+        "expectedOutput": "444",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "arr = [1, 2, 3]",
+        "output": "10",
+        "expectedOutput": "10",
+        "explanation": "minimums are 1, 2, 3, 1, 2, 1 for the six subarrays, summing to 10"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,1,2,4]]",
+        "output": "17",
+        "expectedOutput": "17",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[11,81,94,43,3]]",
+        "output": "444",
+        "expectedOutput": "444",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5,5]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1]]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]]",
+        "output": "1540",
+        "expectedOutput": "1540",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1]]",
+        "output": "1540",
+        "expectedOutput": "1540",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[391,341,237,171,924,936,395,592,918,707,291,567,284,393,873,750,782,591,10,800,256,678,860,19,450,972,159,154,741,327,172,264,671,708,636]]",
+        "output": "77825",
+        "expectedOutput": "77825",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,2,2,2,2,2,2,2,2,2]]",
+        "output": "110",
+        "expectedOutput": "110",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,3,1,3,1,3,1,3]]",
+        "output": "44",
+        "expectedOutput": "44",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[2,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[11443,28594,76521,52135,82014,23128,80542,68489,23239,43320,37445,24199,83510,55331,7645,88608,95230,79261,56611,17098,3198,61689,56179,98698,44488,59129,77108,30060,19570,45498,24022,56328,15133,41999,30924,84927,56006,69435,64028,23864]]",
+        "output": "10440189",
+        "expectedOutput": "10440189",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "output": "820",
+        "expectedOutput": "820",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000,1000000000]]",
+        "output": "999999622",
+        "expectedOutput": "999999622",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,1,2,1,2,1,2,1,2]]",
+        "output": "60",
+        "expectedOutput": "60",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,4,3,2,1,2,3,4,5]]",
+        "output": "85",
+        "expectedOutput": "85",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,8,7,6,5,4,3,2,1,1,2,3,4,5,6,7,8,9]]",
+        "output": "411",
+        "expectedOutput": "411",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def sumSubarrayMins(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int sumSubarrayMins(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int sumSubarrayMins(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumSubarrayMins(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumSubarrayMins(arr) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def sumSubarrayMins(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int sumSubarrayMins(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int sumSubarrayMins(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumSubarrayMins(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumSubarrayMins(arr) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def sumSubarrayMins(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int sumSubarrayMins(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int sumSubarrayMins(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumSubarrayMins(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumSubarrayMins(arr) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def sumSubarrayMins(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int sumSubarrayMins(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int sumSubarrayMins(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumSubarrayMins(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumSubarrayMins(arr) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the stack",
+      "pattern": "monotonic stack computing, for each element, how many subarrays it is the minimum of (its 'contribution')"
+    },
+    "bruteForce": {
+      "approach": "for every pair of start and end indices, compute the subarray's minimum directly and add it to a running total",
+      "time": "O(n^2) or O(n^3) if the minimum itself is recomputed by scanning",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "monotonic stack computing, for each element, how many subarrays it is the minimum of (its 'contribution')",
+    "time": "O(n)",
+    "space": "O(n) for the stack",
+    "hint_ladder": [
+      "instead of summing minimums subarray by subarray, what if you flipped the question: for each individual element, how many subarrays is IT the minimum of? then its contribution to the total is (that count) * (its value)",
+      "an element at index i is the minimum of a subarray exactly when that subarray doesn't cross any element smaller than it. so you need, for each i, the distance to the nearest smaller element on the left and on the right",
+      "use a monotonic increasing stack to compute, for every index, the index of the previous strictly smaller element and the index of the next smaller-or-equal element (careful with the tie-breaking direction to avoid double counting equal elements)",
+      "for index i with left boundary distance L (i - prevSmallerIndex) and right boundary distance R (nextSmallerIndex - i), the number of subarrays where arr[i] is the minimum is L * R; sum arr[i] * L * R over all i, modulo 1,000,000,007"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every pair of start and end indices, compute the subarray's minimum directly and add it to a running total",
+    "time": "O(n^2) or O(n^3) if the minimum itself is recomputed by scanning",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

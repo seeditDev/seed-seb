@@ -1,0 +1,628 @@
+{
+  "id": "third-maximum-number",
+  "questionId": "third-maximum-number",
+  "slug": "third-maximum-number",
+  "title": "Third Maximum Number",
+  "difficulty": "Medium",
+  "category": "Cyclic sort",
+  "patterns": [
+    "cyclic sort",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "you only ever need to remember the top three distinct values at any point during the scan - everything else can be discarded immediately, so a full sort is overkill",
+    "keep three variables representing the current largest, second largest, and third largest distinct values seen so far, all initialized to a sentinel meaning 'not set yet'",
+    "for each number, skip it if it equals any of the three trackers already (duplicates don't count). otherwise figure out where it slides in: if it's bigger than the first tracker, shift first down to second and second down to third before updating first; similar logic if it lands between first and second, or between second and third",
+    "at the end, if the third tracker was never set (fewer than 3 distinct values existed), return the first tracker (the true maximum) instead"
+  ],
+  "commonMistakes": [
+    "using a naive sentinel like negative infinity that collides with a legitimately very negative number in the input, causing incorrect 'not set yet' detection (use a dedicated flag or Long.MIN_VALUE-style sentinel outside the input's possible range)",
+    "counting duplicate values as filling multiple distinct slots",
+    "forgetting to fall back to the overall maximum when fewer than three distinct values exist"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers `nums`.\n\n**Return the third distinct maximum number in `nums`.**\n\nIf a third distinct maximum doesn't exist because there are fewer than three distinct values, return the maximum number instead.\n",
+    "constraints": [
+      "1 <= nums.length <= 10^4",
+      "-2^31 <= nums[i] <= 2^31 - 1"
+    ],
+    "notes": [
+      "all elements are identical",
+      "array with exactly 3 distinct values",
+      "array containing negative numbers"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 2, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "distinct values sorted descending are 3, 2, 1. the third is 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "only two distinct values exist, so return the maximum, 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [2, 2, 3, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "distinct values sorted descending are 3, 2, 1 (duplicates of 2 don't count twice). the third is 1"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,2,3,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,5,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-2,-3]]",
+        "output": "-3",
+        "expectedOutput": "-3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,3,3,3,2,2,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-2147483648,1,2]]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[34,-40,-14,15,34,31,29,-8,-39,46,-20,36,-11,-22,-25,-32,-47,-45,-19,10,28,48,-41,8,3]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-10,-1,4,-14,-5,-6,11,2,1,12,9,-7,-4,6,-13,14,-2,-12,-15,-11,-8,8,0,-3,10,7,-9,3,5,13]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,5,5,4,4,4,3,3,3,2,2,2,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,2,3,1,1,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-1,0,1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,20,30,40,50]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[7,7,7,7,7,7,7]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100,50,25,75,10]]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 2, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "distinct values sorted descending are 3, 2, 1. the third is 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "only two distinct values exist, so return the maximum, 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [2, 2, 3, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "distinct values sorted descending are 3, 2, 1 (duplicates of 2 don't count twice). the third is 1"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 2, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "distinct values sorted descending are 3, 2, 1. the third is 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "only two distinct values exist, so return the maximum, 2"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [2, 2, 3, 1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "distinct values sorted descending are 3, 2, 1 (duplicates of 2 don't count twice). the third is 1"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,2,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[2,2,3,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5,5,5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,2]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-1,-2,-3]]",
+      "output": "-3",
+      "expectedOutput": "-3",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[3,3,3,3,2,2,1,1]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-2147483648,1,2]]",
+      "output": "-2147483648",
+      "expectedOutput": "-2147483648",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[34,-40,-14,15,34,31,29,-8,-39,46,-20,36,-11,-22,-25,-32,-47,-45,-19,10,28,48,-41,8,3]]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-10,-1,4,-14,-5,-6,11,2,1,12,9,-7,-4,6,-13,14,-2,-12,-15,-11,-8,8,0,-3,10,7,-9,3,5,13]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[5,5,5,4,4,4,3,3,3,2,2,2,1]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[2,2,3,1,1,4]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-1,0,1]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[10,20,30,40,50]]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[7,7,7,7,7,7,7]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[100,50,25,75,10]]",
+      "output": "50",
+      "expectedOutput": "50",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 2, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "distinct values sorted descending are 3, 2, 1. the third is 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "only two distinct values exist, so return the maximum, 2"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [2, 2, 3, 1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "distinct values sorted descending are 3, 2, 1 (duplicates of 2 don't count twice). the third is 1"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[2,2,3,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5,5,5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,2]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-1,-2,-3]]",
+        "output": "-3",
+        "expectedOutput": "-3",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[3,3,3,3,2,2,1,1]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-2147483648,1,2]]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[34,-40,-14,15,34,31,29,-8,-39,46,-20,36,-11,-22,-25,-32,-47,-45,-19,10,28,48,-41,8,3]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-10,-1,4,-14,-5,-6,11,2,1,12,9,-7,-4,6,-13,14,-2,-12,-15,-11,-8,8,0,-3,10,7,-9,3,5,13]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,5,5,4,4,4,3,3,3,2,2,2,1]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[2,2,3,1,1,4]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-1,0,1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,20,30,40,50]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[7,7,7,7,7,7,7]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100,50,25,75,10]]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def thirdMax(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int thirdMax(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int thirdMax(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun thirdMax(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    thirdMax(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def thirdMax(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int thirdMax(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int thirdMax(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun thirdMax(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    thirdMax(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def thirdMax(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int thirdMax(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int thirdMax(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun thirdMax(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    thirdMax(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def thirdMax(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int thirdMax(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int thirdMax(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun thirdMax(nums: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    thirdMax(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "single pass tracking the top three distinct values seen so far, updating three running trackers (first, second, third max) as you scan, similar to bounded-slot placement where only a fixed small number of 'slots' need tracking regardless of array size"
+    },
+    "bruteForce": {
+      "approach": "put all values into a sorted set (dedup and sort descending), then take the third element if it exists, otherwise the first",
+      "time": "O(n log n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "single pass tracking the top three distinct values seen so far, updating three running trackers (first, second, third max) as you scan, similar to bounded-slot placement where only a fixed small number of 'slots' need tracking regardless of array size",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "you only ever need to remember the top three distinct values at any point during the scan - everything else can be discarded immediately, so a full sort is overkill",
+      "keep three variables representing the current largest, second largest, and third largest distinct values seen so far, all initialized to a sentinel meaning 'not set yet'",
+      "for each number, skip it if it equals any of the three trackers already (duplicates don't count). otherwise figure out where it slides in: if it's bigger than the first tracker, shift first down to second and second down to third before updating first; similar logic if it lands between first and second, or between second and third",
+      "at the end, if the third tracker was never set (fewer than 3 distinct values existed), return the first tracker (the true maximum) instead"
+    ]
+  },
+  "bruteForce": {
+    "approach": "put all values into a sorted set (dedup and sort descending), then take the third element if it exists, otherwise the first",
+    "time": "O(n log n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

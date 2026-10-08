@@ -1,0 +1,629 @@
+{
+  "id": "remove-linked-list-elements",
+  "questionId": "remove-linked-list-elements",
+  "slug": "remove-linked-list-elements",
+  "title": "Remove Linked List Elements",
+  "difficulty": "Easy",
+  "category": "Linked list",
+  "patterns": [
+    "linked list",
+    "filtering"
+  ],
+  "lists": [],
+  "hints": [
+    "what happens when the very first node needs to be removed - is that a special case for how you'd normally unlink a node?",
+    "a common trick with real linked lists is a dummy head node before the real head, so 'removing the first node' looks the same as removing any other node",
+    "for our array representation, you don't need pointer surgery at all - just decide, for each value, whether it belongs in the output",
+    "walk nums once and append to the result every value that is not equal to val"
+  ],
+  "commonMistakes": [
+    "only removing the first matching node instead of all matching nodes",
+    "mishandling removal when the head itself matches val",
+    "off-by-one errors when multiple matching nodes are adjacent"
+  ],
+  "content": {
+    "problemStatement": "A singly linked list is given to you as an array `nums`, where `nums[i]`\nis the value of the i-th node in order, along with a value `val`.\n\n**Remove every node whose value equals `val`, and return the values of the remaining nodes in their original relative order.**\n",
+    "constraints": [
+      "0 <= nums.length <= 10^4",
+      "1 <= nums[i], val <= 50"
+    ],
+    "notes": [
+      "an empty list",
+      "every node matches val",
+      "no node matches val",
+      "matching nodes at the very start or very end of the list"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 6, 3, 4, 5, 6], val = 6",
+        "output": "[1, 2, 3, 4, 5]",
+        "expectedOutput": "[1, 2, 3, 4, 5]",
+        "explanation": "both nodes with value 6 are removed, the rest keep their order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [], val = 1",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [7, 7, 7, 7], val = 7",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "every node matches val, so the result is empty"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,6,3,4,5,6],6]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[7,7,7,7],7]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3],4]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[6,1,2],6]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,1,2,1,2],2]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[25,26,27,28,29,30],25]",
+        "output": "[26,27,28,29,30]",
+        "expectedOutput": "[26,27,28,29,30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,50],50]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[50,1,2,3,4],50]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,2,2,3,3],2]",
+        "output": "[1,1,3,3]",
+        "expectedOutput": "[1,1,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "[1,2,3,4,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,2],1]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],20]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],1]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,20,30],40]",
+        "output": "[10,20,30]",
+        "expectedOutput": "[10,20,30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1],2]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2],2]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,1,2,1,2,1,2,1,2],1]",
+        "output": "[2,2,2,2,2]",
+        "expectedOutput": "[2,2,2,2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,1,2,1,2,1,2,1,2],2]",
+        "output": "[1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 6, 3, 4, 5, 6], val = 6",
+      "output": "[1, 2, 3, 4, 5]",
+      "expectedOutput": "[1, 2, 3, 4, 5]",
+      "explanation": "both nodes with value 6 are removed, the rest keep their order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [], val = 1",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [7, 7, 7, 7], val = 7",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "every node matches val, so the result is empty"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 6, 3, 4, 5, 6], val = 6",
+      "output": "[1, 2, 3, 4, 5]",
+      "expectedOutput": "[1, 2, 3, 4, 5]",
+      "explanation": "both nodes with value 6 are removed, the rest keep their order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [], val = 1",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [7, 7, 7, 7], val = 7",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "explanation": "every node matches val, so the result is empty"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,6,3,4,5,6],6]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[],1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[7,7,7,7],7]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3],4]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[6,1,2],6]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,1,2,1,2],2]",
+      "output": "[1,1,1]",
+      "expectedOutput": "[1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+      "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[25,26,27,28,29,30],25]",
+      "output": "[26,27,28,29,30]",
+      "expectedOutput": "[26,27,28,29,30]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,50],50]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[50,1,2,3,4],50]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,1,2,2,3,3],2]",
+      "output": "[1,1,3,3]",
+      "expectedOutput": "[1,1,3,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+      "output": "[1,2,3,4,6,7,8,9,10]",
+      "expectedOutput": "[1,2,3,4,6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,1,1,2],1]",
+      "output": "[2]",
+      "expectedOutput": "[2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],20]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],1]",
+      "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[10,20,30],40]",
+      "output": "[10,20,30]",
+      "expectedOutput": "[10,20,30]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1],2]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[2],2]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,1,2,1,2,1,2,1,2],1]",
+      "output": "[2,2,2,2,2]",
+      "expectedOutput": "[2,2,2,2,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,1,2,1,2,1,2,1,2],2]",
+      "output": "[1,1,1,1,1]",
+      "expectedOutput": "[1,1,1,1,1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 6, 3, 4, 5, 6], val = 6",
+        "output": "[1, 2, 3, 4, 5]",
+        "expectedOutput": "[1, 2, 3, 4, 5]",
+        "explanation": "both nodes with value 6 are removed, the rest keep their order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [], val = 1",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [7, 7, 7, 7], val = 7",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "explanation": "every node matches val, so the result is empty"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,6,3,4,5,6],6]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[7,7,7,7],7]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3],4]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[6,1,2],6]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,1,2,1,2],2]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[25,26,27,28,29,30],25]",
+        "output": "[26,27,28,29,30]",
+        "expectedOutput": "[26,27,28,29,30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,50],50]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[50,1,2,3,4],50]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,1,2,2,3,3],2]",
+        "output": "[1,1,3,3]",
+        "expectedOutput": "[1,1,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],5]",
+        "output": "[1,2,3,4,6,7,8,9,10]",
+        "expectedOutput": "[1,2,3,4,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,2],1]",
+        "output": "[2]",
+        "expectedOutput": "[2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],20]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],1]",
+        "output": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,20,30],40]",
+        "output": "[10,20,30]",
+        "expectedOutput": "[10,20,30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1],2]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2],2]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,1,2,1,2,1,2,1,2],1]",
+        "output": "[2,2,2,2,2]",
+        "expectedOutput": "[2,2,2,2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,1,2,1,2,1,2,1,2],2]",
+        "output": "[1,1,1,1,1]",
+        "expectedOutput": "[1,1,1,1,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def removeElements(self, nums, val):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeElements(vector<int>& nums, int val) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeElements(int[] nums, int val) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeElements(nums: IntArray, `val`: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeElements(nums, val) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def removeElements(self, nums, val):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeElements(vector<int>& nums, int val) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeElements(int[] nums, int val) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeElements(nums: IntArray, `val`: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeElements(nums, val) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def removeElements(self, nums, val):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeElements(vector<int>& nums, int val) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeElements(int[] nums, int val) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeElements(nums: IntArray, `val`: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeElements(nums, val) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def removeElements(self, nums, val):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeElements(vector<int>& nums, int val) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeElements(int[] nums, int val) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeElements(nums: IntArray, `val`: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeElements(nums, val) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the output",
+      "pattern": "single pass filtering, conceptually using a dummy head to simplify removing nodes at the front"
+    },
+    "bruteForce": {
+      "approach": "walk the list and build a new array, skipping any node whose value equals val",
+      "time": "O(n)",
+      "space": "O(n) for the output"
+    }
+  },
+  "optimal": {
+    "pattern": "single pass filtering, conceptually using a dummy head to simplify removing nodes at the front",
+    "time": "O(n)",
+    "space": "O(n) for the output",
+    "hint_ladder": [
+      "what happens when the very first node needs to be removed - is that a special case for how you'd normally unlink a node?",
+      "a common trick with real linked lists is a dummy head node before the real head, so 'removing the first node' looks the same as removing any other node",
+      "for our array representation, you don't need pointer surgery at all - just decide, for each value, whether it belongs in the output",
+      "walk nums once and append to the result every value that is not equal to val"
+    ]
+  },
+  "bruteForce": {
+    "approach": "walk the list and build a new array, skipping any node whose value equals val",
+    "time": "O(n)",
+    "space": "O(n) for the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

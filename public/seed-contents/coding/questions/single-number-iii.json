@@ -1,0 +1,629 @@
+{
+  "id": "single-number-iii",
+  "questionId": "single-number-iii",
+  "slug": "single-number-iii",
+  "title": "Single Number III",
+  "difficulty": "Medium",
+  "category": "Bit manipulation",
+  "patterns": [
+    "bit manipulation",
+    "xor"
+  ],
+  "lists": [],
+  "hints": [
+    "if you XOR the entire array, the paired numbers cancel out - what are you left with?",
+    "you're left with a XOR b, where a and b are the two single numbers - since a != b, this XOR is nonzero, meaning at least one bit differs between them",
+    "pick any bit that's set in (a XOR b) - for example the lowest set bit, via (axorb) & (-axorb) - this bit is 1 in exactly one of a or b",
+    "split the entire array into two groups based on whether each number has that bit set, and XOR each group independently - one group's XOR is a, the other's is b, then sort the pair before returning"
+  ],
+  "commonMistakes": [
+    "trying to XOR the whole array and returning a single value, forgetting the problem wants two distinct numbers",
+    "picking a bit position to split on that isn't actually set in (a XOR b), which breaks the separation",
+    "forgetting to sort the two results, so the returned order doesn't match the expected deterministic ascending order"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers where exactly two numbers appear exactly\nonce and every other number appears exactly twice.\n\n**Return the two once-only numbers, sorted in ascending order.**\n",
+    "constraints": [
+      "2 <= nums.length <= 3 * 10^4",
+      "-2^31 <= nums[i] <= 2^31 - 1",
+      "each element in nums appears exactly twice, except two elements that each appear exactly once"
+    ],
+    "notes": [
+      "the array has exactly two elements",
+      "the two single numbers are negative, or straddle zero",
+      "the two single numbers differ in only their lowest bit"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 1, 3, 2, 5]",
+        "output": "[3, 5]",
+        "expectedOutput": "[3, 5]",
+        "explanation": "3 and 5 each appear once, 1 and 2 each appear twice"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1, 0]",
+        "output": "[-1, 0]",
+        "expectedOutput": "[-1, 0]",
+        "explanation": "both elements appear exactly once"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [4, 1, 4, 2, 2, 7]",
+        "output": "[1, 7]",
+        "expectedOutput": "[1, 7]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,1,3,2,5]]",
+        "output": "[3,5]",
+        "expectedOutput": "[3,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,0]]",
+        "output": "[-1,0]",
+        "expectedOutput": "[-1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[4,1,4,2,2,7]]",
+        "output": "[1,7]",
+        "expectedOutput": "[1,7]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[-5,3,-5,9]]",
+        "output": "[3,9]",
+        "expectedOutput": "[3,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[10,20,10,30]]",
+        "output": "[20,30]",
+        "expectedOutput": "[20,30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-10,-20,-10,-30]]",
+        "output": "[-30,-20]",
+        "expectedOutput": "[-30,-20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,1,0,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,3,5,7]]",
+        "output": "[5,7]",
+        "expectedOutput": "[5,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[100,200,100,-200,300,300]]",
+        "output": "[-200,200]",
+        "expectedOutput": "[-200,200]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-1,-2,-1,-3]]",
+        "output": "[-3,-2]",
+        "expectedOutput": "[-3,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[8,4,8,12]]",
+        "output": "[4,12]",
+        "expectedOutput": "[4,12]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,-1,2,2]]",
+        "output": "[-1,1]",
+        "expectedOutput": "[-1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[50,60,50,70]]",
+        "output": "[60,70]",
+        "expectedOutput": "[60,70]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-7,-8,-7,-9]]",
+        "output": "[-9,-8]",
+        "expectedOutput": "[-9,-8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,2,0,-2]]",
+        "output": "[-2,2]",
+        "expectedOutput": "[-2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[15,15,21,33]]",
+        "output": "[21,33]",
+        "expectedOutput": "[21,33]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1000000,5,1000000,6]]",
+        "output": "[5,6]",
+        "expectedOutput": "[5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-100,-200,-100,-300]]",
+        "output": "[-300,-200]",
+        "expectedOutput": "[-300,-200]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[9,9,13,17]]",
+        "output": "[13,17]",
+        "expectedOutput": "[13,17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,-2,4,4]]",
+        "output": "[-2,2]",
+        "expectedOutput": "[-2,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 1, 3, 2, 5]",
+      "output": "[3, 5]",
+      "expectedOutput": "[3, 5]",
+      "explanation": "3 and 5 each appear once, 1 and 2 each appear twice"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1, 0]",
+      "output": "[-1, 0]",
+      "expectedOutput": "[-1, 0]",
+      "explanation": "both elements appear exactly once"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [4, 1, 4, 2, 2, 7]",
+      "output": "[1, 7]",
+      "expectedOutput": "[1, 7]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 1, 3, 2, 5]",
+      "output": "[3, 5]",
+      "expectedOutput": "[3, 5]",
+      "explanation": "3 and 5 each appear once, 1 and 2 each appear twice"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [-1, 0]",
+      "output": "[-1, 0]",
+      "expectedOutput": "[-1, 0]",
+      "explanation": "both elements appear exactly once"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [4, 1, 4, 2, 2, 7]",
+      "output": "[1, 7]",
+      "expectedOutput": "[1, 7]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,1,3,2,5]]",
+      "output": "[3,5]",
+      "expectedOutput": "[3,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-1,0]]",
+      "output": "[-1,0]",
+      "expectedOutput": "[-1,0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[4,1,4,2,2,7]]",
+      "output": "[1,7]",
+      "expectedOutput": "[1,7]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[-5,3,-5,9]]",
+      "output": "[3,9]",
+      "expectedOutput": "[3,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[10,20,10,30]]",
+      "output": "[20,30]",
+      "expectedOutput": "[20,30]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-10,-20,-10,-30]]",
+      "output": "[-30,-20]",
+      "expectedOutput": "[-30,-20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0,1,0,2]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[3,3,5,7]]",
+      "output": "[5,7]",
+      "expectedOutput": "[5,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[100,200,100,-200,300,300]]",
+      "output": "[-200,200]",
+      "expectedOutput": "[-200,200]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-1,-2,-1,-3]]",
+      "output": "[-3,-2]",
+      "expectedOutput": "[-3,-2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[8,4,8,12]]",
+      "output": "[4,12]",
+      "expectedOutput": "[4,12]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,-1,2,2]]",
+      "output": "[-1,1]",
+      "expectedOutput": "[-1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[50,60,50,70]]",
+      "output": "[60,70]",
+      "expectedOutput": "[60,70]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[-7,-8,-7,-9]]",
+      "output": "[-9,-8]",
+      "expectedOutput": "[-9,-8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[0,2,0,-2]]",
+      "output": "[-2,2]",
+      "expectedOutput": "[-2,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[15,15,21,33]]",
+      "output": "[21,33]",
+      "expectedOutput": "[21,33]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1000000,5,1000000,6]]",
+      "output": "[5,6]",
+      "expectedOutput": "[5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-100,-200,-100,-300]]",
+      "output": "[-300,-200]",
+      "expectedOutput": "[-300,-200]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[9,9,13,17]]",
+      "output": "[13,17]",
+      "expectedOutput": "[13,17]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[2,-2,4,4]]",
+      "output": "[-2,2]",
+      "expectedOutput": "[-2,2]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 1, 3, 2, 5]",
+        "output": "[3, 5]",
+        "expectedOutput": "[3, 5]",
+        "explanation": "3 and 5 each appear once, 1 and 2 each appear twice"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [-1, 0]",
+        "output": "[-1, 0]",
+        "expectedOutput": "[-1, 0]",
+        "explanation": "both elements appear exactly once"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [4, 1, 4, 2, 2, 7]",
+        "output": "[1, 7]",
+        "expectedOutput": "[1, 7]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,1,3,2,5]]",
+        "output": "[3,5]",
+        "expectedOutput": "[3,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-1,0]]",
+        "output": "[-1,0]",
+        "expectedOutput": "[-1,0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[4,1,4,2,2,7]]",
+        "output": "[1,7]",
+        "expectedOutput": "[1,7]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[-5,3,-5,9]]",
+        "output": "[3,9]",
+        "expectedOutput": "[3,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[10,20,10,30]]",
+        "output": "[20,30]",
+        "expectedOutput": "[20,30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-10,-20,-10,-30]]",
+        "output": "[-30,-20]",
+        "expectedOutput": "[-30,-20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,1,0,2]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,3,5,7]]",
+        "output": "[5,7]",
+        "expectedOutput": "[5,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[100,200,100,-200,300,300]]",
+        "output": "[-200,200]",
+        "expectedOutput": "[-200,200]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-1,-2,-1,-3]]",
+        "output": "[-3,-2]",
+        "expectedOutput": "[-3,-2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[8,4,8,12]]",
+        "output": "[4,12]",
+        "expectedOutput": "[4,12]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,-1,2,2]]",
+        "output": "[-1,1]",
+        "expectedOutput": "[-1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[50,60,50,70]]",
+        "output": "[60,70]",
+        "expectedOutput": "[60,70]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[-7,-8,-7,-9]]",
+        "output": "[-9,-8]",
+        "expectedOutput": "[-9,-8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[0,2,0,-2]]",
+        "output": "[-2,2]",
+        "expectedOutput": "[-2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[15,15,21,33]]",
+        "output": "[21,33]",
+        "expectedOutput": "[21,33]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1000000,5,1000000,6]]",
+        "output": "[5,6]",
+        "expectedOutput": "[5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-100,-200,-100,-300]]",
+        "output": "[-300,-200]",
+        "expectedOutput": "[-300,-200]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[9,9,13,17]]",
+        "output": "[13,17]",
+        "expectedOutput": "[13,17]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,-2,4,4]]",
+        "output": "[-2,2]",
+        "expectedOutput": "[-2,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def singleNumber(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> singleNumber(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] singleNumber(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun singleNumber(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    singleNumber(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def singleNumber(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> singleNumber(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] singleNumber(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun singleNumber(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    singleNumber(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def singleNumber(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> singleNumber(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] singleNumber(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun singleNumber(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    singleNumber(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def singleNumber(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> singleNumber(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] singleNumber(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun singleNumber(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    singleNumber(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "bit manipulation (XOR everything, then split the array by a differing bit)"
+    },
+    "bruteForce": {
+      "approach": "count occurrences of every number with a hash map, collect the two with count 1, then sort them",
+      "time": "O(n log n) dominated by the final sort of two elements (effectively O(n))",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "bit manipulation (XOR everything, then split the array by a differing bit)",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "if you XOR the entire array, the paired numbers cancel out - what are you left with?",
+      "you're left with a XOR b, where a and b are the two single numbers - since a != b, this XOR is nonzero, meaning at least one bit differs between them",
+      "pick any bit that's set in (a XOR b) - for example the lowest set bit, via (axorb) & (-axorb) - this bit is 1 in exactly one of a or b",
+      "split the entire array into two groups based on whether each number has that bit set, and XOR each group independently - one group's XOR is a, the other's is b, then sort the pair before returning"
+    ]
+  },
+  "bruteForce": {
+    "approach": "count occurrences of every number with a hash map, collect the two with count 1, then sort them",
+    "time": "O(n log n) dominated by the final sort of two elements (effectively O(n))",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

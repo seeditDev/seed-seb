@@ -1,0 +1,653 @@
+{
+  "id": "symmetric-tree",
+  "questionId": "symmetric-tree",
+  "slug": "symmetric-tree",
+  "title": "Symmetric Tree",
+  "difficulty": "Easy",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "recursion"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "symmetry isn't about comparing a tree to itself node by node in the same position - it's about comparing the left subtree to the right subtree as mirror images. what changes when you 'mirror' a comparison?",
+    "write a helper that takes two indices (one conceptually from the left side, one from the right side) and checks whether those two subtrees are mirrors of each other",
+    "two subtrees are mirrors if both are missing, or both exist with equal values AND left's-left mirrors right's-right AND left's-right mirrors right's-left",
+    "call the helper starting with the root's left child index (1) and root's right child index (2) - not with the root compared to itself"
+  ],
+  "commonMistakes": [
+    "recursively comparing left-with-left and right-with-right instead of left-with-right and right-with-left, which checks identical structure rather than mirrored structure",
+    "forgetting the base case where both sides are simultaneously missing (should be true, not false)",
+    "treating a single-node tree or empty tree as a special case instead of letting the general recursion handle it"
+  ],
+  "content": {
+    "problemStatement": "Binary trees are encoded as flat arrays using complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array's bounds **and** its value isn't the sentinel `-101`\n- a position at or beyond the array's end, or one holding `-101`, means \"no node there\" - real node values are always between -100 and 100, so -101 never collides with a genuine value\n\nFor example, `[1, 2, 3, -101, 4]` encodes this tree:\n\n```\n      1\n     / \\\n    2   3\n     \\\n      4\n```\n\nNode 2's left child is missing (index 3 is sentinel) and its right child is 4 (index 4).\n\n**Determine whether the given tree is a mirror image of itself, that is, whether its left subtree is a mirror reflection of its right subtree.**\n",
+    "constraints": [
+      "1 <= tree.length <= 1000",
+      "-100 <= tree[i] <= 100 for every real node value",
+      "the sentinel value -101 marks a missing node and never appears as a real value"
+    ],
+    "notes": [
+      "empty tree ([-101]), which is trivially symmetric",
+      "a tree where both subtrees have the same shape but different values",
+      "a tree where one side has an extra node the other side lacks entirely"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 2, 3, 4, 4, 3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the left subtree (2 with children 3, 4) mirrors the right subtree (2 with children 4, 3): left.left matches right.right (3 = 3) and left.right matches right.left (4 = 4)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, 2, -101, 3, -101, 3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the left 2 has a missing left child but a right child of 3, while the right 2 has a missing left child too but its right child mirrors position doesn't line up: left.left is missing but right.right is 3, so they don't mirror"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "a single node with no children is trivially symmetric"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,2,3,4,4,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,2,-101,3,-101,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[-22,-77,-77,99,5,5,99]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[27]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[25]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-37,-91,-91,-32,-71,-71,-32,87,90,-61,56,56,-61,90,87,-62,41,-7,77,-62,-52,88,-95,-95,88,-52,-62,77,-7,41,-62]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-78,-100,-100,74,-15,-15,74]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,2,-101,3,3,-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,-3,-3,1,2,2,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,2,2,-101,-101,-101]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,2,-101,3,4,-101]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,2,3,-101,-101,-101]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-49,-39,34,-42,67,64,40,-101,-101,-14,35,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-87]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[91,-19,51,50,-88,-101,-101,-89,-101,-37,39,-101,-101,-101,-101,9]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[0,1,1,-101,2,-101,-101]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 2, 3, 4, 4, 3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the left subtree (2 with children 3, 4) mirrors the right subtree (2 with children 4, 3): left.left matches right.right (3 = 3) and left.right matches right.left (4 = 4)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, 2, -101, 3, -101, 3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the left 2 has a missing left child but a right child of 3, while the right 2 has a missing left child too but its right child mirrors position doesn't line up: left.left is missing but right.right is 3, so they don't mirror"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "a single node with no children is trivially symmetric"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 2, 3, 4, 4, 3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the left subtree (2 with children 3, 4) mirrors the right subtree (2 with children 4, 3): left.left matches right.right (3 = 3) and left.right matches right.left (4 = 4)"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [1, 2, 2, -101, 3, -101, 3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the left 2 has a missing left child but a right child of 3, while the right 2 has a missing left child too but its right child mirrors position doesn't line up: left.left is missing but right.right is 3, so they don't mirror"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "a single node with no children is trivially symmetric"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,2,3,4,4,3]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,2,-101,3,-101,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[-101]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[-22,-77,-77,99,5,5,99]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[27]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[25]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[-37,-91,-91,-32,-71,-71,-32,87,90,-61,56,56,-61,90,87,-62,41,-7,77,-62,-52,88,-95,-95,88,-52,-62,77,-7,41,-62]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-78,-100,-100,74,-15,-15,74]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[7]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[-101]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,2,-101,3,3,-101]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[5,-3,-3,1,2,2,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,2,2,-101,-101,-101]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,2,-101,3,4,-101]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,2,3]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,2,3,-101,-101,-101]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[-49,-39,34,-42,67,64,40,-101,-101,-14,35,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-87]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[91,-19,51,50,-88,-101,-101,-89,-101,-37,39,-101,-101,-101,-101,9]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[0,1,1,-101,2,-101,-101]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 2, 3, 4, 4, 3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the left subtree (2 with children 3, 4) mirrors the right subtree (2 with children 4, 3): left.left matches right.right (3 = 3) and left.right matches right.left (4 = 4)"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [1, 2, 2, -101, 3, -101, 3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the left 2 has a missing left child but a right child of 3, while the right 2 has a missing left child too but its right child mirrors position doesn't line up: left.left is missing but right.right is 3, so they don't mirror"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "a single node with no children is trivially symmetric"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,2,3,4,4,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,2,-101,3,-101,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[-22,-77,-77,99,5,5,99]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[27]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[25]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[-37,-91,-91,-32,-71,-71,-32,87,90,-61,56,56,-61,90,87,-62,41,-7,77,-62,-52,88,-95,-95,88,-52,-62,77,-7,41,-62]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-78,-100,-100,74,-15,-15,74]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,2,-101,3,3,-101]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,-3,-3,1,2,2,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,2,2,-101,-101,-101]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,2,-101,3,4,-101]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,2,3]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,2,3,-101,-101,-101]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[-49,-39,34,-42,67,64,40,-101,-101,-14,35,-101,-1,-101,-101,-101,-101,-101,-101,-101,-101,-101,-87]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[91,-19,51,50,-88,-101,-101,-89,-101,-37,39,-101,-101,-101,-101,9]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[0,1,1,-101,2,-101,-101]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isSymmetric(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSymmetric(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSymmetric(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSymmetric(tree: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSymmetric(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isSymmetric(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSymmetric(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSymmetric(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSymmetric(tree: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSymmetric(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isSymmetric(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSymmetric(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSymmetric(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSymmetric(tree: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSymmetric(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isSymmetric(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSymmetric(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSymmetric(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSymmetric(tree: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSymmetric(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n), visiting each node once",
+      "space": "O(h) recursion stack",
+      "pattern": "DFS two pointers in lockstep - one starting at the left child, one at the right child - checking they're mirror images"
+    },
+    "bruteForce": {
+      "approach": "there's no meaningfully different brute force - symmetry is inherently a paired comparison of the left and right subtrees",
+      "time": "O(n)",
+      "space": "O(1) beyond recursion"
+    }
+  },
+  "optimal": {
+    "pattern": "DFS two pointers in lockstep - one starting at the left child, one at the right child - checking they're mirror images",
+    "time": "O(n), visiting each node once",
+    "space": "O(h) recursion stack",
+    "hint_ladder": [
+      "symmetry isn't about comparing a tree to itself node by node in the same position - it's about comparing the left subtree to the right subtree as mirror images. what changes when you 'mirror' a comparison?",
+      "write a helper that takes two indices (one conceptually from the left side, one from the right side) and checks whether those two subtrees are mirrors of each other",
+      "two subtrees are mirrors if both are missing, or both exist with equal values AND left's-left mirrors right's-right AND left's-right mirrors right's-left",
+      "call the helper starting with the root's left child index (1) and root's right child index (2) - not with the root compared to itself"
+    ]
+  },
+  "bruteForce": {
+    "approach": "there's no meaningfully different brute force - symmetry is inherently a paired comparison of the left and right subtrees",
+    "time": "O(n)",
+    "space": "O(1) beyond recursion"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,629 @@
+{
+  "id": "split-array-largest-sum",
+  "questionId": "split-array-largest-sum",
+  "slug": "split-array-largest-sum",
+  "title": "Split Array Largest Sum",
+  "difficulty": "Hard",
+  "category": "Binary search",
+  "patterns": [
+    "binary search",
+    "binary search on answer"
+  ],
+  "lists": [],
+  "hints": [
+    "the search isn't over ways to cut the array directly - it's over the value of the answer itself. what's the smallest the answer could possibly be, and the largest it would ever need to be?",
+    "the answer can never be smaller than the single largest element (that element has to live in some subarray), and never needs to exceed the sum of the whole array (k=1 case)",
+    "for a candidate largest-sum limit, greedily walk the array accumulating a running sum, starting a new subarray whenever adding the next element would exceed the limit - this greedy count gives the minimum number of subarrays needed to respect that limit",
+    "as the limit increases, the number of subarrays needed only decreases or stays the same, so binary search the limit: if the greedy count is <= k, the limit is feasible (try smaller), otherwise it's too tight (try larger)"
+  ],
+  "commonMistakes": [
+    "setting the lower bound of the binary search to 0 or 1 instead of the maximum single element, which can make the feasibility check nonsensical",
+    "greedy count logic that allows a running sum to exceed the candidate limit before cutting",
+    "confusing 'greedy count <= k' with 'greedy count == k' - fewer subarrays than k is still feasible, since you can always split further without increasing the max, e.g. down to single elements"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of non-negative integers and an integer `k`.\n\n**Split the array into k non-empty contiguous subarrays so that the largest sum among the k subarrays is as small as possible, and return that minimized largest sum.**\n\nSplitting means choosing where to cut, not reordering anything.\n",
+    "constraints": [
+      "subarrays must be contiguous and non-empty",
+      "1 <= k <= length of nums",
+      "all values are non-negative"
+    ],
+    "notes": [
+      "k = 1 (the whole array is one subarray, answer is the total sum)",
+      "k equals the array length (every element is its own subarray)",
+      "one element is much larger than the rest"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [7, 2, 5, 10, 8], k = 2",
+        "output": "18",
+        "expectedOutput": "18",
+        "explanation": "splitting into [7,2,5] and [10,8] gives sums 14 and 18; no split into 2 parts does better than a largest sum of 18"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5], k = 2",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": "splitting into [1,2,3] and [4,5] gives sums 6 and 9, which beats every other 2-way split"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 4, 4], k = 3",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "with k equal to the array length, each element is its own subarray, so the largest sum is just the largest single element"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[7,2,5,10,8],2]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5],2]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,4,4],3]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,4,5],1]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1,1,1],2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1,1,1,1,1,1],3]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1,1,1,1,1,1,1],10]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[10,5,13,4,8,4,5,11,14,9,16,10,20,8],8]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[100],1]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,3,1,1,4,5,9,2,6,3],4]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],3]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+        "output": "120",
+        "expectedOutput": "120",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],15]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[50,20,30,10,40,60,15,25,35,45],5]",
+        "output": "80",
+        "expectedOutput": "80",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],4]",
+        "output": "57",
+        "expectedOutput": "57",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[7,7,7,7,7,7,7],2]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7,7,7,7,7,7,7],7]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,4,4],1]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,9,9,9,9,9,9,9],3]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [7, 2, 5, 10, 8], k = 2",
+      "output": "18",
+      "expectedOutput": "18",
+      "explanation": "splitting into [7,2,5] and [10,8] gives sums 14 and 18; no split into 2 parts does better than a largest sum of 18"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5], k = 2",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": "splitting into [1,2,3] and [4,5] gives sums 6 and 9, which beats every other 2-way split"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 4, 4], k = 3",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "with k equal to the array length, each element is its own subarray, so the largest sum is just the largest single element"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [7, 2, 5, 10, 8], k = 2",
+      "output": "18",
+      "expectedOutput": "18",
+      "explanation": "splitting into [7,2,5] and [10,8] gives sums 14 and 18; no split into 2 parts does better than a largest sum of 18"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 2, 3, 4, 5], k = 2",
+      "output": "9",
+      "expectedOutput": "9",
+      "explanation": "splitting into [1,2,3] and [4,5] gives sums 6 and 9, which beats every other 2-way split"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 4, 4], k = 3",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "with k equal to the array length, each element is its own subarray, so the largest sum is just the largest single element"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[7,2,5,10,8],2]",
+      "output": "18",
+      "expectedOutput": "18",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2,3,4,5],2]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,4,4],3]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,3,4,5],1]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,1,1,1],2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5],5]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,1,1,1,1,1,1,1,1],3]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,1,1,1,1,1,1,1,1,1],10]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[10,5,13,4,8,4,5,11,14,9,16,10,20,8],8]",
+      "output": "25",
+      "expectedOutput": "25",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[100],1]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,3,1,1,4,5,9,2,6,3],4]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],3]",
+      "output": "42",
+      "expectedOutput": "42",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+      "output": "120",
+      "expectedOutput": "120",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],15]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[50,20,30,10,40,60,15,25,35,45],5]",
+      "output": "80",
+      "expectedOutput": "80",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],4]",
+      "output": "57",
+      "expectedOutput": "57",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[7,7,7,7,7,7,7],2]",
+      "output": "28",
+      "expectedOutput": "28",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[7,7,7,7,7,7,7],7]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,4,4],1]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[9,9,9,9,9,9,9,9],3]",
+      "output": "27",
+      "expectedOutput": "27",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [7, 2, 5, 10, 8], k = 2",
+        "output": "18",
+        "expectedOutput": "18",
+        "explanation": "splitting into [7,2,5] and [10,8] gives sums 14 and 18; no split into 2 parts does better than a largest sum of 18"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 2, 3, 4, 5], k = 2",
+        "output": "9",
+        "expectedOutput": "9",
+        "explanation": "splitting into [1,2,3] and [4,5] gives sums 6 and 9, which beats every other 2-way split"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 4, 4], k = 3",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "with k equal to the array length, each element is its own subarray, so the largest sum is just the largest single element"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[7,2,5,10,8],2]",
+        "output": "18",
+        "expectedOutput": "18",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2,3,4,5],2]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,4,4],3]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,3,4,5],1]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1,1,1],2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,1,1,1,1,1,1,1,1],3]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,1,1,1,1,1,1,1,1,1],10]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[10,5,13,4,8,4,5,11,14,9,16,10,20,8],8]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[100],1]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,3,1,1,4,5,9,2,6,3],4]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],3]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],1]",
+        "output": "120",
+        "expectedOutput": "120",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],15]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[50,20,30,10,40,60,15,25,35,45],5]",
+        "output": "80",
+        "expectedOutput": "80",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],4]",
+        "output": "57",
+        "expectedOutput": "57",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[7,7,7,7,7,7,7],2]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[7,7,7,7,7,7,7],7]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,4,4],1]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,9,9,9,9,9,9,9],3]",
+        "output": "27",
+        "expectedOutput": "27",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def splitArray(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int splitArray(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int splitArray(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun splitArray(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    splitArray(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def splitArray(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int splitArray(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int splitArray(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun splitArray(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    splitArray(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def splitArray(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int splitArray(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int splitArray(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun splitArray(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    splitArray(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def splitArray(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int splitArray(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int splitArray(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun splitArray(nums: IntArray, k: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    splitArray(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * log(sum(nums)))",
+      "space": "O(1)",
+      "pattern": "binary search on the answer (the largest allowed subarray sum), using a greedy count of how many subarrays that limit forces as the feasibility check"
+    },
+    "bruteForce": {
+      "approach": "try every way to place k-1 cut points among the array (or use dynamic programming over subarray boundaries), computing the largest subarray sum for each split and keeping the minimum",
+      "time": "O(n^2 * k) with DP",
+      "space": "O(n * k)"
+    }
+  },
+  "optimal": {
+    "pattern": "binary search on the answer (the largest allowed subarray sum), using a greedy count of how many subarrays that limit forces as the feasibility check",
+    "time": "O(n * log(sum(nums)))",
+    "space": "O(1)",
+    "hint_ladder": [
+      "the search isn't over ways to cut the array directly - it's over the value of the answer itself. what's the smallest the answer could possibly be, and the largest it would ever need to be?",
+      "the answer can never be smaller than the single largest element (that element has to live in some subarray), and never needs to exceed the sum of the whole array (k=1 case)",
+      "for a candidate largest-sum limit, greedily walk the array accumulating a running sum, starting a new subarray whenever adding the next element would exceed the limit - this greedy count gives the minimum number of subarrays needed to respect that limit",
+      "as the limit increases, the number of subarrays needed only decreases or stays the same, so binary search the limit: if the greedy count is <= k, the limit is feasible (try smaller), otherwise it's too tight (try larger)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every way to place k-1 cut points among the array (or use dynamic programming over subarray boundaries), computing the largest subarray sum for each split and keeping the minimum",
+    "time": "O(n^2 * k) with DP",
+    "space": "O(n * k)"
+  },
+  "isIndex0": true,
+  "level": null
+}

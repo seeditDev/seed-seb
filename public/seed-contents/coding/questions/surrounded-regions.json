@@ -1,0 +1,632 @@
+{
+  "id": "surrounded-regions",
+  "questionId": "surrounded-regions",
+  "slug": "surrounded-regions",
+  "title": "Surrounded Regions",
+  "difficulty": "Medium",
+  "category": "Graphs",
+  "patterns": [
+    "graph dfs/bfs",
+    "grid traversal"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "instead of checking each region to see if it touches the border, work backwards: start your traversal FROM every open cell already on the border",
+    "run DFS or BFS from each border open cell, marking every open cell it reaches as safe",
+    "once every safe cell is marked, do a final pass over the grid: any open cell that was never marked safe gets flipped to a wall",
+    "this way you never need to re-check the same region twice"
+  ],
+  "commonMistakes": [
+    "starting the traversal from interior open cells instead of border open cells, which requires knowing in advance whether a region is safe",
+    "flipping cells to walls while still traversing, which can accidentally block your own traversal",
+    "forgetting single-row or single-column grids are entirely border, so nothing should ever be captured"
+  ],
+  "content": {
+    "problemStatement": "You're given a grid where each cell is 0 (open) or 1 (wall). Any group of connected open cells (connected horizontally or vertically) that touches the border of the grid is considered safe.\n\n**Capture every surrounded region, meaning every group of open cells that never touches the border gets changed to walls (1), and return the resulting grid.**\n",
+    "constraints": [
+      "1 <= rows <= 200",
+      "1 <= cols <= 200",
+      "grid[i][j] is 0 or 1"
+    ],
+    "notes": [
+      "grid with no open cells at all",
+      "an open region entirely surrounded on the interior",
+      "an open region that touches the border and must stay open",
+      "single row or single column grid, where every cell is on the border"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[1,1,1,1],[1,0,0,1],[1,1,0,1],[1,0,1,1]]",
+        "output": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+        "expectedOutput": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+        "explanation": "the open cells at (1,1),(1,2),(2,2) form a region that never touches the border, so they get captured; the open cell at (3,1) is on the border, so it stays open"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[0,0],[0,0]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "explanation": "every open cell touches the border, so nothing is captured"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[1,1,1],[1,0,1],[1,1,1]]",
+        "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "explanation": "the single open cell in the center never touches the border, so it gets captured"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,1,1,1],[1,0,0,1],[1,1,0,1],[1,0,1,1]]]",
+        "output": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+        "expectedOutput": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,1,1],[1,0,1],[1,1,1]]]",
+        "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1,1,1,1],[1,0,1,0,1],[1,1,1,1,1],[1,0,1,0,1],[1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "[[1,1],[1,1]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1,1,1,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,0,1],[1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,1,1],[0,0,1],[1,1,1]]]",
+        "output": "[[0,1,1],[0,0,1],[1,1,1]]",
+        "expectedOutput": "[[0,1,1],[0,0,1],[1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,0,1,0,0]]]",
+        "output": "[[0,0,1,0,0]]",
+        "expectedOutput": "[[0,0,1,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0],[1],[0]]]",
+        "output": "[[0],[1],[0]]",
+        "expectedOutput": "[[0],[1],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,0,0,1,1,1,0],[0,1,1,1,0,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]]",
+        "output": "[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]",
+        "expectedOutput": "[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,1,1,1,1,1],[1,0,1,0,1,1],[1,1,1,0,1,1],[1,0,0,0,1,1],[1,1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0]]]",
+        "output": "[[0]]",
+        "expectedOutput": "[[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1]]]",
+        "output": "[[1]]",
+        "expectedOutput": "[[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1],[1,0,1,1,1,1,0,1],[1,0,1,0,0,1,0,1],[1,0,1,1,1,1,0,1],[1,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,0,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0,0,0,0]]]",
+        "output": "[[0,0,0,0,0]]",
+        "expectedOutput": "[[0,0,0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0],[0],[0],[0]]]",
+        "output": "[[0],[0],[0],[0]]",
+        "expectedOutput": "[[0],[0],[0],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,1,1,1,1,1],[1,0,1,0,1,0,1],[1,1,1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,0,1,1,1],[1,0,1,0,1],[1,1,1,0,1],[1,0,0,0,1],[1,1,1,1,1]]]",
+        "output": "[[1,0,1,1,1],[1,0,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "expectedOutput": "[[1,0,1,1,1],[1,0,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[1,1,1,1],[1,0,0,1],[1,1,0,1],[1,0,1,1]]",
+      "output": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+      "expectedOutput": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+      "explanation": "the open cells at (1,1),(1,2),(2,2) form a region that never touches the border, so they get captured; the open cell at (3,1) is on the border, so it stays open"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[0,0],[0,0]]",
+      "output": "[[0,0],[0,0]]",
+      "expectedOutput": "[[0,0],[0,0]]",
+      "explanation": "every open cell touches the border, so nothing is captured"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[1,1,1],[1,0,1],[1,1,1]]",
+      "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+      "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+      "explanation": "the single open cell in the center never touches the border, so it gets captured"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[1,1,1,1],[1,0,0,1],[1,1,0,1],[1,0,1,1]]",
+      "output": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+      "expectedOutput": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+      "explanation": "the open cells at (1,1),(1,2),(2,2) form a region that never touches the border, so they get captured; the open cell at (3,1) is on the border, so it stays open"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[0,0],[0,0]]",
+      "output": "[[0,0],[0,0]]",
+      "expectedOutput": "[[0,0],[0,0]]",
+      "explanation": "every open cell touches the border, so nothing is captured"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[1,1,1],[1,0,1],[1,1,1]]",
+      "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+      "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+      "explanation": "the single open cell in the center never touches the border, so it gets captured"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,1,1,1],[1,0,0,1],[1,1,0,1],[1,0,1,1]]]",
+      "output": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+      "expectedOutput": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[0,0],[0,0]]]",
+      "output": "[[0,0],[0,0]]",
+      "expectedOutput": "[[0,0],[0,0]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,1,1],[1,0,1],[1,1,1]]]",
+      "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+      "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,1,1,1,1],[1,0,1,0,1],[1,1,1,1,1],[1,0,1,0,1],[1,1,1,1,1]]]",
+      "output": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+      "expectedOutput": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "[[1,1],[1,1]]",
+      "expectedOutput": "[[1,1],[1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,1,1,1,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,0,1],[1,1,1,1,1]]]",
+      "output": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+      "expectedOutput": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[0,1,1],[0,0,1],[1,1,1]]]",
+      "output": "[[0,1,1],[0,0,1],[1,1,1]]",
+      "expectedOutput": "[[0,1,1],[0,0,1],[1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[0,0,1,0,0]]]",
+      "output": "[[0,0,1,0,0]]",
+      "expectedOutput": "[[0,0,1,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[0],[1],[0]]]",
+      "output": "[[0],[1],[0]]",
+      "expectedOutput": "[[0],[1],[0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,0,0,1,1,1,0],[0,1,1,1,0,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]]",
+      "output": "[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]",
+      "expectedOutput": "[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[1,1,1,1,1,1],[1,0,1,0,1,1],[1,1,1,0,1,1],[1,0,0,0,1,1],[1,1,1,1,1,1]]]",
+      "output": "[[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1]]",
+      "expectedOutput": "[[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0]]]",
+      "output": "[[0]]",
+      "expectedOutput": "[[0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1]]]",
+      "output": "[[1]]",
+      "expectedOutput": "[[1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1],[1,0,1,1,1,1,0,1],[1,0,1,0,0,1,0,1],[1,0,1,1,1,1,0,1],[1,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1]]]",
+      "output": "[[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1]]",
+      "expectedOutput": "[[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,0,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1]]]",
+      "output": "[[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "expectedOutput": "[[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[0,0,0,0,0]]]",
+      "output": "[[0,0,0,0,0]]",
+      "expectedOutput": "[[0,0,0,0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[0],[0],[0],[0]]]",
+      "output": "[[0],[0],[0],[0]]",
+      "expectedOutput": "[[0],[0],[0],[0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+      "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+      "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,1,1,1,1,1,1],[1,0,1,0,1,0,1],[1,1,1,1,1,1,1]]]",
+      "output": "[[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]",
+      "expectedOutput": "[[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,0,1,1,1],[1,0,1,0,1],[1,1,1,0,1],[1,0,0,0,1],[1,1,1,1,1]]]",
+      "output": "[[1,0,1,1,1],[1,0,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+      "expectedOutput": "[[1,0,1,1,1],[1,0,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[1,1,1,1],[1,0,0,1],[1,1,0,1],[1,0,1,1]]",
+        "output": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+        "expectedOutput": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+        "explanation": "the open cells at (1,1),(1,2),(2,2) form a region that never touches the border, so they get captured; the open cell at (3,1) is on the border, so it stays open"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[0,0],[0,0]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "explanation": "every open cell touches the border, so nothing is captured"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[1,1,1],[1,0,1],[1,1,1]]",
+        "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "explanation": "the single open cell in the center never touches the border, so it gets captured"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,1,1,1],[1,0,0,1],[1,1,0,1],[1,0,1,1]]]",
+        "output": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+        "expectedOutput": "[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,0,1,1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "[[0,0],[0,0]]",
+        "expectedOutput": "[[0,0],[0,0]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,1,1],[1,0,1],[1,1,1]]]",
+        "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1,1,1,1],[1,0,1,0,1],[1,1,1,1,1],[1,0,1,0,1],[1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "[[1,1],[1,1]]",
+        "expectedOutput": "[[1,1],[1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,1,1,1,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,0,1],[1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,1,1],[0,0,1],[1,1,1]]]",
+        "output": "[[0,1,1],[0,0,1],[1,1,1]]",
+        "expectedOutput": "[[0,1,1],[0,0,1],[1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,0,1,0,0]]]",
+        "output": "[[0,0,1,0,0]]",
+        "expectedOutput": "[[0,0,1,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0],[1],[0]]]",
+        "output": "[[0],[1],[0]]",
+        "expectedOutput": "[[0],[1],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,0,0,1,1,1,0],[0,1,1,1,0,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]]",
+        "output": "[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]",
+        "expectedOutput": "[[0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[1,1,1,1,1,1],[1,0,1,0,1,1],[1,1,1,0,1,1],[1,0,0,0,1,1],[1,1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1],[1,1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0]]]",
+        "output": "[[0]]",
+        "expectedOutput": "[[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1]]]",
+        "output": "[[1]]",
+        "expectedOutput": "[[1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,1],[1,0,1,1,1,1,0,1],[1,0,1,0,0,1,0,1],[1,0,1,1,1,1,0,1],[1,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,1,1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,0,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,1,1,1,1,1,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0,0,0,0]]]",
+        "output": "[[0,0,0,0,0]]",
+        "expectedOutput": "[[0,0,0,0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[0],[0],[0],[0]]]",
+        "output": "[[0],[0],[0],[0]]",
+        "expectedOutput": "[[0],[0],[0],[0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "expectedOutput": "[[1,1,1],[1,1,1],[1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,1,1,1,1,1,1],[1,0,1,0,1,0,1],[1,1,1,1,1,1,1]]]",
+        "output": "[[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]",
+        "expectedOutput": "[[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,0,1,1,1],[1,0,1,0,1],[1,1,1,0,1],[1,0,0,0,1],[1,1,1,1,1]]]",
+        "output": "[[1,0,1,1,1],[1,0,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "expectedOutput": "[[1,0,1,1,1],[1,0,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def solveRegions(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> solveRegions(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] solveRegions(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun solveRegions(grid: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    solveRegions(grid) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def solveRegions(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> solveRegions(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] solveRegions(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun solveRegions(grid: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    solveRegions(grid) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def solveRegions(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> solveRegions(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] solveRegions(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun solveRegions(grid: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    solveRegions(grid) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def solveRegions(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> solveRegions(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] solveRegions(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun solveRegions(grid: Array<IntArray>): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    solveRegions(grid) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(rows * cols)",
+      "space": "O(rows * cols)",
+      "pattern": "graph dfs/bfs starting from the border, marking safe regions first"
+    },
+    "bruteForce": {
+      "approach": "for every open cell, run a fresh traversal to check if its region touches the border, marking the whole region accordingly; repeats work across cells in the same region",
+      "time": "O((rows * cols)^2) in the worst case without memoizing which cells were already checked",
+      "space": "O(rows * cols)"
+    }
+  },
+  "optimal": {
+    "pattern": "graph dfs/bfs starting from the border, marking safe regions first",
+    "time": "O(rows * cols)",
+    "space": "O(rows * cols)",
+    "hint_ladder": [
+      "instead of checking each region to see if it touches the border, work backwards: start your traversal FROM every open cell already on the border",
+      "run DFS or BFS from each border open cell, marking every open cell it reaches as safe",
+      "once every safe cell is marked, do a final pass over the grid: any open cell that was never marked safe gets flipped to a wall",
+      "this way you never need to re-check the same region twice"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every open cell, run a fresh traversal to check if its region touches the border, marking the whole region accordingly; repeats work across cells in the same region",
+    "time": "O((rows * cols)^2) in the worst case without memoizing which cells were already checked",
+    "space": "O(rows * cols)"
+  },
+  "isIndex0": true,
+  "level": null
+}

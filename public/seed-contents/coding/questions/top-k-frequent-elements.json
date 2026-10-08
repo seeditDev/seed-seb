@@ -1,0 +1,599 @@
+{
+  "id": "top-k-frequent-elements",
+  "questionId": "top-k-frequent-elements",
+  "slug": "top-k-frequent-elements",
+  "title": "Top K Frequent Elements",
+  "difficulty": "Medium",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "heap"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "sorting ALL distinct values by frequency does more work than necessary when you only need the top k. what structure keeps just the k best candidates without a full sort?",
+    "a min-heap of size k works: push each (value, frequency), and whenever the heap exceeds size k, pop the smallest - what's left are the k largest",
+    "alternatively, since frequency can't exceed the length of nums, you could bucket values by frequency (a list of buckets, index = frequency) and read off the top k from the highest-frequency buckets first, avoiding a heap entirely",
+    "don't forget the tie-break rule - group your comparison so equal frequencies land in a well-defined order"
+  ],
+  "commonMistakes": [
+    "sorting the full list of distinct values when only a k-sized heap or bucket pass was needed",
+    "returning values in insertion or hash-iteration order instead of following the frequency-then-value ordering rule",
+    "off-by-one when only keeping the heap at size k (popping too early or too late)"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers `nums` and an integer `k`.\n\n**Return the `k` most frequent values.**\n\nTo keep the answer well-defined, order the result by frequency descending, and break ties by value ascending.\n",
+    "constraints": [
+      "1 <= nums.length <= 10^5",
+      "-10^4 <= nums[i] <= 10^4",
+      "1 <= k <= number of distinct values in nums"
+    ],
+    "notes": [
+      "k equals the number of distinct values (return all of them)",
+      "every value appears the same number of times (tie-break decides everything)",
+      "a single distinct value repeated many times"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 2, 2, 3], k = 2",
+        "output": "[1, 2]",
+        "expectedOutput": "[1, 2]",
+        "explanation": "1 appears 3 times, 2 appears twice - the two most frequent values"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1], k = 1",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,1,2,2,3],2]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1],1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[4,1,-1,2,-1,2,3],2]",
+        "output": "[-1,2]",
+        "expectedOutput": "[-1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,2,3,3,3],2]",
+        "output": "[3,2]",
+        "expectedOutput": "[3,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[9],1]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[4,4,4,6,6,9],2]",
+        "output": "[4,6]",
+        "expectedOutput": "[4,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,2,2,3],3]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5,4,4,3],2]",
+        "output": "[5,4]",
+        "expectedOutput": "[5,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-1,-1,-2,-2,-2,0],2]",
+        "output": "[-2,-1]",
+        "expectedOutput": "[-2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5],3]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[7,7,7,7,7,7,7],1]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,0,1,0,3,3,0,1],2]",
+        "output": "[0,3]",
+        "expectedOutput": "[0,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,2,1,5,7,7,6,3,4,5,8,1,4,8,1,2,2,8,7,1,7,6,1,4,1,6,3,4,6,6],4]",
+        "output": "[1,6,4,7]",
+        "expectedOutput": "[1,6,4,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,3,3,5,1,4,2,4,5,4,2,2,2,5,3,5,2,5,1,1,1,4,1,5,3],5]",
+        "output": "[5,1,2,3,4]",
+        "expectedOutput": "[5,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,20,10,30,20,10,40],3]",
+        "output": "[10,20,30]",
+        "expectedOutput": "[10,20,30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-5,-5,-3,-3,-3,-1],3]",
+        "output": "[-3,-5,-1]",
+        "expectedOutput": "[-3,-5,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2,2,3,3,4,4,5],4]",
+        "output": "[2,3,4,5]",
+        "expectedOutput": "[2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,2,5,5,5,8,8,8,8],3]",
+        "output": "[8,5,2]",
+        "expectedOutput": "[8,5,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100,200,100,300,300,300],2]",
+        "output": "[300,100]",
+        "expectedOutput": "[300,100]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 2, 2, 3], k = 2",
+      "output": "[1, 2]",
+      "expectedOutput": "[1, 2]",
+      "explanation": "1 appears 3 times, 2 appears twice - the two most frequent values"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1], k = 1",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 1, 1, 2, 2, 3], k = 2",
+      "output": "[1, 2]",
+      "expectedOutput": "[1, 2]",
+      "explanation": "1 appears 3 times, 2 appears twice - the two most frequent values"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1], k = 1",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,1,1,2,2,3],2]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1],1]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[4,1,-1,2,-1,2,3],2]",
+      "output": "[-1,2]",
+      "expectedOutput": "[-1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,2,3,3,3],2]",
+      "output": "[3,2]",
+      "expectedOutput": "[3,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[9],1]",
+      "output": "[9]",
+      "expectedOutput": "[9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[4,4,4,6,6,9],2]",
+      "output": "[4,6]",
+      "expectedOutput": "[4,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,1,2,2,3],3]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,5,5,4,4,3],2]",
+      "output": "[5,4]",
+      "expectedOutput": "[5,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-1,-1,-2,-2,-2,0],2]",
+      "output": "[-2,-1]",
+      "expectedOutput": "[-2,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5],5]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[1,2,3,4,5],3]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[7,7,7,7,7,7,7],1]",
+      "output": "[7]",
+      "expectedOutput": "[7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[3,0,1,0,3,3,0,1],2]",
+      "output": "[0,3]",
+      "expectedOutput": "[0,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[5,2,1,5,7,7,6,3,4,5,8,1,4,8,1,2,2,8,7,1,7,6,1,4,1,6,3,4,6,6],4]",
+      "output": "[1,6,4,7]",
+      "expectedOutput": "[1,6,4,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[5,3,3,5,1,4,2,4,5,4,2,2,2,5,3,5,2,5,1,1,1,4,1,5,3],5]",
+      "output": "[5,1,2,3,4]",
+      "expectedOutput": "[5,1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[10,20,10,30,20,10,40],3]",
+      "output": "[10,20,30]",
+      "expectedOutput": "[10,20,30]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-5,-5,-3,-3,-3,-1],3]",
+      "output": "[-3,-5,-1]",
+      "expectedOutput": "[-3,-5,-1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[2,2,3,3,4,4,5],4]",
+      "output": "[2,3,4,5]",
+      "expectedOutput": "[2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[2,2,5,5,5,8,8,8,8],3]",
+      "output": "[8,5,2]",
+      "expectedOutput": "[8,5,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[100,200,100,300,300,300],2]",
+      "output": "[300,100]",
+      "expectedOutput": "[300,100]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 1, 1, 2, 2, 3], k = 2",
+        "output": "[1, 2]",
+        "expectedOutput": "[1, 2]",
+        "explanation": "1 appears 3 times, 2 appears twice - the two most frequent values"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1], k = 1",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,1,1,2,2,3],2]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1],1]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[4,1,-1,2,-1,2,3],2]",
+        "output": "[-1,2]",
+        "expectedOutput": "[-1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,2,3,3,3],2]",
+        "output": "[3,2]",
+        "expectedOutput": "[3,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[9],1]",
+        "output": "[9]",
+        "expectedOutput": "[9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[4,4,4,6,6,9],2]",
+        "output": "[4,6]",
+        "expectedOutput": "[4,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,1,2,2,3],3]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5,4,4,3],2]",
+        "output": "[5,4]",
+        "expectedOutput": "[5,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-1,-1,-2,-2,-2,0],2]",
+        "output": "[-2,-1]",
+        "expectedOutput": "[-2,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5],5]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[1,2,3,4,5],3]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[7,7,7,7,7,7,7],1]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,0,1,0,3,3,0,1],2]",
+        "output": "[0,3]",
+        "expectedOutput": "[0,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[5,2,1,5,7,7,6,3,4,5,8,1,4,8,1,2,2,8,7,1,7,6,1,4,1,6,3,4,6,6],4]",
+        "output": "[1,6,4,7]",
+        "expectedOutput": "[1,6,4,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[5,3,3,5,1,4,2,4,5,4,2,2,2,5,3,5,2,5,1,1,1,4,1,5,3],5]",
+        "output": "[5,1,2,3,4]",
+        "expectedOutput": "[5,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,20,10,30,20,10,40],3]",
+        "output": "[10,20,30]",
+        "expectedOutput": "[10,20,30]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-5,-5,-3,-3,-3,-1],3]",
+        "output": "[-3,-5,-1]",
+        "expectedOutput": "[-3,-5,-1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[2,2,3,3,4,4,5],4]",
+        "output": "[2,3,4,5]",
+        "expectedOutput": "[2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[2,2,5,5,5,8,8,8,8],3]",
+        "output": "[8,5,2]",
+        "expectedOutput": "[8,5,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100,200,100,300,300,300],2]",
+        "output": "[300,100]",
+        "expectedOutput": "[300,100]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def topKFrequent(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> topKFrequent(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] topKFrequent(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun topKFrequent(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    topKFrequent(nums, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def topKFrequent(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> topKFrequent(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] topKFrequent(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun topKFrequent(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    topKFrequent(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def topKFrequent(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> topKFrequent(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] topKFrequent(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun topKFrequent(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    topKFrequent(nums, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def topKFrequent(self, nums, k):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> topKFrequent(vector<int>& nums, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] topKFrequent(int[] nums, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun topKFrequent(nums: IntArray, k: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    topKFrequent(nums, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log k) with a heap of size k, or O(n) with bucket sort since frequency is bounded by n",
+      "space": "O(n)",
+      "pattern": "hash map for frequencies, then a heap (or bucket sort by frequency) to avoid a full sort"
+    },
+    "bruteForce": {
+      "approach": "count frequencies with a hash map, then sort all distinct values by frequency and take the top k",
+      "time": "O(n log n) for the sort",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "hash map for frequencies, then a heap (or bucket sort by frequency) to avoid a full sort",
+    "time": "O(n log k) with a heap of size k, or O(n) with bucket sort since frequency is bounded by n",
+    "space": "O(n)",
+    "hint_ladder": [
+      "sorting ALL distinct values by frequency does more work than necessary when you only need the top k. what structure keeps just the k best candidates without a full sort?",
+      "a min-heap of size k works: push each (value, frequency), and whenever the heap exceeds size k, pop the smallest - what's left are the k largest",
+      "alternatively, since frequency can't exceed the length of nums, you could bucket values by frequency (a list of buckets, index = frequency) and read off the top k from the highest-frequency buckets first, avoiding a heap entirely",
+      "don't forget the tie-break rule - group your comparison so equal frequencies land in a well-defined order"
+    ]
+  },
+  "bruteForce": {
+    "approach": "count frequencies with a hash map, then sort all distinct values by frequency and take the top k",
+    "time": "O(n log n) for the sort",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

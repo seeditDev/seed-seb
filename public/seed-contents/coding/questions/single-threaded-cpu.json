@@ -1,0 +1,632 @@
+{
+  "id": "single-threaded-cpu",
+  "questionId": "single-threaded-cpu",
+  "slug": "single-threaded-cpu",
+  "title": "Single-Threaded CPU",
+  "difficulty": "Hard",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "min-heap",
+    "simulation",
+    "greedy"
+  ],
+  "lists": [],
+  "hints": [
+    "process tasks in enqueue-time order using a pointer, but the CPU's actual execution order depends on processing time among whatever has already arrived by the current time",
+    "sort the tasks by enqueueTime, remembering each one's original index. keep a pointer into this sorted list and a running 'current time' starting at the first task's enqueue time",
+    "at each step, push every task whose enqueueTime has arrived (enqueueTime <= current time) into a min-heap ordered by (processingTime, original index), advancing the pointer as you go",
+    "if the heap is empty but tasks remain, jump current time forward to the next task's enqueue time instead of idling one unit at a time. otherwise pop the heap's minimum, record its index, and advance current time by its processingTime"
+  ],
+  "commonMistakes": [
+    "not jumping current time directly to the next enqueue time when idle, instead simulating one time unit at a time, which is far too slow for large gaps",
+    "forgetting the secondary tie-break on original index when two available tasks have equal processingTime",
+    "pushing all tasks into the heap up front regardless of enqueue time, which lets the CPU 'see the future' and pick tasks before they're actually available"
+  ],
+  "content": {
+    "problemStatement": "You have a single-threaded CPU and a list of tasks to run, given as\n`tasks`, where `tasks[i] = [enqueueTime, processingTime]`. Task i\nbecomes available to run at time `enqueueTime`, and once started takes\nexactly `processingTime` units to finish, tasks cannot be interrupted\nonce started.\n\n**Return the order in which the CPU processes the tasks, as a list of their original indices.**\n\nWhenever the CPU is idle and at least one task is available, it picks the available task with the smallest processingTime, breaking ties by the smallest original index. If no task is currently available, the CPU sits idle until the next task becomes available.\n",
+    "constraints": [
+      "1 <= tasks.length <= 10^5",
+      "tasks[i].length == 2",
+      "1 <= enqueueTime_i, processingTime_i <= 10^9"
+    ],
+    "notes": [
+      "a single task",
+      "all tasks share the same enqueue time",
+      "a gap where the CPU must idle waiting for the next task to become available",
+      "tasks whose enqueue order differs from their index order in the input array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tasks = [[1, 2], [2, 4], [3, 2], [4, 1]]",
+        "output": "[0, 2, 3, 1]",
+        "expectedOutput": "[0, 2, 3, 1]",
+        "explanation": "at time 1 only task 0 is available, so it runs (finishes at 3); at time 3 tasks 1 and 2 are both available with processing times 4 and 2, so task 2 runs (finishes at 5); at time 5 tasks 1 and 3 are available with times 4 and 1, so task 3 runs (finishes at 6); finally task 1 runs"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tasks = [[7, 10], [7, 12], [7, 5], [7, 4], [7, 2]]",
+        "output": "[4, 3, 2, 0, 1]",
+        "expectedOutput": "[4, 3, 2, 0, 1]",
+        "explanation": "all five tasks become available at the same time 7, so they run purely in order of smallest processing time: 2, 4, 5, 10, 12, which corresponds to original indices 4, 3, 2, 0, 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tasks = [[1, 2], [5, 3]]",
+        "output": "[0, 1]",
+        "expectedOutput": "[0, 1]",
+        "explanation": "task 0 runs from time 1 to 3; task 1 isn't available until time 5, so the CPU idles from 3 to 5 before running it"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2],[2,4],[3,2],[4,1]]]",
+        "output": "[0,2,3,1]",
+        "expectedOutput": "[0,2,3,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[7,10],[7,12],[7,5],[7,4],[7,2]]]",
+        "output": "[4,3,2,0,1]",
+        "expectedOutput": "[4,3,2,0,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,5]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,2],[5,3]]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,1]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0,1],[0,2],[0,3]]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,1],[1,1],[1,1]]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,5],[10,1],[10,2]]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[5,2],[3,1],[1,3],[7,1]]]",
+        "output": "[2,1,0,3]",
+        "expectedOutput": "[2,1,0,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,5],[2,4],[3,3],[4,2],[5,1]]]",
+        "output": "[0,4,3,2,1]",
+        "expectedOutput": "[0,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,3],[1,9],[2,6]]]",
+        "output": "[0,2,1]",
+        "expectedOutput": "[0,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[3,3],[2,2],[1,1],[4,4]]]",
+        "output": "[2,1,0,3]",
+        "expectedOutput": "[2,1,0,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,2],[1,2],[1,2],[1,2]]]",
+        "output": "[0,1,2,3]",
+        "expectedOutput": "[0,1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[10,1],[20,1],[30,1]]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,2],[1,2],[2,2],[3,2],[4,2]]]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,10],[1,5],[2,1],[3,100],[4,1]]]",
+        "output": "[0,2,4,1,3]",
+        "expectedOutput": "[0,2,4,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1],[2,1],[3,1],[4,1],[5,1]]]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,1],[100,1],[200,1]]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[5,5],[5,5],[5,5],[5,5],[5,5]]]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,1000000000]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tasks = [[1, 2], [2, 4], [3, 2], [4, 1]]",
+      "output": "[0, 2, 3, 1]",
+      "expectedOutput": "[0, 2, 3, 1]",
+      "explanation": "at time 1 only task 0 is available, so it runs (finishes at 3); at time 3 tasks 1 and 2 are both available with processing times 4 and 2, so task 2 runs (finishes at 5); at time 5 tasks 1 and 3 are available with times 4 and 1, so task 3 runs (finishes at 6); finally task 1 runs"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tasks = [[7, 10], [7, 12], [7, 5], [7, 4], [7, 2]]",
+      "output": "[4, 3, 2, 0, 1]",
+      "expectedOutput": "[4, 3, 2, 0, 1]",
+      "explanation": "all five tasks become available at the same time 7, so they run purely in order of smallest processing time: 2, 4, 5, 10, 12, which corresponds to original indices 4, 3, 2, 0, 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tasks = [[1, 2], [5, 3]]",
+      "output": "[0, 1]",
+      "expectedOutput": "[0, 1]",
+      "explanation": "task 0 runs from time 1 to 3; task 1 isn't available until time 5, so the CPU idles from 3 to 5 before running it"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tasks = [[1, 2], [2, 4], [3, 2], [4, 1]]",
+      "output": "[0, 2, 3, 1]",
+      "expectedOutput": "[0, 2, 3, 1]",
+      "explanation": "at time 1 only task 0 is available, so it runs (finishes at 3); at time 3 tasks 1 and 2 are both available with processing times 4 and 2, so task 2 runs (finishes at 5); at time 5 tasks 1 and 3 are available with times 4 and 1, so task 3 runs (finishes at 6); finally task 1 runs"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tasks = [[7, 10], [7, 12], [7, 5], [7, 4], [7, 2]]",
+      "output": "[4, 3, 2, 0, 1]",
+      "expectedOutput": "[4, 3, 2, 0, 1]",
+      "explanation": "all five tasks become available at the same time 7, so they run purely in order of smallest processing time: 2, 4, 5, 10, 12, which corresponds to original indices 4, 3, 2, 0, 1"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tasks = [[1, 2], [5, 3]]",
+      "output": "[0, 1]",
+      "expectedOutput": "[0, 1]",
+      "explanation": "task 0 runs from time 1 to 3; task 1 isn't available until time 5, so the CPU idles from 3 to 5 before running it"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,2],[2,4],[3,2],[4,1]]]",
+      "output": "[0,2,3,1]",
+      "expectedOutput": "[0,2,3,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[7,10],[7,12],[7,5],[7,4],[7,2]]]",
+      "output": "[4,3,2,0,1]",
+      "expectedOutput": "[4,3,2,0,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0,5]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,2],[5,3]]]",
+      "output": "[0,1]",
+      "expectedOutput": "[0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,1]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[0,1],[0,2],[0,3]]]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,1],[1,1],[1,1]]]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[0,5],[10,1],[10,2]]]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[5,2],[3,1],[1,3],[7,1]]]",
+      "output": "[2,1,0,3]",
+      "expectedOutput": "[2,1,0,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,5],[2,4],[3,3],[4,2],[5,1]]]",
+      "output": "[0,4,3,2,1]",
+      "expectedOutput": "[0,4,3,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[0,3],[1,9],[2,6]]]",
+      "output": "[0,2,1]",
+      "expectedOutput": "[0,2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[3,3],[2,2],[1,1],[4,4]]]",
+      "output": "[2,1,0,3]",
+      "expectedOutput": "[2,1,0,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,2],[1,2],[1,2],[1,2]]]",
+      "output": "[0,1,2,3]",
+      "expectedOutput": "[0,1,2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[10,1],[20,1],[30,1]]]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0,2],[1,2],[2,2],[3,2],[4,2]]]",
+      "output": "[0,1,2,3,4]",
+      "expectedOutput": "[0,1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[0,10],[1,5],[2,1],[3,100],[4,1]]]",
+      "output": "[0,2,4,1,3]",
+      "expectedOutput": "[0,2,4,1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,1],[2,1],[3,1],[4,1],[5,1]]]",
+      "output": "[0,1,2,3,4]",
+      "expectedOutput": "[0,1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[0,1],[100,1],[200,1]]]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[5,5],[5,5],[5,5],[5,5],[5,5]]]",
+      "output": "[0,1,2,3,4]",
+      "expectedOutput": "[0,1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[0,1000000000]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tasks = [[1, 2], [2, 4], [3, 2], [4, 1]]",
+        "output": "[0, 2, 3, 1]",
+        "expectedOutput": "[0, 2, 3, 1]",
+        "explanation": "at time 1 only task 0 is available, so it runs (finishes at 3); at time 3 tasks 1 and 2 are both available with processing times 4 and 2, so task 2 runs (finishes at 5); at time 5 tasks 1 and 3 are available with times 4 and 1, so task 3 runs (finishes at 6); finally task 1 runs"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tasks = [[7, 10], [7, 12], [7, 5], [7, 4], [7, 2]]",
+        "output": "[4, 3, 2, 0, 1]",
+        "expectedOutput": "[4, 3, 2, 0, 1]",
+        "explanation": "all five tasks become available at the same time 7, so they run purely in order of smallest processing time: 2, 4, 5, 10, 12, which corresponds to original indices 4, 3, 2, 0, 1"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tasks = [[1, 2], [5, 3]]",
+        "output": "[0, 1]",
+        "expectedOutput": "[0, 1]",
+        "explanation": "task 0 runs from time 1 to 3; task 1 isn't available until time 5, so the CPU idles from 3 to 5 before running it"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2],[2,4],[3,2],[4,1]]]",
+        "output": "[0,2,3,1]",
+        "expectedOutput": "[0,2,3,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[7,10],[7,12],[7,5],[7,4],[7,2]]]",
+        "output": "[4,3,2,0,1]",
+        "expectedOutput": "[4,3,2,0,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,5]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,2],[5,3]]]",
+        "output": "[0,1]",
+        "expectedOutput": "[0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,1]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0,1],[0,2],[0,3]]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,1],[1,1],[1,1]]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,5],[10,1],[10,2]]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[5,2],[3,1],[1,3],[7,1]]]",
+        "output": "[2,1,0,3]",
+        "expectedOutput": "[2,1,0,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,5],[2,4],[3,3],[4,2],[5,1]]]",
+        "output": "[0,4,3,2,1]",
+        "expectedOutput": "[0,4,3,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,3],[1,9],[2,6]]]",
+        "output": "[0,2,1]",
+        "expectedOutput": "[0,2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[3,3],[2,2],[1,1],[4,4]]]",
+        "output": "[2,1,0,3]",
+        "expectedOutput": "[2,1,0,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,2],[1,2],[1,2],[1,2]]]",
+        "output": "[0,1,2,3]",
+        "expectedOutput": "[0,1,2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[10,1],[20,1],[30,1]]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,2],[1,2],[2,2],[3,2],[4,2]]]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,10],[1,5],[2,1],[3,100],[4,1]]]",
+        "output": "[0,2,4,1,3]",
+        "expectedOutput": "[0,2,4,1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,1],[2,1],[3,1],[4,1],[5,1]]]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,1],[100,1],[200,1]]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[5,5],[5,5],[5,5],[5,5],[5,5]]]",
+        "output": "[0,1,2,3,4]",
+        "expectedOutput": "[0,1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,1000000000]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def getOrder(self, tasks):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> getOrder(vector<vector<int>>& tasks) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] getOrder(int[][] tasks) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getOrder(tasks: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getOrder(tasks) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def getOrder(self, tasks):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> getOrder(vector<vector<int>>& tasks) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] getOrder(int[][] tasks) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getOrder(tasks: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getOrder(tasks) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def getOrder(self, tasks):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> getOrder(vector<vector<int>>& tasks) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] getOrder(int[][] tasks) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getOrder(tasks: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getOrder(tasks) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def getOrder(self, tasks):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> getOrder(vector<vector<int>>& tasks) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] getOrder(int[][] tasks) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun getOrder(tasks: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    getOrder(tasks) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n log n)",
+      "space": "O(n)",
+      "pattern": "sort tasks by enqueue time, then use a min-heap keyed by (processingTime, original index) for whichever tasks are currently available"
+    },
+    "bruteForce": {
+      "approach": "at every point in time the CPU becomes free, scan all not-yet-processed tasks to find those with enqueueTime <= current time, then pick the smallest processingTime among them, redoing the full scan each time",
+      "time": "O(n^2)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "sort tasks by enqueue time, then use a min-heap keyed by (processingTime, original index) for whichever tasks are currently available",
+    "time": "O(n log n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "process tasks in enqueue-time order using a pointer, but the CPU's actual execution order depends on processing time among whatever has already arrived by the current time",
+      "sort the tasks by enqueueTime, remembering each one's original index. keep a pointer into this sorted list and a running 'current time' starting at the first task's enqueue time",
+      "at each step, push every task whose enqueueTime has arrived (enqueueTime <= current time) into a min-heap ordered by (processingTime, original index), advancing the pointer as you go",
+      "if the heap is empty but tasks remain, jump current time forward to the next task's enqueue time instead of idling one unit at a time. otherwise pop the heap's minimum, record its index, and advance current time by its processingTime"
+    ]
+  },
+  "bruteForce": {
+    "approach": "at every point in time the CPU becomes free, scan all not-yet-processed tasks to find those with enqueueTime <= current time, then pick the smallest processingTime among them, redoing the full scan each time",
+    "time": "O(n^2)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

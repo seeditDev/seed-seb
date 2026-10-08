@@ -1,0 +1,635 @@
+{
+  "id": "unique-paths",
+  "questionId": "unique-paths",
+  "slug": "unique-paths",
+  "title": "Unique Paths",
+  "difficulty": "Easy",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "grid",
+    "combinatorics"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75"
+  ],
+  "hints": [
+    "the robot can only arrive at cell (i, j) from two places - which ones?",
+    "define dp[i][j] as the number of distinct paths from the start to cell (i, j)",
+    "what's the recurrence: dp[i][j] = dp[i-1][j] + dp[i][j-1], since a path reaches (i, j) either from above or from the left",
+    "the first row and first column each only have one possible path (all moves in one direction), so they're your base case, all set to 1",
+    "fill the table row by row and return dp[m-1][n-1]"
+  ],
+  "commonMistakes": [
+    "off-by-one errors when initializing the first row and first column",
+    "trying to solve it with plain recursion without memoization, which blows up exponentially for larger m, n",
+    "confusing m (rows) and n (columns) when indexing the grid"
+  ],
+  "content": {
+    "problemStatement": "A robot starts in the top-left corner of an `m` x `n` grid. It can only move either right or down at each step, and it wants to reach the bottom-right corner.\n\n**Given the grid dimensions `m` and `n`, return the number of distinct paths the robot can take to reach its destination.**\n",
+    "constraints": [
+      "1 <= m <= 100",
+      "1 <= n <= 100",
+      "the answer is guaranteed to be less than or equal to 2 * 10^9"
+    ],
+    "notes": [
+      "m = 1 or n = 1 (a single row or single column, only one path exists)",
+      "m = 1 and n = 1 (already at the destination)",
+      "a square grid where m = n"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "m = 3, n = 7",
+        "output": "28",
+        "expectedOutput": "28",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "m = 3, n = 2",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "From the top-left, the paths are: right,down,down / down,right,down / down,down,right"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "m = 1, n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "The robot is already at the destination, so there's exactly one (empty) path."
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[3,7]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1,5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[7,3]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[1,100]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[100,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[10,10]",
+        "output": "48620",
+        "expectedOutput": "48620",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[2,2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[5,5]",
+        "output": "70",
+        "expectedOutput": "70",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[15,15]",
+        "output": "40116600",
+        "expectedOutput": "40116600",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[8,12]",
+        "output": "31824",
+        "expectedOutput": "31824",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[12,8]",
+        "output": "31824",
+        "expectedOutput": "31824",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[20,3]",
+        "output": "210",
+        "expectedOutput": "210",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[3,20]",
+        "output": "210",
+        "expectedOutput": "210",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[50,2]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[2,50]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[9,9]",
+        "output": "12870",
+        "expectedOutput": "12870",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[17,17]",
+        "output": "601080390",
+        "expectedOutput": "601080390",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "m = 3, n = 7",
+      "output": "28",
+      "expectedOutput": "28",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "m = 3, n = 2",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "From the top-left, the paths are: right,down,down / down,right,down / down,down,right"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "m = 1, n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "The robot is already at the destination, so there's exactly one (empty) path."
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "m = 3, n = 7",
+      "output": "28",
+      "expectedOutput": "28",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "m = 3, n = 2",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "From the top-left, the paths are: right,down,down / down,right,down / down,down,right"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "m = 1, n = 1",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": "The robot is already at the destination, so there's exactly one (empty) path."
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[3,7]",
+      "output": "28",
+      "expectedOutput": "28",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[1,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[1,5]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[7,3]",
+      "output": "28",
+      "expectedOutput": "28",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[1,100]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[100,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[10,10]",
+      "output": "48620",
+      "expectedOutput": "48620",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[2,2]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[5,5]",
+      "output": "70",
+      "expectedOutput": "70",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[15,15]",
+      "output": "40116600",
+      "expectedOutput": "40116600",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[8,12]",
+      "output": "31824",
+      "expectedOutput": "31824",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[12,8]",
+      "output": "31824",
+      "expectedOutput": "31824",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[20,3]",
+      "output": "210",
+      "expectedOutput": "210",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[3,20]",
+      "output": "210",
+      "expectedOutput": "210",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[50,2]",
+      "output": "50",
+      "expectedOutput": "50",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[2,50]",
+      "output": "50",
+      "expectedOutput": "50",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[9,9]",
+      "output": "12870",
+      "expectedOutput": "12870",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[1,1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[17,17]",
+      "output": "601080390",
+      "expectedOutput": "601080390",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "m = 3, n = 7",
+        "output": "28",
+        "expectedOutput": "28",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "m = 3, n = 2",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "From the top-left, the paths are: right,down,down / down,right,down / down,down,right"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "m = 1, n = 1",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": "The robot is already at the destination, so there's exactly one (empty) path."
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[3,7]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[1,5]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[7,3]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[1,100]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[100,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[10,10]",
+        "output": "48620",
+        "expectedOutput": "48620",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[2,2]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[5,5]",
+        "output": "70",
+        "expectedOutput": "70",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[15,15]",
+        "output": "40116600",
+        "expectedOutput": "40116600",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[8,12]",
+        "output": "31824",
+        "expectedOutput": "31824",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[12,8]",
+        "output": "31824",
+        "expectedOutput": "31824",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[20,3]",
+        "output": "210",
+        "expectedOutput": "210",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[3,20]",
+        "output": "210",
+        "expectedOutput": "210",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[50,2]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[2,50]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[9,9]",
+        "output": "12870",
+        "expectedOutput": "12870",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[1,1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[17,17]",
+        "output": "601080390",
+        "expectedOutput": "601080390",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def uniquePaths(self, m, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int uniquePaths(int m, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int uniquePaths(int m, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun uniquePaths(m: Int, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    uniquePaths(m, n) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def uniquePaths(self, m, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int uniquePaths(int m, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int uniquePaths(int m, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun uniquePaths(m: Int, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    uniquePaths(m, n) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def uniquePaths(self, m, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int uniquePaths(int m, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int uniquePaths(int m, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun uniquePaths(m: Int, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    uniquePaths(m, n) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def uniquePaths(self, m, n):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int uniquePaths(int m, int n) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int uniquePaths(int m, int n) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun uniquePaths(m: Int, n: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    uniquePaths(m, n) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n)",
+      "space": "O(m * n), reducible to O(n)",
+      "pattern": "2D dynamic programming over grid coordinates"
+    },
+    "bruteForce": {
+      "approach": "recursively try moving right and down from every cell, counting paths that reach the bottom-right corner",
+      "time": "O(2^(m+n))",
+      "space": "O(m + n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming over grid coordinates",
+    "time": "O(m * n)",
+    "space": "O(m * n), reducible to O(n)",
+    "hint_ladder": [
+      "the robot can only arrive at cell (i, j) from two places - which ones?",
+      "define dp[i][j] as the number of distinct paths from the start to cell (i, j)",
+      "what's the recurrence: dp[i][j] = dp[i-1][j] + dp[i][j-1], since a path reaches (i, j) either from above or from the left",
+      "the first row and first column each only have one possible path (all moves in one direction), so they're your base case, all set to 1",
+      "fill the table row by row and return dp[m-1][n-1]"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try moving right and down from every cell, counting paths that reach the bottom-right corner",
+    "time": "O(2^(m+n))",
+    "space": "O(m + n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

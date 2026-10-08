@@ -1,0 +1,631 @@
+{
+  "id": "valid-anagram",
+  "questionId": "valid-anagram",
+  "slug": "valid-anagram",
+  "title": "Valid Anagram",
+  "difficulty": "Easy",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "frequency counting"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "sorting works but does more work than necessary - do you actually need order?",
+    "what do you really need to compare between the two strings?",
+    "what if you counted how many times each character appears in each string?",
+    "try one frequency map: increment for each char in s, decrement for each char in t, then check all counts are zero"
+  ],
+  "commonMistakes": [
+    "not checking length first, wasting work comparing strings that can't possibly match",
+    "using two separate frequency maps instead of one increment/decrement map (works, but discuss the tradeoff)"
+  ],
+  "content": {
+    "problemStatement": "You're given two strings, `s` and `t`.\n\n**Determine whether `t` is an anagram of `s`, meaning `t` can be formed by rearranging all the letters of `s`, using each letter exactly as many times as it appears in `s`.**\n",
+    "constraints": [
+      "0 <= s.length, t.length <= 5 * 10^4",
+      "s and t consist of lowercase English letters"
+    ],
+    "notes": [
+      "strings of different lengths (always false)",
+      "empty strings (true)",
+      "repeated characters with different counts (e.g. 'aab' vs 'abb')"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"anagram\", t = \"nagaram\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"rat\", t = \"car\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"aab\", t = \"abb\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "s has two a's and one b; t has one a and two b's - different counts"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"anagram\",\"nagaram\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"rat\",\"car\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aab\",\"abb\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab\",\"a\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aabbcc\",\"ccbbaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"listen\",\"silent\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"hello\",\"olleh\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\",\"zyxwvutsrqponmlkjihgfedcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"night\",\"thing\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"conversation\",\"voicesranton\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aaaaaaaaaaaaaaabbbbbbbbbb\",\"bbbbbbbbbbaaaaaaaaaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aabbccddeeffgg\",\"gfedcbagfedcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"mississippi\",\"ipsissimissp\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xyz\",\"xyzz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"112233\",\"332211\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcdabcdabcd\",\"dcbadcbadcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"anagram\", t = \"nagaram\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"rat\", t = \"car\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"aab\", t = \"abb\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "s has two a's and one b; t has one a and two b's - different counts"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"anagram\", t = \"nagaram\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"rat\", t = \"car\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"aab\", t = \"abb\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "s has two a's and one b; t has one a and two b's - different counts"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"anagram\",\"nagaram\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"rat\",\"car\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"aab\",\"abb\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"\",\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"a\",\"a\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"b\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ab\",\"a\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aabbcc\",\"ccbbaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"listen\",\"silent\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"hello\",\"olleh\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"abcdefghijklmnopqrstuvwxyz\",\"zyxwvutsrqponmlkjihgfedcba\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaab\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"night\",\"thing\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"conversation\",\"voicesranton\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"aaaaaaaaaaaaaaabbbbbbbbbb\",\"bbbbbbbbbbaaaaaaaaaaaaaaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"aabbccddeeffgg\",\"gfedcbagfedcba\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"mississippi\",\"ipsissimissp\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"xyz\",\"xyzz\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"112233\",\"332211\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"abcdabcdabcd\",\"dcbadcbadcba\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"anagram\", t = \"nagaram\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"rat\", t = \"car\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"aab\", t = \"abb\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "s has two a's and one b; t has one a and two b's - different counts"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"anagram\",\"nagaram\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"rat\",\"car\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"aab\",\"abb\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"\",\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"b\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab\",\"a\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aabbcc\",\"ccbbaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"listen\",\"silent\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"hello\",\"olleh\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\",\"zyxwvutsrqponmlkjihgfedcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaa\",\"aaaaaaaaaaaaaaaaaaab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"night\",\"thing\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"conversation\",\"voicesranton\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aaaaaaaaaaaaaaabbbbbbbbbb\",\"bbbbbbbbbbaaaaaaaaaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"aabbccddeeffgg\",\"gfedcbagfedcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"mississippi\",\"ipsissimissp\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xyz\",\"xyzz\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"112233\",\"332211\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcdabcdabcd\",\"dcbadcbadcba\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isAnagram(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isAnagram(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isAnagram(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isAnagram(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isAnagram(s, t) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isAnagram(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isAnagram(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isAnagram(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isAnagram(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isAnagram(s, t) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isAnagram(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isAnagram(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isAnagram(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isAnagram(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isAnagram(s, t) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isAnagram(self, s, t):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isAnagram(string s, string t) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isAnagram(String s, String t) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isAnagram(s: String, t: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isAnagram(s, t) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) if alphabet size is fixed (26 letters), else O(n)",
+      "pattern": "hash map / fixed-size array frequency count"
+    },
+    "bruteForce": {
+      "approach": "sort both strings and compare, or for each char in s remove one matching char from a copy of t",
+      "time": "O(n log n) for sort-and-compare",
+      "space": "O(n) for the sorted copies"
+    }
+  },
+  "optimal": {
+    "pattern": "hash map / fixed-size array frequency count",
+    "time": "O(n)",
+    "space": "O(1) if alphabet size is fixed (26 letters), else O(n)",
+    "hint_ladder": [
+      "sorting works but does more work than necessary - do you actually need order?",
+      "what do you really need to compare between the two strings?",
+      "what if you counted how many times each character appears in each string?",
+      "try one frequency map: increment for each char in s, decrement for each char in t, then check all counts are zero"
+    ]
+  },
+  "bruteForce": {
+    "approach": "sort both strings and compare, or for each char in s remove one matching char from a copy of t",
+    "time": "O(n log n) for sort-and-compare",
+    "space": "O(n) for the sorted copies"
+  },
+  "isIndex0": true,
+  "level": null
+}

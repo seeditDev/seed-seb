@@ -1,0 +1,656 @@
+{
+  "id": "unique-paths-ii",
+  "questionId": "unique-paths-ii",
+  "slug": "unique-paths-ii",
+  "title": "Unique Paths II",
+  "difficulty": "Medium",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "grid",
+    "combinatorics"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "this is unique paths, but now some cells are simply unreachable - what should dp[i][j] be for an obstacle cell?",
+    "define dp[i][j] as the number of ways to reach (i, j); if (i, j) is an obstacle, dp[i][j] = 0 no matter what",
+    "otherwise dp[i][j] = dp[i-1][j] + dp[i][j-1], same as the obstacle-free version, treating out-of-bounds neighbors as 0",
+    "the first row and first column aren't automatically all 1s anymore - an obstacle anywhere in them blocks every cell after it in that row/column",
+    "handle the very first cell as a special case: dp[0][0] = 1 unless it's itself an obstacle, in which case the whole answer is 0"
+  ],
+  "commonMistakes": [
+    "assuming the first row and column are always filled with 1s, forgetting an obstacle can block the rest of that row or column",
+    "not checking if the starting cell itself is an obstacle before initializing dp[0][0] = 1",
+    "treating the obstacle value 1 as a path count instead of a marker, and accidentally adding it into the sum"
+  ],
+  "content": {
+    "problemStatement": "A robot starts in the top-left corner of a grid `obstacleGrid` and wants to reach the bottom-right corner, moving only right or down at each step. Some cells contain obstacles marked with a 1, and the robot cannot step on them; free cells are marked with a 0.\n\n**Return the number of distinct paths from the top-left to the bottom-right corner.**\n\nIf the start or the destination cell itself is an obstacle, there are zero valid paths.\n",
+    "constraints": [
+      "1 <= rows <= 100",
+      "1 <= cols <= 100",
+      "obstacleGrid[i][j] is 0 or 1"
+    ],
+    "notes": [
+      "the start cell is an obstacle",
+      "the destination cell is an obstacle",
+      "a single row or single column grid with an obstacle blocking the only path",
+      "a grid with no obstacles at all"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "obstacleGrid = [[0,0,0],[0,1,0],[0,0,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "The obstacle in the middle blocks the straight-through routes, leaving exactly 2 paths around it."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "obstacleGrid = [[0,1],[0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "obstacleGrid = [[1,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "The starting cell itself is an obstacle, so no path is possible."
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,0,0],[0,1,0],[0,0,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,1],[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[0],[0],[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,0,0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0],[0],[0],[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,0,0],[0,0,0],[0,0,1]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,0,1,1,0,0,1,0],[0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0],[0,0,0,1,0,0,0,0],[0,0,0,0,0,0,1,1],[0,0,0,0,0,0,0,0],[0,0,0,1,0,0,1,0],[0,0,0,0,0,0,1,0]]]",
+        "output": "49",
+        "expectedOutput": "49",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]]",
+        "output": "5345",
+        "expectedOutput": "5345",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0],[0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,0,0,0,0]]]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,0,0],[0,0,0],[0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,0,0,1],[0,1,0,0],[0,0,0,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0]]]",
+        "output": "330",
+        "expectedOutput": "330",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,0,0,0,0],[0,1,1,1,0],[0,0,0,1,0],[1,1,0,1,0],[0,0,0,0,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[0,0,0,0,1],[0,0,0,0,1],[0,0,0,0,0],[0,0,1,0,0],[0,0,0,0,1],[0,0,0,0,1],[1,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0]]]",
+        "output": "84",
+        "expectedOutput": "84",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "obstacleGrid = [[0,0,0],[0,1,0],[0,0,0]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "The obstacle in the middle blocks the straight-through routes, leaving exactly 2 paths around it."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "obstacleGrid = [[0,1],[0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "obstacleGrid = [[1,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "The starting cell itself is an obstacle, so no path is possible."
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "obstacleGrid = [[0,0,0],[0,1,0],[0,0,0]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "explanation": "The obstacle in the middle blocks the straight-through routes, leaving exactly 2 paths around it."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "obstacleGrid = [[0,1],[0,0]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "obstacleGrid = [[1,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "The starting cell itself is an obstacle, so no path is possible."
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[0,0,0],[0,1,0],[0,0,0]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[0,1],[0,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[0,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[0],[0],[0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[0,0,0,0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[0],[0],[0],[0]]]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[0,0,0],[0,0,0],[0,0,1]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[0,0,1,1,0,0,1,0],[0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0],[0,0,0,1,0,0,0,0],[0,0,0,0,0,0,1,1],[0,0,0,0,0,0,0,0],[0,0,0,1,0,0,1,0],[0,0,0,0,0,0,1,0]]]",
+      "output": "49",
+      "expectedOutput": "49",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]]",
+      "output": "5345",
+      "expectedOutput": "5345",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,1],[1,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[0,0],[0,0]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0],[0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,0,0,0,0]]]",
+      "output": "28",
+      "expectedOutput": "28",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]]",
+      "output": "36",
+      "expectedOutput": "36",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,0,0],[0,0,0],[0,0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[0,0,0,1],[0,1,0,0],[0,0,0,0]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0]]]",
+      "output": "330",
+      "expectedOutput": "330",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[0,0,0,0,0],[0,1,1,1,0],[0,0,0,1,0],[1,1,0,1,0],[0,0,0,0,0]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[[0,0,0,0,1],[0,0,0,0,1],[0,0,0,0,0],[0,0,1,0,0],[0,0,0,0,1],[0,0,0,0,1],[1,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0]]]",
+      "output": "84",
+      "expectedOutput": "84",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "obstacleGrid = [[0,0,0],[0,1,0],[0,0,0]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "explanation": "The obstacle in the middle blocks the straight-through routes, leaving exactly 2 paths around it."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "obstacleGrid = [[0,1],[0,0]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "obstacleGrid = [[1,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "The starting cell itself is an obstacle, so no path is possible."
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[0,0,0],[0,1,0],[0,0,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[0,1],[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[0],[0],[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[0,0,0,0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[0],[0],[0],[0]]]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[0,0,0],[0,0,0],[0,0,1]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,0,1,1,0,0,1,0],[0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0],[0,0,0,1,0,0,0,0],[0,0,0,0,0,0,1,1],[0,0,0,0,0,0,0,0],[0,0,0,1,0,0,1,0],[0,0,0,0,0,0,1,0]]]",
+        "output": "49",
+        "expectedOutput": "49",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]]]",
+        "output": "5345",
+        "expectedOutput": "5345",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,1],[1,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[0,0],[0,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0],[0,0,0,1,0,0],[0,0,0,0,1,0],[0,0,0,0,0,0]]]",
+        "output": "28",
+        "expectedOutput": "28",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0]]]",
+        "output": "36",
+        "expectedOutput": "36",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,0,0],[0,0,0],[0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[0,0,0,1],[0,1,0,0],[0,0,0,0]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0]]]",
+        "output": "330",
+        "expectedOutput": "330",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[0,0,0,0,0],[0,1,1,1,0],[0,0,0,1,0],[1,1,0,1,0],[0,0,0,0,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[0,0,0,0,1],[0,0,0,0,1],[0,0,0,0,0],[0,0,1,0,0],[0,0,0,0,1],[0,0,0,0,1],[1,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0]]]",
+        "output": "84",
+        "expectedOutput": "84",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def uniquePathsWithObstacles(self, obstacleGrid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int uniquePathsWithObstacles(vector<vector<int>>& obstacleGrid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int uniquePathsWithObstacles(int[][] obstacleGrid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun uniquePathsWithObstacles(obstacleGrid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    uniquePathsWithObstacles(obstacleGrid) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def uniquePathsWithObstacles(self, obstacleGrid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int uniquePathsWithObstacles(vector<vector<int>>& obstacleGrid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int uniquePathsWithObstacles(int[][] obstacleGrid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun uniquePathsWithObstacles(obstacleGrid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    uniquePathsWithObstacles(obstacleGrid) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def uniquePathsWithObstacles(self, obstacleGrid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int uniquePathsWithObstacles(vector<vector<int>>& obstacleGrid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int uniquePathsWithObstacles(int[][] obstacleGrid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun uniquePathsWithObstacles(obstacleGrid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    uniquePathsWithObstacles(obstacleGrid) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def uniquePathsWithObstacles(self, obstacleGrid):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int uniquePathsWithObstacles(vector<vector<int>>& obstacleGrid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int uniquePathsWithObstacles(int[][] obstacleGrid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun uniquePathsWithObstacles(obstacleGrid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    uniquePathsWithObstacles(obstacleGrid) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n)",
+      "space": "O(m * n), reducible to O(n)",
+      "pattern": "2D dynamic programming over grid coordinates with blocked cells"
+    },
+    "bruteForce": {
+      "approach": "recursively explore every right/down move from the current cell, skipping obstacles, and count paths that reach the destination",
+      "time": "O(2^(m+n))",
+      "space": "O(m + n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming over grid coordinates with blocked cells",
+    "time": "O(m * n)",
+    "space": "O(m * n), reducible to O(n)",
+    "hint_ladder": [
+      "this is unique paths, but now some cells are simply unreachable - what should dp[i][j] be for an obstacle cell?",
+      "define dp[i][j] as the number of ways to reach (i, j); if (i, j) is an obstacle, dp[i][j] = 0 no matter what",
+      "otherwise dp[i][j] = dp[i-1][j] + dp[i][j-1], same as the obstacle-free version, treating out-of-bounds neighbors as 0",
+      "the first row and first column aren't automatically all 1s anymore - an obstacle anywhere in them blocks every cell after it in that row/column",
+      "handle the very first cell as a special case: dp[0][0] = 1 unless it's itself an obstacle, in which case the whole answer is 0"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively explore every right/down move from the current cell, skipping obstacles, and count paths that reach the destination",
+    "time": "O(2^(m+n))",
+    "space": "O(m + n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

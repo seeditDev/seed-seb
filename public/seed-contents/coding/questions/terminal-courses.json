@@ -1,0 +1,636 @@
+{
+  "id": "terminal-courses",
+  "questionId": "terminal-courses",
+  "slug": "terminal-courses",
+  "title": "Courses Nothing Depends On",
+  "difficulty": "Easy",
+  "category": "Topological sort",
+  "patterns": [
+    "topological sort",
+    "graph",
+    "out-degree"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "a course is terminal if it never shows up as the second element of any prerequisite pair - how would you track that in one pass?",
+    "make a boolean array of size n, and for every prerequisite pair mark the second element as 'referenced'",
+    "after one pass over all edges, which indices were never marked?",
+    "collect those indices in ascending order - a left-to-right scan over the array already visits them in order"
+  ],
+  "commonMistakes": [
+    "confusing which element of the pair is the dependent course and which is the prerequisite",
+    "forgetting that a self-loop prerequisite marks that course as referenced, excluding it from the result",
+    "not returning the result in ascending order"
+  ],
+  "content": {
+    "problemStatement": "There are `n` courses, labeled 0 to n - 1, and a list of prerequisite pairs `prereqs`, where each pair [a, b] means course a requires course b to be completed first (so b is a prerequisite for a).\n\n**Return, in ascending order, every course that is never listed as a prerequisite for any other course, meaning nothing depends on it.**\n",
+    "constraints": [
+      "1 <= n <= 2000",
+      "0 <= prerequisites.length <= 5000",
+      "prerequisites[i].length == 2",
+      "0 <= a, b < n for each [a, b] in prerequisites"
+    ],
+    "notes": [
+      "no prerequisite edges at all - every course is terminal",
+      "a self-loop prerequisite like [0, 0] means that course IS listed as a prerequisite (of itself), so it's not terminal",
+      "a course that is a prerequisite for several other courses at once",
+      "a straight dependency chain, where only the very last course in the chain is terminal"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4, prereqs = [[1, 0], [2, 0], [3, 1]]",
+        "output": "[2, 3]",
+        "expectedOutput": "[2, 3]",
+        "explanation": "course 0 is a prerequisite for 1 and 2, and course 1 is a prerequisite for 3; courses 2 and 3 are never a prerequisite for anything"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, prereqs = []",
+        "output": "[0, 1, 2]",
+        "expectedOutput": "[0, 1, 2]",
+        "explanation": "with no prerequisite pairs at all, no course is ever required by another"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 5, prereqs = [[2, 0], [2, 1], [4, 3]]",
+        "output": "[2, 4]",
+        "expectedOutput": "[2, 4]",
+        "explanation": "courses 0, 1, and 3 are each a prerequisite for something; courses 2 and 4 are not"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[4,[[1,0],[2,0],[3,1]]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[5,[[2,0],[2,1],[4,3]]]",
+        "output": "[2,4]",
+        "expectedOutput": "[2,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[3,[[0,0],[1,0]]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[4,[[1,0],[2,1],[3,2]]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[10,[[1,0],[2,0],[3,1],[4,1],[5,2]]]",
+        "output": "[3,4,5,6,7,8,9]",
+        "expectedOutput": "[3,4,5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6,[[0,0],[1,1],[2,2]]]",
+        "output": "[3,4,5]",
+        "expectedOutput": "[3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8,[[1,0],[1,0],[2,0],[3,2]]]",
+        "output": "[1,3,4,5,6,7]",
+        "expectedOutput": "[1,3,4,5,6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[20,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18]]]",
+        "output": "[19]",
+        "expectedOutput": "[19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[1,[[0,0]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[15,[]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[3,[]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[9,[[1,0],[1,0],[2,0],[3,0],[4,3]]]",
+        "output": "[1,2,4,5,6,7,8]",
+        "expectedOutput": "[1,2,4,5,6,7,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[25,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18],[20,19],[21,20],[22,21],[23,22],[24,23]]]",
+        "output": "[24]",
+        "expectedOutput": "[24]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[7,[[0,1],[2,3],[4,5]]]",
+        "output": "[0,2,4,6]",
+        "expectedOutput": "[0,2,4,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[4,[[0,0],[1,1],[2,2],[3,3]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[2,[[0,1]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[12,[[6,5],[7,6],[8,7],[9,8],[10,9],[11,10]]]",
+        "output": "[0,1,2,3,4,11]",
+        "expectedOutput": "[0,1,2,3,4,11]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[5,[[1,0],[2,0],[3,0],[4,0]]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[16,[[3,1],[3,2],[7,5],[7,6],[11,9],[11,10]]]",
+        "output": "[0,3,4,7,8,11,12,13,14,15]",
+        "expectedOutput": "[0,3,4,7,8,11,12,13,14,15]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4, prereqs = [[1, 0], [2, 0], [3, 1]]",
+      "output": "[2, 3]",
+      "expectedOutput": "[2, 3]",
+      "explanation": "course 0 is a prerequisite for 1 and 2, and course 1 is a prerequisite for 3; courses 2 and 3 are never a prerequisite for anything"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, prereqs = []",
+      "output": "[0, 1, 2]",
+      "expectedOutput": "[0, 1, 2]",
+      "explanation": "with no prerequisite pairs at all, no course is ever required by another"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 5, prereqs = [[2, 0], [2, 1], [4, 3]]",
+      "output": "[2, 4]",
+      "expectedOutput": "[2, 4]",
+      "explanation": "courses 0, 1, and 3 are each a prerequisite for something; courses 2 and 4 are not"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "n = 4, prereqs = [[1, 0], [2, 0], [3, 1]]",
+      "output": "[2, 3]",
+      "expectedOutput": "[2, 3]",
+      "explanation": "course 0 is a prerequisite for 1 and 2, and course 1 is a prerequisite for 3; courses 2 and 3 are never a prerequisite for anything"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "n = 3, prereqs = []",
+      "output": "[0, 1, 2]",
+      "expectedOutput": "[0, 1, 2]",
+      "explanation": "with no prerequisite pairs at all, no course is ever required by another"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "n = 5, prereqs = [[2, 0], [2, 1], [4, 3]]",
+      "output": "[2, 4]",
+      "expectedOutput": "[2, 4]",
+      "explanation": "courses 0, 1, and 3 are each a prerequisite for something; courses 2 and 4 are not"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[4,[[1,0],[2,0],[3,1]]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[3,[]]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[5,[[2,0],[2,1],[4,3]]]",
+      "output": "[2,4]",
+      "expectedOutput": "[2,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[3,[[0,0],[1,0]]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[4,[[1,0],[2,1],[3,2]]]",
+      "output": "[3]",
+      "expectedOutput": "[3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[10,[[1,0],[2,0],[3,1],[4,1],[5,2]]]",
+      "output": "[3,4,5,6,7,8,9]",
+      "expectedOutput": "[3,4,5,6,7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[6,[[0,0],[1,1],[2,2]]]",
+      "output": "[3,4,5]",
+      "expectedOutput": "[3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[8,[[1,0],[1,0],[2,0],[3,2]]]",
+      "output": "[1,3,4,5,6,7]",
+      "expectedOutput": "[1,3,4,5,6,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[20,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18]]]",
+      "output": "[19]",
+      "expectedOutput": "[19]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[1,[[0,0]]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[15,[]]",
+      "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+      "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[3,[]]",
+      "output": "[0,1,2]",
+      "expectedOutput": "[0,1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[9,[[1,0],[1,0],[2,0],[3,0],[4,3]]]",
+      "output": "[1,2,4,5,6,7,8]",
+      "expectedOutput": "[1,2,4,5,6,7,8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[25,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18],[20,19],[21,20],[22,21],[23,22],[24,23]]]",
+      "output": "[24]",
+      "expectedOutput": "[24]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[7,[[0,1],[2,3],[4,5]]]",
+      "output": "[0,2,4,6]",
+      "expectedOutput": "[0,2,4,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[4,[[0,0],[1,1],[2,2],[3,3]]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[2,[[0,1]]]",
+      "output": "[0]",
+      "expectedOutput": "[0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[12,[[6,5],[7,6],[8,7],[9,8],[10,9],[11,10]]]",
+      "output": "[0,1,2,3,4,11]",
+      "expectedOutput": "[0,1,2,3,4,11]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[5,[[1,0],[2,0],[3,0],[4,0]]]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[16,[[3,1],[3,2],[7,5],[7,6],[11,9],[11,10]]]",
+      "output": "[0,3,4,7,8,11,12,13,14,15]",
+      "expectedOutput": "[0,3,4,7,8,11,12,13,14,15]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "n = 4, prereqs = [[1, 0], [2, 0], [3, 1]]",
+        "output": "[2, 3]",
+        "expectedOutput": "[2, 3]",
+        "explanation": "course 0 is a prerequisite for 1 and 2, and course 1 is a prerequisite for 3; courses 2 and 3 are never a prerequisite for anything"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "n = 3, prereqs = []",
+        "output": "[0, 1, 2]",
+        "expectedOutput": "[0, 1, 2]",
+        "explanation": "with no prerequisite pairs at all, no course is ever required by another"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "n = 5, prereqs = [[2, 0], [2, 1], [4, 3]]",
+        "output": "[2, 4]",
+        "expectedOutput": "[2, 4]",
+        "explanation": "courses 0, 1, and 3 are each a prerequisite for something; courses 2 and 4 are not"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[4,[[1,0],[2,0],[3,1]]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[3,[]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[5,[[2,0],[2,1],[4,3]]]",
+        "output": "[2,4]",
+        "expectedOutput": "[2,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[3,[[0,0],[1,0]]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[4,[[1,0],[2,1],[3,2]]]",
+        "output": "[3]",
+        "expectedOutput": "[3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[10,[[1,0],[2,0],[3,1],[4,1],[5,2]]]",
+        "output": "[3,4,5,6,7,8,9]",
+        "expectedOutput": "[3,4,5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[6,[[0,0],[1,1],[2,2]]]",
+        "output": "[3,4,5]",
+        "expectedOutput": "[3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[8,[[1,0],[1,0],[2,0],[3,2]]]",
+        "output": "[1,3,4,5,6,7]",
+        "expectedOutput": "[1,3,4,5,6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[20,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18]]]",
+        "output": "[19]",
+        "expectedOutput": "[19]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[1,[[0,0]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[15,[]]",
+        "output": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "expectedOutput": "[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[3,[]]",
+        "output": "[0,1,2]",
+        "expectedOutput": "[0,1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[9,[[1,0],[1,0],[2,0],[3,0],[4,3]]]",
+        "output": "[1,2,4,5,6,7,8]",
+        "expectedOutput": "[1,2,4,5,6,7,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[25,[[1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13],[15,14],[16,15],[17,16],[18,17],[19,18],[20,19],[21,20],[22,21],[23,22],[24,23]]]",
+        "output": "[24]",
+        "expectedOutput": "[24]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[7,[[0,1],[2,3],[4,5]]]",
+        "output": "[0,2,4,6]",
+        "expectedOutput": "[0,2,4,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[4,[[0,0],[1,1],[2,2],[3,3]]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[2,[[0,1]]]",
+        "output": "[0]",
+        "expectedOutput": "[0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[12,[[6,5],[7,6],[8,7],[9,8],[10,9],[11,10]]]",
+        "output": "[0,1,2,3,4,11]",
+        "expectedOutput": "[0,1,2,3,4,11]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[5,[[1,0],[2,0],[3,0],[4,0]]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[16,[[3,1],[3,2],[7,5],[7,6],[11,9],[11,10]]]",
+        "output": "[0,3,4,7,8,11,12,13,14,15]",
+        "expectedOutput": "[0,3,4,7,8,11,12,13,14,15]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def terminalCourses(self, n, prereqs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> terminalCourses(int n, vector<vector<int>>& prereqs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] terminalCourses(int n, int[][] prereqs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun terminalCourses(n: Int, prereqs: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    terminalCourses(n, prereqs) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def terminalCourses(self, n, prereqs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> terminalCourses(int n, vector<vector<int>>& prereqs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] terminalCourses(int n, int[][] prereqs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun terminalCourses(n: Int, prereqs: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    terminalCourses(n, prereqs) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def terminalCourses(self, n, prereqs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> terminalCourses(int n, vector<vector<int>>& prereqs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] terminalCourses(int n, int[][] prereqs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun terminalCourses(n: Int, prereqs: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    terminalCourses(n, prereqs) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def terminalCourses(self, n, prereqs):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> terminalCourses(int n, vector<vector<int>>& prereqs) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] terminalCourses(int n, int[][] prereqs) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun terminalCourses(n: Int, prereqs: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    terminalCourses(n, prereqs) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n + m)",
+      "space": "O(n)",
+      "pattern": "one pass to mark every index that is ever referenced as a prerequisite, then collect every unmarked index"
+    },
+    "bruteForce": {
+      "approach": "for every course, scan the entire prereqs list to check whether it ever appears as the prerequisite (second) element of a pair",
+      "time": "O(n * m)",
+      "space": "O(1) beyond the output"
+    }
+  },
+  "optimal": {
+    "pattern": "one pass to mark every index that is ever referenced as a prerequisite, then collect every unmarked index",
+    "time": "O(n + m)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "a course is terminal if it never shows up as the second element of any prerequisite pair - how would you track that in one pass?",
+      "make a boolean array of size n, and for every prerequisite pair mark the second element as 'referenced'",
+      "after one pass over all edges, which indices were never marked?",
+      "collect those indices in ascending order - a left-to-right scan over the array already visits them in order"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for every course, scan the entire prereqs list to check whether it ever appears as the prerequisite (second) element of a pair",
+    "time": "O(n * m)",
+    "space": "O(1) beyond the output"
+  },
+  "isIndex0": true,
+  "level": null
+}

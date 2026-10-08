@@ -1,0 +1,705 @@
+{
+  "id": "word-ladder",
+  "questionId": "word-ladder",
+  "slug": "word-ladder",
+  "title": "Word Ladder",
+  "difficulty": "Hard",
+  "category": "Graphs",
+  "patterns": [
+    "graph",
+    "bfs",
+    "shortest path",
+    "string"
+  ],
+  "lists": [
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "this is shortest path in disguise - what connects two 'nodes' (words) with an edge here?",
+    "put wordList into a hash set first so checking whether a candidate word is valid is O(1) instead of scanning a list",
+    "from the current word, generate every possible one-letter substitution (L positions times 25 other letters) and check which ones are in the word set and unvisited",
+    "BFS from beginWord, tracking the sequence length as the BFS depth (starting at 1 for beginWord itself), and return the depth as soon as you dequeue endWord",
+    "if the queue empties without ever reaching endWord, or endWord was never in wordList to begin with, return 0"
+  ],
+  "commonMistakes": [
+    "not checking membership of endWord in wordList upfront, and instead searching forever, or crashing, when it's simply absent",
+    "regenerating candidate words by scanning wordList for a match instead of generating all L * 26 substitutions directly and checking set membership",
+    "not marking words as visited, causing the BFS to revisit the same word through multiple paths and blow up in time",
+    "returning the number of transformation steps (edges) instead of the number of words (nodes) in the sequence, which is off by one",
+    "using DFS and returning the first path found instead of guaranteeing the shortest one via BFS"
+  ],
+  "content": {
+    "problemStatement": "You're given two words, `beginWord` and `endWord`, both the same length, and a dictionary of words (given as a single space-delimited string, `wordList`). A transformation sequence from `beginWord` to `endWord` is a sequence of words beginWord -> w1 -> w2 -> ... -> endWord where each adjacent pair of words differs in exactly one letter position, and every word in the sequence after `beginWord` (including `endWord`) must appear in `wordList`.\n\n**Return the number of words in the shortest such transformation sequence, counting both `beginWord` and `endWord`.**\n\nIf no such sequence exists, or `endWord` is not in `wordList` at all, return 0.\n",
+    "constraints": [
+      "1 <= beginWord.length <= 10",
+      "endWord.length == beginWord.length",
+      "1 <= number of words in wordList <= 5000",
+      "every word in wordList has the same length as beginWord",
+      "beginWord, endWord, and all words in wordList consist of lowercase English letters only",
+      "beginWord != endWord, and all the words in wordList are distinct"
+    ],
+    "notes": [
+      "endWord is not present in wordList at all (immediately impossible)",
+      "beginWord and endWord differ by exactly one letter, giving the shortest possible non-trivial sequence",
+      "a wordList that looks promising but the actual letter-by-letter graph has no path connecting begin to end",
+      "beginWord itself happens to also appear in wordList (it still doesn't need to, but it's harmless if it does)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "beginWord = \"hit\", endWord = \"cog\", wordList = \"hot dot dog lot log cog\"",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "one shortest sequence is \"hit\" -> \"hot\" -> \"dot\" -> \"dog\" -> \"cog\", which has 5 words"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "beginWord = \"hot\", endWord = \"dog\", wordList = \"hot dog dot\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "\"hot\" -> \"dot\" -> \"dog\", 3 words. \"hot\" and \"dog\" differ in two letters so they cannot be adjacent directly"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "beginWord = \"hit\", endWord = \"cog\", wordList = \"hot dot dog lot log\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "\"cog\" is not in wordList, so no valid sequence can end there"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"hit\",\"cog\",\"hot dot dog lot log cog\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"hit\",\"cog\",\"hot dot dog lot log\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\",\"c\",\"a b c\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"hot\",\"dog\",\"hot dog\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"hot\",\"dog\",\"hot dog dot\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"cat\",\"dog\",\"cat cot cog dog\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"qa\",\"sq\",\"si go se cf jr lb hb mr do jt kt du of ts zz sq aq to tq db bs dc bb bg pw kb sr yy oo\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"leet\",\"code\",\"lest lost lose lome\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"same\",\"cost\",\"same cast cost\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaa\",\"zzz\",\"aaz azz zzz\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"word\",\"play\",\"word ward wart part park play\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"stone\",\"stole\",\"stole stane\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"start\",\"finish\",\"start stare stire stize fizze finish\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"dog\",\"cat\",\"dot cot cat dog\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"cog\",\"hit\",\"cog dog dot hot hit\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"cold\",\"warm\",\"cord word ward warm\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"ab\",\"cd\",\"ab ad cd\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"ab\",\"cd\",\"ab cd\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abc\",\"def\",\"abd acd aef abf abe adf def\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"mist\",\"fold\",\"most fost fold\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"black\",\"white\",\"block clock\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"plain\",\"train\",\"slain stain strain\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"toon\",\"poet\",\"ton pon poet poon\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "beginWord = \"hit\", endWord = \"cog\", wordList = \"hot dot dog lot log cog\"",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "one shortest sequence is \"hit\" -> \"hot\" -> \"dot\" -> \"dog\" -> \"cog\", which has 5 words"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "beginWord = \"hot\", endWord = \"dog\", wordList = \"hot dog dot\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "\"hot\" -> \"dot\" -> \"dog\", 3 words. \"hot\" and \"dog\" differ in two letters so they cannot be adjacent directly"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "beginWord = \"hit\", endWord = \"cog\", wordList = \"hot dot dog lot log\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "\"cog\" is not in wordList, so no valid sequence can end there"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "beginWord = \"hit\", endWord = \"cog\", wordList = \"hot dot dog lot log cog\"",
+      "output": "5",
+      "expectedOutput": "5",
+      "explanation": "one shortest sequence is \"hit\" -> \"hot\" -> \"dot\" -> \"dog\" -> \"cog\", which has 5 words"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "beginWord = \"hot\", endWord = \"dog\", wordList = \"hot dog dot\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "\"hot\" -> \"dot\" -> \"dog\", 3 words. \"hot\" and \"dog\" differ in two letters so they cannot be adjacent directly"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "beginWord = \"hit\", endWord = \"cog\", wordList = \"hot dot dog lot log\"",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "\"cog\" is not in wordList, so no valid sequence can end there"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"hit\",\"cog\",\"hot dot dog lot log cog\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"hit\",\"cog\",\"hot dot dog lot log\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a\",\"c\",\"a b c\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"hot\",\"dog\",\"hot dog\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"hot\",\"dog\",\"hot dog dot\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"cat\",\"dog\",\"cat cot cog dog\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"qa\",\"sq\",\"si go se cf jr lb hb mr do jt kt du of ts zz sq aq to tq db bs dc bb bg pw kb sr yy oo\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"leet\",\"code\",\"lest lost lose lome\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"same\",\"cost\",\"same cast cost\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aaa\",\"zzz\",\"aaz azz zzz\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"word\",\"play\",\"word ward wart part park play\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"stone\",\"stole\",\"stole stane\"]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"start\",\"finish\",\"start stare stire stize fizze finish\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"dog\",\"cat\",\"dot cot cat dog\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"cog\",\"hit\",\"cog dog dot hot hit\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"cold\",\"warm\",\"cord word ward warm\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"ab\",\"cd\",\"ab ad cd\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"ab\",\"cd\",\"ab cd\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abc\",\"def\",\"abd acd aef abf abe adf def\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"mist\",\"fold\",\"most fost fold\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"black\",\"white\",\"block clock\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"plain\",\"train\",\"slain stain strain\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[\"toon\",\"poet\",\"ton pon poet poon\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "beginWord = \"hit\", endWord = \"cog\", wordList = \"hot dot dog lot log cog\"",
+        "output": "5",
+        "expectedOutput": "5",
+        "explanation": "one shortest sequence is \"hit\" -> \"hot\" -> \"dot\" -> \"dog\" -> \"cog\", which has 5 words"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "beginWord = \"hot\", endWord = \"dog\", wordList = \"hot dog dot\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "\"hot\" -> \"dot\" -> \"dog\", 3 words. \"hot\" and \"dog\" differ in two letters so they cannot be adjacent directly"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "beginWord = \"hit\", endWord = \"cog\", wordList = \"hot dot dog lot log\"",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "\"cog\" is not in wordList, so no valid sequence can end there"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"hit\",\"cog\",\"hot dot dog lot log cog\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"hit\",\"cog\",\"hot dot dog lot log\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\",\"c\",\"a b c\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"hot\",\"dog\",\"hot dog\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"hot\",\"dog\",\"hot dog dot\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"cat\",\"dog\",\"cat cot cog dog\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"qa\",\"sq\",\"si go se cf jr lb hb mr do jt kt du of ts zz sq aq to tq db bs dc bb bg pw kb sr yy oo\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"leet\",\"code\",\"lest lost lose lome\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"same\",\"cost\",\"same cast cost\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaa\",\"zzz\",\"aaz azz zzz\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"word\",\"play\",\"word ward wart part park play\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"stone\",\"stole\",\"stole stane\"]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"start\",\"finish\",\"start stare stire stize fizze finish\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"dog\",\"cat\",\"dot cot cat dog\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"cog\",\"hit\",\"cog dog dot hot hit\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"cold\",\"warm\",\"cord word ward warm\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"ab\",\"cd\",\"ab ad cd\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"ab\",\"cd\",\"ab cd\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abc\",\"def\",\"abd acd aef abf abe adf def\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"mist\",\"fold\",\"most fost fold\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"black\",\"white\",\"block clock\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"plain\",\"train\",\"slain stain strain\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"toon\",\"poet\",\"ton pon poet poon\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def ladderLength(self, beginWord, endWord, wordList):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\n#include <unordered_set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int ladderLength(string beginWord, string endWord, string wordList) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int ladderLength(String beginWord, String endWord, String wordList) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun ladderLength(beginWord: String, endWord: String, wordList: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    ladderLength(beginWord, endWord, wordList) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def ladderLength(self, beginWord, endWord, wordList):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\n#include <unordered_set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int ladderLength(string beginWord, string endWord, string wordList) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int ladderLength(String beginWord, String endWord, String wordList) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun ladderLength(beginWord: String, endWord: String, wordList: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    ladderLength(beginWord, endWord, wordList) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def ladderLength(self, beginWord, endWord, wordList):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\n#include <unordered_set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int ladderLength(string beginWord, string endWord, string wordList) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int ladderLength(String beginWord, String endWord, String wordList) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun ladderLength(beginWord: String, endWord: String, wordList: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    ladderLength(beginWord, endWord, wordList) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def ladderLength(self, beginWord, endWord, wordList):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\n#include <unordered_set>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    int ladderLength(string beginWord, string endWord, string wordList) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int ladderLength(String beginWord, String endWord, String wordList) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun ladderLength(beginWord: String, endWord: String, wordList: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    ladderLength(beginWord, endWord, wordList) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(N * L^2 * 26) where N is the number of words in wordList and L is the word length, since each BFS step tries changing each of L positions to each of 26 letters",
+      "space": "O(N) for the word set and visited set",
+      "pattern": "BFS shortest path over an implicit graph where nodes are words and an edge connects two words that differ in exactly one letter"
+    },
+    "bruteForce": {
+      "approach": "explore every possible sequence of one-letter substitutions from beginWord via DFS/backtracking, checking each candidate word against wordList, tracking the shortest sequence that reaches endWord",
+      "time": "O(26^L) in the worst case, where L is the word length, due to massive redundant re-exploration",
+      "space": "O(L) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "BFS shortest path over an implicit graph where nodes are words and an edge connects two words that differ in exactly one letter",
+    "time": "O(N * L^2 * 26) where N is the number of words in wordList and L is the word length, since each BFS step tries changing each of L positions to each of 26 letters",
+    "space": "O(N) for the word set and visited set",
+    "hint_ladder": [
+      "this is shortest path in disguise - what connects two 'nodes' (words) with an edge here?",
+      "put wordList into a hash set first so checking whether a candidate word is valid is O(1) instead of scanning a list",
+      "from the current word, generate every possible one-letter substitution (L positions times 25 other letters) and check which ones are in the word set and unvisited",
+      "BFS from beginWord, tracking the sequence length as the BFS depth (starting at 1 for beginWord itself), and return the depth as soon as you dequeue endWord",
+      "if the queue empties without ever reaching endWord, or endWord was never in wordList to begin with, return 0"
+    ]
+  },
+  "bruteForce": {
+    "approach": "explore every possible sequence of one-letter substitutions from beginWord via DFS/backtracking, checking each candidate word against wordList, tracking the shortest sequence that reaches endWord",
+    "time": "O(26^L) in the worst case, where L is the word length, due to massive redundant re-exploration",
+    "space": "O(L) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

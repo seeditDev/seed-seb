@@ -1,0 +1,633 @@
+{
+  "id": "search-in-rotated-sorted-array",
+  "questionId": "search-in-rotated-sorted-array",
+  "slug": "search-in-rotated-sorted-array",
+  "title": "Search in Rotated Sorted Array",
+  "difficulty": "Medium",
+  "category": "Binary search",
+  "patterns": [
+    "binary search"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "even though the whole array isn't sorted, at any binary search step, at least one of the two halves around mid IS fully sorted - can you tell which one?",
+    "compare nums[left] to nums[mid]: if nums[left] <= nums[mid], the left half is sorted; otherwise the right half is sorted",
+    "once you know which half is sorted, you can check with a plain range comparison whether target could be in that sorted half",
+    "if target is in the sorted half's range, search there; otherwise the target (if it exists) must be in the other half - search that instead"
+  ],
+  "commonMistakes": [
+    "trying to first find the rotation pivot in a separate pass, then binary searching, which is more complex than needed",
+    "using <= vs < inconsistently when deciding which half is sorted, mishandling the case where left == mid",
+    "not handling the fully-non-rotated case (already sorted) as just a special case of the same logic"
+  ],
+  "content": {
+    "problemStatement": "An array of distinct integers, originally sorted in ascending order, has\nbeen rotated an unknown number of positions to the right, so it's still\nmade of two sorted runs joined together.\n\n**Given the rotated array and a target value, return the index of the target, or -1 if it isn't present.**\n\nYour solution must run faster than a plain linear scan.\n",
+    "constraints": [
+      "1 <= nums.length <= 5000",
+      "-10^4 <= nums[i] <= 10^4",
+      "all values in nums are unique",
+      "-10^4 <= target <= 10^4"
+    ],
+    "notes": [
+      "array is not rotated at all (pivot at index 0)",
+      "target is exactly at the rotation point",
+      "single-element array"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [4, 5, 6, 7, 0, 1, 2], target = 0",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the array was [0,1,2,4,5,6,7] rotated so it wraps at index 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [4, 5, 6, 7, 0, 1, 2], target = 3",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "3 doesn't appear anywhere in the array"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1], target = 0",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[4,5,6,7,0,1,2],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[4,5,6,7,0,1,2],3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],0]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5,1,3],5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5,6,7],4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5,6,7],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7],7]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7],8]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[7,1,2,3,4,5,6],7]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,3,4,5,6,7,1],1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,6,7,1,2,3,4],6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,6,7,1,2,3,4],9]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[9],9]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1],2]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[3,1],3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],5]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],35]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],50]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [4, 5, 6, 7, 0, 1, 2], target = 0",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the array was [0,1,2,4,5,6,7] rotated so it wraps at index 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [4, 5, 6, 7, 0, 1, 2], target = 3",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "3 doesn't appear anywhere in the array"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1], target = 0",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [4, 5, 6, 7, 0, 1, 2], target = 0",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "the array was [0,1,2,4,5,6,7] rotated so it wraps at index 4"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [4, 5, 6, 7, 0, 1, 2], target = 3",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "3 doesn't appear anywhere in the array"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1], target = 0",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[4,5,6,7,0,1,2],0]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[4,5,6,7,0,1,2],3]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1],0]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1],1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[5,1,3],5]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3,4,5,6,7],4]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4,5,6,7],1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,2,3,4,5,6,7],7]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5,6,7],8]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[7,1,2,3,4,5,6],7]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,3,4,5,6,7,1],1]",
+      "output": "6",
+      "expectedOutput": "6",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[5,6,7,1,2,3,4],6]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[5,6,7,1,2,3,4],9]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[9],9]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1],2]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[3,1],1]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[3,1],3]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],5]",
+      "output": "25",
+      "expectedOutput": "25",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],35]",
+      "output": "15",
+      "expectedOutput": "15",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],50]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [4, 5, 6, 7, 0, 1, 2], target = 0",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "the array was [0,1,2,4,5,6,7] rotated so it wraps at index 4"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [4, 5, 6, 7, 0, 1, 2], target = 3",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "3 doesn't appear anywhere in the array"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1], target = 0",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[4,5,6,7,0,1,2],0]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[4,5,6,7,0,1,2],3]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],0]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[5,1,3],5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3,4,5,6,7],4]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4,5,6,7],1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,2,3,4,5,6,7],7]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7],8]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[7,1,2,3,4,5,6],7]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,3,4,5,6,7,1],1]",
+        "output": "6",
+        "expectedOutput": "6",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,6,7,1,2,3,4],6]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[5,6,7,1,2,3,4],9]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[9],9]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1],2]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[3,1],1]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[3,1],3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],5]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],35]",
+        "output": "15",
+        "expectedOutput": "15",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],50]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def searchRotated(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int searchRotated(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int searchRotated(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchRotated(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchRotated(nums, target) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def searchRotated(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int searchRotated(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int searchRotated(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchRotated(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchRotated(nums, target) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def searchRotated(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int searchRotated(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int searchRotated(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchRotated(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchRotated(nums, target) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def searchRotated(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int searchRotated(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int searchRotated(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun searchRotated(nums: IntArray, target: Int): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    searchRotated(nums, target) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(log n)",
+      "space": "O(1)",
+      "pattern": "modified binary search that first figures out which half of the current range is sorted, then checks whether target falls inside that sorted half"
+    },
+    "bruteForce": {
+      "approach": "linear scan checking every element against target",
+      "time": "O(n)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "modified binary search that first figures out which half of the current range is sorted, then checks whether target falls inside that sorted half",
+    "time": "O(log n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "even though the whole array isn't sorted, at any binary search step, at least one of the two halves around mid IS fully sorted - can you tell which one?",
+      "compare nums[left] to nums[mid]: if nums[left] <= nums[mid], the left half is sorted; otherwise the right half is sorted",
+      "once you know which half is sorted, you can check with a plain range comparison whether target could be in that sorted half",
+      "if target is in the sorted half's range, search there; otherwise the target (if it exists) must be in the other half - search that instead"
+    ]
+  },
+  "bruteForce": {
+    "approach": "linear scan checking every element against target",
+    "time": "O(n)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,742 @@
+{
+  "id": "string-to-integer",
+  "questionId": "string-to-integer",
+  "slug": "string-to-integer",
+  "title": "String to Integer (atoi)",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "strings",
+    "simulation"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "walk through the string with one index, in the exact order the spec describes: whitespace first, then an optional sign, then digits",
+    "stop consuming digits the moment you hit a non-digit character, and simply ignore everything after that, don't treat it as an error",
+    "build up the numeric value one digit at a time (value = value * 10 + digit) rather than slicing and using a builtin parser, so you can catch overflow as it happens instead of after the fact",
+    "check for overflow before it happens: if continuing to multiply by 10 and add a digit would exceed INT_MAX (or go below INT_MIN once negative), clamp immediately and stop",
+    "the only two ways to return 0 are an empty digit run (nothing but whitespace, only a sign, or garbage right away) - everything else produces some valid clamped number"
+  ],
+  "commonMistakes": [
+    "using the language's built-in integer parser directly on a substring and letting it throw or silently misbehave on overflow instead of clamping to the 32-bit range",
+    "accepting more than one sign character or a sign appearing after digits have already started",
+    "not stopping at the first non-digit character and instead trying to also parse things like a following decimal point or exponent",
+    "computing the full big-integer value first and clamping only at the very end, which overflows the language's native integer type for very long digit runs",
+    "forgetting the case where whitespace or a lone sign is followed by no digits at all, which must return 0"
+  ],
+  "content": {
+    "problemStatement": "Implement a function that mimics the behavior of the C-style atoi\nfunction: it converts a string to a 32-bit signed integer.\n\n**Skip any leading whitespace, then optionally consume a single '+' or '-' sign, then consume as many consecutive digits as possible to form the number's magnitude, then ignore all remaining characters and return the resulting value.**\n\nIf there are no digits to consume, the conversion fails and you should return 0. If the resulting number is outside the 32-bit signed integer range [-2147483648, 2147483647], clamp it to that range.\n",
+    "constraints": [
+      "0 <= s.length <= 200",
+      "s consists of English letters, digits, ' ', '+', '-', and '.'",
+      "the result must be clamped to the 32-bit signed integer range [-2147483648, 2147483647]"
+    ],
+    "notes": [
+      "a string with no digits at all (return 0)",
+      "a number that overflows the 32-bit signed range in either direction (clamp it)",
+      "a sign character with no digits following it (return 0)",
+      "leading zeros before the significant digits",
+      "an empty string or a string of only whitespace"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"42\"",
+        "output": "42",
+        "expectedOutput": "42",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"   -42\"",
+        "output": "-42",
+        "expectedOutput": "-42",
+        "explanation": "leading whitespace is skipped, then the minus sign and digits are read"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"4193 with words\"",
+        "output": "4193",
+        "expectedOutput": "4193",
+        "explanation": "digit reading stops at the first non-digit character, and everything after is ignored"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"42\"]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"   -42\"]",
+        "output": "-42",
+        "expectedOutput": "-42",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"4193 with words\"]",
+        "output": "4193",
+        "expectedOutput": "4193",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"words and 987\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"-91283472332\"]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"91283472332\"]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"3.14159\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"+1\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"  +1\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"   \"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"  0000000000012345678\"]",
+        "output": "12345678",
+        "expectedOutput": "12345678",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"-000000000000001\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"+-2\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"  -0012a42\"]",
+        "output": "-12",
+        "expectedOutput": "-12",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"2147483647\"]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"2147483648\"]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"-2147483648\"]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"-2147483649\"]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"9999999999999999999\"]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"-9999999999999999999\"]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"  hello42\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"42abc\"]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[\"   +0 123\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[\"0032\"]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"42\"",
+      "output": "42",
+      "expectedOutput": "42",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"   -42\"",
+      "output": "-42",
+      "expectedOutput": "-42",
+      "explanation": "leading whitespace is skipped, then the minus sign and digits are read"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"4193 with words\"",
+      "output": "4193",
+      "expectedOutput": "4193",
+      "explanation": "digit reading stops at the first non-digit character, and everything after is ignored"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"42\"",
+      "output": "42",
+      "expectedOutput": "42",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"   -42\"",
+      "output": "-42",
+      "expectedOutput": "-42",
+      "explanation": "leading whitespace is skipped, then the minus sign and digits are read"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"4193 with words\"",
+      "output": "4193",
+      "expectedOutput": "4193",
+      "explanation": "digit reading stops at the first non-digit character, and everything after is ignored"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"42\"]",
+      "output": "42",
+      "expectedOutput": "42",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"   -42\"]",
+      "output": "-42",
+      "expectedOutput": "-42",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"4193 with words\"]",
+      "output": "4193",
+      "expectedOutput": "4193",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"words and 987\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"-91283472332\"]",
+      "output": "-2147483648",
+      "expectedOutput": "-2147483648",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"91283472332\"]",
+      "output": "2147483647",
+      "expectedOutput": "2147483647",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"3.14159\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"+1\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"  +1\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"   \"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"  0000000000012345678\"]",
+      "output": "12345678",
+      "expectedOutput": "12345678",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"-000000000000001\"]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"+-2\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"  -0012a42\"]",
+      "output": "-12",
+      "expectedOutput": "-12",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"2147483647\"]",
+      "output": "2147483647",
+      "expectedOutput": "2147483647",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"2147483648\"]",
+      "output": "2147483647",
+      "expectedOutput": "2147483647",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"-2147483648\"]",
+      "output": "-2147483648",
+      "expectedOutput": "-2147483648",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"-2147483649\"]",
+      "output": "-2147483648",
+      "expectedOutput": "-2147483648",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"9999999999999999999\"]",
+      "output": "2147483647",
+      "expectedOutput": "2147483647",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"-9999999999999999999\"]",
+      "output": "-2147483648",
+      "expectedOutput": "-2147483648",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"  hello42\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[\"42abc\"]",
+      "output": "42",
+      "expectedOutput": "42",
+      "hidden": true
+    },
+    {
+      "id": "tc_24",
+      "input": "[\"   +0 123\"]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_25",
+      "input": "[\"0032\"]",
+      "output": "32",
+      "expectedOutput": "32",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"42\"",
+        "output": "42",
+        "expectedOutput": "42",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"   -42\"",
+        "output": "-42",
+        "expectedOutput": "-42",
+        "explanation": "leading whitespace is skipped, then the minus sign and digits are read"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"4193 with words\"",
+        "output": "4193",
+        "expectedOutput": "4193",
+        "explanation": "digit reading stops at the first non-digit character, and everything after is ignored"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"42\"]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"   -42\"]",
+        "output": "-42",
+        "expectedOutput": "-42",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"4193 with words\"]",
+        "output": "4193",
+        "expectedOutput": "4193",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"words and 987\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"-91283472332\"]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"91283472332\"]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"3.14159\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"+1\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"  +1\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"   \"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"  0000000000012345678\"]",
+        "output": "12345678",
+        "expectedOutput": "12345678",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"-000000000000001\"]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"+-2\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"  -0012a42\"]",
+        "output": "-12",
+        "expectedOutput": "-12",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"2147483647\"]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"2147483648\"]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"-2147483648\"]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"-2147483649\"]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"9999999999999999999\"]",
+        "output": "2147483647",
+        "expectedOutput": "2147483647",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"-9999999999999999999\"]",
+        "output": "-2147483648",
+        "expectedOutput": "-2147483648",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"  hello42\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"42abc\"]",
+        "output": "42",
+        "expectedOutput": "42",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[\"   +0 123\"]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[\"0032\"]",
+        "output": "32",
+        "expectedOutput": "32",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def myAtoi(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int myAtoi(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int myAtoi(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun myAtoi(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    myAtoi(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def myAtoi(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int myAtoi(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int myAtoi(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun myAtoi(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    myAtoi(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def myAtoi(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int myAtoi(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int myAtoi(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun myAtoi(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    myAtoi(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def myAtoi(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int myAtoi(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int myAtoi(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun myAtoi(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    myAtoi(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "single-pass manual parse: whitespace, sign, digits, then clamp"
+    },
+    "bruteForce": {
+      "approach": "there isn't really a slower 'brute force' here since the whole problem is just a single careful left-to-right scan; the naive first attempt is usually to skip straight to a language builtin parser and then patch clamping and garbage-character behavior on afterwards, which tends to miss edge cases",
+      "time": "O(n)",
+      "space": "O(1)"
+    }
+  },
+  "optimal": {
+    "pattern": "single-pass manual parse: whitespace, sign, digits, then clamp",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "walk through the string with one index, in the exact order the spec describes: whitespace first, then an optional sign, then digits",
+      "stop consuming digits the moment you hit a non-digit character, and simply ignore everything after that, don't treat it as an error",
+      "build up the numeric value one digit at a time (value = value * 10 + digit) rather than slicing and using a builtin parser, so you can catch overflow as it happens instead of after the fact",
+      "check for overflow before it happens: if continuing to multiply by 10 and add a digit would exceed INT_MAX (or go below INT_MIN once negative), clamp immediately and stop",
+      "the only two ways to return 0 are an empty digit run (nothing but whitespace, only a sign, or garbage right away) - everything else produces some valid clamped number"
+    ]
+  },
+  "bruteForce": {
+    "approach": "there isn't really a slower 'brute force' here since the whole problem is just a single careful left-to-right scan; the naive first attempt is usually to skip straight to a language builtin parser and then patch clamping and garbage-character behavior on afterwards, which tends to miss edge cases",
+    "time": "O(n)",
+    "space": "O(1)"
+  },
+  "isIndex0": true,
+  "level": null
+}

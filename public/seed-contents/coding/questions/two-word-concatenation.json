@@ -1,0 +1,632 @@
+{
+  "id": "two-word-concatenation",
+  "questionId": "two-word-concatenation",
+  "slug": "two-word-concatenation",
+  "title": "Two-Word Concatenation Check",
+  "difficulty": "Medium",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "if target = left + right, both left and right individually need to be present in the word list - what's the fastest way to check 'is this string in my set of words' as you scan through target?",
+    "insert every word into a trie so that checking membership of any prefix is fast, character by character",
+    "walk target from the beginning, one character at a time, following the trie; every time you land on a node marked end-of-word, you've found a valid 'left' piece - note that position",
+    "for each such split position, check whether the remaining suffix of target (from that position to the end) is itself a complete word by walking the trie again from the root",
+    "remember the 'two different entries' rule: if left and right are equal in text, you need that word to appear in the list at least twice - track insertion counts per word, not just presence"
+  ],
+  "commonMistakes": [
+    "allowing a single list entry to be used for both halves when the word only appears once in the list",
+    "checking only one split point (e.g. the midpoint) instead of trying every valid prefix/suffix split",
+    "confusing this with 'any number of words' (like Word Break) instead of exactly two"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited string of lowercase `words` and a separate `target` word.\n\n**Determine whether `target` can be formed by concatenating exactly two different entries from the word list, in some order, and return true if so, false otherwise.**\n\nEach entry may only be used once; if the same word text appears twice in the list, that counts as two separate usable entries.\n",
+    "constraints": [
+      "2 <= number of word entries <= 1000",
+      "1 <= words[i].length <= 1000",
+      "1 <= target.length <= 2000",
+      "target and all words consist only of lowercase English letters"
+    ],
+    "notes": [
+      "target can only be formed by using the same list entry twice (not allowed unless it appears twice)",
+      "target's split point could occur at more than one position; only one needs to work",
+      "no combination of any two entries forms target"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"cat cats dog catsdog\", target = \"catsdog\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "\"cats\" + \"dog\" = \"catsdog\", and both are separate entries in the list"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"a b\", target = \"aa\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "\"a\" + \"a\" would require two entries equal to \"a\", but the list only has one"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"a a\", target = \"aa\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the list has \"a\" twice, as two separate entries, so \"a\" + \"a\" is valid"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"cat cats dog catsdog\",\"catsdog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a b\",\"ab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a b\",\"aa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a a\",\"aa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"cat dog\",\"catcat\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a b c\",\"ab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a b c\",\"bc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a b c\",\"cc\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"cat dog bird catdog dogcat\",\"catdog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"x y\",\"yx\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"same same\",\"samesame\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ab cd\",\"abcd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"a a a\",\"aa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"hello world\",\"helloworld\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"one two three\",\"twothree\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"p q r s\",\"qr\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"no match here\",\"nowhere\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"test testtest\",\"testtesttest\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ab\",\"abab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"run jump\",\"runjump\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"cat cats dog catsdog\", target = \"catsdog\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "\"cats\" + \"dog\" = \"catsdog\", and both are separate entries in the list"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"a b\", target = \"aa\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "\"a\" + \"a\" would require two entries equal to \"a\", but the list only has one"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"a a\", target = \"aa\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the list has \"a\" twice, as two separate entries, so \"a\" + \"a\" is valid"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"cat cats dog catsdog\", target = \"catsdog\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "\"cats\" + \"dog\" = \"catsdog\", and both are separate entries in the list"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"a b\", target = \"aa\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "\"a\" + \"a\" would require two entries equal to \"a\", but the list only has one"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"a a\", target = \"aa\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the list has \"a\" twice, as two separate entries, so \"a\" + \"a\" is valid"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"cat cats dog catsdog\",\"catsdog\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"a b\",\"ab\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a b\",\"aa\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a a\",\"aa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"cat dog\",\"catcat\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a b c\",\"ab\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"a b c\",\"bc\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"a b c\",\"cc\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"cat dog bird catdog dogcat\",\"catdog\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"x y\",\"yx\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"same same\",\"samesame\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"ab cd\",\"abcd\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"a a a\",\"aa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"hello world\",\"helloworld\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"one two three\",\"twothree\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"p q r s\",\"qr\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"no match here\",\"nowhere\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"test testtest\",\"testtesttest\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"ab\",\"abab\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"run jump\",\"runjump\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"cat cats dog catsdog\", target = \"catsdog\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "\"cats\" + \"dog\" = \"catsdog\", and both are separate entries in the list"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"a b\", target = \"aa\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "\"a\" + \"a\" would require two entries equal to \"a\", but the list only has one"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"a a\", target = \"aa\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the list has \"a\" twice, as two separate entries, so \"a\" + \"a\" is valid"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"cat cats dog catsdog\",\"catsdog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a b\",\"ab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a b\",\"aa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a a\",\"aa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"cat dog\",\"catcat\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a b c\",\"ab\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"a b c\",\"bc\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"a b c\",\"cc\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"cat dog bird catdog dogcat\",\"catdog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"x y\",\"yx\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"same same\",\"samesame\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ab cd\",\"abcd\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"a a a\",\"aa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"hello world\",\"helloworld\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"one two three\",\"twothree\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"p q r s\",\"qr\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"no match here\",\"nowhere\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"test testtest\",\"testtesttest\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ab\",\"abab\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"run jump\",\"runjump\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def canFormFromTwoWords(self, words, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canFormFromTwoWords(string words, string target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canFormFromTwoWords(String words, String target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canFormFromTwoWords(words: String, target: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canFormFromTwoWords(words, target) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def canFormFromTwoWords(self, words, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canFormFromTwoWords(string words, string target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canFormFromTwoWords(String words, String target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canFormFromTwoWords(words: String, target: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canFormFromTwoWords(words, target) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def canFormFromTwoWords(self, words, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canFormFromTwoWords(string words, string target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canFormFromTwoWords(String words, String target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canFormFromTwoWords(words: String, target: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canFormFromTwoWords(words, target) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def canFormFromTwoWords(self, words, target):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool canFormFromTwoWords(string words, string target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean canFormFromTwoWords(String words, String target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun canFormFromTwoWords(words: String, target: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    canFormFromTwoWords(words, target) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(len(target)) per split check using the trie, O(total word characters) to build",
+      "space": "O(total word characters)",
+      "pattern": "insert all words into a trie, then walk target from the start following trie edges; every position where you land on an end-of-word node is a candidate split point - check whether the remaining suffix is also a complete word in the trie (using a duplicate-count trie so reusing the same text twice is allowed only if it was inserted twice)"
+    },
+    "bruteForce": {
+      "approach": "put word counts in a frequency map; for every split point of target into a left and right part, check both parts exist in the map with enough remaining count",
+      "time": "O(len(target) * average lookup cost), simple but requires careful counting to respect 'two different entries'",
+      "space": "O(n) for the frequency map"
+    }
+  },
+  "optimal": {
+    "pattern": "insert all words into a trie, then walk target from the start following trie edges; every position where you land on an end-of-word node is a candidate split point - check whether the remaining suffix is also a complete word in the trie (using a duplicate-count trie so reusing the same text twice is allowed only if it was inserted twice)",
+    "time": "O(len(target)) per split check using the trie, O(total word characters) to build",
+    "space": "O(total word characters)",
+    "hint_ladder": [
+      "if target = left + right, both left and right individually need to be present in the word list - what's the fastest way to check 'is this string in my set of words' as you scan through target?",
+      "insert every word into a trie so that checking membership of any prefix is fast, character by character",
+      "walk target from the beginning, one character at a time, following the trie; every time you land on a node marked end-of-word, you've found a valid 'left' piece - note that position",
+      "for each such split position, check whether the remaining suffix of target (from that position to the end) is itself a complete word by walking the trie again from the root",
+      "remember the 'two different entries' rule: if left and right are equal in text, you need that word to appear in the list at least twice - track insertion counts per word, not just presence"
+    ]
+  },
+  "bruteForce": {
+    "approach": "put word counts in a frequency map; for every split point of target into a left and right part, check both parts exist in the map with enough remaining count",
+    "time": "O(len(target) * average lookup cost), simple but requires careful counting to respect 'two different entries'",
+    "space": "O(n) for the frequency map"
+  },
+  "isIndex0": true,
+  "level": null
+}

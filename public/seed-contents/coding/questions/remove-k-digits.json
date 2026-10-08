@@ -1,0 +1,630 @@
+{
+  "id": "remove-k-digits",
+  "questionId": "remove-k-digits",
+  "slug": "remove-k-digits",
+  "title": "Remove K Digits",
+  "difficulty": "Easy",
+  "category": "Monotonic stack",
+  "patterns": [
+    "monotonic stack",
+    "greedy",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "to make a number as small as possible, you generally want smaller digits to appear as far to the left as possible. if a digit is immediately followed by a smaller digit, would you ever want to keep the bigger one?",
+    "scan left to right, keeping a stack of digits you've decided to keep so far. while the stack's top digit is bigger than the current digit and you still have removals left, pop it - that's one of your k removals used",
+    "after the scan, push the current digit; if you still have removals left over at the end (the digits were non-decreasing), remove them from the very end of the stack instead",
+    "finally, strip any leading zeros from the resulting stack, and return '0' if nothing meaningful remains"
+  ],
+  "commonMistakes": [
+    "forgetting to remove leftover k from the end when the input digits are already non-decreasing",
+    "not stripping leading zeros produced after removals",
+    "returning an empty string instead of '0' when every digit gets removed"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `num` representing a non-negative integer, and an\ninteger `k`.\n\n**Remove exactly `k` digits from `num` so that the digits that remain, kept in their original order, form the smallest possible number.**\n\nThe result should not have leading zeros, unless the number itself is \"0\".\n",
+    "constraints": [
+      "1 <= num.length",
+      "0 <= k <= num.length",
+      "num consists only of digits and has no leading zeros itself"
+    ],
+    "notes": [
+      "removing digits creates new leading zeros that must be stripped",
+      "k equals num.length, so the entire number is removed (result is 0)",
+      "the digits are already in non-decreasing order, so the removals should come from the end"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "num = \"1432219\", k = 3",
+        "output": "\"1219\"",
+        "expectedOutput": "\"1219\"",
+        "explanation": "removing the digits 4, 3, and 2 leaves 1, 2, 1, 9 in order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "num = \"10200\", k = 1",
+        "output": "\"200\"",
+        "expectedOutput": "\"200\"",
+        "explanation": "removing the leading 1 leaves 0200, and leading zeros are then dropped, giving 200"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "num = \"10\", k = 2",
+        "output": "\"0\"",
+        "expectedOutput": "\"0\"",
+        "explanation": "removing both digits leaves nothing, but the result must represent a number, so it becomes 0"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"1432219\",3]",
+        "output": "1219",
+        "expectedOutput": "1219",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"10200\",1]",
+        "output": "200",
+        "expectedOutput": "200",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"10\",2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"112\",1]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"9\",1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"10\",1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"100\",1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"1234567890\",5]",
+        "output": "12340",
+        "expectedOutput": "12340",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"9876543210\",5]",
+        "output": "43210",
+        "expectedOutput": "43210",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"11111\",3]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"100200300\",4]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"54321\",0]",
+        "output": "54321",
+        "expectedOutput": "54321",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"123456789012345\",7]",
+        "output": "12012345",
+        "expectedOutput": "12012345",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"20001\",3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"0\",0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"1\",1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"12345\",5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"99999\",0]",
+        "output": "99999",
+        "expectedOutput": "99999",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"100000000\",8]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"30208\",3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "num = \"1432219\", k = 3",
+      "output": "\"1219\"",
+      "expectedOutput": "\"1219\"",
+      "explanation": "removing the digits 4, 3, and 2 leaves 1, 2, 1, 9 in order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "num = \"10200\", k = 1",
+      "output": "\"200\"",
+      "expectedOutput": "\"200\"",
+      "explanation": "removing the leading 1 leaves 0200, and leading zeros are then dropped, giving 200"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "num = \"10\", k = 2",
+      "output": "\"0\"",
+      "expectedOutput": "\"0\"",
+      "explanation": "removing both digits leaves nothing, but the result must represent a number, so it becomes 0"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "num = \"1432219\", k = 3",
+      "output": "\"1219\"",
+      "expectedOutput": "\"1219\"",
+      "explanation": "removing the digits 4, 3, and 2 leaves 1, 2, 1, 9 in order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "num = \"10200\", k = 1",
+      "output": "\"200\"",
+      "expectedOutput": "\"200\"",
+      "explanation": "removing the leading 1 leaves 0200, and leading zeros are then dropped, giving 200"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "num = \"10\", k = 2",
+      "output": "\"0\"",
+      "expectedOutput": "\"0\"",
+      "explanation": "removing both digits leaves nothing, but the result must represent a number, so it becomes 0"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"1432219\",3]",
+      "output": "1219",
+      "expectedOutput": "1219",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"10200\",1]",
+      "output": "200",
+      "expectedOutput": "200",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"10\",2]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"112\",1]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"9\",1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"10\",1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"100\",1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"1234567890\",5]",
+      "output": "12340",
+      "expectedOutput": "12340",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"9876543210\",5]",
+      "output": "43210",
+      "expectedOutput": "43210",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"11111\",3]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"100200300\",4]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"54321\",0]",
+      "output": "54321",
+      "expectedOutput": "54321",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"123456789012345\",7]",
+      "output": "12012345",
+      "expectedOutput": "12012345",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"20001\",3]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"0\",0]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"1\",1]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"12345\",5]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"99999\",0]",
+      "output": "99999",
+      "expectedOutput": "99999",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"100000000\",8]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"30208\",3]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "num = \"1432219\", k = 3",
+        "output": "\"1219\"",
+        "expectedOutput": "\"1219\"",
+        "explanation": "removing the digits 4, 3, and 2 leaves 1, 2, 1, 9 in order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "num = \"10200\", k = 1",
+        "output": "\"200\"",
+        "expectedOutput": "\"200\"",
+        "explanation": "removing the leading 1 leaves 0200, and leading zeros are then dropped, giving 200"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "num = \"10\", k = 2",
+        "output": "\"0\"",
+        "expectedOutput": "\"0\"",
+        "explanation": "removing both digits leaves nothing, but the result must represent a number, so it becomes 0"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"1432219\",3]",
+        "output": "1219",
+        "expectedOutput": "1219",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"10200\",1]",
+        "output": "200",
+        "expectedOutput": "200",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"10\",2]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"112\",1]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"9\",1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"10\",1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"100\",1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"1234567890\",5]",
+        "output": "12340",
+        "expectedOutput": "12340",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"9876543210\",5]",
+        "output": "43210",
+        "expectedOutput": "43210",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"11111\",3]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"100200300\",4]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"54321\",0]",
+        "output": "54321",
+        "expectedOutput": "54321",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"123456789012345\",7]",
+        "output": "12012345",
+        "expectedOutput": "12012345",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"20001\",3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"0\",0]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"1\",1]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"12345\",5]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"99999\",0]",
+        "output": "99999",
+        "expectedOutput": "99999",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"100000000\",8]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"30208\",3]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def removeKdigits(self, num, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeKdigits(string num, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeKdigits(String num, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeKdigits(num: String, k: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeKdigits(num, k) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def removeKdigits(self, num, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeKdigits(string num, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeKdigits(String num, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeKdigits(num: String, k: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeKdigits(num, k) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def removeKdigits(self, num, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeKdigits(string num, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeKdigits(String num, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeKdigits(num: String, k: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeKdigits(num, k) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def removeKdigits(self, num, k):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string removeKdigits(string num, int k) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String removeKdigits(String num, int k) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeKdigits(num: String, k: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeKdigits(num, k) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the stack",
+      "pattern": "monotonic increasing stack of digits, greedily discarding a larger digit whenever a smaller one follows it"
+    },
+    "bruteForce": {
+      "approach": "try every combination of k digits to remove, build the resulting string for each, and keep the smallest valid one",
+      "time": "O(C(n, k) * n) which is exponential",
+      "space": "O(n) per candidate"
+    }
+  },
+  "optimal": {
+    "pattern": "monotonic increasing stack of digits, greedily discarding a larger digit whenever a smaller one follows it",
+    "time": "O(n)",
+    "space": "O(n) for the stack",
+    "hint_ladder": [
+      "to make a number as small as possible, you generally want smaller digits to appear as far to the left as possible. if a digit is immediately followed by a smaller digit, would you ever want to keep the bigger one?",
+      "scan left to right, keeping a stack of digits you've decided to keep so far. while the stack's top digit is bigger than the current digit and you still have removals left, pop it - that's one of your k removals used",
+      "after the scan, push the current digit; if you still have removals left over at the end (the digits were non-decreasing), remove them from the very end of the stack instead",
+      "finally, strip any leading zeros from the resulting stack, and return '0' if nothing meaningful remains"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every combination of k digits to remove, build the resulting string for each, and keep the smallest valid one",
+    "time": "O(C(n, k) * n) which is exponential",
+    "space": "O(n) per candidate"
+  },
+  "isIndex0": true,
+  "level": null
+}

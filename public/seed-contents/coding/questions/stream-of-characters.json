@@ -1,0 +1,632 @@
+{
+  "id": "stream-of-characters",
+  "questionId": "stream-of-characters",
+  "slug": "stream-of-characters",
+  "title": "Stream of Characters",
+  "difficulty": "Medium",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "simulation"
+  ],
+  "lists": [],
+  "hints": [
+    "you're always asking 'does some suffix ENDING at the newest character match a word' - reading a word backward from its last character is the same as reading its reverse forward from its first character",
+    "insert every dictionary word reversed into a trie (so 'cd' is stored as 'dc')",
+    "keep a running buffer of the stream seen so far (or just enough of its tail to cover the longest dictionary word)",
+    "on each new character, walk the reversed trie starting from the root, feeding it the stream's most recent characters in reverse order (newest first) - if you ever hit a node marked end-of-word during this walk, some suffix matches, return 1",
+    "if the walk falls off the trie (no child for the needed character) before hitting any end-of-word node, return 0 for this query"
+  ],
+  "commonMistakes": [
+    "storing dictionary words forward and trying to walk the trie backward, which doesn't correspond to any valid trie traversal",
+    "keeping the entire stream in memory and re-scanning all of it per query instead of only walking back up to the longest word length",
+    "not stopping the backward walk as soon as an end-of-word node is hit, which can waste time but more importantly risks missing that a SHORTER suffix already matched"
+  ],
+  "content": {
+    "problemStatement": "You're given a single space-delimited sequence of operations:\n\n- the FIRST token always has the special form `init:word1,word2,word3` - a comma-separated dictionary of lowercase words (no spaces within a word), establishing the dictionary to check against\n- every token after that has the form `query:c` where c is a single lowercase character, representing the next character arriving in a live stream (characters accumulate over time; you never see the whole stream at once)\n\n**After each query character is appended to the stream so far, check whether the suffix of the stream ending at that character, for any length, exactly matches a complete word in the dictionary, and return a list with the result (1 if some suffix matches, else 0) for every query token, in order.**\n",
+    "constraints": [
+      "1 <= number of dictionary words <= 2000",
+      "1 <= dictionary word length <= 200",
+      "1 <= number of query tokens <= 4 * 10^4",
+      "dictionary words and stream characters consist only of lowercase English letters"
+    ],
+    "notes": [
+      "a query character that never contributes to any match, ever",
+      "a dictionary word of length 1 (matches immediately on the first occurrence of that character)",
+      "two different dictionary words that both end up matching at the same query position"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"init:cd,f,kl query:a query:b query:c query:d query:e query:f\"",
+        "output": "[0, 0, 0, 1, 0, 1]",
+        "expectedOutput": "[0, 0, 0, 1, 0, 1]",
+        "explanation": "stream builds up as a,b,c,d,e,f; after the 4th character the stream is \"abcd\" and its suffix \"cd\" matches the dictionary; after the 6th character the stream is \"abcdef\" and its suffix \"f\" matches"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"init:a,ab query:a query:a query:a\"",
+        "output": "[1, 1, 1]",
+        "expectedOutput": "[1, 1, 1]",
+        "explanation": "every single character streamed is itself a suffix equal to the dictionary word \"a\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"init:abc query:x query:a query:b query:c\"",
+        "output": "[0, 0, 0, 1]",
+        "expectedOutput": "[0, 0, 0, 1]",
+        "explanation": "stream becomes \"xabc\" only at the 4th character does the suffix \"abc\" match"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"init:cd,f,kl query:a query:b query:c query:d query:e query:f\"]",
+        "output": "[0,0,0,1,0,1]",
+        "expectedOutput": "[0,0,0,1,0,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"init:a,ab query:a query:a query:a\"]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"init:abc query:x query:a query:b query:c\"]",
+        "output": "[0,0,0,1]",
+        "expectedOutput": "[0,0,0,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"init:z query:z query:z\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"init:a query:a query:b query:a\"]",
+        "output": "[1,0,1]",
+        "expectedOutput": "[1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"init:ab,bc query:a query:b query:c\"]",
+        "output": "[0,1,1]",
+        "expectedOutput": "[0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"init:xyz query:x query:y query:z query:x query:y query:z\"]",
+        "output": "[0,0,1,0,0,1]",
+        "expectedOutput": "[0,0,1,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"init:aa,aaa query:a query:a query:a query:a\"]",
+        "output": "[0,1,1,1]",
+        "expectedOutput": "[0,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"init:hello query:h query:e query:l query:l query:o\"]",
+        "output": "[0,0,0,0,1]",
+        "expectedOutput": "[0,0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"init:a,b,c query:a query:b query:c query:d\"]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"init:abc,bc,c query:a query:b query:c\"]",
+        "output": "[0,0,1]",
+        "expectedOutput": "[0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"init:mno query:m query:n query:o query:m query:n query:o\"]",
+        "output": "[0,0,1,0,0,1]",
+        "expectedOutput": "[0,0,1,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"init:repeat query:r query:e query:p query:e query:a query:t\"]",
+        "output": "[0,0,0,0,0,1]",
+        "expectedOutput": "[0,0,0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"init:q query:q query:q query:q query:q\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"init:cat,at,t query:c query:a query:t\"]",
+        "output": "[0,0,1]",
+        "expectedOutput": "[0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"init:abcd,bcd,cd,d query:a query:b query:c query:d\"]",
+        "output": "[0,0,0,1]",
+        "expectedOutput": "[0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"init:foo,oof query:f query:o query:o\"]",
+        "output": "[0,0,1]",
+        "expectedOutput": "[0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"init:xy query:a query:x query:y query:x query:y\"]",
+        "output": "[0,0,1,0,1]",
+        "expectedOutput": "[0,0,1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"init:test,st,t query:t query:e query:s query:t\"]",
+        "output": "[1,0,0,1]",
+        "expectedOutput": "[1,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"init:banana,nana,ana,na,a query:b query:a query:n query:a query:n query:a\"]",
+        "output": "[0,1,0,1,0,1]",
+        "expectedOutput": "[0,1,0,1,0,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"init:cd,f,kl query:a query:b query:c query:d query:e query:f\"",
+      "output": "[0, 0, 0, 1, 0, 1]",
+      "expectedOutput": "[0, 0, 0, 1, 0, 1]",
+      "explanation": "stream builds up as a,b,c,d,e,f; after the 4th character the stream is \"abcd\" and its suffix \"cd\" matches the dictionary; after the 6th character the stream is \"abcdef\" and its suffix \"f\" matches"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"init:a,ab query:a query:a query:a\"",
+      "output": "[1, 1, 1]",
+      "expectedOutput": "[1, 1, 1]",
+      "explanation": "every single character streamed is itself a suffix equal to the dictionary word \"a\""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"init:abc query:x query:a query:b query:c\"",
+      "output": "[0, 0, 0, 1]",
+      "expectedOutput": "[0, 0, 0, 1]",
+      "explanation": "stream becomes \"xabc\" only at the 4th character does the suffix \"abc\" match"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "ops = \"init:cd,f,kl query:a query:b query:c query:d query:e query:f\"",
+      "output": "[0, 0, 0, 1, 0, 1]",
+      "expectedOutput": "[0, 0, 0, 1, 0, 1]",
+      "explanation": "stream builds up as a,b,c,d,e,f; after the 4th character the stream is \"abcd\" and its suffix \"cd\" matches the dictionary; after the 6th character the stream is \"abcdef\" and its suffix \"f\" matches"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "ops = \"init:a,ab query:a query:a query:a\"",
+      "output": "[1, 1, 1]",
+      "expectedOutput": "[1, 1, 1]",
+      "explanation": "every single character streamed is itself a suffix equal to the dictionary word \"a\""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "ops = \"init:abc query:x query:a query:b query:c\"",
+      "output": "[0, 0, 0, 1]",
+      "expectedOutput": "[0, 0, 0, 1]",
+      "explanation": "stream becomes \"xabc\" only at the 4th character does the suffix \"abc\" match"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"init:cd,f,kl query:a query:b query:c query:d query:e query:f\"]",
+      "output": "[0,0,0,1,0,1]",
+      "expectedOutput": "[0,0,0,1,0,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"init:a,ab query:a query:a query:a\"]",
+      "output": "[1,1,1]",
+      "expectedOutput": "[1,1,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"init:abc query:x query:a query:b query:c\"]",
+      "output": "[0,0,0,1]",
+      "expectedOutput": "[0,0,0,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"init:z query:z query:z\"]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"init:a query:a query:b query:a\"]",
+      "output": "[1,0,1]",
+      "expectedOutput": "[1,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"init:ab,bc query:a query:b query:c\"]",
+      "output": "[0,1,1]",
+      "expectedOutput": "[0,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"init:xyz query:x query:y query:z query:x query:y query:z\"]",
+      "output": "[0,0,1,0,0,1]",
+      "expectedOutput": "[0,0,1,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"init:aa,aaa query:a query:a query:a query:a\"]",
+      "output": "[0,1,1,1]",
+      "expectedOutput": "[0,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"init:hello query:h query:e query:l query:l query:o\"]",
+      "output": "[0,0,0,0,1]",
+      "expectedOutput": "[0,0,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"init:a,b,c query:a query:b query:c query:d\"]",
+      "output": "[1,1,1,0]",
+      "expectedOutput": "[1,1,1,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"init:abc,bc,c query:a query:b query:c\"]",
+      "output": "[0,0,1]",
+      "expectedOutput": "[0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"init:mno query:m query:n query:o query:m query:n query:o\"]",
+      "output": "[0,0,1,0,0,1]",
+      "expectedOutput": "[0,0,1,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"init:repeat query:r query:e query:p query:e query:a query:t\"]",
+      "output": "[0,0,0,0,0,1]",
+      "expectedOutput": "[0,0,0,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"init:q query:q query:q query:q query:q\"]",
+      "output": "[1,1,1,1]",
+      "expectedOutput": "[1,1,1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"init:cat,at,t query:c query:a query:t\"]",
+      "output": "[0,0,1]",
+      "expectedOutput": "[0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"init:abcd,bcd,cd,d query:a query:b query:c query:d\"]",
+      "output": "[0,0,0,1]",
+      "expectedOutput": "[0,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"init:foo,oof query:f query:o query:o\"]",
+      "output": "[0,0,1]",
+      "expectedOutput": "[0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"init:xy query:a query:x query:y query:x query:y\"]",
+      "output": "[0,0,1,0,1]",
+      "expectedOutput": "[0,0,1,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"init:test,st,t query:t query:e query:s query:t\"]",
+      "output": "[1,0,0,1]",
+      "expectedOutput": "[1,0,0,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"init:banana,nana,ana,na,a query:b query:a query:n query:a query:n query:a\"]",
+      "output": "[0,1,0,1,0,1]",
+      "expectedOutput": "[0,1,0,1,0,1]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "ops = \"init:cd,f,kl query:a query:b query:c query:d query:e query:f\"",
+        "output": "[0, 0, 0, 1, 0, 1]",
+        "expectedOutput": "[0, 0, 0, 1, 0, 1]",
+        "explanation": "stream builds up as a,b,c,d,e,f; after the 4th character the stream is \"abcd\" and its suffix \"cd\" matches the dictionary; after the 6th character the stream is \"abcdef\" and its suffix \"f\" matches"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "ops = \"init:a,ab query:a query:a query:a\"",
+        "output": "[1, 1, 1]",
+        "expectedOutput": "[1, 1, 1]",
+        "explanation": "every single character streamed is itself a suffix equal to the dictionary word \"a\""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "ops = \"init:abc query:x query:a query:b query:c\"",
+        "output": "[0, 0, 0, 1]",
+        "expectedOutput": "[0, 0, 0, 1]",
+        "explanation": "stream becomes \"xabc\" only at the 4th character does the suffix \"abc\" match"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"init:cd,f,kl query:a query:b query:c query:d query:e query:f\"]",
+        "output": "[0,0,0,1,0,1]",
+        "expectedOutput": "[0,0,0,1,0,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"init:a,ab query:a query:a query:a\"]",
+        "output": "[1,1,1]",
+        "expectedOutput": "[1,1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"init:abc query:x query:a query:b query:c\"]",
+        "output": "[0,0,0,1]",
+        "expectedOutput": "[0,0,0,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"init:z query:z query:z\"]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"init:a query:a query:b query:a\"]",
+        "output": "[1,0,1]",
+        "expectedOutput": "[1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"init:ab,bc query:a query:b query:c\"]",
+        "output": "[0,1,1]",
+        "expectedOutput": "[0,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"init:xyz query:x query:y query:z query:x query:y query:z\"]",
+        "output": "[0,0,1,0,0,1]",
+        "expectedOutput": "[0,0,1,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"init:aa,aaa query:a query:a query:a query:a\"]",
+        "output": "[0,1,1,1]",
+        "expectedOutput": "[0,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"init:hello query:h query:e query:l query:l query:o\"]",
+        "output": "[0,0,0,0,1]",
+        "expectedOutput": "[0,0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"init:a,b,c query:a query:b query:c query:d\"]",
+        "output": "[1,1,1,0]",
+        "expectedOutput": "[1,1,1,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"init:abc,bc,c query:a query:b query:c\"]",
+        "output": "[0,0,1]",
+        "expectedOutput": "[0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"init:mno query:m query:n query:o query:m query:n query:o\"]",
+        "output": "[0,0,1,0,0,1]",
+        "expectedOutput": "[0,0,1,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"init:repeat query:r query:e query:p query:e query:a query:t\"]",
+        "output": "[0,0,0,0,0,1]",
+        "expectedOutput": "[0,0,0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"init:q query:q query:q query:q query:q\"]",
+        "output": "[1,1,1,1]",
+        "expectedOutput": "[1,1,1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"init:cat,at,t query:c query:a query:t\"]",
+        "output": "[0,0,1]",
+        "expectedOutput": "[0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"init:abcd,bcd,cd,d query:a query:b query:c query:d\"]",
+        "output": "[0,0,0,1]",
+        "expectedOutput": "[0,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"init:foo,oof query:f query:o query:o\"]",
+        "output": "[0,0,1]",
+        "expectedOutput": "[0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"init:xy query:a query:x query:y query:x query:y\"]",
+        "output": "[0,0,1,0,1]",
+        "expectedOutput": "[0,0,1,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"init:test,st,t query:t query:e query:s query:t\"]",
+        "output": "[1,0,0,1]",
+        "expectedOutput": "[1,0,0,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"init:banana,nana,ana,na,a query:b query:a query:n query:a query:n query:a\"]",
+        "output": "[0,1,0,1,0,1]",
+        "expectedOutput": "[0,1,0,1,0,1]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def streamQueryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> streamQueryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] streamQueryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun streamQueryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    streamQueryResults(ops) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def streamQueryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> streamQueryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] streamQueryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun streamQueryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    streamQueryResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def streamQueryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> streamQueryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] streamQueryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun streamQueryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    streamQueryResults(ops) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def streamQueryResults(self, ops):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> streamQueryResults(string ops) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] streamQueryResults(String ops) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun streamQueryResults(ops: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    streamQueryResults(ops) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(max word length) per query",
+      "space": "O(total dictionary characters)",
+      "pattern": "insert the REVERSED dictionary words into a trie, then on each query walk backward from the most recently streamed character through the trie, stopping as soon as no reversed word can extend further or you hit an end-of-word node"
+    },
+    "bruteForce": {
+      "approach": "keep the whole stream seen so far as a string; on each query, try every suffix length and check if that suffix is in a set of dictionary words",
+      "time": "O(max word length) per query if you cap suffix length checked, using a hash set for membership",
+      "space": "O(total dictionary characters + stream length)"
+    }
+  },
+  "optimal": {
+    "pattern": "insert the REVERSED dictionary words into a trie, then on each query walk backward from the most recently streamed character through the trie, stopping as soon as no reversed word can extend further or you hit an end-of-word node",
+    "time": "O(max word length) per query",
+    "space": "O(total dictionary characters)",
+    "hint_ladder": [
+      "you're always asking 'does some suffix ENDING at the newest character match a word' - reading a word backward from its last character is the same as reading its reverse forward from its first character",
+      "insert every dictionary word reversed into a trie (so 'cd' is stored as 'dc')",
+      "keep a running buffer of the stream seen so far (or just enough of its tail to cover the longest dictionary word)",
+      "on each new character, walk the reversed trie starting from the root, feeding it the stream's most recent characters in reverse order (newest first) - if you ever hit a node marked end-of-word during this walk, some suffix matches, return 1",
+      "if the walk falls off the trie (no child for the needed character) before hitting any end-of-word node, return 0 for this query"
+    ]
+  },
+  "bruteForce": {
+    "approach": "keep the whole stream seen so far as a string; on each query, try every suffix length and check if that suffix is in a set of dictionary words",
+    "time": "O(max word length) per query if you cap suffix length checked, using a hash set for membership",
+    "space": "O(total dictionary characters + stream length)"
+  },
+  "isIndex0": true,
+  "level": null
+}

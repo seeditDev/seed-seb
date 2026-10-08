@@ -1,0 +1,633 @@
+{
+  "id": "triangle",
+  "questionId": "triangle",
+  "slug": "triangle",
+  "title": "Triangle Minimum Path Sum",
+  "difficulty": "Medium",
+  "category": "Dp 2d",
+  "patterns": [
+    "dynamic programming",
+    "grid"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "it's easier to think about this bottom-up: what's the cheapest way to finish a path starting from some cell in the bottom row? just its own value, since there's nowhere left to go",
+    "define dp[i][j] as the minimum sum of a path from cell (i, j) down to the bottom of the triangle",
+    "recurrence: dp[i][j] = triangle[i][j] + min(dp[i+1][j], dp[i+1][j+1]), since from (i, j) you can only move to (i+1, j) or (i+1, j+1)",
+    "start dp equal to the bottom row itself, then work upward row by row applying the recurrence",
+    "the answer ends up at dp[0][0], the minimum cost of a path starting at the very top"
+  ],
+  "commonMistakes": [
+    "trying to index the next row incorrectly, off by one, since each row has one more element than the row above it",
+    "working top-down without memoization, causing the same subpaths to be recomputed exponentially many times",
+    "confusing which two children a cell can move to (it's j and j+1 in the row below, not j-1 and j)"
+  ],
+  "content": {
+    "problemStatement": "You're given a triangular arrangement of numbers `triangle`, stored as a list of rows where row i has i + 1 elements. Starting at the top and moving down one row at a time, you may move from index j in the current row to either index j or index j + 1 in the next row.\n\n**Find the minimum possible sum of numbers along any path from the top to the bottom row.**\n",
+    "constraints": [
+      "1 <= triangle.length <= 200",
+      "triangle[i].length == i + 1",
+      "-10^4 <= triangle[i][j] <= 10^4"
+    ],
+    "notes": [
+      "a triangle with a single row (just the top element)",
+      "all negative numbers",
+      "a two-row triangle where every choice matters equally little"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "triangle = [[2],[3,4],[6,5,7],[4,1,8,3]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "explanation": "The path 2 -> 3 -> 5 -> 1 sums to 11 and is the cheapest route."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "triangle = [[-10]]",
+        "output": "-10",
+        "expectedOutput": "-10",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "triangle = [[1],[2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "The only paths are 1 -> 2 (sum 3) and 1 -> 3 (sum 4); 3 is the minimum."
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[2],[3,4],[6,5,7],[4,1,8,3]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[-10]]]",
+        "output": "-10",
+        "expectedOutput": "-10",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1],[2,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1],[-2,-3]]]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[5],[1,2],[4,1,3]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[7]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0],[0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1],[2,3],[4,5,6],[7,8,9,10]]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[7],[5,5],[6,-10,-10],[3,-3,8,-1],[-4,2,9,8,-8],[8,-5,-6,-9,-10,-7],[-7,9,-5,1,-6,-10,-10],[-9,-6,10,10,-9,-8,-9,-8]]]",
+        "output": "-36",
+        "expectedOutput": "-36",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[51],[95,-7],[-49,36,70],[-84,93,82,-2],[-73,-37,-48,-48,-72],[-92,-92,92,62,-78,92],[61,61,-27,22,-75,-67,-75],[93,65,-48,-25,-19,-14,8,-34],[-95,-11,-35,-28,-88,83,94,-6,-18],[96,54,28,21,-27,58,90,-93,5,-93]]]",
+        "output": "-319",
+        "expectedOutput": "-319",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[-5],[-5,-5],[-5,-5,-5],[-5,-5,-5,-5],[-5,-5,-5,-5,-5],[-5,-5,-5,-5,-5,-5]]]",
+        "output": "-30",
+        "expectedOutput": "-30",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[28],[34,50],[7,23,31],[46,4,35,37],[14,46,6,37,19],[11,28,1,34,13,19],[49,49,4,1,23,32,7],[32,45,12,32,38,23,33,17],[37,11,19,14,45,15,32,11,8],[41,50,6,32,45,36,7,41,21,23],[7,26,26,48,6,28,42,2,24,14,20],[17,28,35,33,11,25,41,15,30,9,35,39]]]",
+        "output": "158",
+        "expectedOutput": "158",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0],[0,0],[0,0,0],[0,0,0,0],[0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[18],[-18,2],[17,0,13],[-11,8,15,0],[-10,9,8,-4,17],[-6,-12,1,9,-5,12],[-8,-3,-1,19,-11,-11,-5],[0,18,13,2,-10,-5,0,-8],[-4,-14,-10,-14,-8,4,-11,-11,-1]]]",
+        "output": "-32",
+        "expectedOutput": "-32",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1],[100,100],[1,100,1],[100,1,100,1]]]",
+        "output": "103",
+        "expectedOutput": "103",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[501],[-391,-110],[-440,-599,-777],[306,866,-782,-425],[-578,812,-205,-50,-931]]]",
+        "output": "-1742",
+        "expectedOutput": "-1742",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[2],[3,4],[6,5,7]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[3],[7,4],[2,4,6],[8,5,9,3]]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[50],[-31,9],[-22,3,-22],[15,34,5,0],[21,-26,-1,-41,13],[-45,-14,-33,10,43,42],[-37,-34,-35,8,-5,20,28],[-48,6,16,-5,-14,-4,-23,-1],[-44,-37,15,46,-38,25,35,-9,44],[-40,49,35,-24,-1,-27,3,-34,10,-33],[-50,-30,50,-39,-8,-46,-38,-32,-22,8,5]]]",
+        "output": "-231",
+        "expectedOutput": "-231",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[10],[10,10],[10,10,10]]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "triangle = [[2],[3,4],[6,5,7],[4,1,8,3]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "explanation": "The path 2 -> 3 -> 5 -> 1 sums to 11 and is the cheapest route."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "triangle = [[-10]]",
+      "output": "-10",
+      "expectedOutput": "-10",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "triangle = [[1],[2,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "The only paths are 1 -> 2 (sum 3) and 1 -> 3 (sum 4); 3 is the minimum."
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "triangle = [[2],[3,4],[6,5,7],[4,1,8,3]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "explanation": "The path 2 -> 3 -> 5 -> 1 sums to 11 and is the cheapest route."
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "triangle = [[-10]]",
+      "output": "-10",
+      "expectedOutput": "-10",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "triangle = [[1],[2,3]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "The only paths are 1 -> 2 (sum 3) and 1 -> 3 (sum 4); 3 is the minimum."
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[2],[3,4],[6,5,7],[4,1,8,3]]]",
+      "output": "11",
+      "expectedOutput": "11",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[-10]]]",
+      "output": "-10",
+      "expectedOutput": "-10",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1],[2,3]]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1],[-2,-3]]]",
+      "output": "-2",
+      "expectedOutput": "-2",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[5],[1,2],[4,1,3]]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[7]]]",
+      "output": "7",
+      "expectedOutput": "7",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[0],[0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1],[2,3],[4,5,6],[7,8,9,10]]]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[7],[5,5],[6,-10,-10],[3,-3,8,-1],[-4,2,9,8,-8],[8,-5,-6,-9,-10,-7],[-7,9,-5,1,-6,-10,-10],[-9,-6,10,10,-9,-8,-9,-8]]]",
+      "output": "-36",
+      "expectedOutput": "-36",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[51],[95,-7],[-49,36,70],[-84,93,82,-2],[-73,-37,-48,-48,-72],[-92,-92,92,62,-78,92],[61,61,-27,22,-75,-67,-75],[93,65,-48,-25,-19,-14,8,-34],[-95,-11,-35,-28,-88,83,94,-6,-18],[96,54,28,21,-27,58,90,-93,5,-93]]]",
+      "output": "-319",
+      "expectedOutput": "-319",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[-5],[-5,-5],[-5,-5,-5],[-5,-5,-5,-5],[-5,-5,-5,-5,-5],[-5,-5,-5,-5,-5,-5]]]",
+      "output": "-30",
+      "expectedOutput": "-30",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[28],[34,50],[7,23,31],[46,4,35,37],[14,46,6,37,19],[11,28,1,34,13,19],[49,49,4,1,23,32,7],[32,45,12,32,38,23,33,17],[37,11,19,14,45,15,32,11,8],[41,50,6,32,45,36,7,41,21,23],[7,26,26,48,6,28,42,2,24,14,20],[17,28,35,33,11,25,41,15,30,9,35,39]]]",
+      "output": "158",
+      "expectedOutput": "158",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0],[0,0],[0,0,0],[0,0,0,0],[0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[18],[-18,2],[17,0,13],[-11,8,15,0],[-10,9,8,-4,17],[-6,-12,1,9,-5,12],[-8,-3,-1,19,-11,-11,-5],[0,18,13,2,-10,-5,0,-8],[-4,-14,-10,-14,-8,4,-11,-11,-1]]]",
+      "output": "-32",
+      "expectedOutput": "-32",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1],[100,100],[1,100,1],[100,1,100,1]]]",
+      "output": "103",
+      "expectedOutput": "103",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[501],[-391,-110],[-440,-599,-777],[306,866,-782,-425],[-578,812,-205,-50,-931]]]",
+      "output": "-1742",
+      "expectedOutput": "-1742",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[2],[3,4],[6,5,7]]]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[3],[7,4],[2,4,6],[8,5,9,3]]]",
+      "output": "16",
+      "expectedOutput": "16",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[50],[-31,9],[-22,3,-22],[15,34,5,0],[21,-26,-1,-41,13],[-45,-14,-33,10,43,42],[-37,-34,-35,8,-5,20,28],[-48,6,16,-5,-14,-4,-23,-1],[-44,-37,15,46,-38,25,35,-9,44],[-40,49,35,-24,-1,-27,3,-34,10,-33],[-50,-30,50,-39,-8,-46,-38,-32,-22,8,5]]]",
+      "output": "-231",
+      "expectedOutput": "-231",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[10],[10,10],[10,10,10]]]",
+      "output": "30",
+      "expectedOutput": "30",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "triangle = [[2],[3,4],[6,5,7],[4,1,8,3]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "explanation": "The path 2 -> 3 -> 5 -> 1 sums to 11 and is the cheapest route."
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "triangle = [[-10]]",
+        "output": "-10",
+        "expectedOutput": "-10",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "triangle = [[1],[2,3]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "The only paths are 1 -> 2 (sum 3) and 1 -> 3 (sum 4); 3 is the minimum."
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[2],[3,4],[6,5,7],[4,1,8,3]]]",
+        "output": "11",
+        "expectedOutput": "11",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[-10]]]",
+        "output": "-10",
+        "expectedOutput": "-10",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1],[2,3]]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1],[-2,-3]]]",
+        "output": "-2",
+        "expectedOutput": "-2",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[5],[1,2],[4,1,3]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[7]]]",
+        "output": "7",
+        "expectedOutput": "7",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0],[0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1],[2,3],[4,5,6],[7,8,9,10]]]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[7],[5,5],[6,-10,-10],[3,-3,8,-1],[-4,2,9,8,-8],[8,-5,-6,-9,-10,-7],[-7,9,-5,1,-6,-10,-10],[-9,-6,10,10,-9,-8,-9,-8]]]",
+        "output": "-36",
+        "expectedOutput": "-36",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[51],[95,-7],[-49,36,70],[-84,93,82,-2],[-73,-37,-48,-48,-72],[-92,-92,92,62,-78,92],[61,61,-27,22,-75,-67,-75],[93,65,-48,-25,-19,-14,8,-34],[-95,-11,-35,-28,-88,83,94,-6,-18],[96,54,28,21,-27,58,90,-93,5,-93]]]",
+        "output": "-319",
+        "expectedOutput": "-319",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[-5],[-5,-5],[-5,-5,-5],[-5,-5,-5,-5],[-5,-5,-5,-5,-5],[-5,-5,-5,-5,-5,-5]]]",
+        "output": "-30",
+        "expectedOutput": "-30",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[28],[34,50],[7,23,31],[46,4,35,37],[14,46,6,37,19],[11,28,1,34,13,19],[49,49,4,1,23,32,7],[32,45,12,32,38,23,33,17],[37,11,19,14,45,15,32,11,8],[41,50,6,32,45,36,7,41,21,23],[7,26,26,48,6,28,42,2,24,14,20],[17,28,35,33,11,25,41,15,30,9,35,39]]]",
+        "output": "158",
+        "expectedOutput": "158",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0],[0,0],[0,0,0],[0,0,0,0],[0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[18],[-18,2],[17,0,13],[-11,8,15,0],[-10,9,8,-4,17],[-6,-12,1,9,-5,12],[-8,-3,-1,19,-11,-11,-5],[0,18,13,2,-10,-5,0,-8],[-4,-14,-10,-14,-8,4,-11,-11,-1]]]",
+        "output": "-32",
+        "expectedOutput": "-32",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1],[100,100],[1,100,1],[100,1,100,1]]]",
+        "output": "103",
+        "expectedOutput": "103",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[501],[-391,-110],[-440,-599,-777],[306,866,-782,-425],[-578,812,-205,-50,-931]]]",
+        "output": "-1742",
+        "expectedOutput": "-1742",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[2],[3,4],[6,5,7]]]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[3],[7,4],[2,4,6],[8,5,9,3]]]",
+        "output": "16",
+        "expectedOutput": "16",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[50],[-31,9],[-22,3,-22],[15,34,5,0],[21,-26,-1,-41,13],[-45,-14,-33,10,43,42],[-37,-34,-35,8,-5,20,28],[-48,6,16,-5,-14,-4,-23,-1],[-44,-37,15,46,-38,25,35,-9,44],[-40,49,35,-24,-1,-27,3,-34,10,-33],[-50,-30,50,-39,-8,-46,-38,-32,-22,8,5]]]",
+        "output": "-231",
+        "expectedOutput": "-231",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[10],[10,10],[10,10,10]]]",
+        "output": "30",
+        "expectedOutput": "30",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def minimumTotal(self, triangle):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumTotal(vector<vector<int>>& triangle) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumTotal(int[][] triangle) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumTotal(triangle: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumTotal(triangle) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def minimumTotal(self, triangle):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumTotal(vector<vector<int>>& triangle) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumTotal(int[][] triangle) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumTotal(triangle: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumTotal(triangle) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def minimumTotal(self, triangle):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumTotal(vector<vector<int>>& triangle) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumTotal(int[][] triangle) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumTotal(triangle: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumTotal(triangle) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def minimumTotal(self, triangle):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int minimumTotal(vector<vector<int>>& triangle) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int minimumTotal(int[][] triangle) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun minimumTotal(triangle: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    minimumTotal(triangle) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2) where n is the number of rows",
+      "space": "O(n^2), reducible to O(n)",
+      "pattern": "2D dynamic programming working bottom-up over triangle rows"
+    },
+    "bruteForce": {
+      "approach": "recursively branch at every row, trying both index j and j + 1 in the next row, and take the minimum total over all root-to-bottom paths",
+      "time": "O(2^n) where n is the number of rows",
+      "space": "O(n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "2D dynamic programming working bottom-up over triangle rows",
+    "time": "O(n^2) where n is the number of rows",
+    "space": "O(n^2), reducible to O(n)",
+    "hint_ladder": [
+      "it's easier to think about this bottom-up: what's the cheapest way to finish a path starting from some cell in the bottom row? just its own value, since there's nowhere left to go",
+      "define dp[i][j] as the minimum sum of a path from cell (i, j) down to the bottom of the triangle",
+      "recurrence: dp[i][j] = triangle[i][j] + min(dp[i+1][j], dp[i+1][j+1]), since from (i, j) you can only move to (i+1, j) or (i+1, j+1)",
+      "start dp equal to the bottom row itself, then work upward row by row applying the recurrence",
+      "the answer ends up at dp[0][0], the minimum cost of a path starting at the very top"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively branch at every row, trying both index j and j + 1 in the next row, and take the minimum total over all root-to-bottom paths",
+    "time": "O(2^n) where n is the number of rows",
+    "space": "O(n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

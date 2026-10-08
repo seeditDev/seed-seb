@@ -1,0 +1,658 @@
+{
+  "id": "word-search-ii",
+  "questionId": "word-search-ii",
+  "slug": "word-search-ii",
+  "title": "Word Search II",
+  "difficulty": "Hard",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "backtracking"
+  ],
+  "lists": [
+    "blind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "searching for each word independently repeats a lot of the same board exploration - could the words share a search structure?",
+    "insert every candidate word into a trie, marking end-of-word nodes",
+    "run one DFS per starting cell, but walk the trie alongside the board: only continue into a neighbor if the trie has a child edge for that neighbor's letter",
+    "when a trie node marked end-of-word is reached, record that word as found - but keep exploring, since one word can be a prefix of another",
+    "mark cells visited going down and unmark them coming back up, exactly like single-word word search, so the same cell can be reused by other paths"
+  ],
+  "commonMistakes": [
+    "reusing a cell within the same word's trace (must track per-trace visited cells and undo on backtrack)",
+    "producing output words out of alphabetical or trie-discovery order instead of preserving the original input word list order",
+    "stopping the DFS as soon as a word is found instead of continuing, which misses other words that share that word as a prefix",
+    "not handling a candidate word that is longer than the total cell count as an automatic miss before searching"
+  ],
+  "content": {
+    "problemStatement": "You're given a grid of lowercase letters, encoded as a string where each row is a run of letters and rows are separated by \"|\". For example, `\"oaan|etae|ihkr|iflv\"` is this 4x4 grid:\n\n```\no a a n\ne t a e\ni h k r\ni f l v\n```\n\nYou're also given a space-delimited list of candidate `words`. For each candidate word, it can be traced out by moving from cell to cell in the grid, where each step must move to a horizontally or vertically adjacent cell, and no cell may be reused within a single word's trace. A fresh trace, with all cells available again, is allowed for each new word.\n\n**Return the candidate words that can be found, space-delimited, in the same order they appeared in the input word list.**\n",
+    "constraints": [
+      "1 <= rows, cols <= 6 for the decoded board",
+      "1 <= number of candidate words <= 8",
+      "1 <= word length <= 10",
+      "the board and all words consist of lowercase English letters only"
+    ],
+    "notes": [
+      "a candidate word longer than the total number of cells in the board (always not found)",
+      "two different candidate words that share a long common prefix",
+      "a word whose letters all exist in the board, but never in a connected adjacent path",
+      "the same letter repeated densely across the board, forcing real backtracking"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "board = \"oaan|etae|ihkr|iflv\", words = \"oath pea eat rain\"",
+        "output": "\"oath eat\"",
+        "expectedOutput": "\"oath eat\"",
+        "explanation": "oath traces (0,0)o -> (0,1)a -> (1,1)t -> (2,1)h; eat traces (1,3)e -> (1,2)a -> (1,1)t; pea and rain cannot be traced"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "board = \"ab|cd\", words = \"a ab ac ad\"",
+        "output": "\"a ab ac\"",
+        "expectedOutput": "\"a ab ac\"",
+        "explanation": "(0,0) and (1,1) are diagonal, not adjacent, so \"ad\" cannot be traced"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "board = \"xy|zw\", words = \"xy yz wz\"",
+        "output": "\"xy wz\"",
+        "expectedOutput": "\"xy wz\"",
+        "explanation": "\"yz\" would need y at (0,1) adjacent to z, but z is at (1,0), a diagonal, so it fails"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"oaan|etae|ihkr|iflv\",\"oath pea eat rain\"]",
+        "output": "oath eat",
+        "expectedOutput": "oath eat",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"ab|cd\",\"a ab ac ad ba cd dc abcd\"]",
+        "output": "a ab ac ba cd dc",
+        "expectedOutput": "a ab ac ba cd dc",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\",\"a b\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"xy|zw\",\"xy yz wz\"]",
+        "output": "xy wz",
+        "expectedOutput": "xy wz",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"abcde\",\"abc cde edcba ace\"]",
+        "output": "abc cde edcba",
+        "expectedOutput": "abc cde edcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"ab|ba\",\"aba abab baa\"]",
+        "output": "aba abab",
+        "expectedOutput": "aba abab",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab|cd|ef\",\"abdf ace bdf aceg\"]",
+        "output": "abdf ace bdf",
+        "expectedOutput": "abdf ace bdf",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aa|aa\",\"aaa aaaaa\"]",
+        "output": "aaa",
+        "expectedOutput": "aaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"ab|dc\",\"abcd adcb abdc\"]",
+        "output": "abcd adcb",
+        "expectedOutput": "abcd adcb",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"xyz\",\"xyz zyx xy yz xz\"]",
+        "output": "xyz zyx xy yz",
+        "expectedOutput": "xyz zyx xy yz",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"pqr|stu|vwx\",\"pst psv pqrux qrs\"]",
+        "output": "pst psv pqrux",
+        "expectedOutput": "pst psv pqrux",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"m\",\"m n\"]",
+        "output": "m",
+        "expectedOutput": "m",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"ab\",\"a b ab ba\"]",
+        "output": "a b ab ba",
+        "expectedOutput": "a b ab ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"ab|cd\",\"abc abd acd bcd\"]",
+        "output": "abd acd",
+        "expectedOutput": "abd acd",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aab|abb\",\"aaa aab aba baa abb\"]",
+        "output": "aab aba baa abb",
+        "expectedOutput": "aab aba baa abb",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"a|a|a|a\",\"aaaa aaaaaaaaaaaaaaaaa\"]",
+        "output": "aaaa",
+        "expectedOutput": "aaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"hello|world\",\"hello world hold lord ow\"]",
+        "output": "hello world ow",
+        "expectedOutput": "hello world ow",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xy|yx\",\"xy yx xx yy xyx\"]",
+        "output": "xy yx xyx",
+        "expectedOutput": "xy yx xyx",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcd|efgh|ijkl|mnop\",\"af be im dh helo abcdefgh\"]",
+        "output": "im dh abcdefgh",
+        "expectedOutput": "im dh abcdefgh",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"z\",\"z zz za\"]",
+        "output": "z",
+        "expectedOutput": "z",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"no|on\",\"no on noon nono\"]",
+        "output": "no on nono",
+        "expectedOutput": "no on nono",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "board = \"oaan|etae|ihkr|iflv\", words = \"oath pea eat rain\"",
+      "output": "\"oath eat\"",
+      "expectedOutput": "\"oath eat\"",
+      "explanation": "oath traces (0,0)o -> (0,1)a -> (1,1)t -> (2,1)h; eat traces (1,3)e -> (1,2)a -> (1,1)t; pea and rain cannot be traced"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "board = \"ab|cd\", words = \"a ab ac ad\"",
+      "output": "\"a ab ac\"",
+      "expectedOutput": "\"a ab ac\"",
+      "explanation": "(0,0) and (1,1) are diagonal, not adjacent, so \"ad\" cannot be traced"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "board = \"xy|zw\", words = \"xy yz wz\"",
+      "output": "\"xy wz\"",
+      "expectedOutput": "\"xy wz\"",
+      "explanation": "\"yz\" would need y at (0,1) adjacent to z, but z is at (1,0), a diagonal, so it fails"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "board = \"oaan|etae|ihkr|iflv\", words = \"oath pea eat rain\"",
+      "output": "\"oath eat\"",
+      "expectedOutput": "\"oath eat\"",
+      "explanation": "oath traces (0,0)o -> (0,1)a -> (1,1)t -> (2,1)h; eat traces (1,3)e -> (1,2)a -> (1,1)t; pea and rain cannot be traced"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "board = \"ab|cd\", words = \"a ab ac ad\"",
+      "output": "\"a ab ac\"",
+      "expectedOutput": "\"a ab ac\"",
+      "explanation": "(0,0) and (1,1) are diagonal, not adjacent, so \"ad\" cannot be traced"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "board = \"xy|zw\", words = \"xy yz wz\"",
+      "output": "\"xy wz\"",
+      "expectedOutput": "\"xy wz\"",
+      "explanation": "\"yz\" would need y at (0,1) adjacent to z, but z is at (1,0), a diagonal, so it fails"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"oaan|etae|ihkr|iflv\",\"oath pea eat rain\"]",
+      "output": "oath eat",
+      "expectedOutput": "oath eat",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"ab|cd\",\"a ab ac ad ba cd dc abcd\"]",
+      "output": "a ab ac ba cd dc",
+      "expectedOutput": "a ab ac ba cd dc",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a\",\"a b\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"xy|zw\",\"xy yz wz\"]",
+      "output": "xy wz",
+      "expectedOutput": "xy wz",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"abcde\",\"abc cde edcba ace\"]",
+      "output": "abc cde edcba",
+      "expectedOutput": "abc cde edcba",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"ab|ba\",\"aba abab baa\"]",
+      "output": "aba abab",
+      "expectedOutput": "aba abab",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ab|cd|ef\",\"abdf ace bdf aceg\"]",
+      "output": "abdf ace bdf",
+      "expectedOutput": "abdf ace bdf",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aa|aa\",\"aaa aaaaa\"]",
+      "output": "aaa",
+      "expectedOutput": "aaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"ab|dc\",\"abcd adcb abdc\"]",
+      "output": "abcd adcb",
+      "expectedOutput": "abcd adcb",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"xyz\",\"xyz zyx xy yz xz\"]",
+      "output": "xyz zyx xy yz",
+      "expectedOutput": "xyz zyx xy yz",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"pqr|stu|vwx\",\"pst psv pqrux qrs\"]",
+      "output": "pst psv pqrux",
+      "expectedOutput": "pst psv pqrux",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"m\",\"m n\"]",
+      "output": "m",
+      "expectedOutput": "m",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"ab\",\"a b ab ba\"]",
+      "output": "a b ab ba",
+      "expectedOutput": "a b ab ba",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"ab|cd\",\"abc abd acd bcd\"]",
+      "output": "abd acd",
+      "expectedOutput": "abd acd",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"aab|abb\",\"aaa aab aba baa abb\"]",
+      "output": "aab aba baa abb",
+      "expectedOutput": "aab aba baa abb",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"a|a|a|a\",\"aaaa aaaaaaaaaaaaaaaaa\"]",
+      "output": "aaaa",
+      "expectedOutput": "aaaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"hello|world\",\"hello world hold lord ow\"]",
+      "output": "hello world ow",
+      "expectedOutput": "hello world ow",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"xy|yx\",\"xy yx xx yy xyx\"]",
+      "output": "xy yx xyx",
+      "expectedOutput": "xy yx xyx",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abcd|efgh|ijkl|mnop\",\"af be im dh helo abcdefgh\"]",
+      "output": "im dh abcdefgh",
+      "expectedOutput": "im dh abcdefgh",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"z\",\"z zz za\"]",
+      "output": "z",
+      "expectedOutput": "z",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"no|on\",\"no on noon nono\"]",
+      "output": "no on nono",
+      "expectedOutput": "no on nono",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "board = \"oaan|etae|ihkr|iflv\", words = \"oath pea eat rain\"",
+        "output": "\"oath eat\"",
+        "expectedOutput": "\"oath eat\"",
+        "explanation": "oath traces (0,0)o -> (0,1)a -> (1,1)t -> (2,1)h; eat traces (1,3)e -> (1,2)a -> (1,1)t; pea and rain cannot be traced"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "board = \"ab|cd\", words = \"a ab ac ad\"",
+        "output": "\"a ab ac\"",
+        "expectedOutput": "\"a ab ac\"",
+        "explanation": "(0,0) and (1,1) are diagonal, not adjacent, so \"ad\" cannot be traced"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "board = \"xy|zw\", words = \"xy yz wz\"",
+        "output": "\"xy wz\"",
+        "expectedOutput": "\"xy wz\"",
+        "explanation": "\"yz\" would need y at (0,1) adjacent to z, but z is at (1,0), a diagonal, so it fails"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"oaan|etae|ihkr|iflv\",\"oath pea eat rain\"]",
+        "output": "oath eat",
+        "expectedOutput": "oath eat",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"ab|cd\",\"a ab ac ad ba cd dc abcd\"]",
+        "output": "a ab ac ba cd dc",
+        "expectedOutput": "a ab ac ba cd dc",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\",\"a b\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"xy|zw\",\"xy yz wz\"]",
+        "output": "xy wz",
+        "expectedOutput": "xy wz",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"abcde\",\"abc cde edcba ace\"]",
+        "output": "abc cde edcba",
+        "expectedOutput": "abc cde edcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"ab|ba\",\"aba abab baa\"]",
+        "output": "aba abab",
+        "expectedOutput": "aba abab",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab|cd|ef\",\"abdf ace bdf aceg\"]",
+        "output": "abdf ace bdf",
+        "expectedOutput": "abdf ace bdf",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aa|aa\",\"aaa aaaaa\"]",
+        "output": "aaa",
+        "expectedOutput": "aaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"ab|dc\",\"abcd adcb abdc\"]",
+        "output": "abcd adcb",
+        "expectedOutput": "abcd adcb",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"xyz\",\"xyz zyx xy yz xz\"]",
+        "output": "xyz zyx xy yz",
+        "expectedOutput": "xyz zyx xy yz",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"pqr|stu|vwx\",\"pst psv pqrux qrs\"]",
+        "output": "pst psv pqrux",
+        "expectedOutput": "pst psv pqrux",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"m\",\"m n\"]",
+        "output": "m",
+        "expectedOutput": "m",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"ab\",\"a b ab ba\"]",
+        "output": "a b ab ba",
+        "expectedOutput": "a b ab ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"ab|cd\",\"abc abd acd bcd\"]",
+        "output": "abd acd",
+        "expectedOutput": "abd acd",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aab|abb\",\"aaa aab aba baa abb\"]",
+        "output": "aab aba baa abb",
+        "expectedOutput": "aab aba baa abb",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"a|a|a|a\",\"aaaa aaaaaaaaaaaaaaaaa\"]",
+        "output": "aaaa",
+        "expectedOutput": "aaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"hello|world\",\"hello world hold lord ow\"]",
+        "output": "hello world ow",
+        "expectedOutput": "hello world ow",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xy|yx\",\"xy yx xx yy xyx\"]",
+        "output": "xy yx xyx",
+        "expectedOutput": "xy yx xyx",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcd|efgh|ijkl|mnop\",\"af be im dh helo abcdefgh\"]",
+        "output": "im dh abcdefgh",
+        "expectedOutput": "im dh abcdefgh",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"z\",\"z zz za\"]",
+        "output": "z",
+        "expectedOutput": "z",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"no|on\",\"no on noon nono\"]",
+        "output": "no on nono",
+        "expectedOutput": "no on nono",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findWords(self, board, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string findWords(string board, string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String findWords(String board, String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findWords(board: String, words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findWords(board, words) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findWords(self, board, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string findWords(string board, string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String findWords(String board, String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findWords(board: String, words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findWords(board, words) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findWords(self, board, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string findWords(string board, string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String findWords(String board, String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findWords(board: String, words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findWords(board, words) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findWords(self, board, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <sstream>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string findWords(string board, string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String findWords(String board, String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findWords(board: String, words: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findWords(board, words) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(rows * cols * 4^L) total, shared across all words instead of paying the search cost once per word",
+      "space": "O(total characters across all words) for the trie, plus O(L) recursion depth",
+      "pattern": "build a trie of all candidate words once, then run a single combined backtracking DFS from every board cell, following trie edges so failing prefixes are abandoned across all words at once"
+    },
+    "bruteForce": {
+      "approach": "for each word, independently DFS from every cell in the board, exploring all four directions with no pruning across different words, checking each full path against the word",
+      "time": "O(W * rows * cols * 4^L) where W is the number of words and L is the max word length",
+      "space": "O(L) recursion depth per search"
+    }
+  },
+  "optimal": {
+    "pattern": "build a trie of all candidate words once, then run a single combined backtracking DFS from every board cell, following trie edges so failing prefixes are abandoned across all words at once",
+    "time": "O(rows * cols * 4^L) total, shared across all words instead of paying the search cost once per word",
+    "space": "O(total characters across all words) for the trie, plus O(L) recursion depth",
+    "hint_ladder": [
+      "searching for each word independently repeats a lot of the same board exploration - could the words share a search structure?",
+      "insert every candidate word into a trie, marking end-of-word nodes",
+      "run one DFS per starting cell, but walk the trie alongside the board: only continue into a neighbor if the trie has a child edge for that neighbor's letter",
+      "when a trie node marked end-of-word is reached, record that word as found - but keep exploring, since one word can be a prefix of another",
+      "mark cells visited going down and unmark them coming back up, exactly like single-word word search, so the same cell can be reused by other paths"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each word, independently DFS from every cell in the board, exploring all four directions with no pruning across different words, checking each full path against the word",
+    "time": "O(W * rows * cols * 4^L) where W is the number of words and L is the max word length",
+    "space": "O(L) recursion depth per search"
+  },
+  "isIndex0": true,
+  "level": null
+}

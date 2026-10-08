@@ -1,0 +1,634 @@
+{
+  "id": "summary-ranges",
+  "questionId": "summary-ranges",
+  "slug": "summary-ranges",
+  "title": "Summary Ranges",
+  "difficulty": "Easy",
+  "category": "Merge intervals",
+  "patterns": [
+    "merge intervals",
+    "arrays"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "since the array is sorted and has unique values, two numbers are 'consecutive' exactly when nums[i+1] == nums[i] + 1",
+    "walk through the array keeping track of where the current run started",
+    "whenever the next number breaks the run (isn't exactly one more than the current number), close off the range [runStart, currentNumber] and start a new run at the next number",
+    "don't forget to close off and record the final run after the loop ends"
+  ],
+  "commonMistakes": [
+    "forgetting to flush the last run after the loop finishes",
+    "comparing nums[i+1] - nums[i-1] or some other off-by-one instead of nums[i+1] - nums[i] == 1",
+    "not handling the empty array case, which should return an empty list rather than crashing or returning [[]]"
+  ],
+  "content": {
+    "problemStatement": "You're given a sorted array of unique integers `nums`.\n\n**Return the smallest sorted list of ranges that exactly covers every number in `nums`, where each range is represented as [start, end].**\n\nIf a range covers only a single number, still represent it as [start, start].\n",
+    "constraints": [
+      "0 <= nums.length <= 25",
+      "-2^31 <= nums[i] <= 2^31 - 1",
+      "all values in nums are unique",
+      "nums is sorted in strictly increasing order"
+    ],
+    "notes": [
+      "empty array (return an empty list of ranges)",
+      "single element array",
+      "every number is part of one single consecutive run",
+      "no two numbers are consecutive (every range is a single point)",
+      "negative numbers"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [0,1,2,4,5,7]",
+        "output": "[[0,2],[4,5],[7,7]]",
+        "expectedOutput": "[[0,2],[4,5],[7,7]]",
+        "explanation": "0,1,2 are consecutive; 4,5 are consecutive; 7 stands alone"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0,2,3,4,6,8,9]",
+        "output": "[[0,0],[2,4],[6,6],[8,9]]",
+        "expectedOutput": "[[0,0],[2,4],[6,6],[8,9]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[[1,1]]",
+        "expectedOutput": "[[1,1]]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[0,1,2,4,5,7]]",
+        "output": "[[0,2],[4,5],[7,7]]",
+        "expectedOutput": "[[0,2],[4,5],[7,7]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,2,3,4,6,8,9]]",
+        "output": "[[0,0],[2,4],[6,6],[8,9]]",
+        "expectedOutput": "[[0,0],[2,4],[6,6],[8,9]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "[[1,1]]",
+        "expectedOutput": "[[1,1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[-3,-2,-1,1,2]]",
+        "output": "[[-3,-1],[1,2]]",
+        "expectedOutput": "[[-3,-1],[1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5]]",
+        "output": "[[5,5]]",
+        "expectedOutput": "[[5,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3]]",
+        "output": "[[1,3]]",
+        "expectedOutput": "[[1,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,3,5,7]]",
+        "output": "[[1,1],[3,3],[5,5],[7,7]]",
+        "expectedOutput": "[[1,1],[3,3],[5,5],[7,7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-4,-3,-1,0,1,5]]",
+        "output": "[[-5,-3],[-1,1],[5,5]]",
+        "expectedOutput": "[[-5,-3],[-1,1],[5,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "[[0,19]]",
+        "expectedOutput": "[[0,19]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,1,3,4,5,7,8,9,11]]",
+        "output": "[[0,1],[3,5],[7,9],[11,11]]",
+        "expectedOutput": "[[0,1],[3,5],[7,9],[11,11]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-10,-9,-8,-7,0,1,2,10]]",
+        "output": "[[-10,-7],[0,2],[10,10]]",
+        "expectedOutput": "[[-10,-7],[0,2],[10,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2]]",
+        "output": "[[2,2]]",
+        "expectedOutput": "[[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,4,5,7,8,10]]",
+        "output": "[[1,2],[4,5],[7,8],[10,10]]",
+        "expectedOutput": "[[1,2],[4,5],[7,8],[10,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-3,-1,0,1,3]]",
+        "output": "[[-3,-3],[-1,1],[3,3]]",
+        "expectedOutput": "[[-3,-3],[-1,1],[3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0]]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-1]]",
+        "output": "[[-1,-1]]",
+        "expectedOutput": "[[-1,-1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[[-10,10]]",
+        "expectedOutput": "[[-10,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,10,11,12,13,20,30,31,32]]",
+        "output": "[[1,3],[10,13],[20,20],[30,32]]",
+        "expectedOutput": "[[1,3],[10,13],[20,20],[30,32]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100]]",
+        "output": "[[100,100]]",
+        "expectedOutput": "[[100,100]]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [0,1,2,4,5,7]",
+      "output": "[[0,2],[4,5],[7,7]]",
+      "expectedOutput": "[[0,2],[4,5],[7,7]]",
+      "explanation": "0,1,2 are consecutive; 4,5 are consecutive; 7 stands alone"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0,2,3,4,6,8,9]",
+      "output": "[[0,0],[2,4],[6,6],[8,9]]",
+      "expectedOutput": "[[0,0],[2,4],[6,6],[8,9]]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "[[1,1]]",
+      "expectedOutput": "[[1,1]]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [0,1,2,4,5,7]",
+      "output": "[[0,2],[4,5],[7,7]]",
+      "expectedOutput": "[[0,2],[4,5],[7,7]]",
+      "explanation": "0,1,2 are consecutive; 4,5 are consecutive; 7 stands alone"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0,2,3,4,6,8,9]",
+      "output": "[[0,0],[2,4],[6,6],[8,9]]",
+      "expectedOutput": "[[0,0],[2,4],[6,6],[8,9]]",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1]",
+      "output": "[[1,1]]",
+      "expectedOutput": "[[1,1]]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[0,1,2,4,5,7]]",
+      "output": "[[0,2],[4,5],[7,7]]",
+      "expectedOutput": "[[0,2],[4,5],[7,7]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,2,3,4,6,8,9]]",
+      "output": "[[0,0],[2,4],[6,6],[8,9]]",
+      "expectedOutput": "[[0,0],[2,4],[6,6],[8,9]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1]]",
+      "output": "[[1,1]]",
+      "expectedOutput": "[[1,1]]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[]]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[-3,-2,-1,1,2]]",
+      "output": "[[-3,-1],[1,2]]",
+      "expectedOutput": "[[-3,-1],[1,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[5]]",
+      "output": "[[5,5]]",
+      "expectedOutput": "[[5,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3]]",
+      "output": "[[1,3]]",
+      "expectedOutput": "[[1,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,3,5,7]]",
+      "output": "[[1,1],[3,3],[5,5],[7,7]]",
+      "expectedOutput": "[[1,1],[3,3],[5,5],[7,7]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[-5,-4,-3,-1,0,1,5]]",
+      "output": "[[-5,-3],[-1,1],[5,5]]",
+      "expectedOutput": "[[-5,-3],[-1,1],[5,5]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+      "output": "[[0,19]]",
+      "expectedOutput": "[[0,19]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[0,1,3,4,5,7,8,9,11]]",
+      "output": "[[0,1],[3,5],[7,9],[11,11]]",
+      "expectedOutput": "[[0,1],[3,5],[7,9],[11,11]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[-10,-9,-8,-7,0,1,2,10]]",
+      "output": "[[-10,-7],[0,2],[10,10]]",
+      "expectedOutput": "[[-10,-7],[0,2],[10,10]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[2]]",
+      "output": "[[2,2]]",
+      "expectedOutput": "[[2,2]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,4,5,7,8,10]]",
+      "output": "[[1,2],[4,5],[7,8],[10,10]]",
+      "expectedOutput": "[[1,2],[4,5],[7,8],[10,10]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-3,-1,0,1,3]]",
+      "output": "[[-3,-3],[-1,1],[3,3]]",
+      "expectedOutput": "[[-3,-3],[-1,1],[3,3]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[0]]",
+      "output": "[[0,0]]",
+      "expectedOutput": "[[0,0]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[-1]]",
+      "output": "[[-1,-1]]",
+      "expectedOutput": "[[-1,-1]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]]",
+      "output": "[[-10,10]]",
+      "expectedOutput": "[[-10,10]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,10,11,12,13,20,30,31,32]]",
+      "output": "[[1,3],[10,13],[20,20],[30,32]]",
+      "expectedOutput": "[[1,3],[10,13],[20,20],[30,32]]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[100]]",
+      "output": "[[100,100]]",
+      "expectedOutput": "[[100,100]]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [0,1,2,4,5,7]",
+        "output": "[[0,2],[4,5],[7,7]]",
+        "expectedOutput": "[[0,2],[4,5],[7,7]]",
+        "explanation": "0,1,2 are consecutive; 4,5 are consecutive; 7 stands alone"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0,2,3,4,6,8,9]",
+        "output": "[[0,0],[2,4],[6,6],[8,9]]",
+        "expectedOutput": "[[0,0],[2,4],[6,6],[8,9]]",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1]",
+        "output": "[[1,1]]",
+        "expectedOutput": "[[1,1]]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[0,1,2,4,5,7]]",
+        "output": "[[0,2],[4,5],[7,7]]",
+        "expectedOutput": "[[0,2],[4,5],[7,7]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,2,3,4,6,8,9]]",
+        "output": "[[0,0],[2,4],[6,6],[8,9]]",
+        "expectedOutput": "[[0,0],[2,4],[6,6],[8,9]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1]]",
+        "output": "[[1,1]]",
+        "expectedOutput": "[[1,1]]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[]]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[-3,-2,-1,1,2]]",
+        "output": "[[-3,-1],[1,2]]",
+        "expectedOutput": "[[-3,-1],[1,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5]]",
+        "output": "[[5,5]]",
+        "expectedOutput": "[[5,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3]]",
+        "output": "[[1,3]]",
+        "expectedOutput": "[[1,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,3,5,7]]",
+        "output": "[[1,1],[3,3],[5,5],[7,7]]",
+        "expectedOutput": "[[1,1],[3,3],[5,5],[7,7]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[-5,-4,-3,-1,0,1,5]]",
+        "output": "[[-5,-3],[-1,1],[5,5]]",
+        "expectedOutput": "[[-5,-3],[-1,1],[5,5]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]]",
+        "output": "[[0,19]]",
+        "expectedOutput": "[[0,19]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,1,3,4,5,7,8,9,11]]",
+        "output": "[[0,1],[3,5],[7,9],[11,11]]",
+        "expectedOutput": "[[0,1],[3,5],[7,9],[11,11]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[-10,-9,-8,-7,0,1,2,10]]",
+        "output": "[[-10,-7],[0,2],[10,10]]",
+        "expectedOutput": "[[-10,-7],[0,2],[10,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[2]]",
+        "output": "[[2,2]]",
+        "expectedOutput": "[[2,2]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,4,5,7,8,10]]",
+        "output": "[[1,2],[4,5],[7,8],[10,10]]",
+        "expectedOutput": "[[1,2],[4,5],[7,8],[10,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-3,-1,0,1,3]]",
+        "output": "[[-3,-3],[-1,1],[3,3]]",
+        "expectedOutput": "[[-3,-3],[-1,1],[3,3]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[0]]",
+        "output": "[[0,0]]",
+        "expectedOutput": "[[0,0]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[-1]]",
+        "output": "[[-1,-1]]",
+        "expectedOutput": "[[-1,-1]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]]",
+        "output": "[[-10,10]]",
+        "expectedOutput": "[[-10,10]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,10,11,12,13,20,30,31,32]]",
+        "output": "[[1,3],[10,13],[20,20],[30,32]]",
+        "expectedOutput": "[[1,3],[10,13],[20,20],[30,32]]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[100]]",
+        "output": "[[100,100]]",
+        "expectedOutput": "[[100,100]]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def summaryRanges(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> summaryRanges(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] summaryRanges(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun summaryRanges(nums: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    summaryRanges(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def summaryRanges(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> summaryRanges(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] summaryRanges(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun summaryRanges(nums: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    summaryRanges(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def summaryRanges(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> summaryRanges(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] summaryRanges(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun summaryRanges(nums: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    summaryRanges(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def summaryRanges(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<vector<int>> summaryRanges(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[][] summaryRanges(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun summaryRanges(nums: IntArray): Array<IntArray> {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    summaryRanges(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) beyond the output",
+      "pattern": "single pass tracking the start of the current run"
+    },
+    "bruteForce": {
+      "approach": "for each starting index not yet covered, scan forward while the next number is exactly one more than the current, then record that range; repeat from the first uncovered index",
+      "time": "O(n)",
+      "space": "O(1) beyond the output (this brute force is already close to optimal since the array is sorted)"
+    }
+  },
+  "optimal": {
+    "pattern": "single pass tracking the start of the current run",
+    "time": "O(n)",
+    "space": "O(1) beyond the output",
+    "hint_ladder": [
+      "since the array is sorted and has unique values, two numbers are 'consecutive' exactly when nums[i+1] == nums[i] + 1",
+      "walk through the array keeping track of where the current run started",
+      "whenever the next number breaks the run (isn't exactly one more than the current number), close off the range [runStart, currentNumber] and start a new run at the next number",
+      "don't forget to close off and record the final run after the loop ends"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each starting index not yet covered, scan forward while the next number is exactly one more than the current, then record that range; repeat from the first uncovered index",
+    "time": "O(n)",
+    "space": "O(1) beyond the output (this brute force is already close to optimal since the array is sorted)"
+  },
+  "isIndex0": true,
+  "level": null
+}

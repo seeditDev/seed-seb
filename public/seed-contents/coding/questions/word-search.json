@@ -1,0 +1,632 @@
+{
+  "id": "word-search",
+  "questionId": "word-search",
+  "slug": "word-search",
+  "title": "Word Search on a Coded Grid",
+  "difficulty": "Medium",
+  "category": "Backtracking",
+  "patterns": [
+    "backtracking"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "the word must be matched in order, one grid step at a time, so this is a DFS where you only keep going if the next cell's value matches the next needed letter",
+    "try starting the search from every cell that matches word[0]",
+    "at each step, mark the current cell as visited (e.g. temporarily overwrite it with a sentinel, or use a separate visited grid), then recurse into the up/down/left/right neighbors looking for the next character",
+    "when a recursive branch fails or after you've explored all four directions, unmark the current cell (undo the visited mark) before returning - this backtrack step is essential so the same cell can be reused by a different path attempt"
+  ],
+  "commonMistakes": [
+    "forgetting to unmark a cell as unvisited after a failed branch, which incorrectly blocks other valid paths from reusing it",
+    "not checking board bounds before looking at a neighbor, causing an out-of-bounds access",
+    "only trying one starting cell instead of every cell that matches the first letter of the word"
+  ],
+  "content": {
+    "problemStatement": "You're given a grid `board` of integers, where each integer represents a letter code, and a target sequence of integers `word` representing a word (also as letter codes).\n\n**Determine whether the word can be traced out by moving from cell to cell in the grid, where each step must move to a horizontally or vertically adjacent cell.**\n\nNo cell may be reused within a single trace.\n",
+    "constraints": [
+      "1 <= rows <= 6",
+      "1 <= cols <= 6",
+      "1 <= word.length <= 10"
+    ],
+    "notes": [
+      "the word is longer than the number of cells in the grid (always false)",
+      "the word can be found only by a path that must resist the temptation to reuse a cell greedily",
+      "the word's first letter code does not appear anywhere in the grid (always false)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "board = [[1, 2, 3], [4, 5, 6], [7, 8, 9]], word = [1, 2, 3, 6, 9]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the path (0,0) -> (0,1) -> (0,2) -> (1,2) -> (2,2) spells 1,2,3,6,9 using adjacent, non-repeated cells"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "board = [[1, 2, 3], [4, 5, 6], [7, 8, 9]], word = [1, 2, 3, 9]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "after reaching the 3 at (0,2), no adjacent unused cell holds the value 9"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "board = [[1, 1], [1, 1]], word = [1, 1, 1, 1, 1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the grid only has 4 cells, so a 5-step path without reusing a cell is impossible"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]],[1,2,3,6,9]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]],[1,2,3,9]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,1],[1,1]],[1,1,1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[1,1]],[1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,2],[3,4]],[1,2,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2],[3,4]],[1,3,4,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[5]],[5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[5]],[5,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2,3,4],[5,6,7,8],[9,10,11,12]],[1,5,9,10,11,12]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]],[9,8,7,4,1,2,3,6,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[2,2],[2,2]],[2,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]],[5,6,9,8,7,4,1,2,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]],[1,1,1,1,1,1,1,1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]],[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[3,1],[1,3]],[3,1,3,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,2,3,4,5,6]],[1,2,3,4,5,6]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,2,3],[4,5,6]],[1,4,5,2,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,2],[2,1]],[1,2,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,2],[2,1]],[1,2,1,2,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[6,6,6],[6,6,6],[6,6,6]],[6,6,6,6,6]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "board = [[1, 2, 3], [4, 5, 6], [7, 8, 9]], word = [1, 2, 3, 6, 9]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the path (0,0) -> (0,1) -> (0,2) -> (1,2) -> (2,2) spells 1,2,3,6,9 using adjacent, non-repeated cells"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "board = [[1, 2, 3], [4, 5, 6], [7, 8, 9]], word = [1, 2, 3, 9]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "after reaching the 3 at (0,2), no adjacent unused cell holds the value 9"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "board = [[1, 1], [1, 1]], word = [1, 1, 1, 1, 1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the grid only has 4 cells, so a 5-step path without reusing a cell is impossible"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "board = [[1, 2, 3], [4, 5, 6], [7, 8, 9]], word = [1, 2, 3, 6, 9]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the path (0,0) -> (0,1) -> (0,2) -> (1,2) -> (2,2) spells 1,2,3,6,9 using adjacent, non-repeated cells"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "board = [[1, 2, 3], [4, 5, 6], [7, 8, 9]], word = [1, 2, 3, 9]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "after reaching the 3 at (0,2), no adjacent unused cell holds the value 9"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "board = [[1, 1], [1, 1]], word = [1, 1, 1, 1, 1]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the grid only has 4 cells, so a 5-step path without reusing a cell is impossible"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,2,3],[4,5,6],[7,8,9]],[1,2,3,6,9]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,2,3],[4,5,6],[7,8,9]],[1,2,3,9]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1,1],[1,1]],[1,1,1,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,1],[1,1]],[1,1,1,1,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,2],[3,4]],[1,2,4]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,2],[3,4]],[1,3,4,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[5]],[5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[5]],[5,5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,2,3,4],[5,6,7,8],[9,10,11,12]],[1,5,9,10,11,12]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,2,3],[4,5,6],[7,8,9]],[9,8,7,4,1,2,3,6,5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[2,2],[2,2]],[2,2,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,2,3],[4,5,6],[7,8,9]],[5,6,9,8,7,4,1,2,3]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,1,1],[1,1,1],[1,1,1]],[1,1,1,1,1,1,1,1,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1,1,1],[1,1,1],[1,1,1]],[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[3,1],[1,3]],[3,1,3,1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[1,2,3,4,5,6]],[1,2,3,4,5,6]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,2,3],[4,5,6]],[1,4,5,2,3]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,2],[2,1]],[1,2,1,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[1,2],[2,1]],[1,2,1,2,1]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[6,6,6],[6,6,6],[6,6,6]],[6,6,6,6,6]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "board = [[1, 2, 3], [4, 5, 6], [7, 8, 9]], word = [1, 2, 3, 6, 9]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the path (0,0) -> (0,1) -> (0,2) -> (1,2) -> (2,2) spells 1,2,3,6,9 using adjacent, non-repeated cells"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "board = [[1, 2, 3], [4, 5, 6], [7, 8, 9]], word = [1, 2, 3, 9]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "after reaching the 3 at (0,2), no adjacent unused cell holds the value 9"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "board = [[1, 1], [1, 1]], word = [1, 1, 1, 1, 1]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the grid only has 4 cells, so a 5-step path without reusing a cell is impossible"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]],[1,2,3,6,9]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]],[1,2,3,9]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1,1],[1,1]],[1,1,1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,1],[1,1]],[1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,2],[3,4]],[1,2,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2],[3,4]],[1,3,4,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[5]],[5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[5]],[5,5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2,3,4],[5,6,7,8],[9,10,11,12]],[1,5,9,10,11,12]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]],[9,8,7,4,1,2,3,6,5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[2,2],[2,2]],[2,2,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]],[5,6,9,8,7,4,1,2,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]],[1,1,1,1,1,1,1,1,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]],[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[3,1],[1,3]],[3,1,3,1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[1,2,3,4,5,6]],[1,2,3,4,5,6]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,2,3],[4,5,6]],[1,4,5,2,3]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,2],[2,1]],[1,2,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[1,2],[2,1]],[1,2,1,2,1]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[6,6,6],[6,6,6],[6,6,6]],[6,6,6,6,6]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def wordSearch(self, board, word):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordSearch(vector<vector<int>>& board, vector<int>& word) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordSearch(int[][] board, int[] word) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordSearch(board: Array<IntArray>, word: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordSearch(board, word) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def wordSearch(self, board, word):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordSearch(vector<vector<int>>& board, vector<int>& word) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordSearch(int[][] board, int[] word) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordSearch(board: Array<IntArray>, word: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordSearch(board, word) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def wordSearch(self, board, word):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordSearch(vector<vector<int>>& board, vector<int>& word) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordSearch(int[][] board, int[] word) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordSearch(board: Array<IntArray>, word: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordSearch(board, word) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def wordSearch(self, board, word):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordSearch(vector<vector<int>>& board, vector<int>& word) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordSearch(int[][] board, int[] word) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordSearch(board: Array<IntArray>, word: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordSearch(board, word) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(rows * cols * 4^L)",
+      "space": "O(L) recursion depth, excluding the board itself",
+      "pattern": "backtracking DFS from each matching starting cell, marking cells visited on the way down and unmarking them on the way back up"
+    },
+    "bruteForce": {
+      "approach": "from every cell matching word[0], try every possible sequence of adjacent moves (a full DFS tree with no early termination), checking at the end whether it spelled out the word",
+      "time": "O(rows * cols * 4^L) where L is the word length (same order as the optimal approach, since there's no real 'brute force' shortcut for this problem)",
+      "space": "O(L) recursion depth plus a visited-cells structure"
+    }
+  },
+  "optimal": {
+    "pattern": "backtracking DFS from each matching starting cell, marking cells visited on the way down and unmarking them on the way back up",
+    "time": "O(rows * cols * 4^L)",
+    "space": "O(L) recursion depth, excluding the board itself",
+    "hint_ladder": [
+      "the word must be matched in order, one grid step at a time, so this is a DFS where you only keep going if the next cell's value matches the next needed letter",
+      "try starting the search from every cell that matches word[0]",
+      "at each step, mark the current cell as visited (e.g. temporarily overwrite it with a sentinel, or use a separate visited grid), then recurse into the up/down/left/right neighbors looking for the next character",
+      "when a recursive branch fails or after you've explored all four directions, unmark the current cell (undo the visited mark) before returning - this backtrack step is essential so the same cell can be reused by a different path attempt"
+    ]
+  },
+  "bruteForce": {
+    "approach": "from every cell matching word[0], try every possible sequence of adjacent moves (a full DFS tree with no early termination), checking at the end whether it spelled out the word",
+    "time": "O(rows * cols * 4^L) where L is the word length (same order as the optimal approach, since there's no real 'brute force' shortcut for this problem)",
+    "space": "O(L) recursion depth plus a visited-cells structure"
+  },
+  "isIndex0": true,
+  "level": null
+}

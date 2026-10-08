@@ -1,0 +1,634 @@
+{
+  "id": "subtree-of-another-tree",
+  "questionId": "subtree-of-another-tree",
+  "slug": "subtree-of-another-tree",
+  "title": "Subtree of Another Tree",
+  "difficulty": "Easy",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "recursion"
+  ],
+  "lists": [
+    "blind-75"
+  ],
+  "hints": [
+    "first write a helper that checks whether two trees, given their root indices, are exactly identical (same values, same shape)",
+    "subRoot doesn't have to match at root's own root - it could match starting at any node inside root",
+    "walk through every node of root, and at each one, run the identical-trees check against subRoot's root",
+    "if the identical-trees check succeeds at any node, return true immediately; if you exhaust every node of root without a match, return false"
+  ],
+  "commonMistakes": [
+    "only checking whether subRoot matches at root's own root, instead of trying every node of root as a potential match point",
+    "checking that subRoot's values appear somewhere in root without verifying the exact shape (missing/extra children in the wrong places)",
+    "forgetting the sentinel means a node has no left or right child, and letting a mismatch here silently pass as a match"
+  ],
+  "content": {
+    "problemStatement": "Binary trees in these problems are encoded as a flat array using\ncomplete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array's bounds **and** its value isn't the sentinel `-101`\n- any position at or beyond the end of the array, or holding `-101`, means \"no node there\" - real node values are always in the range -100 to 100, so -101 can never be mistaken for a genuine value\n\nYou're given two trees encoded this way, `root` and `subRoot`.\n\n**Return true if subRoot's exact structure and values appear anywhere in root, rooted at some node of root, and false otherwise.**\n\nThat node and every descendant must match subRoot node for node, in the same shape. subRoot matching root's entire tree also counts as true.\n",
+    "constraints": [
+      "1 <= number of nodes in root <= 2000",
+      "1 <= number of nodes in subRoot <= 1000",
+      "every real node value in both trees is between -100 and 100 inclusive",
+      "the sentinel value -101 marks a missing node and never appears as a real value"
+    ],
+    "notes": [
+      "subRoot matches root's entire tree",
+      "subRoot's values all appear somewhere in root, but never in matching shape (e.g. as a subtree of a subtree, or with extra/missing children)",
+      "root and subRoot both being a single node",
+      "duplicate values appearing at multiple places in root, only one of which is a true structural match"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "root = [3, 4, 5, 1, 2], subRoot = [4, 1, 2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the subtree rooted at the node with value 4 (root's left child) has exactly the shape and values of subRoot"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "root = [3, 4, 5, 1, 2, -101, -101, -101, -101, 0], subRoot = [4, 1, 2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the node with value 4 now has an extra node with value 0 attached below it, so its subtree no longer matches subRoot exactly"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "root = [1, 1], subRoot = [1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "root's left child (value 1, a leaf) matches subRoot (a single node with value 1) exactly"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,4,5,1,2],[4,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,4,5,1,2,-101,-101,-101,-101,0],[4,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],[2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1],[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,1],[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,4,5,1,2],[3,4,5,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,4,5,1,2],[5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,3,8,1,4,7,9],[4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,3,8,1,4,7,9],[3,1,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,3,8,1,4,7,9],[8,7,9]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,3,8,1,4,7,9],[8,7,10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3],[2,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,2,3,3,-101,-101,4,4],[2,3,-101,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,2,3,3,-101,-101,4,4],[2,3,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,5,15,2,7,12,20],[5,2,7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[10,5,15,2,7,12,20],[15,12,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,5,15,2,7,12,20],[15,12,21]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0,0],[0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-5,-5,-5],[-5,-5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "root = [3, 4, 5, 1, 2], subRoot = [4, 1, 2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the subtree rooted at the node with value 4 (root's left child) has exactly the shape and values of subRoot"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "root = [3, 4, 5, 1, 2, -101, -101, -101, -101, 0], subRoot = [4, 1, 2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the node with value 4 now has an extra node with value 0 attached below it, so its subtree no longer matches subRoot exactly"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "root = [1, 1], subRoot = [1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "root's left child (value 1, a leaf) matches subRoot (a single node with value 1) exactly"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "root = [3, 4, 5, 1, 2], subRoot = [4, 1, 2]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the subtree rooted at the node with value 4 (root's left child) has exactly the shape and values of subRoot"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "root = [3, 4, 5, 1, 2, -101, -101, -101, -101, 0], subRoot = [4, 1, 2]",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the node with value 4 now has an extra node with value 0 attached below it, so its subtree no longer matches subRoot exactly"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "root = [1, 1], subRoot = [1]",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "root's left child (value 1, a leaf) matches subRoot (a single node with value 1) exactly"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,4,5,1,2],[4,1,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[3,4,5,1,2,-101,-101,-101,-101,0],[4,1,2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1],[1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1],[2]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1,1],[1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2,1],[1]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[3,4,5,1,2],[3,4,5,1,2]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[3,4,5,1,2],[5]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[5,3,8,1,4,7,9],[4]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[5,3,8,1,4,7,9],[3,1,4]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[5,3,8,1,4,7,9],[8,7,9]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[5,3,8,1,4,7,9],[8,7,10]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,2,3],[2,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,2,3,3,-101,-101,4,4],[2,3,-101,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,2,2,3,3,-101,-101,4,4],[2,3,4]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[10,5,15,2,7,12,20],[5,2,7]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[10,5,15,2,7,12,20],[15,12,20]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[10,5,15,2,7,12,20],[15,12,21]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[0,0],[0]]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[-5,-5,-5],[-5,-5]]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "root = [3, 4, 5, 1, 2], subRoot = [4, 1, 2]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the subtree rooted at the node with value 4 (root's left child) has exactly the shape and values of subRoot"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "root = [3, 4, 5, 1, 2, -101, -101, -101, -101, 0], subRoot = [4, 1, 2]",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the node with value 4 now has an extra node with value 0 attached below it, so its subtree no longer matches subRoot exactly"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "root = [1, 1], subRoot = [1]",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "root's left child (value 1, a leaf) matches subRoot (a single node with value 1) exactly"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,4,5,1,2],[4,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,4,5,1,2,-101,-101,-101,-101,0],[4,1,2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1],[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],[2]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1,1],[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,1],[1]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[3,4,5,1,2],[3,4,5,1,2]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[3,4,5,1,2],[5]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[5,3,8,1,4,7,9],[4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[5,3,8,1,4,7,9],[3,1,4]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[5,3,8,1,4,7,9],[8,7,9]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[5,3,8,1,4,7,9],[8,7,10]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,2,3],[2,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,2,3,3,-101,-101,4,4],[2,3,-101,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,2,2,3,3,-101,-101,4,4],[2,3,4]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,5,15,2,7,12,20],[5,2,7]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[10,5,15,2,7,12,20],[15,12,20]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[10,5,15,2,7,12,20],[15,12,21]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[0,0],[0]]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[-5,-5,-5],[-5,-5]]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isSubtree(self, root, subRoot):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSubtree(vector<int>& root, vector<int>& subRoot) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSubtree(int[] root, int[] subRoot) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSubtree(root: IntArray, subRoot: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSubtree(root, subRoot) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isSubtree(self, root, subRoot):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSubtree(vector<int>& root, vector<int>& subRoot) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSubtree(int[] root, int[] subRoot) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSubtree(root: IntArray, subRoot: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSubtree(root, subRoot) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isSubtree(self, root, subRoot):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSubtree(vector<int>& root, vector<int>& subRoot) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSubtree(int[] root, int[] subRoot) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSubtree(root: IntArray, subRoot: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSubtree(root, subRoot) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isSubtree(self, root, subRoot):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isSubtree(vector<int>& root, vector<int>& subRoot) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isSubtree(int[] root, int[] subRoot) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isSubtree(root: IntArray, subRoot: IntArray): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isSubtree(root, subRoot) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(m * n) in the worst case (there is a faster O(m+n) serialization-based approach, but the direct recursive check is the expected solution here)",
+      "space": "O(h1 + h2) for the recursion stack",
+      "pattern": "tree DFS: recursively test every node of root as a candidate root for a same-tree comparison against subRoot"
+    },
+    "bruteForce": {
+      "approach": "same as optimal - for every node in root, check whether the subtree rooted there is structurally identical to subRoot",
+      "time": "O(m * n) where n is the size of root and m is the size of subRoot, since each of the n candidate roots can trigger an O(m) comparison",
+      "space": "O(h1 + h2) recursion stack for the two trees' heights"
+    }
+  },
+  "optimal": {
+    "pattern": "tree DFS: recursively test every node of root as a candidate root for a same-tree comparison against subRoot",
+    "time": "O(m * n) in the worst case (there is a faster O(m+n) serialization-based approach, but the direct recursive check is the expected solution here)",
+    "space": "O(h1 + h2) for the recursion stack",
+    "hint_ladder": [
+      "first write a helper that checks whether two trees, given their root indices, are exactly identical (same values, same shape)",
+      "subRoot doesn't have to match at root's own root - it could match starting at any node inside root",
+      "walk through every node of root, and at each one, run the identical-trees check against subRoot's root",
+      "if the identical-trees check succeeds at any node, return true immediately; if you exhaust every node of root without a match, return false"
+    ]
+  },
+  "bruteForce": {
+    "approach": "same as optimal - for every node in root, check whether the subtree rooted there is structurally identical to subRoot",
+    "time": "O(m * n) where n is the size of root and m is the size of subRoot, since each of the n candidate roots can trigger an O(m) comparison",
+    "space": "O(h1 + h2) recursion stack for the two trees' heights"
+  },
+  "isIndex0": true,
+  "level": null
+}

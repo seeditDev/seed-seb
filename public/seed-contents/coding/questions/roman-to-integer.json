@@ -1,0 +1,741 @@
+{
+  "id": "roman-to-integer",
+  "questionId": "roman-to-integer",
+  "slug": "roman-to-integer",
+  "title": "Roman to Integer",
+  "difficulty": "Easy",
+  "category": "Hash map",
+  "patterns": [
+    "hash map",
+    "strings",
+    "greedy"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "map each of the seven symbols to its integer value first - that alone handles purely additive numerals like 'LVIII'",
+    "the tricky part is subtractive pairs like 'IV' or 'CM', where a smaller symbol comes right before a larger one and should be subtracted instead of added",
+    "at each position, compare the current symbol's value to the value of the symbol right after it",
+    "if the next symbol's value is strictly greater than the current one's, subtract the current value from your running total instead of adding it; otherwise add it as usual",
+    "a single pass with that one-symbol lookahead is enough, no need to special-case each of the six subtractive pairs individually"
+  ],
+  "commonMistakes": [
+    "hardcoding only the additive case and never checking whether the current symbol should be subtracted",
+    "off-by-one errors in the lookahead, e.g. comparing a symbol to itself or reading past the end of the string on the last character",
+    "assuming every smaller-before-larger occurrence is one of the six valid subtractive pairs instead of just comparing values directly",
+    "building a full substitution table for all six pairs instead of the simpler single-pass comparison, and getting the pair list wrong"
+  ],
+  "content": {
+    "problemStatement": "Roman numerals use seven symbols: I (1), V (5), X (10), L (50), C (100), D (500), and M (1000). Normally symbols are written largest to smallest and their values are summed, but six specific pairs use subtractive notation instead, where a smaller-value symbol placed immediately before a larger-value one means \"subtract\" rather than \"add\":\n\n- IV (4), IX (9)\n- XL (40), XC (90)\n- CD (400), CM (900)\n\n**Given a valid roman numeral string, return the integer it represents.**\n",
+    "constraints": [
+      "1 <= s.length <= 15",
+      "s contains only the characters I, V, X, L, C, D, M",
+      "s is guaranteed to be a valid roman numeral in the range [1, 3999]"
+    ],
+    "notes": [
+      "a single symbol (e.g. 'M' or 'I')",
+      "a numeral made entirely of subtractive pairs (e.g. 'CMXCIX')",
+      "the largest representable value, 3999 ('MMMCMXCIX')",
+      "a numeral with no subtractive pairs, purely additive (e.g. 'LVIII')"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"III\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "three I's summed together: 1 + 1 + 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"LVIII\"",
+        "output": "58",
+        "expectedOutput": "58",
+        "explanation": "L = 50, V = 5, III = 3, summed normally: 50 + 5 + 3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"MCMXCIV\"",
+        "output": "1994",
+        "expectedOutput": "1994",
+        "explanation": "M = 1000, CM = 900 (subtractive), XC = 90 (subtractive), IV = 4 (subtractive): 1000 + 900 + 90 + 4"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"III\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"IV\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"IX\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"LVIII\"]",
+        "output": "58",
+        "expectedOutput": "58",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"MCMXCIV\"]",
+        "output": "1994",
+        "expectedOutput": "1994",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"I\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"V\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"X\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"L\"]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"C\"]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"D\"]",
+        "output": "500",
+        "expectedOutput": "500",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"M\"]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"XL\"]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"XC\"]",
+        "output": "90",
+        "expectedOutput": "90",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"CD\"]",
+        "output": "400",
+        "expectedOutput": "400",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"CM\"]",
+        "output": "900",
+        "expectedOutput": "900",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"XIV\"]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"XIX\"]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"MMXXIV\"]",
+        "output": "2024",
+        "expectedOutput": "2024",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"MMMCMXCIX\"]",
+        "output": "3999",
+        "expectedOutput": "3999",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"DCXXI\"]",
+        "output": "621",
+        "expectedOutput": "621",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"CDXLIV\"]",
+        "output": "444",
+        "expectedOutput": "444",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"CMXCIX\"]",
+        "output": "999",
+        "expectedOutput": "999",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[\"LXXXVIII\"]",
+        "output": "88",
+        "expectedOutput": "88",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[\"MMM\"]",
+        "output": "3000",
+        "expectedOutput": "3000",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"III\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "three I's summed together: 1 + 1 + 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"LVIII\"",
+      "output": "58",
+      "expectedOutput": "58",
+      "explanation": "L = 50, V = 5, III = 3, summed normally: 50 + 5 + 3"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"MCMXCIV\"",
+      "output": "1994",
+      "expectedOutput": "1994",
+      "explanation": "M = 1000, CM = 900 (subtractive), XC = 90 (subtractive), IV = 4 (subtractive): 1000 + 900 + 90 + 4"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"III\"",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": "three I's summed together: 1 + 1 + 1"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"LVIII\"",
+      "output": "58",
+      "expectedOutput": "58",
+      "explanation": "L = 50, V = 5, III = 3, summed normally: 50 + 5 + 3"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"MCMXCIV\"",
+      "output": "1994",
+      "expectedOutput": "1994",
+      "explanation": "M = 1000, CM = 900 (subtractive), XC = 90 (subtractive), IV = 4 (subtractive): 1000 + 900 + 90 + 4"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"III\"]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"IV\"]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"IX\"]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"LVIII\"]",
+      "output": "58",
+      "expectedOutput": "58",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"MCMXCIV\"]",
+      "output": "1994",
+      "expectedOutput": "1994",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"I\"]",
+      "output": "1",
+      "expectedOutput": "1",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"V\"]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"X\"]",
+      "output": "10",
+      "expectedOutput": "10",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"L\"]",
+      "output": "50",
+      "expectedOutput": "50",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"C\"]",
+      "output": "100",
+      "expectedOutput": "100",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"D\"]",
+      "output": "500",
+      "expectedOutput": "500",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"M\"]",
+      "output": "1000",
+      "expectedOutput": "1000",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"XL\"]",
+      "output": "40",
+      "expectedOutput": "40",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"XC\"]",
+      "output": "90",
+      "expectedOutput": "90",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"CD\"]",
+      "output": "400",
+      "expectedOutput": "400",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"CM\"]",
+      "output": "900",
+      "expectedOutput": "900",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"XIV\"]",
+      "output": "14",
+      "expectedOutput": "14",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"XIX\"]",
+      "output": "19",
+      "expectedOutput": "19",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"MMXXIV\"]",
+      "output": "2024",
+      "expectedOutput": "2024",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"MMMCMXCIX\"]",
+      "output": "3999",
+      "expectedOutput": "3999",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"DCXXI\"]",
+      "output": "621",
+      "expectedOutput": "621",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"CDXLIV\"]",
+      "output": "444",
+      "expectedOutput": "444",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[\"CMXCIX\"]",
+      "output": "999",
+      "expectedOutput": "999",
+      "hidden": true
+    },
+    {
+      "id": "tc_24",
+      "input": "[\"LXXXVIII\"]",
+      "output": "88",
+      "expectedOutput": "88",
+      "hidden": true
+    },
+    {
+      "id": "tc_25",
+      "input": "[\"MMM\"]",
+      "output": "3000",
+      "expectedOutput": "3000",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"III\"",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": "three I's summed together: 1 + 1 + 1"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"LVIII\"",
+        "output": "58",
+        "expectedOutput": "58",
+        "explanation": "L = 50, V = 5, III = 3, summed normally: 50 + 5 + 3"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"MCMXCIV\"",
+        "output": "1994",
+        "expectedOutput": "1994",
+        "explanation": "M = 1000, CM = 900 (subtractive), XC = 90 (subtractive), IV = 4 (subtractive): 1000 + 900 + 90 + 4"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"III\"]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"IV\"]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"IX\"]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"LVIII\"]",
+        "output": "58",
+        "expectedOutput": "58",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"MCMXCIV\"]",
+        "output": "1994",
+        "expectedOutput": "1994",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"I\"]",
+        "output": "1",
+        "expectedOutput": "1",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"V\"]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"X\"]",
+        "output": "10",
+        "expectedOutput": "10",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"L\"]",
+        "output": "50",
+        "expectedOutput": "50",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"C\"]",
+        "output": "100",
+        "expectedOutput": "100",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"D\"]",
+        "output": "500",
+        "expectedOutput": "500",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"M\"]",
+        "output": "1000",
+        "expectedOutput": "1000",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"XL\"]",
+        "output": "40",
+        "expectedOutput": "40",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"XC\"]",
+        "output": "90",
+        "expectedOutput": "90",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"CD\"]",
+        "output": "400",
+        "expectedOutput": "400",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"CM\"]",
+        "output": "900",
+        "expectedOutput": "900",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"XIV\"]",
+        "output": "14",
+        "expectedOutput": "14",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"XIX\"]",
+        "output": "19",
+        "expectedOutput": "19",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"MMXXIV\"]",
+        "output": "2024",
+        "expectedOutput": "2024",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"MMMCMXCIX\"]",
+        "output": "3999",
+        "expectedOutput": "3999",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"DCXXI\"]",
+        "output": "621",
+        "expectedOutput": "621",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"CDXLIV\"]",
+        "output": "444",
+        "expectedOutput": "444",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"CMXCIX\"]",
+        "output": "999",
+        "expectedOutput": "999",
+        "hidden": true
+      },
+      {
+        "id": "tc_24",
+        "input": "[\"LXXXVIII\"]",
+        "output": "88",
+        "expectedOutput": "88",
+        "hidden": true
+      },
+      {
+        "id": "tc_25",
+        "input": "[\"MMM\"]",
+        "output": "3000",
+        "expectedOutput": "3000",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def romanToInt(self, s):\n",
+    "cpp": "#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int romanToInt(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int romanToInt(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun romanToInt(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    romanToInt(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def romanToInt(self, s):\n",
+    "cpp": "#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int romanToInt(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int romanToInt(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun romanToInt(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    romanToInt(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def romanToInt(self, s):\n",
+    "cpp": "#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int romanToInt(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int romanToInt(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun romanToInt(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    romanToInt(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def romanToInt(self, s):\n",
+    "cpp": "#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    int romanToInt(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int romanToInt(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun romanToInt(s: String): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    romanToInt(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) (fixed-size symbol map)",
+      "pattern": "single left-to-right scan with a value map and one-symbol lookahead"
+    },
+    "bruteForce": {
+      "approach": "scan left to right, look up each symbol's value in a map, and simply sum every value (works for additive numerals but needs the subtractive check below to be correct in general)",
+      "time": "O(n)",
+      "space": "O(1) (fixed-size symbol map)"
+    }
+  },
+  "optimal": {
+    "pattern": "single left-to-right scan with a value map and one-symbol lookahead",
+    "time": "O(n)",
+    "space": "O(1) (fixed-size symbol map)",
+    "hint_ladder": [
+      "map each of the seven symbols to its integer value first - that alone handles purely additive numerals like 'LVIII'",
+      "the tricky part is subtractive pairs like 'IV' or 'CM', where a smaller symbol comes right before a larger one and should be subtracted instead of added",
+      "at each position, compare the current symbol's value to the value of the symbol right after it",
+      "if the next symbol's value is strictly greater than the current one's, subtract the current value from your running total instead of adding it; otherwise add it as usual",
+      "a single pass with that one-symbol lookahead is enough, no need to special-case each of the six subtractive pairs individually"
+    ]
+  },
+  "bruteForce": {
+    "approach": "scan left to right, look up each symbol's value in a map, and simply sum every value (works for additive numerals but needs the subtractive check below to be correct in general)",
+    "time": "O(n)",
+    "space": "O(1) (fixed-size symbol map)"
+  },
+  "isIndex0": true,
+  "level": null
+}

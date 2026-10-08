@@ -1,0 +1,635 @@
+{
+  "id": "word-break",
+  "questionId": "word-break",
+  "slug": "word-break",
+  "title": "Word Break",
+  "difficulty": "Hard",
+  "category": "Dp 1d",
+  "patterns": [
+    "dynamic programming",
+    "string"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "split wordDict on spaces into a set first, so checking whether a chunk is a valid word is fast",
+    "define breakable(i) as: can the first i characters of s be fully decomposed into dictionary words? what is breakable(0), the empty prefix?",
+    "breakable(i) is true if there's some earlier valid split point j < i such that breakable(j) is true and s[j:i] is itself a dictionary word",
+    "for each i from 1 to n, scan all earlier j where breakable(j) is true and check whether s[j:i] is in the dictionary - the final answer is breakable(n)"
+  ],
+  "commonMistakes": [
+    "greedily matching the longest or first dictionary word found at each position instead of exploring all valid split points",
+    "re-scanning the dictionary as a list on every check instead of using a set, which turns a fast solution slow",
+    "forgetting the base case breakable(0) = true, which is what allows the very first word in the split to be recognized"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s` and a dictionary of words (given here as a single space-delimited string, `wordDict`).\n\n**Determine whether `s` can be split into a sequence of one or more dictionary words placed back to back.**\n\nThe same dictionary word may be reused as many times as needed.\n",
+    "constraints": [
+      "1 <= s.length <= 300",
+      "1 <= number of words in wordDict <= 1000",
+      "1 <= length of each word in wordDict <= 20",
+      "s and the words in wordDict consist of lowercase English letters only",
+      "all the words in wordDict are distinct"
+    ],
+    "notes": [
+      "s is exactly equal to a single dictionary word",
+      "a greedy split from the left fails, but a different split succeeds (like 'catsandog')",
+      "s requires reusing the same word more than once"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"leetcode\", wordDict = \"leet code\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "\"leetcode\" splits into \"leet\" + \"code\", both in the dictionary"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"applepenapple\", wordDict = \"apple pen\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "\"applepenapple\" splits into \"apple\" + \"pen\" + \"apple\", reusing \"apple\" twice"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"catsandog\", wordDict = \"cats dog sand and cat\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "every way of splitting the prefix leaves a trailing chunk that isn't a dictionary word"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"leetcode\",\"leet code\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"applepenapple\",\"apple pen\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"catsandog\",\"cats dog sand and cat\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"cars\",\"car ca rs\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"abcd\",\"a bc d\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aa\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aaaaaaa\",\"aaaa aaaaaaa aaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abcd\",\"a b c\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab\",\"a aa aaa aaaa aaaaa aaaaaa aaaaaaa aaaaaaaa aaaaaaaaa aaaaaaaaaa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"catsanddog\",\"cat cats and sand dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"pineapplepenapple\",\"apple pen applepen pine pineapple\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"goalspecial\",\"go als pecial\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaaaaaa\",\"aaaa aaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"wordbreakproblem\",\"word break problem\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"ilikesamsung\",\"i like sam sung samsung mobile ice cream\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"bb\",\"a b bb\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"thequickbrownfox\",\"the quick brown fox jumps over lazy dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdefghij\",\"ab cd ef gh ij\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"xyz\",\"x y\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"leetcode\", wordDict = \"leet code\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "\"leetcode\" splits into \"leet\" + \"code\", both in the dictionary"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"applepenapple\", wordDict = \"apple pen\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "\"applepenapple\" splits into \"apple\" + \"pen\" + \"apple\", reusing \"apple\" twice"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"catsandog\", wordDict = \"cats dog sand and cat\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "every way of splitting the prefix leaves a trailing chunk that isn't a dictionary word"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"leetcode\", wordDict = \"leet code\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "\"leetcode\" splits into \"leet\" + \"code\", both in the dictionary"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"applepenapple\", wordDict = \"apple pen\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "\"applepenapple\" splits into \"apple\" + \"pen\" + \"apple\", reusing \"apple\" twice"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"catsandog\", wordDict = \"cats dog sand and cat\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "every way of splitting the prefix leaves a trailing chunk that isn't a dictionary word"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"leetcode\",\"leet code\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"applepenapple\",\"apple pen\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"catsandog\",\"cats dog sand and cat\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"cars\",\"car ca rs\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"abcd\",\"a bc d\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"a\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"aa\",\"a\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"aaaaaaa\",\"aaaa aaaaaaa aaaaaaaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"abcd\",\"a b c\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab\",\"a aa aaa aaaa aaaaa aaaaaa aaaaaaa aaaaaaaa aaaaaaaaa aaaaaaaaaa\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"catsanddog\",\"cat cats and sand dog\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"pineapplepenapple\",\"apple pen applepen pine pineapple\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"goalspecial\",\"go als pecial\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"aaaaaaa\",\"aaaa aaa\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"wordbreakproblem\",\"word break problem\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"ilikesamsung\",\"i like sam sung samsung mobile ice cream\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"bb\",\"a b bb\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"thequickbrownfox\",\"the quick brown fox jumps over lazy dog\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abcdefghij\",\"ab cd ef gh ij\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"xyz\",\"x y\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"leetcode\", wordDict = \"leet code\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "\"leetcode\" splits into \"leet\" + \"code\", both in the dictionary"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"applepenapple\", wordDict = \"apple pen\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "\"applepenapple\" splits into \"apple\" + \"pen\" + \"apple\", reusing \"apple\" twice"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"catsandog\", wordDict = \"cats dog sand and cat\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "every way of splitting the prefix leaves a trailing chunk that isn't a dictionary word"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"leetcode\",\"leet code\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"applepenapple\",\"apple pen\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"catsandog\",\"cats dog sand and cat\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"cars\",\"car ca rs\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"abcd\",\"a bc d\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"aa\",\"a\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"aaaaaaa\",\"aaaa aaaaaaa aaaaaaaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"abcd\",\"a b c\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab\",\"a aa aaa aaaa aaaaa aaaaaa aaaaaaa aaaaaaaa aaaaaaaaa aaaaaaaaaa\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"catsanddog\",\"cat cats and sand dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"pineapplepenapple\",\"apple pen applepen pine pineapple\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"goalspecial\",\"go als pecial\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"aaaaaaa\",\"aaaa aaa\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"wordbreakproblem\",\"word break problem\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"ilikesamsung\",\"i like sam sung samsung mobile ice cream\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"bb\",\"a b bb\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"thequickbrownfox\",\"the quick brown fox jumps over lazy dog\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abcdefghij\",\"ab cd ef gh ij\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"xyz\",\"x y\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def wordBreak(self, s, wordDict):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordBreak(string s, string wordDict) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordBreak(String s, String wordDict) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordBreak(s: String, wordDict: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordBreak(s, wordDict) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def wordBreak(self, s, wordDict):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordBreak(string s, string wordDict) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordBreak(String s, String wordDict) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordBreak(s: String, wordDict: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordBreak(s, wordDict) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def wordBreak(self, s, wordDict):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordBreak(string s, string wordDict) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordBreak(String s, String wordDict) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordBreak(s: String, wordDict: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordBreak(s, wordDict) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def wordBreak(self, s, wordDict):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool wordBreak(string s, string wordDict) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean wordBreak(String s, String wordDict) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun wordBreak(s: String, wordDict: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    wordBreak(s, wordDict) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n^2) using an O(1)-ish substring/hash lookup per split point, where n is s.length",
+      "space": "O(n) for the breakable array, plus a hash set for the dictionary words",
+      "pattern": "dynamic programming - let breakable(i) mean the prefix s[0:i] can be fully split into dictionary words"
+    },
+    "bruteForce": {
+      "approach": "recursively try every prefix of the remaining string that matches a dictionary word, and recurse on the rest; return true if any path consumes the whole string",
+      "time": "O(2^n) - exponential, recomputes the same suffixes repeatedly",
+      "space": "O(n) recursion stack"
+    }
+  },
+  "optimal": {
+    "pattern": "dynamic programming - let breakable(i) mean the prefix s[0:i] can be fully split into dictionary words",
+    "time": "O(n^2) using an O(1)-ish substring/hash lookup per split point, where n is s.length",
+    "space": "O(n) for the breakable array, plus a hash set for the dictionary words",
+    "hint_ladder": [
+      "split wordDict on spaces into a set first, so checking whether a chunk is a valid word is fast",
+      "define breakable(i) as: can the first i characters of s be fully decomposed into dictionary words? what is breakable(0), the empty prefix?",
+      "breakable(i) is true if there's some earlier valid split point j < i such that breakable(j) is true and s[j:i] is itself a dictionary word",
+      "for each i from 1 to n, scan all earlier j where breakable(j) is true and check whether s[j:i] is in the dictionary - the final answer is breakable(n)"
+    ]
+  },
+  "bruteForce": {
+    "approach": "recursively try every prefix of the remaining string that matches a dictionary word, and recurse on the rest; return true if any path consumes the whole string",
+    "time": "O(2^n) - exponential, recomputes the same suffixes repeatedly",
+    "space": "O(n) recursion stack"
+  },
+  "isIndex0": true,
+  "level": null
+}

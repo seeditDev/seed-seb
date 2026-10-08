@@ -1,0 +1,634 @@
+{
+  "id": "remove-element",
+  "questionId": "remove-element",
+  "slug": "remove-element",
+  "title": "Remove Element",
+  "difficulty": "Easy",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers",
+    "in-place filtering"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you don't need to shift every remaining element one at a time - what if you tracked where the next kept element should go?",
+    "walk through the array with a read pointer; whenever the current value isn't val, place it at a separate write pointer position and advance the write pointer",
+    "the write pointer only moves when you keep something, so it naturally compacts the array as you go",
+    "at the end, everything before the write pointer is your answer, everything after can be discarded or ignored"
+  ],
+  "commonMistakes": [
+    "removing elements from the middle of an array one at a time, which shifts everything after it and costs O(n) per removal",
+    "comparing against the wrong variable, e.g. filtering by index instead of by value",
+    "not preserving the original relative order of the kept elements",
+    "confusing this with 'remove duplicates', which is a different problem - here you remove one specific value, not repeats"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of integers and a target value.\n\n**Remove every occurrence of that value from the list, keeping the remaining elements in their original relative order, and return the list that's left.**\n\nThe classic in-place version of this problem also cares about not using extra space and reporting a count, but for this exercise just return the resulting list directly.\n",
+    "constraints": [
+      "0 <= nums.length <= 100",
+      "0 <= nums[i] <= 50",
+      "0 <= val <= 100",
+      "val may not appear in nums at all"
+    ],
+    "notes": [
+      "an empty input list",
+      "every element equals val (result is empty)",
+      "no element equals val (result is unchanged)",
+      "val appears at the very first and very last positions"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3,2,2,3], val = 3",
+        "output": "[2,2]",
+        "expectedOutput": "[2,2]",
+        "explanation": "both 3s are removed, leaving the two 2s in their original order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0,1,2,2,3,0,4,2], val = 2",
+        "output": "[0,1,3,0,4]",
+        "expectedOutput": "[0,1,3,0,4]",
+        "explanation": "every 2 is removed; everything else keeps its relative order"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1,2,3,4], val = 5",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "explanation": "val never appears, so nothing is removed"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,2,3],3]",
+        "output": "[2,2]",
+        "expectedOutput": "[2,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1,2,2,3,0,4,2],2]",
+        "output": "[0,1,3,0,4]",
+        "expectedOutput": "[0,1,3,0,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],2]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2,2,2],2]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4],5]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5,5,5],5]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,1,2,1,2],1]",
+        "output": "[2,2,2]",
+        "expectedOutput": "[2,2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-1,-2,-3,-1],-1]",
+        "output": "[-2,-3]",
+        "expectedOutput": "[-2,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,0,0,0],0]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3],3]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,1,2],3]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[4,5,4,4,6],4]",
+        "output": "[5,6]",
+        "expectedOutput": "[5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,1,2,2,3,3],2]",
+        "output": "[1,1,3,3]",
+        "expectedOutput": "[1,1,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,20,30,40,50],25]",
+        "output": "[10,20,30,40,50]",
+        "expectedOutput": "[10,20,30,40,50]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[7],7]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],10]",
+        "output": "[1,2,3,4,5,6,7,8,9]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],1]",
+        "output": "[2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,3,2,3,2,3],3]",
+        "output": "[2,2,2]",
+        "expectedOutput": "[2,2,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3,2,2,3], val = 3",
+      "output": "[2,2]",
+      "expectedOutput": "[2,2]",
+      "explanation": "both 3s are removed, leaving the two 2s in their original order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0,1,2,2,3,0,4,2], val = 2",
+      "output": "[0,1,3,0,4]",
+      "expectedOutput": "[0,1,3,0,4]",
+      "explanation": "every 2 is removed; everything else keeps its relative order"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1,2,3,4], val = 5",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "explanation": "val never appears, so nothing is removed"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3,2,2,3], val = 3",
+      "output": "[2,2]",
+      "expectedOutput": "[2,2]",
+      "explanation": "both 3s are removed, leaving the two 2s in their original order"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [0,1,2,2,3,0,4,2], val = 2",
+      "output": "[0,1,3,0,4]",
+      "expectedOutput": "[0,1,3,0,4]",
+      "explanation": "every 2 is removed; everything else keeps its relative order"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1,2,3,4], val = 5",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "explanation": "val never appears, so nothing is removed"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,2,2,3],3]",
+      "output": "[2,2]",
+      "expectedOutput": "[2,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[0,1,2,2,3,0,4,2],2]",
+      "output": "[0,1,3,0,4]",
+      "expectedOutput": "[0,1,3,0,4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[],1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1],1]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[1],2]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[2,2,2,2],2]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[1,2,3,4],5]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[5,5,5,5,5],5]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,1,2,1,2],1]",
+      "output": "[2,2,2]",
+      "expectedOutput": "[2,2,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[-1,-2,-3,-1],-1]",
+      "output": "[-2,-3]",
+      "expectedOutput": "[-2,-3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[0,0,0,0],0]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3],3]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[3,1,2],3]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[4,5,4,4,6],4]",
+      "output": "[5,6]",
+      "expectedOutput": "[5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[1,1,2,2,3,3],2]",
+      "output": "[1,1,3,3]",
+      "expectedOutput": "[1,1,3,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[10,20,30,40,50],25]",
+      "output": "[10,20,30,40,50]",
+      "expectedOutput": "[10,20,30,40,50]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[7],7]",
+      "output": "[]",
+      "expectedOutput": "[]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],10]",
+      "output": "[1,2,3,4,5,6,7,8,9]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8,9,10],1]",
+      "output": "[2,3,4,5,6,7,8,9,10]",
+      "expectedOutput": "[2,3,4,5,6,7,8,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[2,3,2,3,2,3],3]",
+      "output": "[2,2,2]",
+      "expectedOutput": "[2,2,2]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3,2,2,3], val = 3",
+        "output": "[2,2]",
+        "expectedOutput": "[2,2]",
+        "explanation": "both 3s are removed, leaving the two 2s in their original order"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [0,1,2,2,3,0,4,2], val = 2",
+        "output": "[0,1,3,0,4]",
+        "expectedOutput": "[0,1,3,0,4]",
+        "explanation": "every 2 is removed; everything else keeps its relative order"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1,2,3,4], val = 5",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "explanation": "val never appears, so nothing is removed"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,2,2,3],3]",
+        "output": "[2,2]",
+        "expectedOutput": "[2,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[0,1,2,2,3,0,4,2],2]",
+        "output": "[0,1,3,0,4]",
+        "expectedOutput": "[0,1,3,0,4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1],1]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[1],2]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[2,2,2,2],2]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[1,2,3,4],5]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[5,5,5,5,5],5]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,1,2,1,2],1]",
+        "output": "[2,2,2]",
+        "expectedOutput": "[2,2,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[-1,-2,-3,-1],-1]",
+        "output": "[-2,-3]",
+        "expectedOutput": "[-2,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[0,0,0,0],0]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3],3]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,1,2],3]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[4,5,4,4,6],4]",
+        "output": "[5,6]",
+        "expectedOutput": "[5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[1,1,2,2,3,3],2]",
+        "output": "[1,1,3,3]",
+        "expectedOutput": "[1,1,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[10,20,30,40,50],25]",
+        "output": "[10,20,30,40,50]",
+        "expectedOutput": "[10,20,30,40,50]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[7],7]",
+        "output": "[]",
+        "expectedOutput": "[]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],10]",
+        "output": "[1,2,3,4,5,6,7,8,9]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8,9,10],1]",
+        "output": "[2,3,4,5,6,7,8,9,10]",
+        "expectedOutput": "[2,3,4,5,6,7,8,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[2,3,2,3,2,3],3]",
+        "output": "[2,2,2]",
+        "expectedOutput": "[2,2,2]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def removeElement(self, nums, val):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeElement(vector<int>& nums, int val) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeElement(int[] nums, int val) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeElement(nums: IntArray, val_: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeElement(nums, val) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def removeElement(self, nums, val):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeElement(vector<int>& nums, int val) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeElement(int[] nums, int val) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeElement(nums: IntArray, val_: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeElement(nums, val) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def removeElement(self, nums, val):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeElement(vector<int>& nums, int val) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeElement(int[] nums, int val) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeElement(nums: IntArray, val_: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeElement(nums, val) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def removeElement(self, nums, val):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> removeElement(vector<int>& nums, int val) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] removeElement(int[] nums, int val) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun removeElement(nums: IntArray, val_: Int): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    removeElement(nums, val) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra beyond the output",
+      "pattern": "two pointers, overwrite matches in place with a write pointer that only advances for kept elements"
+    },
+    "bruteForce": {
+      "approach": "build a brand new list by iterating through nums and copying over every element that isn't equal to val",
+      "time": "O(n)",
+      "space": "O(n) for the new list"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers, overwrite matches in place with a write pointer that only advances for kept elements",
+    "time": "O(n)",
+    "space": "O(1) extra beyond the output",
+    "hint_ladder": [
+      "you don't need to shift every remaining element one at a time - what if you tracked where the next kept element should go?",
+      "walk through the array with a read pointer; whenever the current value isn't val, place it at a separate write pointer position and advance the write pointer",
+      "the write pointer only moves when you keep something, so it naturally compacts the array as you go",
+      "at the end, everything before the write pointer is your answer, everything after can be discarded or ignored"
+    ]
+  },
+  "bruteForce": {
+    "approach": "build a brand new list by iterating through nums and copying over every element that isn't equal to val",
+    "time": "O(n)",
+    "space": "O(n) for the new list"
+  },
+  "isIndex0": true,
+  "level": null
+}

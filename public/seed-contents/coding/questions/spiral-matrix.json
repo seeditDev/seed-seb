@@ -1,0 +1,659 @@
+{
+  "id": "spiral-matrix",
+  "questionId": "spiral-matrix",
+  "slug": "spiral-matrix",
+  "title": "Spiral Matrix",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "matrix traversal",
+    "simulation",
+    "boundary shrinking"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "instead of tracking every visited cell, can you describe the unvisited region at any point with just a few numbers?",
+    "the unvisited region is always a shrinking rectangle - what four values define a rectangle?",
+    "keep top, bottom, left, right boundaries; walk right across the top row, then down the right column, then left across the bottom row, then up the left column",
+    "after finishing each edge, move that boundary inward by one, and stop the loop once top > bottom or left > right",
+    "be careful with the bottom row and left column steps - skip them if the boundaries have already crossed, or you'll revisit cells on a single row or column input"
+  ],
+  "commonMistakes": [
+    "revisiting the top row or right column when the matrix has collapsed to a single row or column",
+    "not shrinking a boundary after finishing an edge, causing an infinite loop or repeated cells",
+    "assuming the matrix is square when it can be any rectangle",
+    "using a visited set unnecessarily, which works but is more memory than needed"
+  ],
+  "content": {
+    "problemStatement": "You're given a rectangular grid of integers.\n\n**Walk through the grid in spiral order, starting at the top-left cell and moving clockwise, and return every value you visit, in the order visited.**\n\nThe spiral goes right across the top row, down the right column, left across the bottom row, up the left column, then repeats one layer inward.\n",
+    "constraints": [
+      "1 <= rows, cols <= 10",
+      "-100 <= matrix[i][j] <= 100",
+      "matrix is rectangular (every row has the same length)"
+    ],
+    "notes": [
+      "a single row (spiral is just left to right)",
+      "a single column (spiral is just top to bottom)",
+      "a single cell",
+      "a non-square matrix where one dimension is much larger than the other"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "matrix = [[1,2,3],[4,5,6],[7,8,9]]",
+        "output": "[1, 2, 3, 6, 9, 8, 7, 4, 5]",
+        "expectedOutput": "[1, 2, 3, 6, 9, 8, 7, 4, 5]",
+        "explanation": "right across the top row, down the right edge, left across the bottom row, up the remaining left edge, then the lone center cell"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12]]",
+        "output": "[1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]",
+        "expectedOutput": "[1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]",
+        "explanation": "a non-square grid still spirals the same way, shrinking the boundary each lap"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "matrix = [[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]]]",
+        "output": "[1,2,3,6,9,8,7,4,5]",
+        "expectedOutput": "[1,2,3,6,9,8,7,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2,3,4],[5,6,7,8],[9,10,11,12]]]",
+        "output": "[1,2,3,4,8,12,11,10,9,5,6,7]",
+        "expectedOutput": "[1,2,3,4,8,12,11,10,9,5,6,7]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1]]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,2,3,4,5]]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1],[2],[3],[4]]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2],[3,4]]]",
+        "output": "[1,2,4,3]",
+        "expectedOutput": "[1,2,4,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,2,3],[4,5,6]]]",
+        "output": "[1,2,3,6,5,4]",
+        "expectedOutput": "[1,2,3,6,5,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,4],[2,5],[3,6]]]",
+        "output": "[1,4,5,6,3,2]",
+        "expectedOutput": "[1,4,5,6,3,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]]",
+        "output": "[1,2,3,4,8,12,16,15,14,13,9,5,6,7,11,10]",
+        "expectedOutput": "[1,2,3,4,8,12,16,15,14,13,9,5,6,7,11,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[-1,-2,-3],[-4,-5,-6],[-7,-8,-9]]]",
+        "output": "[-1,-2,-3,-6,-9,-8,-7,-4,-5]",
+        "expectedOutput": "[-1,-2,-3,-6,-9,-8,-7,-4,-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[5]]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,2],[3,4],[5,6]]]",
+        "output": "[1,2,4,6,5,3]",
+        "expectedOutput": "[1,2,4,6,5,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,2,3,4,5,6]]]",
+        "output": "[1,2,3,4,5,6]",
+        "expectedOutput": "[1,2,3,4,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1],[2],[3],[4],[5],[6]]]",
+        "output": "[1,2,3,4,5,6]",
+        "expectedOutput": "[1,2,3,4,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,2,3],[8,9,4],[7,6,5]]]",
+        "output": "[1,2,3,4,5,6,7,8,9]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+        "output": "[0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15]]]",
+        "output": "[1,2,3,4,5,10,15,14,13,12,11,6,7,8,9]",
+        "expectedOutput": "[1,2,3,4,5,10,15,14,13,12,11,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,2],[3,4],[5,6],[7,8]]]",
+        "output": "[1,2,4,6,8,7,5,3]",
+        "expectedOutput": "[1,2,4,6,8,7,5,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[100,200],[300,400]]]",
+        "output": "[100,200,400,300]",
+        "expectedOutput": "[100,200,400,300]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,2,3,4,5],[16,17,18,19,6],[15,24,25,20,7],[14,23,22,21,8],[13,12,11,10,9]]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[1,2],[4,3]]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "matrix = [[1,2,3],[4,5,6],[7,8,9]]",
+      "output": "[1, 2, 3, 6, 9, 8, 7, 4, 5]",
+      "expectedOutput": "[1, 2, 3, 6, 9, 8, 7, 4, 5]",
+      "explanation": "right across the top row, down the right edge, left across the bottom row, up the remaining left edge, then the lone center cell"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12]]",
+      "output": "[1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]",
+      "expectedOutput": "[1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]",
+      "explanation": "a non-square grid still spirals the same way, shrinking the boundary each lap"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "matrix = [[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "matrix = [[1,2,3],[4,5,6],[7,8,9]]",
+      "output": "[1, 2, 3, 6, 9, 8, 7, 4, 5]",
+      "expectedOutput": "[1, 2, 3, 6, 9, 8, 7, 4, 5]",
+      "explanation": "right across the top row, down the right edge, left across the bottom row, up the remaining left edge, then the lone center cell"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12]]",
+      "output": "[1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]",
+      "expectedOutput": "[1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]",
+      "explanation": "a non-square grid still spirals the same way, shrinking the boundary each lap"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "matrix = [[1]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[1,2,3],[4,5,6],[7,8,9]]]",
+      "output": "[1,2,3,6,9,8,7,4,5]",
+      "expectedOutput": "[1,2,3,6,9,8,7,4,5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,2,3,4],[5,6,7,8],[9,10,11,12]]]",
+      "output": "[1,2,3,4,8,12,11,10,9,5,6,7]",
+      "expectedOutput": "[1,2,3,4,8,12,11,10,9,5,6,7]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[1]]]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1,2,3,4,5]]]",
+      "output": "[1,2,3,4,5]",
+      "expectedOutput": "[1,2,3,4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1],[2],[3],[4]]]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,2],[3,4]]]",
+      "output": "[1,2,4,3]",
+      "expectedOutput": "[1,2,4,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,2,3],[4,5,6]]]",
+      "output": "[1,2,3,6,5,4]",
+      "expectedOutput": "[1,2,3,6,5,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[1,4],[2,5],[3,6]]]",
+      "output": "[1,4,5,6,3,2]",
+      "expectedOutput": "[1,4,5,6,3,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]]",
+      "output": "[1,2,3,4,8,12,16,15,14,13,9,5,6,7,11,10]",
+      "expectedOutput": "[1,2,3,4,8,12,16,15,14,13,9,5,6,7,11,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[-1,-2,-3],[-4,-5,-6],[-7,-8,-9]]]",
+      "output": "[-1,-2,-3,-6,-9,-8,-7,-4,-5]",
+      "expectedOutput": "[-1,-2,-3,-6,-9,-8,-7,-4,-5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[5]]]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,2],[3,4],[5,6]]]",
+      "output": "[1,2,4,6,5,3]",
+      "expectedOutput": "[1,2,4,6,5,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[1,2,3,4,5,6]]]",
+      "output": "[1,2,3,4,5,6]",
+      "expectedOutput": "[1,2,3,4,5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1],[2],[3],[4],[5],[6]]]",
+      "output": "[1,2,3,4,5,6]",
+      "expectedOutput": "[1,2,3,4,5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,2,3],[8,9,4],[7,6,5]]]",
+      "output": "[1,2,3,4,5,6,7,8,9]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+      "output": "[0,0,0,0,0,0,0,0,0]",
+      "expectedOutput": "[0,0,0,0,0,0,0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15]]]",
+      "output": "[1,2,3,4,5,10,15,14,13,12,11,6,7,8,9]",
+      "expectedOutput": "[1,2,3,4,5,10,15,14,13,12,11,6,7,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,2],[3,4],[5,6],[7,8]]]",
+      "output": "[1,2,4,6,8,7,5,3]",
+      "expectedOutput": "[1,2,4,6,8,7,5,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[100,200],[300,400]]]",
+      "output": "[100,200,400,300]",
+      "expectedOutput": "[100,200,400,300]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,2,3,4,5],[16,17,18,19,6],[15,24,25,20,7],[14,23,22,21,8],[13,12,11,10,9]]]",
+      "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+      "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[[[1,2],[4,3]]]",
+      "output": "[1,2,3,4]",
+      "expectedOutput": "[1,2,3,4]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "matrix = [[1,2,3],[4,5,6],[7,8,9]]",
+        "output": "[1, 2, 3, 6, 9, 8, 7, 4, 5]",
+        "expectedOutput": "[1, 2, 3, 6, 9, 8, 7, 4, 5]",
+        "explanation": "right across the top row, down the right edge, left across the bottom row, up the remaining left edge, then the lone center cell"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12]]",
+        "output": "[1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]",
+        "expectedOutput": "[1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]",
+        "explanation": "a non-square grid still spirals the same way, shrinking the boundary each lap"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "matrix = [[1]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[1,2,3],[4,5,6],[7,8,9]]]",
+        "output": "[1,2,3,6,9,8,7,4,5]",
+        "expectedOutput": "[1,2,3,6,9,8,7,4,5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2,3,4],[5,6,7,8],[9,10,11,12]]]",
+        "output": "[1,2,3,4,8,12,11,10,9,5,6,7]",
+        "expectedOutput": "[1,2,3,4,8,12,11,10,9,5,6,7]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[1]]]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1,2,3,4,5]]]",
+        "output": "[1,2,3,4,5]",
+        "expectedOutput": "[1,2,3,4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1],[2],[3],[4]]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,2],[3,4]]]",
+        "output": "[1,2,4,3]",
+        "expectedOutput": "[1,2,4,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,2,3],[4,5,6]]]",
+        "output": "[1,2,3,6,5,4]",
+        "expectedOutput": "[1,2,3,6,5,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[1,4],[2,5],[3,6]]]",
+        "output": "[1,4,5,6,3,2]",
+        "expectedOutput": "[1,4,5,6,3,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]]",
+        "output": "[1,2,3,4,8,12,16,15,14,13,9,5,6,7,11,10]",
+        "expectedOutput": "[1,2,3,4,8,12,16,15,14,13,9,5,6,7,11,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[-1,-2,-3],[-4,-5,-6],[-7,-8,-9]]]",
+        "output": "[-1,-2,-3,-6,-9,-8,-7,-4,-5]",
+        "expectedOutput": "[-1,-2,-3,-6,-9,-8,-7,-4,-5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[5]]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,2],[3,4],[5,6]]]",
+        "output": "[1,2,4,6,5,3]",
+        "expectedOutput": "[1,2,4,6,5,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[1,2,3,4,5,6]]]",
+        "output": "[1,2,3,4,5,6]",
+        "expectedOutput": "[1,2,3,4,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1],[2],[3],[4],[5],[6]]]",
+        "output": "[1,2,3,4,5,6]",
+        "expectedOutput": "[1,2,3,4,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,2,3],[8,9,4],[7,6,5]]]",
+        "output": "[1,2,3,4,5,6,7,8,9]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[0,0,0],[0,0,0],[0,0,0]]]",
+        "output": "[0,0,0,0,0,0,0,0,0]",
+        "expectedOutput": "[0,0,0,0,0,0,0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15]]]",
+        "output": "[1,2,3,4,5,10,15,14,13,12,11,6,7,8,9]",
+        "expectedOutput": "[1,2,3,4,5,10,15,14,13,12,11,6,7,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,2],[3,4],[5,6],[7,8]]]",
+        "output": "[1,2,4,6,8,7,5,3]",
+        "expectedOutput": "[1,2,4,6,8,7,5,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[100,200],[300,400]]]",
+        "output": "[100,200,400,300]",
+        "expectedOutput": "[100,200,400,300]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,2,3,4,5],[16,17,18,19,6],[15,24,25,20,7],[14,23,22,21,8],[13,12,11,10,9]]]",
+        "output": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+        "expectedOutput": "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[[[1,2],[4,3]]]",
+        "output": "[1,2,3,4]",
+        "expectedOutput": "[1,2,3,4]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def spiralOrder(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> spiralOrder(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] spiralOrder(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun spiralOrder(matrix: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    spiralOrder(matrix) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def spiralOrder(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> spiralOrder(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] spiralOrder(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun spiralOrder(matrix: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    spiralOrder(matrix) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def spiralOrder(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> spiralOrder(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] spiralOrder(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun spiralOrder(matrix: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    spiralOrder(matrix) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def spiralOrder(self, matrix):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> spiralOrder(vector<vector<int>>& matrix) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] spiralOrder(int[][] matrix) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun spiralOrder(matrix: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    spiralOrder(matrix) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(rows * cols)",
+      "space": "O(1) extra, not counting the output",
+      "pattern": "track four shrinking boundaries (top, bottom, left, right) and walk each edge in order, moving the boundary inward after each edge"
+    },
+    "bruteForce": {
+      "approach": "mark every visited cell and, at each step, try the four directions in clockwise priority, turning whenever the next cell is out of bounds or already visited",
+      "time": "O(rows * cols)",
+      "space": "O(rows * cols) for the visited grid"
+    }
+  },
+  "optimal": {
+    "pattern": "track four shrinking boundaries (top, bottom, left, right) and walk each edge in order, moving the boundary inward after each edge",
+    "time": "O(rows * cols)",
+    "space": "O(1) extra, not counting the output",
+    "hint_ladder": [
+      "instead of tracking every visited cell, can you describe the unvisited region at any point with just a few numbers?",
+      "the unvisited region is always a shrinking rectangle - what four values define a rectangle?",
+      "keep top, bottom, left, right boundaries; walk right across the top row, then down the right column, then left across the bottom row, then up the left column",
+      "after finishing each edge, move that boundary inward by one, and stop the loop once top > bottom or left > right",
+      "be careful with the bottom row and left column steps - skip them if the boundaries have already crossed, or you'll revisit cells on a single row or column input"
+    ]
+  },
+  "bruteForce": {
+    "approach": "mark every visited cell and, at each step, try the four directions in clockwise priority, turning whenever the next cell is out of bounds or already visited",
+    "time": "O(rows * cols)",
+    "space": "O(rows * cols) for the visited grid"
+  },
+  "isIndex0": true,
+  "level": null
+}

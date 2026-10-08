@@ -1,0 +1,630 @@
+{
+  "id": "sum-of-prefix-scores",
+  "questionId": "sum-of-prefix-scores",
+  "slug": "sum-of-prefix-scores",
+  "title": "Sum of Prefix Scores of Words",
+  "difficulty": "Medium",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "a prefix's count is exactly 'how many words pass through this point in a trie' - so build the trie once and get every prefix count as a byproduct of insertion",
+    "insert every word into the trie; at each node you pass through while inserting a word (including the final node), increment that node's pass-through counter by one",
+    "once all words are inserted, every node's counter equals the prefix count for the path from root to that node",
+    "for each word, walk the trie along its own characters again, and sum up the counters at every node visited - that sum is exactly its prefix score"
+  ],
+  "commonMistakes": [
+    "recomputing prefix counts with a fresh scan per word instead of reusing the shared trie counters, which defeats the point",
+    "forgetting to increment the counter at the ROOT's children on the very first character of each word (off-by-one in the insertion loop)",
+    "not handling duplicate words correctly, since they should still both contribute to and read from the same shared counters"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited string of lowercase words (the list may\ncontain duplicates). For a given prefix string p, define its \"prefix\ncount\" as the number of words in the whole list that start with p. For\neach word in the list, define its \"prefix score\" as the sum of the\nprefix counts of all of its own non-empty prefixes, from length 1 up to\nits full length.\n\n**Return the prefix score of every word, as a list in the same order as the input list.**\n",
+    "constraints": [
+      "1 <= number of words <= 1000",
+      "1 <= words[i].length <= 1000",
+      "sum of words[i].length <= 5 * 10^5",
+      "words consist only of lowercase English letters"
+    ],
+    "notes": [
+      "duplicate words in the list (both count toward each other's prefix counts)",
+      "a single-character word (score equals just its own prefix count)",
+      "words that share no prefixes with any other word (each prefix count is 1)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"abc ab bc b\"",
+        "output": "[5, 4, 3, 2]",
+        "expectedOutput": "[5, 4, 3, 2]",
+        "explanation": "prefix counts: \"a\"=2, \"ab\"=2, \"abc\"=1, \"b\"=2, \"bc\"=1; \"abc\" scores a+ab+abc = 2+2+1 = 5; \"ab\" scores a+ab = 2+2 = 4; \"bc\" scores b+bc = 2+1 = 3; \"b\" scores b = 2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"abcd\"",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "explanation": "a single word: each of its 4 prefixes has count 1, sum = 4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"wow wow\"",
+        "output": "[6, 6]",
+        "expectedOutput": "[6, 6]",
+        "explanation": "each prefix (\"w\",\"wo\",\"wow\") has count 2 since both entries share them, so each word scores 2+2+2 = 6"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"abc ab bc b\"]",
+        "output": "[5,4,3,2]",
+        "expectedOutput": "[5,4,3,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abcd\"]",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"wow wow\"]",
+        "output": "[6,6]",
+        "expectedOutput": "[6,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a a a\"]",
+        "output": "[3,3,3]",
+        "expectedOutput": "[3,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa aa\"]",
+        "output": "[4,4]",
+        "expectedOutput": "[4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab ac ad\"]",
+        "output": "[4,4,4]",
+        "expectedOutput": "[4,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abc abd abe abc\"]",
+        "output": "[10,9,9,10]",
+        "expectedOutput": "[10,9,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"x xy xyz\"]",
+        "output": "[3,5,6]",
+        "expectedOutput": "[3,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"same same same same\"]",
+        "output": "[16,16,16,16]",
+        "expectedOutput": "[16,16,16,16]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"pre prefix prep\"]",
+        "output": "[9,12,10]",
+        "expectedOutput": "[9,12,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"z zz zzz zzzz\"]",
+        "output": "[4,7,9,10]",
+        "expectedOutput": "[4,7,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"cat catalog cats\"]",
+        "output": "[9,13,10]",
+        "expectedOutput": "[9,13,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"one two three\"]",
+        "output": "[3,4,6]",
+        "expectedOutput": "[3,4,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aaaa aaab aabb\"]",
+        "output": "[9,9,8]",
+        "expectedOutput": "[9,9,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"m\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"ba baa baaa\"]",
+        "output": "[6,8,9]",
+        "expectedOutput": "[6,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"q qq qqq qqqq qqqqq\"]",
+        "output": "[5,9,12,14,15]",
+        "expectedOutput": "[5,9,12,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abc xyz mno\"]",
+        "output": "[3,3,3]",
+        "expectedOutput": "[3,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"na nan nano\"]",
+        "output": "[6,8,9]",
+        "expectedOutput": "[6,8,9]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"abc ab bc b\"",
+      "output": "[5, 4, 3, 2]",
+      "expectedOutput": "[5, 4, 3, 2]",
+      "explanation": "prefix counts: \"a\"=2, \"ab\"=2, \"abc\"=1, \"b\"=2, \"bc\"=1; \"abc\" scores a+ab+abc = 2+2+1 = 5; \"ab\" scores a+ab = 2+2 = 4; \"bc\" scores b+bc = 2+1 = 3; \"b\" scores b = 2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"abcd\"",
+      "output": "[4]",
+      "expectedOutput": "[4]",
+      "explanation": "a single word: each of its 4 prefixes has count 1, sum = 4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"wow wow\"",
+      "output": "[6, 6]",
+      "expectedOutput": "[6, 6]",
+      "explanation": "each prefix (\"w\",\"wo\",\"wow\") has count 2 since both entries share them, so each word scores 2+2+2 = 6"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "words = \"abc ab bc b\"",
+      "output": "[5, 4, 3, 2]",
+      "expectedOutput": "[5, 4, 3, 2]",
+      "explanation": "prefix counts: \"a\"=2, \"ab\"=2, \"abc\"=1, \"b\"=2, \"bc\"=1; \"abc\" scores a+ab+abc = 2+2+1 = 5; \"ab\" scores a+ab = 2+2 = 4; \"bc\" scores b+bc = 2+1 = 3; \"b\" scores b = 2"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "words = \"abcd\"",
+      "output": "[4]",
+      "expectedOutput": "[4]",
+      "explanation": "a single word: each of its 4 prefixes has count 1, sum = 4"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "words = \"wow wow\"",
+      "output": "[6, 6]",
+      "expectedOutput": "[6, 6]",
+      "explanation": "each prefix (\"w\",\"wo\",\"wow\") has count 2 since both entries share them, so each word scores 2+2+2 = 6"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"abc ab bc b\"]",
+      "output": "[5,4,3,2]",
+      "expectedOutput": "[5,4,3,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"abcd\"]",
+      "output": "[4]",
+      "expectedOutput": "[4]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"wow wow\"]",
+      "output": "[6,6]",
+      "expectedOutput": "[6,6]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"a a a\"]",
+      "output": "[3,3,3]",
+      "expectedOutput": "[3,3,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"a\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"aa aa\"]",
+      "output": "[4,4]",
+      "expectedOutput": "[4,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ab ac ad\"]",
+      "output": "[4,4,4]",
+      "expectedOutput": "[4,4,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"abc abd abe abc\"]",
+      "output": "[10,9,9,10]",
+      "expectedOutput": "[10,9,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"x xy xyz\"]",
+      "output": "[3,5,6]",
+      "expectedOutput": "[3,5,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"same same same same\"]",
+      "output": "[16,16,16,16]",
+      "expectedOutput": "[16,16,16,16]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"pre prefix prep\"]",
+      "output": "[9,12,10]",
+      "expectedOutput": "[9,12,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"z zz zzz zzzz\"]",
+      "output": "[4,7,9,10]",
+      "expectedOutput": "[4,7,9,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"cat catalog cats\"]",
+      "output": "[9,13,10]",
+      "expectedOutput": "[9,13,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"one two three\"]",
+      "output": "[3,4,6]",
+      "expectedOutput": "[3,4,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"aaaa aaab aabb\"]",
+      "output": "[9,9,8]",
+      "expectedOutput": "[9,9,8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"m\"]",
+      "output": "[1]",
+      "expectedOutput": "[1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"ba baa baaa\"]",
+      "output": "[6,8,9]",
+      "expectedOutput": "[6,8,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"q qq qqq qqqq qqqqq\"]",
+      "output": "[5,9,12,14,15]",
+      "expectedOutput": "[5,9,12,14,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"abc xyz mno\"]",
+      "output": "[3,3,3]",
+      "expectedOutput": "[3,3,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"na nan nano\"]",
+      "output": "[6,8,9]",
+      "expectedOutput": "[6,8,9]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "words = \"abc ab bc b\"",
+        "output": "[5, 4, 3, 2]",
+        "expectedOutput": "[5, 4, 3, 2]",
+        "explanation": "prefix counts: \"a\"=2, \"ab\"=2, \"abc\"=1, \"b\"=2, \"bc\"=1; \"abc\" scores a+ab+abc = 2+2+1 = 5; \"ab\" scores a+ab = 2+2 = 4; \"bc\" scores b+bc = 2+1 = 3; \"b\" scores b = 2"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "words = \"abcd\"",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "explanation": "a single word: each of its 4 prefixes has count 1, sum = 4"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "words = \"wow wow\"",
+        "output": "[6, 6]",
+        "expectedOutput": "[6, 6]",
+        "explanation": "each prefix (\"w\",\"wo\",\"wow\") has count 2 since both entries share them, so each word scores 2+2+2 = 6"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"abc ab bc b\"]",
+        "output": "[5,4,3,2]",
+        "expectedOutput": "[5,4,3,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"abcd\"]",
+        "output": "[4]",
+        "expectedOutput": "[4]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"wow wow\"]",
+        "output": "[6,6]",
+        "expectedOutput": "[6,6]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"a a a\"]",
+        "output": "[3,3,3]",
+        "expectedOutput": "[3,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"a\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"aa aa\"]",
+        "output": "[4,4]",
+        "expectedOutput": "[4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab ac ad\"]",
+        "output": "[4,4,4]",
+        "expectedOutput": "[4,4,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"abc abd abe abc\"]",
+        "output": "[10,9,9,10]",
+        "expectedOutput": "[10,9,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"x xy xyz\"]",
+        "output": "[3,5,6]",
+        "expectedOutput": "[3,5,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"same same same same\"]",
+        "output": "[16,16,16,16]",
+        "expectedOutput": "[16,16,16,16]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"pre prefix prep\"]",
+        "output": "[9,12,10]",
+        "expectedOutput": "[9,12,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"z zz zzz zzzz\"]",
+        "output": "[4,7,9,10]",
+        "expectedOutput": "[4,7,9,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"cat catalog cats\"]",
+        "output": "[9,13,10]",
+        "expectedOutput": "[9,13,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"one two three\"]",
+        "output": "[3,4,6]",
+        "expectedOutput": "[3,4,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"aaaa aaab aabb\"]",
+        "output": "[9,9,8]",
+        "expectedOutput": "[9,9,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"m\"]",
+        "output": "[1]",
+        "expectedOutput": "[1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"ba baa baaa\"]",
+        "output": "[6,8,9]",
+        "expectedOutput": "[6,8,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"q qq qqq qqqq qqqqq\"]",
+        "output": "[5,9,12,14,15]",
+        "expectedOutput": "[5,9,12,14,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"abc xyz mno\"]",
+        "output": "[3,3,3]",
+        "expectedOutput": "[3,3,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"na nan nano\"]",
+        "output": "[6,8,9]",
+        "expectedOutput": "[6,8,9]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def prefixScores(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> prefixScores(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] prefixScores(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun prefixScores(words: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    prefixScores(words) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def prefixScores(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> prefixScores(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] prefixScores(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun prefixScores(words: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    prefixScores(words) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def prefixScores(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> prefixScores(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] prefixScores(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun prefixScores(words: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    prefixScores(words) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def prefixScores(self, words):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> prefixScores(string words) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] prefixScores(String words) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun prefixScores(words: String): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    prefixScores(words) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(total characters) to build and to answer all queries",
+      "space": "O(total characters)",
+      "pattern": "insert every word into a trie, incrementing a counter at every node visited during each insertion; then for each word, walk the trie again and sum the counters along its path"
+    },
+    "bruteForce": {
+      "approach": "for each word, for each of its prefixes, scan the entire word list counting how many words start with that prefix, and sum those counts",
+      "time": "O(n * m^2) where n is word count and m is max word length",
+      "space": "O(n * m)"
+    }
+  },
+  "optimal": {
+    "pattern": "insert every word into a trie, incrementing a counter at every node visited during each insertion; then for each word, walk the trie again and sum the counters along its path",
+    "time": "O(total characters) to build and to answer all queries",
+    "space": "O(total characters)",
+    "hint_ladder": [
+      "a prefix's count is exactly 'how many words pass through this point in a trie' - so build the trie once and get every prefix count as a byproduct of insertion",
+      "insert every word into the trie; at each node you pass through while inserting a word (including the final node), increment that node's pass-through counter by one",
+      "once all words are inserted, every node's counter equals the prefix count for the path from root to that node",
+      "for each word, walk the trie along its own characters again, and sum up the counters at every node visited - that sum is exactly its prefix score"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each word, for each of its prefixes, scan the entire word list counting how many words start with that prefix, and sum those counts",
+    "time": "O(n * m^2) where n is word count and m is max word length",
+    "space": "O(n * m)"
+  },
+  "isIndex0": true,
+  "level": null
+}

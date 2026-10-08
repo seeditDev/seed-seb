@@ -1,0 +1,637 @@
+{
+  "id": "serialize-and-deserialize-binary-tree",
+  "questionId": "serialize-and-deserialize-binary-tree",
+  "slug": "serialize-and-deserialize-binary-tree",
+  "title": "Serialize and Deserialize Binary Tree",
+  "difficulty": "Hard",
+  "category": "Tree dfs",
+  "patterns": [
+    "tree",
+    "dfs",
+    "design",
+    "string"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75"
+  ],
+  "hints": [
+    "you get to invent the string format yourself - the only requirement is that your deserialize function can perfectly undo whatever your serialize function did",
+    "a preorder traversal (node, then left, then right) that also emits an explicit marker for every missing child contains enough information to rebuild the exact tree shape, unlike a traversal that omits missing children",
+    "pick a delimiter that can never be confused with a real value or the missing-child marker, for example a comma, and join node values (or the marker) into one string in preorder order",
+    "to deserialize, split the string back into tokens and consume them in the same preorder order: read one token as the current node's value (or stop if it's the missing-child marker), then recursively build the left subtree, then the right subtree, from the remaining tokens",
+    "reuse a single 'position in the token list' cursor across the whole recursive deserialize call, since each recursive call must pick up exactly where the previous one left off"
+  ],
+  "commonMistakes": [
+    "omitting markers for missing children, which loses shape information and makes deserialization ambiguous (e.g. can't tell a lone left child from a lone right child)",
+    "using a delimiter or missing-child marker that could also appear as part of a real negative number's string form, causing a parsing collision",
+    "trying to deserialize with an index passed by value through recursive calls instead of a shared, mutable cursor, so sibling subtrees don't see how many tokens the previous subtree consumed",
+    "using level-order (BFS) serialization but forgetting that every present node still needs both of its child slots represented, even at the last level"
+  ],
+  "content": {
+    "problemStatement": "Binary trees in these problems are encoded as a flat array named `tree` using complete-binary-tree (heap) indexing:\n\n- the root sits at index 0\n- a node at index `i` has its left child at index `2*i+1` and right child at index `2*i+2`\n- a child index only counts as real if it's within the array's bounds **and** its value isn't the sentinel `-101`\n- `-101` means \"no node there\" - real node values are always in the range -100 to 100, so -101 can never be mistaken for a genuine value\n\n**Design a way to serialize a binary tree into a string and deserialize it back into the same tree, then, given a tree in the flat array encoding, serialize it and immediately deserialize the result, returning the reconstructed tree in the same flat array encoding.**\n\nThere's no constraint on the string format other than that your serialize and deserialize functions must agree with each other. A correct solution always returns exactly the tree it started with, structurally identical down to which children are present.\n",
+    "constraints": [
+      "0 <= number of real nodes <= 10^4",
+      "-100 <= tree[i] <= 100 for every real node",
+      "the input array is always a valid, minimal flat encoding (its last element is never the sentinel, unless the whole tree is empty)"
+    ],
+    "notes": [
+      "an empty tree",
+      "a tree containing negative values and zero, which must be distinguishable from the sentinel and from each other in your string format",
+      "a deeply skewed tree (every node has only one child), which stresses how your format handles long runs of missing children"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, -101, -101, 4, 5]",
+        "output": "[1, 2, 3, -101, -101, 4, 5]",
+        "expectedOutput": "[1, 2, 3, -101, -101, 4, 5]",
+        "explanation": "serializing then deserializing any tree must reproduce that exact tree; here the round trip returns the input array unchanged"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [-101]",
+        "output": "[-101]",
+        "expectedOutput": "[-101]",
+        "explanation": "an empty tree round-trips to an empty tree"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [5]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "explanation": "a single node with no children round-trips to itself"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-101]]",
+        "output": "[-101]",
+        "expectedOutput": "[-101]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,-101,2]]",
+        "output": "[1,-101,2]",
+        "expectedOutput": "[1,-101,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,9,20,-101,-101,15,7]]",
+        "output": "[3,9,20,-101,-101,15,7]",
+        "expectedOutput": "[3,9,20,-101,-101,15,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-1,-2,-3]]",
+        "output": "[-1,-2,-3]",
+        "expectedOutput": "[-1,-2,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[100,-100,50,-50]]",
+        "output": "[100,-100,50,-50]",
+        "expectedOutput": "[100,-100,50,-50]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[1,2,3,4,5,6,7]",
+        "expectedOutput": "[1,2,3,4,5,6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[7]]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,1]]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[4,2,6,1,3,5,7,-101,-101,-101,-101,-101,-101,-101,8]]",
+        "output": "[4,2,6,1,3,5,7,-101,-101,-101,-101,-101,-101,-101,8]",
+        "expectedOutput": "[4,2,6,1,3,5,7,-101,-101,-101,-101,-101,-101,-101,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[9,4,15,-101,-101,-101,20]]",
+        "output": "[9,4,15,-101,-101,-101,20]",
+        "expectedOutput": "[9,4,15,-101,-101,-101,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,-101,3,4]]",
+        "output": "[1,2,-101,3,4]",
+        "expectedOutput": "[1,2,-101,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-5,-10,-15]]",
+        "output": "[-5,-10,-15]",
+        "expectedOutput": "[-5,-10,-15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[50,25,75,10,30,60,80]]",
+        "output": "[50,25,75,10,30,60,80]",
+        "expectedOutput": "[50,25,75,10,30,60,80]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,-101,2,-101,-101,-101,3]]",
+        "output": "[1,-101,2,-101,-101,-101,3]",
+        "expectedOutput": "[1,-101,2,-101,-101,-101,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[6,2,8,0,4,7,9]]",
+        "output": "[6,2,8,0,4,7,9]",
+        "expectedOutput": "[6,2,8,0,4,7,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,1,4,1,5,9,2]]",
+        "output": "[3,1,4,1,5,9,2]",
+        "expectedOutput": "[3,1,4,1,5,9,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[8]]",
+        "output": "[8]",
+        "expectedOutput": "[8]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, -101, -101, 4, 5]",
+      "output": "[1, 2, 3, -101, -101, 4, 5]",
+      "expectedOutput": "[1, 2, 3, -101, -101, 4, 5]",
+      "explanation": "serializing then deserializing any tree must reproduce that exact tree; here the round trip returns the input array unchanged"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [-101]",
+      "output": "[-101]",
+      "expectedOutput": "[-101]",
+      "explanation": "an empty tree round-trips to an empty tree"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [5]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "explanation": "a single node with no children round-trips to itself"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "tree = [1, 2, 3, -101, -101, 4, 5]",
+      "output": "[1, 2, 3, -101, -101, 4, 5]",
+      "expectedOutput": "[1, 2, 3, -101, -101, 4, 5]",
+      "explanation": "serializing then deserializing any tree must reproduce that exact tree; here the round trip returns the input array unchanged"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "tree = [-101]",
+      "output": "[-101]",
+      "expectedOutput": "[-101]",
+      "explanation": "an empty tree round-trips to an empty tree"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "tree = [5]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "explanation": "a single node with no children round-trips to itself"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,3]]",
+      "output": "[1,2,3]",
+      "expectedOutput": "[1,2,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[-101]]",
+      "output": "[-101]",
+      "expectedOutput": "[-101]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[5]]",
+      "output": "[5]",
+      "expectedOutput": "[5]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,-101,2]]",
+      "output": "[1,-101,2]",
+      "expectedOutput": "[1,-101,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[3,9,20,-101,-101,15,7]]",
+      "output": "[3,9,20,-101,-101,15,7]",
+      "expectedOutput": "[3,9,20,-101,-101,15,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[-1,-2,-3]]",
+      "output": "[-1,-2,-3]",
+      "expectedOutput": "[-1,-2,-3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[0,0,0]]",
+      "output": "[0,0,0]",
+      "expectedOutput": "[0,0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[100,-100,50,-50]]",
+      "output": "[100,-100,50,-50]",
+      "expectedOutput": "[100,-100,50,-50]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5,6,7]]",
+      "output": "[1,2,3,4,5,6,7]",
+      "expectedOutput": "[1,2,3,4,5,6,7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[7]]",
+      "output": "[7]",
+      "expectedOutput": "[7]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,1]]",
+      "output": "[2,1]",
+      "expectedOutput": "[2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[4,2,6,1,3,5,7,-101,-101,-101,-101,-101,-101,-101,8]]",
+      "output": "[4,2,6,1,3,5,7,-101,-101,-101,-101,-101,-101,-101,8]",
+      "expectedOutput": "[4,2,6,1,3,5,7,-101,-101,-101,-101,-101,-101,-101,8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[9,4,15,-101,-101,-101,20]]",
+      "output": "[9,4,15,-101,-101,-101,20]",
+      "expectedOutput": "[9,4,15,-101,-101,-101,20]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,-101,3,4]]",
+      "output": "[1,2,-101,3,4]",
+      "expectedOutput": "[1,2,-101,3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-5,-10,-15]]",
+      "output": "[-5,-10,-15]",
+      "expectedOutput": "[-5,-10,-15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[50,25,75,10,30,60,80]]",
+      "output": "[50,25,75,10,30,60,80]",
+      "expectedOutput": "[50,25,75,10,30,60,80]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[1,-101,2,-101,-101,-101,3]]",
+      "output": "[1,-101,2,-101,-101,-101,3]",
+      "expectedOutput": "[1,-101,2,-101,-101,-101,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[6,2,8,0,4,7,9]]",
+      "output": "[6,2,8,0,4,7,9]",
+      "expectedOutput": "[6,2,8,0,4,7,9]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[3,1,4,1,5,9,2]]",
+      "output": "[3,1,4,1,5,9,2]",
+      "expectedOutput": "[3,1,4,1,5,9,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[8]]",
+      "output": "[8]",
+      "expectedOutput": "[8]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "tree = [1, 2, 3, -101, -101, 4, 5]",
+        "output": "[1, 2, 3, -101, -101, 4, 5]",
+        "expectedOutput": "[1, 2, 3, -101, -101, 4, 5]",
+        "explanation": "serializing then deserializing any tree must reproduce that exact tree; here the round trip returns the input array unchanged"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "tree = [-101]",
+        "output": "[-101]",
+        "expectedOutput": "[-101]",
+        "explanation": "an empty tree round-trips to an empty tree"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "tree = [5]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "explanation": "a single node with no children round-trips to itself"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,3]]",
+        "output": "[1,2,3]",
+        "expectedOutput": "[1,2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[-101]]",
+        "output": "[-101]",
+        "expectedOutput": "[-101]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[5]]",
+        "output": "[5]",
+        "expectedOutput": "[5]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,-101,2]]",
+        "output": "[1,-101,2]",
+        "expectedOutput": "[1,-101,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[3,9,20,-101,-101,15,7]]",
+        "output": "[3,9,20,-101,-101,15,7]",
+        "expectedOutput": "[3,9,20,-101,-101,15,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[-1,-2,-3]]",
+        "output": "[-1,-2,-3]",
+        "expectedOutput": "[-1,-2,-3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[0,0,0]]",
+        "output": "[0,0,0]",
+        "expectedOutput": "[0,0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[100,-100,50,-50]]",
+        "output": "[100,-100,50,-50]",
+        "expectedOutput": "[100,-100,50,-50]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5,6,7]]",
+        "output": "[1,2,3,4,5,6,7]",
+        "expectedOutput": "[1,2,3,4,5,6,7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[7]]",
+        "output": "[7]",
+        "expectedOutput": "[7]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,1]]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[4,2,6,1,3,5,7,-101,-101,-101,-101,-101,-101,-101,8]]",
+        "output": "[4,2,6,1,3,5,7,-101,-101,-101,-101,-101,-101,-101,8]",
+        "expectedOutput": "[4,2,6,1,3,5,7,-101,-101,-101,-101,-101,-101,-101,8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[9,4,15,-101,-101,-101,20]]",
+        "output": "[9,4,15,-101,-101,-101,20]",
+        "expectedOutput": "[9,4,15,-101,-101,-101,20]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,-101,3,4]]",
+        "output": "[1,2,-101,3,4]",
+        "expectedOutput": "[1,2,-101,3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-5,-10,-15]]",
+        "output": "[-5,-10,-15]",
+        "expectedOutput": "[-5,-10,-15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[50,25,75,10,30,60,80]]",
+        "output": "[50,25,75,10,30,60,80]",
+        "expectedOutput": "[50,25,75,10,30,60,80]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[1,-101,2,-101,-101,-101,3]]",
+        "output": "[1,-101,2,-101,-101,-101,3]",
+        "expectedOutput": "[1,-101,2,-101,-101,-101,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[6,2,8,0,4,7,9]]",
+        "output": "[6,2,8,0,4,7,9]",
+        "expectedOutput": "[6,2,8,0,4,7,9]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[3,1,4,1,5,9,2]]",
+        "output": "[3,1,4,1,5,9,2]",
+        "expectedOutput": "[3,1,4,1,5,9,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[8]]",
+        "output": "[8]",
+        "expectedOutput": "[8]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def serializeThenDeserialize(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> serializeThenDeserialize(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] serializeThenDeserialize(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun serializeThenDeserialize(tree: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    serializeThenDeserialize(tree) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def serializeThenDeserialize(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> serializeThenDeserialize(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] serializeThenDeserialize(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun serializeThenDeserialize(tree: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    serializeThenDeserialize(tree) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def serializeThenDeserialize(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> serializeThenDeserialize(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] serializeThenDeserialize(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun serializeThenDeserialize(tree: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    serializeThenDeserialize(tree) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def serializeThenDeserialize(self, tree):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> serializeThenDeserialize(vector<int>& tree) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] serializeThenDeserialize(int[] tree) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun serializeThenDeserialize(tree: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    serializeThenDeserialize(tree) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n) to serialize and O(n) to deserialize, each visiting every node (and every missing-child marker) once",
+      "space": "O(n) for the string representation, plus O(h) recursion stack",
+      "pattern": "preorder DFS serialization: emit the current node's value, then recursively serialize left, then right, using a distinct marker for missing children"
+    },
+    "bruteForce": {
+      "approach": "there isn't really a slower alternative here - any correct serialize/deserialize pair takes linear time; the interesting choice is the encoding scheme, not an asymptotic tradeoff. a naive scheme like a level-order (BFS) string with explicit null markers works but produces a longer string than a compact preorder scheme",
+      "time": "O(n) to serialize, O(n) to deserialize",
+      "space": "O(n) for the string and the rebuilt tree"
+    }
+  },
+  "optimal": {
+    "pattern": "preorder DFS serialization: emit the current node's value, then recursively serialize left, then right, using a distinct marker for missing children",
+    "time": "O(n) to serialize and O(n) to deserialize, each visiting every node (and every missing-child marker) once",
+    "space": "O(n) for the string representation, plus O(h) recursion stack",
+    "hint_ladder": [
+      "you get to invent the string format yourself - the only requirement is that your deserialize function can perfectly undo whatever your serialize function did",
+      "a preorder traversal (node, then left, then right) that also emits an explicit marker for every missing child contains enough information to rebuild the exact tree shape, unlike a traversal that omits missing children",
+      "pick a delimiter that can never be confused with a real value or the missing-child marker, for example a comma, and join node values (or the marker) into one string in preorder order",
+      "to deserialize, split the string back into tokens and consume them in the same preorder order: read one token as the current node's value (or stop if it's the missing-child marker), then recursively build the left subtree, then the right subtree, from the remaining tokens",
+      "reuse a single 'position in the token list' cursor across the whole recursive deserialize call, since each recursive call must pick up exactly where the previous one left off"
+    ]
+  },
+  "bruteForce": {
+    "approach": "there isn't really a slower alternative here - any correct serialize/deserialize pair takes linear time; the interesting choice is the encoding scheme, not an asymptotic tradeoff. a naive scheme like a level-order (BFS) string with explicit null markers works but produces a longer string than a compact preorder scheme",
+    "time": "O(n) to serialize, O(n) to deserialize",
+    "space": "O(n) for the string and the rebuilt tree"
+  },
+  "isIndex0": true,
+  "level": null
+}

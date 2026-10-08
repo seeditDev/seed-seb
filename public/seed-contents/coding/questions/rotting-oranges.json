@@ -1,0 +1,633 @@
+{
+  "id": "rotting-oranges",
+  "questionId": "rotting-oranges",
+  "slug": "rotting-oranges",
+  "title": "Rotting Oranges",
+  "difficulty": "Medium",
+  "category": "Graphs",
+  "patterns": [
+    "graph dfs/bfs",
+    "multi-source bfs",
+    "grid traversal"
+  ],
+  "lists": [
+    "grind-75"
+  ],
+  "hints": [
+    "rot doesn't spread from just one source, it spreads from every rotten orange at once - that's a multi-source BFS",
+    "start by putting every initially rotten orange's coordinates into a queue, all at 'minute 0'",
+    "process the queue level by level (minute by minute); each fresh orange adjacent to something in the current level becomes rotten and joins the next level",
+    "track the minute count as you process levels, and after BFS finishes, check whether any fresh orange was never reached"
+  ],
+  "commonMistakes": [
+    "starting BFS from only one rotten orange instead of all of them simultaneously",
+    "forgetting to check at the end whether any fresh oranges remain unreached, which should return -1",
+    "off-by-one errors in the minute count, especially when there were zero fresh oranges to begin with"
+  ],
+  "content": {
+    "problemStatement": "You're given a grid where each cell is 0 (empty), 1 (a fresh orange), or\n2 (a rotten orange). Every minute, any fresh orange that is horizontally\nor vertically adjacent to a rotten orange becomes rotten too.\n\n**Return the minimum number of minutes that must pass until no fresh orange remains, or -1 if that's impossible.**\n",
+    "constraints": [
+      "1 <= rows, cols <= 10",
+      "grid[i][j] is 0, 1, or 2",
+      "rows == grid.length and cols == grid[i].length for every row"
+    ],
+    "notes": [
+      "no fresh oranges at all (answer is 0)",
+      "no rotten oranges but at least one fresh orange (answer is -1)",
+      "a fresh orange completely walled off by empty cells",
+      "grid entirely rotten already"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[2,1,1],[1,1,0],[0,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "rot spreads outward minute by minute from the initial rotten orange until every fresh orange is reached"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[2,1,1],[0,1,1],[1,0,1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "the fresh orange in the bottom-left corner is isolated by empty cells and can never rot"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[0,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "there are no fresh oranges to begin with"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[2,1,1],[1,1,0],[0,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[2,1,1],[0,1,1],[1,0,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,2]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[2,2],[2,2]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,0,0],[0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[2,0,1],[0,0,0],[1,0,0]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[2,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,2]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2,2,0,1,0,0,1],[0,0,2,0,2,0,2,0],[2,2,1,1,0,1,2,0],[0,1,2,0,1,2,2,0],[0,1,1,1,0,2,0,0],[2,0,0,0,2,2,1,1],[2,0,1,1,0,1,0,0],[0,0,0,1,0,1,1,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,2,0,0,2,0],[1,1,1,1,1,1],[0,0,0,0,0,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[2]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[2,1,0,1,2],[1,1,0,1,1],[0,0,0,0,0],[1,1,0,1,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[2,1,2,2,2,0,1,1,1,2],[0,1,1,2,0,1,0,1,2,1],[2,0,2,1,2,0,0,0,1,0],[2,0,0,1,1,0,1,2,1,0],[1,2,1,0,2,2,2,2,2,1],[0,0,0,1,2,2,2,2,1,2],[0,1,1,0,1,2,2,0,0,2],[2,2,1,2,0,1,2,2,1,0],[2,0,0,2,2,0,1,0,2,2],[1,0,2,1,2,2,1,1,0,0]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[2,1,1,1,1,1,1,1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[2],[1],[1],[1],[1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[2,1,1],[1,1,0],[0,1,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "rot spreads outward minute by minute from the initial rotten orange until every fresh orange is reached"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[2,1,1],[0,1,1],[1,0,1]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "the fresh orange in the bottom-left corner is isolated by empty cells and can never rot"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[0,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "there are no fresh oranges to begin with"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "grid = [[2,1,1],[1,1,0],[0,1,1]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "explanation": "rot spreads outward minute by minute from the initial rotten orange until every fresh orange is reached"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "grid = [[2,1,1],[0,1,1],[1,0,1]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "explanation": "the fresh orange in the bottom-left corner is isolated by empty cells and can never rot"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "grid = [[0,2]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "explanation": "there are no fresh oranges to begin with"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[2,1,1],[1,1,0],[0,1,1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[2,1,1],[0,1,1],[1,0,1]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[0,2]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[0,0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[2,2],[2,2]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[0,0,0],[0,0,0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[2,0,1],[0,0,0],[1,0,0]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[2,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,2]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,2,2,0,1,0,0,1],[0,0,2,0,2,0,2,0],[2,2,1,1,0,1,2,0],[0,1,2,0,1,2,2,0],[0,1,1,1,0,2,0,0],[2,0,0,0,2,2,1,1],[2,0,1,1,0,1,0,0],[0,0,0,1,0,1,1,1]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[0,2,0,0,2,0],[1,1,1,1,1,1],[0,0,0,0,0,0]]]",
+      "output": "2",
+      "expectedOutput": "2",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[2]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[1]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[0]]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[2,1,0,1,2],[1,1,0,1,1],[0,0,0,0,0],[1,1,0,1,1]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[2,1,2,2,2,0,1,1,1,2],[0,1,1,2,0,1,0,1,2,1],[2,0,2,1,2,0,0,0,1,0],[2,0,0,1,1,0,1,2,1,0],[1,2,1,0,2,2,2,2,2,1],[0,0,0,1,2,2,2,2,1,2],[0,1,1,0,1,2,2,0,0,2],[2,2,1,2,0,1,2,2,1,0],[2,0,0,2,2,0,1,0,2,2],[1,0,2,1,2,2,1,1,0,0]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[2,1,1,1,1,1,1,1,1,1]]]",
+      "output": "9",
+      "expectedOutput": "9",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[2],[1],[1],[1],[1]]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[1,1],[1,1]]]",
+      "output": "-1",
+      "expectedOutput": "-1",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "grid = [[2,1,1],[1,1,0],[0,1,1]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "explanation": "rot spreads outward minute by minute from the initial rotten orange until every fresh orange is reached"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "grid = [[2,1,1],[0,1,1],[1,0,1]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "explanation": "the fresh orange in the bottom-left corner is isolated by empty cells and can never rot"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "grid = [[0,2]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "explanation": "there are no fresh oranges to begin with"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[2,1,1],[1,1,0],[0,1,1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[2,1,1],[0,1,1],[1,0,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[0,2]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1,1,1],[1,1,1],[1,1,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[2,2],[2,2]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[0,0,0],[0,0,0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[2,0,1],[0,0,0],[1,0,0]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[2,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,2]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,2,2,0,1,0,0,1],[0,0,2,0,2,0,2,0],[2,2,1,1,0,1,2,0],[0,1,2,0,1,2,2,0],[0,1,1,1,0,2,0,0],[2,0,0,0,2,2,1,1],[2,0,1,1,0,1,0,0],[0,0,0,1,0,1,1,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[0,2,0,0,2,0],[1,1,1,1,1,1],[0,0,0,0,0,0]]]",
+        "output": "2",
+        "expectedOutput": "2",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[2]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[0]]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[2,1,0,1,2],[1,1,0,1,1],[0,0,0,0,0],[1,1,0,1,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[2,1,2,2,2,0,1,1,1,2],[0,1,1,2,0,1,0,1,2,1],[2,0,2,1,2,0,0,0,1,0],[2,0,0,1,1,0,1,2,1,0],[1,2,1,0,2,2,2,2,2,1],[0,0,0,1,2,2,2,2,1,2],[0,1,1,0,1,2,2,0,0,2],[2,2,1,2,0,1,2,2,1,0],[2,0,0,2,2,0,1,0,2,2],[1,0,2,1,2,2,1,1,0,0]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[2,1,1,1,1,1,1,1,1,1]]]",
+        "output": "9",
+        "expectedOutput": "9",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[2],[1],[1],[1],[1]]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[1,1],[1,1]]]",
+        "output": "-1",
+        "expectedOutput": "-1",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def orangesRotting(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int orangesRotting(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int orangesRotting(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun orangesRotting(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    orangesRotting(grid) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def orangesRotting(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int orangesRotting(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int orangesRotting(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun orangesRotting(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    orangesRotting(grid) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def orangesRotting(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int orangesRotting(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int orangesRotting(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun orangesRotting(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    orangesRotting(grid) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def orangesRotting(self, grid):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    int orangesRotting(vector<vector<int>>& grid) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int orangesRotting(int[][] grid) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun orangesRotting(grid: Array<IntArray>): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    orangesRotting(grid) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(rows * cols)",
+      "space": "O(rows * cols)",
+      "pattern": "multi-source graph bfs, starting simultaneously from every rotten orange"
+    },
+    "bruteForce": {
+      "approach": "repeatedly scan the entire grid minute by minute, rotting any fresh orange adjacent to a rotten one, until a full pass makes no change",
+      "time": "O((rows * cols)^2) in the worst case since each pass rescans the full grid",
+      "space": "O(rows * cols)"
+    }
+  },
+  "optimal": {
+    "pattern": "multi-source graph bfs, starting simultaneously from every rotten orange",
+    "time": "O(rows * cols)",
+    "space": "O(rows * cols)",
+    "hint_ladder": [
+      "rot doesn't spread from just one source, it spreads from every rotten orange at once - that's a multi-source BFS",
+      "start by putting every initially rotten orange's coordinates into a queue, all at 'minute 0'",
+      "process the queue level by level (minute by minute); each fresh orange adjacent to something in the current level becomes rotten and joins the next level",
+      "track the minute count as you process levels, and after BFS finishes, check whether any fresh orange was never reached"
+    ]
+  },
+  "bruteForce": {
+    "approach": "repeatedly scan the entire grid minute by minute, rotting any fresh orange adjacent to a rotten one, until a full pass makes no change",
+    "time": "O((rows * cols)^2) in the worst case since each pass rescans the full grid",
+    "space": "O(rows * cols)"
+  },
+  "isIndex0": true,
+  "level": null
+}

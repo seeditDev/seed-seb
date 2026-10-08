@@ -1,0 +1,656 @@
+{
+  "id": "reverse-words-in-a-string",
+  "questionId": "reverse-words-in-a-string",
+  "slug": "reverse-words-in-a-string",
+  "title": "Reverse Words in a String",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "strings",
+    "two pointers"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "the simplest correct approach is to split on whitespace and reverse the resulting list of words - most languages' split already drops empty tokens caused by multiple spaces",
+    "if you're asked to avoid extra space (the classic follow-up), think about what happens if you reverse the entire character array first",
+    "reversing the whole string reverses the order of the words but also reverses each word's own letters - so what's the fix?",
+    "after the full reversal, walk through and reverse each individual word back to normal, using two pointers to find each word's boundaries",
+    "handle the spaces last: skip over runs of multiple spaces and any leading/trailing spaces while writing the final compacted result"
+  ],
+  "commonMistakes": [
+    "using a fixed single split(' ') which produces empty-string tokens for consecutive spaces instead of collapsing them",
+    "forgetting to strip leading/trailing spaces before or after reversing",
+    "reversing the whole string character by character and forgetting to re-reverse each individual word, leaving words spelled backwards",
+    "joining the reversed words with more than one space or with no space at all"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s` that may contain leading spaces, trailing\nspaces, and multiple spaces between words.\n\n**Return a new string with the words in reverse order, separated by exactly one space each, with no leading or trailing spaces.**\n\nA word is defined as a maximal run of non-space characters.\n",
+    "constraints": [
+      "1 <= s.length <= 10^4",
+      "s consists of English letters, digits, and spaces ' '",
+      "there is at least one word in s"
+    ],
+    "notes": [
+      "multiple consecutive spaces between two words",
+      "leading and/or trailing spaces",
+      "a single word with no spaces at all",
+      "exactly two words"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"the sky is blue\"",
+        "output": "\"blue is sky the\"",
+        "expectedOutput": "\"blue is sky the\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"  hello world  \"",
+        "output": "\"world hello\"",
+        "expectedOutput": "\"world hello\"",
+        "explanation": "leading and trailing spaces are removed from the result"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a good   example\"",
+        "output": "\"example good a\"",
+        "expectedOutput": "\"example good a\"",
+        "explanation": "multiple spaces between words in the input collapse to a single space in the output"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"the sky is blue\"]",
+        "output": "blue is sky the",
+        "expectedOutput": "blue is sky the",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"  hello world  \"]",
+        "output": "world hello",
+        "expectedOutput": "world hello",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a good   example\"]",
+        "output": "example good a",
+        "expectedOutput": "example good a",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"  Bob    Loves  Alice   \"]",
+        "output": "Alice Loves Bob",
+        "expectedOutput": "Alice Loves Bob",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"Alice does not even like bob\"]",
+        "output": "bob like even not does Alice",
+        "expectedOutput": "bob like even not does Alice",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"single\"]",
+        "output": "single",
+        "expectedOutput": "single",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"  a  \"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"hi\"]",
+        "output": "hi",
+        "expectedOutput": "hi",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"1 2 3 4 5\"]",
+        "output": "5 4 3 2 1",
+        "expectedOutput": "5 4 3 2 1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"the quick brown fox jumps over the lazy dog\"]",
+        "output": "dog lazy the over jumps fox brown quick the",
+        "expectedOutput": "dog lazy the over jumps fox brown quick the",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"   leading spaces here\"]",
+        "output": "here spaces leading",
+        "expectedOutput": "here spaces leading",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"trailing spaces here   \"]",
+        "output": "here spaces trailing",
+        "expectedOutput": "here spaces trailing",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"double  space   between   words\"]",
+        "output": "words between space double",
+        "expectedOutput": "words between space double",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"a b\"]",
+        "output": "b a",
+        "expectedOutput": "b a",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"b a\"]",
+        "output": "a b",
+        "expectedOutput": "a b",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"   a   b   c   \"]",
+        "output": "c b a",
+        "expectedOutput": "c b a",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"code  is   fun\"]",
+        "output": "fun is code",
+        "expectedOutput": "fun is code",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"sky\"]",
+        "output": "sky",
+        "expectedOutput": "sky",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"this   is    a test\"]",
+        "output": "test a is this",
+        "expectedOutput": "test a is this",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"   this is a test   \"]",
+        "output": "test a is this",
+        "expectedOutput": "test a is this",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"keep   calm and code on\"]",
+        "output": "on code and calm keep",
+        "expectedOutput": "on code and calm keep",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"the sky is blue\"",
+      "output": "\"blue is sky the\"",
+      "expectedOutput": "\"blue is sky the\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"  hello world  \"",
+      "output": "\"world hello\"",
+      "expectedOutput": "\"world hello\"",
+      "explanation": "leading and trailing spaces are removed from the result"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a good   example\"",
+      "output": "\"example good a\"",
+      "expectedOutput": "\"example good a\"",
+      "explanation": "multiple spaces between words in the input collapse to a single space in the output"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"the sky is blue\"",
+      "output": "\"blue is sky the\"",
+      "expectedOutput": "\"blue is sky the\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"  hello world  \"",
+      "output": "\"world hello\"",
+      "expectedOutput": "\"world hello\"",
+      "explanation": "leading and trailing spaces are removed from the result"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"a good   example\"",
+      "output": "\"example good a\"",
+      "expectedOutput": "\"example good a\"",
+      "explanation": "multiple spaces between words in the input collapse to a single space in the output"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"the sky is blue\"]",
+      "output": "blue is sky the",
+      "expectedOutput": "blue is sky the",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"  hello world  \"]",
+      "output": "world hello",
+      "expectedOutput": "world hello",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a good   example\"]",
+      "output": "example good a",
+      "expectedOutput": "example good a",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"  Bob    Loves  Alice   \"]",
+      "output": "Alice Loves Bob",
+      "expectedOutput": "Alice Loves Bob",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"Alice does not even like bob\"]",
+      "output": "bob like even not does Alice",
+      "expectedOutput": "bob like even not does Alice",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"single\"]",
+      "output": "single",
+      "expectedOutput": "single",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"  a  \"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"hi\"]",
+      "output": "hi",
+      "expectedOutput": "hi",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"1 2 3 4 5\"]",
+      "output": "5 4 3 2 1",
+      "expectedOutput": "5 4 3 2 1",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"the quick brown fox jumps over the lazy dog\"]",
+      "output": "dog lazy the over jumps fox brown quick the",
+      "expectedOutput": "dog lazy the over jumps fox brown quick the",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"   leading spaces here\"]",
+      "output": "here spaces leading",
+      "expectedOutput": "here spaces leading",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"trailing spaces here   \"]",
+      "output": "here spaces trailing",
+      "expectedOutput": "here spaces trailing",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"double  space   between   words\"]",
+      "output": "words between space double",
+      "expectedOutput": "words between space double",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"a b\"]",
+      "output": "b a",
+      "expectedOutput": "b a",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"b a\"]",
+      "output": "a b",
+      "expectedOutput": "a b",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"   a   b   c   \"]",
+      "output": "c b a",
+      "expectedOutput": "c b a",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"code  is   fun\"]",
+      "output": "fun is code",
+      "expectedOutput": "fun is code",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"sky\"]",
+      "output": "sky",
+      "expectedOutput": "sky",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"this   is    a test\"]",
+      "output": "test a is this",
+      "expectedOutput": "test a is this",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"   this is a test   \"]",
+      "output": "test a is this",
+      "expectedOutput": "test a is this",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"keep   calm and code on\"]",
+      "output": "on code and calm keep",
+      "expectedOutput": "on code and calm keep",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"the sky is blue\"",
+        "output": "\"blue is sky the\"",
+        "expectedOutput": "\"blue is sky the\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"  hello world  \"",
+        "output": "\"world hello\"",
+        "expectedOutput": "\"world hello\"",
+        "explanation": "leading and trailing spaces are removed from the result"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"a good   example\"",
+        "output": "\"example good a\"",
+        "expectedOutput": "\"example good a\"",
+        "explanation": "multiple spaces between words in the input collapse to a single space in the output"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"the sky is blue\"]",
+        "output": "blue is sky the",
+        "expectedOutput": "blue is sky the",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"  hello world  \"]",
+        "output": "world hello",
+        "expectedOutput": "world hello",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a good   example\"]",
+        "output": "example good a",
+        "expectedOutput": "example good a",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"  Bob    Loves  Alice   \"]",
+        "output": "Alice Loves Bob",
+        "expectedOutput": "Alice Loves Bob",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"Alice does not even like bob\"]",
+        "output": "bob like even not does Alice",
+        "expectedOutput": "bob like even not does Alice",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"single\"]",
+        "output": "single",
+        "expectedOutput": "single",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"  a  \"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"hi\"]",
+        "output": "hi",
+        "expectedOutput": "hi",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"1 2 3 4 5\"]",
+        "output": "5 4 3 2 1",
+        "expectedOutput": "5 4 3 2 1",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"the quick brown fox jumps over the lazy dog\"]",
+        "output": "dog lazy the over jumps fox brown quick the",
+        "expectedOutput": "dog lazy the over jumps fox brown quick the",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"   leading spaces here\"]",
+        "output": "here spaces leading",
+        "expectedOutput": "here spaces leading",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"trailing spaces here   \"]",
+        "output": "here spaces trailing",
+        "expectedOutput": "here spaces trailing",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"double  space   between   words\"]",
+        "output": "words between space double",
+        "expectedOutput": "words between space double",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"a b\"]",
+        "output": "b a",
+        "expectedOutput": "b a",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"b a\"]",
+        "output": "a b",
+        "expectedOutput": "a b",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"   a   b   c   \"]",
+        "output": "c b a",
+        "expectedOutput": "c b a",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"code  is   fun\"]",
+        "output": "fun is code",
+        "expectedOutput": "fun is code",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"sky\"]",
+        "output": "sky",
+        "expectedOutput": "sky",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"this   is    a test\"]",
+        "output": "test a is this",
+        "expectedOutput": "test a is this",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"   this is a test   \"]",
+        "output": "test a is this",
+        "expectedOutput": "test a is this",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"keep   calm and code on\"]",
+        "output": "on code and calm keep",
+        "expectedOutput": "on code and calm keep",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def reverseWords(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string reverseWords(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String reverseWords(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseWords(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseWords(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def reverseWords(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string reverseWords(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String reverseWords(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseWords(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseWords(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def reverseWords(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string reverseWords(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String reverseWords(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseWords(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseWords(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def reverseWords(self, s):\n",
+    "cpp": "#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    string reverseWords(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String reverseWords(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseWords(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseWords(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra, not counting the output string",
+      "pattern": "in-place two-pointer reversal (reverse whole string, then reverse each word)"
+    },
+    "bruteForce": {
+      "approach": "split the string on whitespace into a list of words (this already discards empty tokens from consecutive spaces), reverse the list, and join with single spaces",
+      "time": "O(n)",
+      "space": "O(n)"
+    }
+  },
+  "optimal": {
+    "pattern": "in-place two-pointer reversal (reverse whole string, then reverse each word)",
+    "time": "O(n)",
+    "space": "O(1) extra, not counting the output string",
+    "hint_ladder": [
+      "the simplest correct approach is to split on whitespace and reverse the resulting list of words - most languages' split already drops empty tokens caused by multiple spaces",
+      "if you're asked to avoid extra space (the classic follow-up), think about what happens if you reverse the entire character array first",
+      "reversing the whole string reverses the order of the words but also reverses each word's own letters - so what's the fix?",
+      "after the full reversal, walk through and reverse each individual word back to normal, using two pointers to find each word's boundaries",
+      "handle the spaces last: skip over runs of multiple spaces and any leading/trailing spaces while writing the final compacted result"
+    ]
+  },
+  "bruteForce": {
+    "approach": "split the string on whitespace into a list of words (this already discards empty tokens from consecutive spaces), reverse the list, and join with single spaces",
+    "time": "O(n)",
+    "space": "O(n)"
+  },
+  "isIndex0": true,
+  "level": null
+}

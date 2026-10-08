@@ -1,0 +1,632 @@
+{
+  "id": "valid-parentheses",
+  "questionId": "valid-parentheses",
+  "slug": "valid-parentheses",
+  "title": "Valid Parentheses",
+  "difficulty": "Easy",
+  "category": "Stack",
+  "patterns": [
+    "stack"
+  ],
+  "lists": [
+    "blind-75",
+    "grind-75",
+    "interview-150"
+  ],
+  "hints": [
+    "when you close a bracket, which opening bracket must it match - the earliest unmatched one, or the most recent one?",
+    "what data structure naturally gives you 'the most recent unmatched item'?",
+    "try a stack: push opening brackets, and on a closing bracket, pop and check it matches",
+    "what should happen if you need to pop but the stack is empty, or the string ends with items still on the stack?"
+  ],
+  "commonMistakes": [
+    "not handling an empty stack when a closing bracket appears (index-out-of-range)",
+    "forgetting to check the stack is empty at the very end (unmatched opening brackets)",
+    "matching by bracket family loosely instead of exact pair type"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s` made up only of the bracket characters ( ) [ ] { }.\n\n**Decide whether the brackets are \"balanced\": every opening bracket has a matching closing bracket of the same type, and brackets close in the correct nested order.**\n",
+    "constraints": [
+      "0 <= s.length <= 10^4",
+      "s consists only of the characters '(', ')', '[', ']', '{', '}'"
+    ],
+    "notes": [
+      "empty string (valid)",
+      "only opening brackets",
+      "only closing brackets",
+      "correct bracket types but wrong order, e.g. '([)]'"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"()[]{}\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"(]\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"([)]\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the brackets overlap instead of nesting properly - ( opens, then [ opens, but ) closes before ] does"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"()[]{}\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"(]\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"([)]\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"(((\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"(\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\")\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"[\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"]\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"{}\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"([{}])\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"([)\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"((()))\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\")))\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"{[()]}\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"{[(])}\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"()()()()\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"((((()))))\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"[({})]\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"{[]}\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"()[]{}\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"(]\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"([)]\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the brackets overlap instead of nesting properly - ( opens, then [ opens, but ) closes before ] does"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"()[]{}\"",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"(]\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"([)]\"",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "the brackets overlap instead of nesting properly - ( opens, then [ opens, but ) closes before ] does"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"()[]{}\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"(]\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"([)]\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"(((\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"(\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\")\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"[\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"]\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"{}\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"([{}])\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"([)\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"((()))\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\")))\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"{[()]}\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"{[(])}\"]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"()()()()\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"((((()))))\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"[({})]\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"{[]}\"]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"()[]{}\"",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"(]\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"([)]\"",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "the brackets overlap instead of nesting properly - ( opens, then [ opens, but ) closes before ] does"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"()[]{}\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"(]\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"([)]\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"(((\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"(\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\")\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"[\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"]\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"{}\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"([{}])\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"([)\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"((()))\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\")))\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"{[()]}\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"{[(])}\"]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"()()()()\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"((((()))))\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"[({})]\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"{[]}\"]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def isValid(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isValid(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isValid(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isValid(s: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isValid(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def isValid(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isValid(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isValid(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isValid(s: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isValid(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def isValid(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isValid(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isValid(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isValid(s: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isValid(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def isValid(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool isValid(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean isValid(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun isValid(s: String): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    isValid(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n)",
+      "pattern": "stack (last-in-first-out matching)"
+    },
+    "bruteForce": {
+      "approach": "repeatedly scan the string and remove any adjacent matching pair (e.g. '()' or '[]') until no more removals are possible, then check if the string is empty",
+      "time": "O(n^2) in the worst case (repeated scans)",
+      "space": "O(n) for the mutable copy"
+    }
+  },
+  "optimal": {
+    "pattern": "stack (last-in-first-out matching)",
+    "time": "O(n)",
+    "space": "O(n)",
+    "hint_ladder": [
+      "when you close a bracket, which opening bracket must it match - the earliest unmatched one, or the most recent one?",
+      "what data structure naturally gives you 'the most recent unmatched item'?",
+      "try a stack: push opening brackets, and on a closing bracket, pop and check it matches",
+      "what should happen if you need to pop but the stack is empty, or the string ends with items still on the stack?"
+    ]
+  },
+  "bruteForce": {
+    "approach": "repeatedly scan the string and remove any adjacent matching pair (e.g. '()' or '[]') until no more removals are possible, then check if the string is empty",
+    "time": "O(n^2) in the worst case (repeated scans)",
+    "space": "O(n) for the mutable copy"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,677 @@
+{
+  "id": "zigzag-conversion",
+  "questionId": "zigzag-conversion",
+  "slug": "zigzag-conversion",
+  "title": "Zigzag Conversion",
+  "difficulty": "Medium",
+  "category": "Two pointers",
+  "patterns": [
+    "strings",
+    "simulation"
+  ],
+  "lists": [
+    "interview-150"
+  ],
+  "hints": [
+    "you never actually need a full 2D grid - you only care which row each character lands on, so keep one growing string (or list) per row",
+    "track a current row index and a direction (down or up), appending each character of s to that row's bucket as you go",
+    "the direction only flips at the two extremes: when you're at row 0, start moving down; when you hit row numRows - 1, start moving up",
+    "after one full pass through s appending characters to their row buckets, concatenate the buckets in order from row 0 to row numRows - 1 for the final answer",
+    "handle numRows == 1 as a special case up front (or notice the bounce logic naturally degenerates to it): with only one row, direction flips every single step but the row index never actually changes, so the string comes back unchanged either way"
+  ],
+  "commonMistakes": [
+    "not handling numRows == 1 (or numRows >= s.length) and dividing by zero or going out of bounds in a cycle-length formula",
+    "flipping direction on every step instead of only at the top and bottom rows, producing a pure alternation instead of a real zigzag",
+    "off-by-one errors in the direction-flip condition, e.g. flipping one row too early or too late at the boundaries",
+    "trying to compute each character's final row with a closed-form formula and getting the cycle length wrong (it's 2 * numRows - 2, not numRows or 2 * numRows)"
+  ],
+  "content": {
+    "problemStatement": "You're given a string `s` and a number of rows `numRows`. Imagine writing `s` in a zigzag pattern across `numRows` rows: characters go straight down one row at a time until the bottom row is reached, then diagonally back up to the top row, then straight down again, repeating this bounce for the entire string.\n\nFor example, `s = \"PAYPALISHIRING\"` with `numRows = 3` is written as:\n\n```\nP . A . H . N\nA P L S I I G\nY . I . R . .\n```\n\n**Once the zigzag is fully written out, read the characters back row by row (top row first, left to right, then the next row, and so on) and return the resulting string.**\n\nIf `numRows` is 1, the \"zigzag\" never actually bends, so the string is returned unchanged.\n",
+    "constraints": [
+      "1 <= s.length <= 1000",
+      "s consists of English letters, digits, ',' and '.'",
+      "1 <= numRows <= 1000"
+    ],
+    "notes": [
+      "numRows = 1 (string is returned unchanged)",
+      "numRows >= s.length (each character sits on its own row, string is unchanged)",
+      "numRows = 2 (the zigzag degenerates into simply alternating characters between two rows)",
+      "a string whose length is an exact multiple of a full up-and-down cycle"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"PAYPALISHIRING\", numRows = 3",
+        "output": "\"PAHNAPLSIIGYIR\"",
+        "expectedOutput": "\"PAHNAPLSIIGYIR\"",
+        "explanation": "written zigzag across 3 rows as P.A.H.N / A.P.L.S.I.I.G / Y.I.R, then read row by row"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"PAYPALISHIRING\", numRows = 4",
+        "output": "\"PINALSIGYAHRPI\"",
+        "expectedOutput": "\"PINALSIGYAHRPI\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"A\", numRows = 1",
+        "output": "\"A\"",
+        "expectedOutput": "\"A\"",
+        "explanation": "with only one row there is no zigzag, the string is unchanged"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"PAYPALISHIRING\",3]",
+        "output": "PAHNAPLSIIGYIR",
+        "expectedOutput": "PAHNAPLSIIGYIR",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"PAYPALISHIRING\",4]",
+        "output": "PINALSIGYAHRPI",
+        "expectedOutput": "PINALSIGYAHRPI",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"A\",1]",
+        "output": "A",
+        "expectedOutput": "A",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"AB\",1]",
+        "output": "AB",
+        "expectedOutput": "AB",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ABCDE\",1]",
+        "output": "ABCDE",
+        "expectedOutput": "ABCDE",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"ABC\",2]",
+        "output": "ACB",
+        "expectedOutput": "ACB",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ABCD\",2]",
+        "output": "ACBD",
+        "expectedOutput": "ACBD",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ABCDEFGH\",3]",
+        "output": "AEBDFHCG",
+        "expectedOutput": "AEBDFHCG",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"HELLOWORLD\",4]",
+        "output": "HOEWRLOLLD",
+        "expectedOutput": "HOEWRLOLLD",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"A\",2]",
+        "output": "A",
+        "expectedOutput": "A",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"AB\",2]",
+        "output": "AB",
+        "expectedOutput": "AB",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ABC\",3]",
+        "output": "ABC",
+        "expectedOutput": "ABC",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"ABCDEFGHIJKLMNOP\",4]",
+        "output": "AGMBFHLNCEIKODJP",
+        "expectedOutput": "AGMBFHLNCEIKODJP",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"PAYPALISHIRING\",2]",
+        "output": "PYAIHRNAPLSIIG",
+        "expectedOutput": "PYAIHRNAPLSIIG",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"PAYPALISHIRING\",5]",
+        "output": "PHASIYIRPLIGAN",
+        "expectedOutput": "PHASIYIRPLIGAN",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"PAYPALISHIRING\",6]",
+        "output": "PRAIIYHNPSGAIL",
+        "expectedOutput": "PRAIIYHNPSGAIL",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"THEQUICKBROWNFOX\",5]",
+        "output": "TBHKRXECOOQIWFUN",
+        "expectedOutput": "TBHKRXECOOQIWFUN",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"ZIGZAGCONVERSION\",3]",
+        "output": "ZANSIZGOVRINGCEO",
+        "expectedOutput": "ZANSIZGOVRINGCEO",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ZIGZAGCONVERSION\",4]",
+        "output": "ZCSIGORIGANEOZVN",
+        "expectedOutput": "ZCSIGORIGANEOZVN",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"ABCDEFGHIJ\",5]",
+        "output": "AIBHJCGDFE",
+        "expectedOutput": "AIBHJCGDFE",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"XYZ\",4]",
+        "output": "XYZ",
+        "expectedOutput": "XYZ",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"LEETCODEISHARD\",3]",
+        "output": "LCIRETOESADEDH",
+        "expectedOutput": "LCIRETOESADEDH",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"PAYPALISHIRING\", numRows = 3",
+      "output": "\"PAHNAPLSIIGYIR\"",
+      "expectedOutput": "\"PAHNAPLSIIGYIR\"",
+      "explanation": "written zigzag across 3 rows as P.A.H.N / A.P.L.S.I.I.G / Y.I.R, then read row by row"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"PAYPALISHIRING\", numRows = 4",
+      "output": "\"PINALSIGYAHRPI\"",
+      "expectedOutput": "\"PINALSIGYAHRPI\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"A\", numRows = 1",
+      "output": "\"A\"",
+      "expectedOutput": "\"A\"",
+      "explanation": "with only one row there is no zigzag, the string is unchanged"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"PAYPALISHIRING\", numRows = 3",
+      "output": "\"PAHNAPLSIIGYIR\"",
+      "expectedOutput": "\"PAHNAPLSIIGYIR\"",
+      "explanation": "written zigzag across 3 rows as P.A.H.N / A.P.L.S.I.I.G / Y.I.R, then read row by row"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"PAYPALISHIRING\", numRows = 4",
+      "output": "\"PINALSIGYAHRPI\"",
+      "expectedOutput": "\"PINALSIGYAHRPI\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "s = \"A\", numRows = 1",
+      "output": "\"A\"",
+      "expectedOutput": "\"A\"",
+      "explanation": "with only one row there is no zigzag, the string is unchanged"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"PAYPALISHIRING\",3]",
+      "output": "PAHNAPLSIIGYIR",
+      "expectedOutput": "PAHNAPLSIIGYIR",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"PAYPALISHIRING\",4]",
+      "output": "PINALSIGYAHRPI",
+      "expectedOutput": "PINALSIGYAHRPI",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"A\",1]",
+      "output": "A",
+      "expectedOutput": "A",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"AB\",1]",
+      "output": "AB",
+      "expectedOutput": "AB",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"ABCDE\",1]",
+      "output": "ABCDE",
+      "expectedOutput": "ABCDE",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"ABC\",2]",
+      "output": "ACB",
+      "expectedOutput": "ACB",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ABCD\",2]",
+      "output": "ACBD",
+      "expectedOutput": "ACBD",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"ABCDEFGH\",3]",
+      "output": "AEBDFHCG",
+      "expectedOutput": "AEBDFHCG",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"HELLOWORLD\",4]",
+      "output": "HOEWRLOLLD",
+      "expectedOutput": "HOEWRLOLLD",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"A\",2]",
+      "output": "A",
+      "expectedOutput": "A",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"AB\",2]",
+      "output": "AB",
+      "expectedOutput": "AB",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"ABC\",3]",
+      "output": "ABC",
+      "expectedOutput": "ABC",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"ABCDEFGHIJKLMNOP\",4]",
+      "output": "AGMBFHLNCEIKODJP",
+      "expectedOutput": "AGMBFHLNCEIKODJP",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"PAYPALISHIRING\",2]",
+      "output": "PYAIHRNAPLSIIG",
+      "expectedOutput": "PYAIHRNAPLSIIG",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"PAYPALISHIRING\",5]",
+      "output": "PHASIYIRPLIGAN",
+      "expectedOutput": "PHASIYIRPLIGAN",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"PAYPALISHIRING\",6]",
+      "output": "PRAIIYHNPSGAIL",
+      "expectedOutput": "PRAIIYHNPSGAIL",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"THEQUICKBROWNFOX\",5]",
+      "output": "TBHKRXECOOQIWFUN",
+      "expectedOutput": "TBHKRXECOOQIWFUN",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"ZIGZAGCONVERSION\",3]",
+      "output": "ZANSIZGOVRINGCEO",
+      "expectedOutput": "ZANSIZGOVRINGCEO",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"ZIGZAGCONVERSION\",4]",
+      "output": "ZCSIGORIGANEOZVN",
+      "expectedOutput": "ZCSIGORIGANEOZVN",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"ABCDEFGHIJ\",5]",
+      "output": "AIBHJCGDFE",
+      "expectedOutput": "AIBHJCGDFE",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"XYZ\",4]",
+      "output": "XYZ",
+      "expectedOutput": "XYZ",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"LEETCODEISHARD\",3]",
+      "output": "LCIRETOESADEDH",
+      "expectedOutput": "LCIRETOESADEDH",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"PAYPALISHIRING\", numRows = 3",
+        "output": "\"PAHNAPLSIIGYIR\"",
+        "expectedOutput": "\"PAHNAPLSIIGYIR\"",
+        "explanation": "written zigzag across 3 rows as P.A.H.N / A.P.L.S.I.I.G / Y.I.R, then read row by row"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"PAYPALISHIRING\", numRows = 4",
+        "output": "\"PINALSIGYAHRPI\"",
+        "expectedOutput": "\"PINALSIGYAHRPI\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "s = \"A\", numRows = 1",
+        "output": "\"A\"",
+        "expectedOutput": "\"A\"",
+        "explanation": "with only one row there is no zigzag, the string is unchanged"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"PAYPALISHIRING\",3]",
+        "output": "PAHNAPLSIIGYIR",
+        "expectedOutput": "PAHNAPLSIIGYIR",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"PAYPALISHIRING\",4]",
+        "output": "PINALSIGYAHRPI",
+        "expectedOutput": "PINALSIGYAHRPI",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"A\",1]",
+        "output": "A",
+        "expectedOutput": "A",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"AB\",1]",
+        "output": "AB",
+        "expectedOutput": "AB",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"ABCDE\",1]",
+        "output": "ABCDE",
+        "expectedOutput": "ABCDE",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"ABC\",2]",
+        "output": "ACB",
+        "expectedOutput": "ACB",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ABCD\",2]",
+        "output": "ACBD",
+        "expectedOutput": "ACBD",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"ABCDEFGH\",3]",
+        "output": "AEBDFHCG",
+        "expectedOutput": "AEBDFHCG",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"HELLOWORLD\",4]",
+        "output": "HOEWRLOLLD",
+        "expectedOutput": "HOEWRLOLLD",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"A\",2]",
+        "output": "A",
+        "expectedOutput": "A",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"AB\",2]",
+        "output": "AB",
+        "expectedOutput": "AB",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"ABC\",3]",
+        "output": "ABC",
+        "expectedOutput": "ABC",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"ABCDEFGHIJKLMNOP\",4]",
+        "output": "AGMBFHLNCEIKODJP",
+        "expectedOutput": "AGMBFHLNCEIKODJP",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"PAYPALISHIRING\",2]",
+        "output": "PYAIHRNAPLSIIG",
+        "expectedOutput": "PYAIHRNAPLSIIG",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"PAYPALISHIRING\",5]",
+        "output": "PHASIYIRPLIGAN",
+        "expectedOutput": "PHASIYIRPLIGAN",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"PAYPALISHIRING\",6]",
+        "output": "PRAIIYHNPSGAIL",
+        "expectedOutput": "PRAIIYHNPSGAIL",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"THEQUICKBROWNFOX\",5]",
+        "output": "TBHKRXECOOQIWFUN",
+        "expectedOutput": "TBHKRXECOOQIWFUN",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"ZIGZAGCONVERSION\",3]",
+        "output": "ZANSIZGOVRINGCEO",
+        "expectedOutput": "ZANSIZGOVRINGCEO",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ZIGZAGCONVERSION\",4]",
+        "output": "ZCSIGORIGANEOZVN",
+        "expectedOutput": "ZCSIGORIGANEOZVN",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"ABCDEFGHIJ\",5]",
+        "output": "AIBHJCGDFE",
+        "expectedOutput": "AIBHJCGDFE",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"XYZ\",4]",
+        "output": "XYZ",
+        "expectedOutput": "XYZ",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"LEETCODEISHARD\",3]",
+        "output": "LCIRETOESADEDH",
+        "expectedOutput": "LCIRETOESADEDH",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def convert(self, s, numRows):\n",
+    "cpp": "#include <string>\n#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    string convert(string s, int numRows) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String convert(String s, int numRows) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun convert(s: String, numRows: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    convert(s, numRows) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def convert(self, s, numRows):\n",
+    "cpp": "#include <string>\n#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    string convert(string s, int numRows) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String convert(String s, int numRows) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun convert(s: String, numRows: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    convert(s, numRows) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def convert(self, s, numRows):\n",
+    "cpp": "#include <string>\n#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    string convert(string s, int numRows) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String convert(String s, int numRows) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun convert(s: String, numRows: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    convert(s, numRows) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def convert(self, s, numRows):\n",
+    "cpp": "#include <string>\n#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    string convert(string s, int numRows) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String convert(String s, int numRows) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun convert(s: String, numRows: Int): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    convert(s, numRows) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(n) for the row buckets and output, no 2D grid needed",
+      "pattern": "simulate row placement directly into numRows string buckets, bouncing direction at the top and bottom"
+    },
+    "bruteForce": {
+      "approach": "actually build a 2D grid of numRows rows sized to fit the string, simulate placing each character at its (row, column) position by walking down and up, then scan the grid row by row skipping empty cells",
+      "time": "O(n) time but with extra overhead for the sparse 2D grid",
+      "space": "O(n * numRows/steps) for the grid, wasteful compared to the row-buckets approach"
+    }
+  },
+  "optimal": {
+    "pattern": "simulate row placement directly into numRows string buckets, bouncing direction at the top and bottom",
+    "time": "O(n)",
+    "space": "O(n) for the row buckets and output, no 2D grid needed",
+    "hint_ladder": [
+      "you never actually need a full 2D grid - you only care which row each character lands on, so keep one growing string (or list) per row",
+      "track a current row index and a direction (down or up), appending each character of s to that row's bucket as you go",
+      "the direction only flips at the two extremes: when you're at row 0, start moving down; when you hit row numRows - 1, start moving up",
+      "after one full pass through s appending characters to their row buckets, concatenate the buckets in order from row 0 to row numRows - 1 for the final answer",
+      "handle numRows == 1 as a special case up front (or notice the bounce logic naturally degenerates to it): with only one row, direction flips every single step but the row index never actually changes, so the string comes back unchanged either way"
+    ]
+  },
+  "bruteForce": {
+    "approach": "actually build a 2D grid of numRows rows sized to fit the string, simulate placing each character at its (row, column) position by walking down and up, then scan the grid row by row skipping empty cells",
+    "time": "O(n) time but with extra overhead for the sparse 2D grid",
+    "space": "O(n * numRows/steps) for the grid, wasteful compared to the row-buckets approach"
+  },
+  "isIndex0": true,
+  "level": null
+}

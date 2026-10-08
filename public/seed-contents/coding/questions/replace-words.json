@@ -1,0 +1,633 @@
+{
+  "id": "replace-words",
+  "questionId": "replace-words",
+  "slug": "replace-words",
+  "title": "Replace Words With Shortest Root",
+  "difficulty": "Easy",
+  "category": "Trie",
+  "patterns": [
+    "trie",
+    "string"
+  ],
+  "lists": [],
+  "hints": [
+    "you always want the SHORTEST matching root - if you walk a word's characters from its start, which matching root would you hit first?",
+    "insert every dictionary root into a trie, marking end-of-word nodes",
+    "for each sentence word, walk the trie one character at a time following the word's letters",
+    "the moment you land on a node marked as end-of-word, stop immediately and use the characters collected so far as the replacement - that's guaranteed to be the shortest matching root since you found it first",
+    "if you fall off the trie (no child for the next needed character) before hitting any end-of-word node, the original word is left unchanged"
+  ],
+  "commonMistakes": [
+    "finding A matching root but not verifying it's the shortest one (e.g. checking roots in dictionary order instead of walking shortest-first)",
+    "replacing a word even when no root actually matches, due to a moved on empty prefix or off-by-one in the walk",
+    "not stopping the trie walk exactly at the first end-of-word node, instead walking to the end of the sentence word"
+  ],
+  "content": {
+    "problemStatement": "You're given a space-delimited dictionary of word roots and a separate\nspace-delimited sentence.\n\n**For every word in the sentence, if one or more roots in the dictionary is a prefix of that word, replace the word with the shortest such root, and return the modified sentence as a single space-delimited string.**\n\nIf no root is a prefix of a word, leave the word unchanged.\n",
+    "constraints": [
+      "1 <= number of roots in dictionary <= 1000",
+      "1 <= length of each root <= 100",
+      "1 <= number of words in sentence <= 1000",
+      "1 <= length of each sentence word <= 1000",
+      "dictionary and sentence consist only of lowercase English letters and spaces"
+    ],
+    "notes": [
+      "a sentence word is itself already one of the roots (should be replaced by itself, unchanged in value)",
+      "a dictionary root is longer than a sentence word it can't possibly prefix (never matches)",
+      "a sentence word matched by no root at all (left unchanged)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "dictionary = \"cat bat rat\", sentence = \"the cattle was rattled by the battery\"",
+        "output": "\"the cat was rat by the bat\"",
+        "expectedOutput": "\"the cat was rat by the bat\"",
+        "explanation": "\"cattle\" -> \"cat\", \"rattled\" -> \"rat\", \"battery\" -> \"bat\"; \"the\", \"was\", \"by\" have no matching root"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "dictionary = \"a b c\", sentence = \"aadsfasf absbs bbab cadsfafs\"",
+        "output": "\"a a b c\"",
+        "expectedOutput": "\"a a b c\"",
+        "explanation": "every word is replaced by its single-letter root; both aadsfasf and absbs start with a, so both become a"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "dictionary = \"a aa aaa\", sentence = \"aaaaa\"",
+        "output": "\"a\"",
+        "expectedOutput": "\"a\"",
+        "explanation": "all three roots are prefixes of \"aaaaa\", so the shortest, \"a\", wins"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"cat bat rat\",\"the cattle was rattled by the battery\"]",
+        "output": "the cat was rat by the bat",
+        "expectedOutput": "the cat was rat by the bat",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a b c\",\"aadsfasf absbs bbab cadsfafs\"]",
+        "output": "a a b c",
+        "expectedOutput": "a a b c",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a aa aaa\",\"aaaaa\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"ab\",\"it is abnormal\"]",
+        "output": "it is ab",
+        "expectedOutput": "it is ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"cat dog\",\"catalog dogma catapult\"]",
+        "output": "cat dog cat",
+        "expectedOutput": "cat dog cat",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"aardvark\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab abc\",\"abcdef\"]",
+        "output": "ab",
+        "expectedOutput": "ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"run runner\",\"running runner runs\"]",
+        "output": "run run run",
+        "expectedOutput": "run run run",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"z\",\"abc def zzz\"]",
+        "output": "abc def z",
+        "expectedOutput": "abc def z",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"pre\",\"prefix precook nonmatch\"]",
+        "output": "pre pre nonmatch",
+        "expectedOutput": "pre pre nonmatch",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"cat\",\"cat catalog catty catnap\"]",
+        "output": "cat cat cat cat",
+        "expectedOutput": "cat cat cat cat",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"do doe\",\"doing doer does\"]",
+        "output": "do do do",
+        "expectedOutput": "do do do",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"a b c d e\",\"apple banana cherry date elderberry\"]",
+        "output": "a b c d e",
+        "expectedOutput": "a b c d e",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"xyz\",\"xyzabc abcxyz\"]",
+        "output": "xyz abcxyz",
+        "expectedOutput": "xyz abcxyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"qu quick\",\"question quickly quiz\"]",
+        "output": "qu qu qu",
+        "expectedOutput": "qu qu qu",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"no\",\"nothing normal none\"]",
+        "output": "no no no",
+        "expectedOutput": "no no no",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"hi\",\"hi history highlight\"]",
+        "output": "hi hi hi",
+        "expectedOutput": "hi hi hi",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"fun funny\",\"functional fungus funfair\"]",
+        "output": "fun fun fun",
+        "expectedOutput": "fun fun fun",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ab\",\"ababab abcabc\"]",
+        "output": "ab ab",
+        "expectedOutput": "ab ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"re\",\"return rerun reset unrelated\"]",
+        "output": "re re re unrelated",
+        "expectedOutput": "re re re unrelated",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "dictionary = \"cat bat rat\", sentence = \"the cattle was rattled by the battery\"",
+      "output": "\"the cat was rat by the bat\"",
+      "expectedOutput": "\"the cat was rat by the bat\"",
+      "explanation": "\"cattle\" -> \"cat\", \"rattled\" -> \"rat\", \"battery\" -> \"bat\"; \"the\", \"was\", \"by\" have no matching root"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "dictionary = \"a b c\", sentence = \"aadsfasf absbs bbab cadsfafs\"",
+      "output": "\"a a b c\"",
+      "expectedOutput": "\"a a b c\"",
+      "explanation": "every word is replaced by its single-letter root; both aadsfasf and absbs start with a, so both become a"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "dictionary = \"a aa aaa\", sentence = \"aaaaa\"",
+      "output": "\"a\"",
+      "expectedOutput": "\"a\"",
+      "explanation": "all three roots are prefixes of \"aaaaa\", so the shortest, \"a\", wins"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "dictionary = \"cat bat rat\", sentence = \"the cattle was rattled by the battery\"",
+      "output": "\"the cat was rat by the bat\"",
+      "expectedOutput": "\"the cat was rat by the bat\"",
+      "explanation": "\"cattle\" -> \"cat\", \"rattled\" -> \"rat\", \"battery\" -> \"bat\"; \"the\", \"was\", \"by\" have no matching root"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "dictionary = \"a b c\", sentence = \"aadsfasf absbs bbab cadsfafs\"",
+      "output": "\"a a b c\"",
+      "expectedOutput": "\"a a b c\"",
+      "explanation": "every word is replaced by its single-letter root; both aadsfasf and absbs start with a, so both become a"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "dictionary = \"a aa aaa\", sentence = \"aaaaa\"",
+      "output": "\"a\"",
+      "expectedOutput": "\"a\"",
+      "explanation": "all three roots are prefixes of \"aaaaa\", so the shortest, \"a\", wins"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"cat bat rat\",\"the cattle was rattled by the battery\"]",
+      "output": "the cat was rat by the bat",
+      "expectedOutput": "the cat was rat by the bat",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"a b c\",\"aadsfasf absbs bbab cadsfafs\"]",
+      "output": "a a b c",
+      "expectedOutput": "a a b c",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a aa aaa\",\"aaaaa\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"ab\",\"it is abnormal\"]",
+      "output": "it is ab",
+      "expectedOutput": "it is ab",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"cat dog\",\"catalog dogma catapult\"]",
+      "output": "cat dog cat",
+      "expectedOutput": "cat dog cat",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"a\",\"aardvark\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"ab abc\",\"abcdef\"]",
+      "output": "ab",
+      "expectedOutput": "ab",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"run runner\",\"running runner runs\"]",
+      "output": "run run run",
+      "expectedOutput": "run run run",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"z\",\"abc def zzz\"]",
+      "output": "abc def z",
+      "expectedOutput": "abc def z",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"pre\",\"prefix precook nonmatch\"]",
+      "output": "pre pre nonmatch",
+      "expectedOutput": "pre pre nonmatch",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"cat\",\"cat catalog catty catnap\"]",
+      "output": "cat cat cat cat",
+      "expectedOutput": "cat cat cat cat",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"do doe\",\"doing doer does\"]",
+      "output": "do do do",
+      "expectedOutput": "do do do",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"a b c d e\",\"apple banana cherry date elderberry\"]",
+      "output": "a b c d e",
+      "expectedOutput": "a b c d e",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"xyz\",\"xyzabc abcxyz\"]",
+      "output": "xyz abcxyz",
+      "expectedOutput": "xyz abcxyz",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"qu quick\",\"question quickly quiz\"]",
+      "output": "qu qu qu",
+      "expectedOutput": "qu qu qu",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"no\",\"nothing normal none\"]",
+      "output": "no no no",
+      "expectedOutput": "no no no",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"hi\",\"hi history highlight\"]",
+      "output": "hi hi hi",
+      "expectedOutput": "hi hi hi",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"fun funny\",\"functional fungus funfair\"]",
+      "output": "fun fun fun",
+      "expectedOutput": "fun fun fun",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"ab\",\"ababab abcabc\"]",
+      "output": "ab ab",
+      "expectedOutput": "ab ab",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"re\",\"return rerun reset unrelated\"]",
+      "output": "re re re unrelated",
+      "expectedOutput": "re re re unrelated",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "dictionary = \"cat bat rat\", sentence = \"the cattle was rattled by the battery\"",
+        "output": "\"the cat was rat by the bat\"",
+        "expectedOutput": "\"the cat was rat by the bat\"",
+        "explanation": "\"cattle\" -> \"cat\", \"rattled\" -> \"rat\", \"battery\" -> \"bat\"; \"the\", \"was\", \"by\" have no matching root"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "dictionary = \"a b c\", sentence = \"aadsfasf absbs bbab cadsfafs\"",
+        "output": "\"a a b c\"",
+        "expectedOutput": "\"a a b c\"",
+        "explanation": "every word is replaced by its single-letter root; both aadsfasf and absbs start with a, so both become a"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "dictionary = \"a aa aaa\", sentence = \"aaaaa\"",
+        "output": "\"a\"",
+        "expectedOutput": "\"a\"",
+        "explanation": "all three roots are prefixes of \"aaaaa\", so the shortest, \"a\", wins"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"cat bat rat\",\"the cattle was rattled by the battery\"]",
+        "output": "the cat was rat by the bat",
+        "expectedOutput": "the cat was rat by the bat",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"a b c\",\"aadsfasf absbs bbab cadsfafs\"]",
+        "output": "a a b c",
+        "expectedOutput": "a a b c",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a aa aaa\",\"aaaaa\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"ab\",\"it is abnormal\"]",
+        "output": "it is ab",
+        "expectedOutput": "it is ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"cat dog\",\"catalog dogma catapult\"]",
+        "output": "cat dog cat",
+        "expectedOutput": "cat dog cat",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"a\",\"aardvark\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"ab abc\",\"abcdef\"]",
+        "output": "ab",
+        "expectedOutput": "ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"run runner\",\"running runner runs\"]",
+        "output": "run run run",
+        "expectedOutput": "run run run",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"z\",\"abc def zzz\"]",
+        "output": "abc def z",
+        "expectedOutput": "abc def z",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"pre\",\"prefix precook nonmatch\"]",
+        "output": "pre pre nonmatch",
+        "expectedOutput": "pre pre nonmatch",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"cat\",\"cat catalog catty catnap\"]",
+        "output": "cat cat cat cat",
+        "expectedOutput": "cat cat cat cat",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"do doe\",\"doing doer does\"]",
+        "output": "do do do",
+        "expectedOutput": "do do do",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"a b c d e\",\"apple banana cherry date elderberry\"]",
+        "output": "a b c d e",
+        "expectedOutput": "a b c d e",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"xyz\",\"xyzabc abcxyz\"]",
+        "output": "xyz abcxyz",
+        "expectedOutput": "xyz abcxyz",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"qu quick\",\"question quickly quiz\"]",
+        "output": "qu qu qu",
+        "expectedOutput": "qu qu qu",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"no\",\"nothing normal none\"]",
+        "output": "no no no",
+        "expectedOutput": "no no no",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"hi\",\"hi history highlight\"]",
+        "output": "hi hi hi",
+        "expectedOutput": "hi hi hi",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"fun funny\",\"functional fungus funfair\"]",
+        "output": "fun fun fun",
+        "expectedOutput": "fun fun fun",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"ab\",\"ababab abcabc\"]",
+        "output": "ab ab",
+        "expectedOutput": "ab ab",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"re\",\"return rerun reset unrelated\"]",
+        "output": "re re re unrelated",
+        "expectedOutput": "re re re unrelated",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def replaceWords(self, dictionary, sentence):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string replaceWords(string dictionary, string sentence) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String replaceWords(String dictionary, String sentence) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun replaceWords(dictionary: String, sentence: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    replaceWords(dictionary, sentence) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def replaceWords(self, dictionary, sentence):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string replaceWords(string dictionary, string sentence) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String replaceWords(String dictionary, String sentence) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun replaceWords(dictionary: String, sentence: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    replaceWords(dictionary, sentence) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def replaceWords(self, dictionary, sentence):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string replaceWords(string dictionary, string sentence) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String replaceWords(String dictionary, String sentence) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun replaceWords(dictionary: String, sentence: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    replaceWords(dictionary, sentence) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def replaceWords(self, dictionary, sentence):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\n#include <sstream>\nusing namespace std;\n\nclass Solution {\npublic:\n    string replaceWords(string dictionary, string sentence) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String replaceWords(String dictionary, String sentence) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun replaceWords(dictionary: String, sentence: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    replaceWords(dictionary, sentence) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(total dictionary characters) to build, O(m) per sentence word to query",
+      "space": "O(total dictionary characters)",
+      "pattern": "insert all roots into a trie, then for each sentence word walk down the trie character by character and stop at the first node marked as a complete root"
+    },
+    "bruteForce": {
+      "approach": "for each sentence word, scan every root in the dictionary, collect the ones that are prefixes, and keep the shortest",
+      "time": "O(s * d * m) where s is sentence word count, d is dictionary size, m is average word length",
+      "space": "O(d * m) to store the dictionary"
+    }
+  },
+  "optimal": {
+    "pattern": "insert all roots into a trie, then for each sentence word walk down the trie character by character and stop at the first node marked as a complete root",
+    "time": "O(total dictionary characters) to build, O(m) per sentence word to query",
+    "space": "O(total dictionary characters)",
+    "hint_ladder": [
+      "you always want the SHORTEST matching root - if you walk a word's characters from its start, which matching root would you hit first?",
+      "insert every dictionary root into a trie, marking end-of-word nodes",
+      "for each sentence word, walk the trie one character at a time following the word's letters",
+      "the moment you land on a node marked as end-of-word, stop immediately and use the characters collected so far as the replacement - that's guaranteed to be the shortest matching root since you found it first",
+      "if you fall off the trie (no child for the next needed character) before hitting any end-of-word node, the original word is left unchanged"
+    ]
+  },
+  "bruteForce": {
+    "approach": "for each sentence word, scan every root in the dictionary, collect the ones that are prefixes, and keep the shortest",
+    "time": "O(s * d * m) where s is sentence word count, d is dictionary size, m is average word length",
+    "space": "O(d * m) to store the dictionary"
+  },
+  "isIndex0": true,
+  "level": null
+}

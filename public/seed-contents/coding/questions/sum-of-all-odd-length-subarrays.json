@@ -1,0 +1,626 @@
+{
+  "id": "sum-of-all-odd-length-subarrays",
+  "questionId": "sum-of-all-odd-length-subarrays",
+  "slug": "sum-of-all-odd-length-subarrays",
+  "title": "Sum of All Odd Length Subarrays",
+  "difficulty": "Easy",
+  "category": "Prefix sum",
+  "patterns": [
+    "prefix sum"
+  ],
+  "lists": [],
+  "hints": [
+    "instead of summing subarrays one at a time, what if you asked: for a fixed element at index i, how many odd-length subarrays include it, and can you sum contributions per element instead?",
+    "for index i (0-indexed), there are (i+1) choices for where a subarray could start at or before i, and (n-i) choices for where it could end at or after i - together giving total subarrays containing i",
+    "half (rounded appropriately) of those subarrays have odd length - work out the exact odd count from the total count and the count starting before/after i",
+    "multiply arr[i] by its odd-subarray count and sum over all i - this avoids ever materializing a subarray"
+  ],
+  "commonMistakes": [
+    "miscounting how many subarrays containing index i have odd length versus even length",
+    "double counting or missing subarrays that start and end exactly at i (length 1)",
+    "reaching for the O(n) trick before getting a correct brute force first - verify against brute force on small inputs"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of integers. Consider every contiguous subarray\nwhose length is odd.\n\n**Return the sum of the sums of all such subarrays.**\n",
+    "constraints": [
+      "1 <= arr.length <= 100",
+      "-1000 <= arr[i] <= 1000"
+    ],
+    "notes": [
+      "a single element array",
+      "an array of length 2 (only odd-length subarrays are the two singletons)"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arr = [1, 4, 2, 5, 3]",
+        "output": "58",
+        "expectedOutput": "58",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arr = [1, 2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "arr = [10, 11, 12]",
+        "output": "66",
+        "expectedOutput": "66",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,4,2,5,3]]",
+        "output": "58",
+        "expectedOutput": "58",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[10,11,12]]",
+        "output": "66",
+        "expectedOutput": "66",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[-5]]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1,-2,-3,-4]]",
+        "output": "-25",
+        "expectedOutput": "-25",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[6,10,-4,-3,6,-10,-8,-2,-8,-6,2,8,-9,2,-10]]",
+        "output": "-836",
+        "expectedOutput": "-836",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "110",
+        "expectedOutput": "110",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,4,6,8,10,12]]",
+        "output": "196",
+        "expectedOutput": "196",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "2752",
+        "expectedOutput": "2752",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,2,-3,4,-5,6,-7]]",
+        "output": "-16",
+        "expectedOutput": "-16",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[100,-100,100,-100]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-1,-1,5,-2,-4,4,3,-3,5,4,1,0,2,-3,-1,4,5,-3,-5,3]]",
+        "output": "690",
+        "expectedOutput": "690",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[7,7,7,7,7]]",
+        "output": "133",
+        "expectedOutput": "133",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[3,-1,2,-4,5,0,-2]]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4]]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8]]",
+        "output": "270",
+        "expectedOutput": "270",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0,1,0,-1,0,1,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arr = [1, 4, 2, 5, 3]",
+      "output": "58",
+      "expectedOutput": "58",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arr = [1, 2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "arr = [10, 11, 12]",
+      "output": "66",
+      "expectedOutput": "66",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "arr = [1, 4, 2, 5, 3]",
+      "output": "58",
+      "expectedOutput": "58",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "arr = [1, 2]",
+      "output": "3",
+      "expectedOutput": "3",
+      "explanation": ""
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "arr = [10, 11, 12]",
+      "output": "66",
+      "expectedOutput": "66",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,4,2,5,3]]",
+      "output": "58",
+      "expectedOutput": "58",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,2]]",
+      "output": "3",
+      "expectedOutput": "3",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[10,11,12]]",
+      "output": "66",
+      "expectedOutput": "66",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[5]]",
+      "output": "5",
+      "expectedOutput": "5",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[-5]]",
+      "output": "-5",
+      "expectedOutput": "-5",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,3]]",
+      "output": "12",
+      "expectedOutput": "12",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[-1,-2,-3,-4]]",
+      "output": "-25",
+      "expectedOutput": "-25",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,0,0]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[6,10,-4,-3,6,-10,-8,-2,-8,-6,2,8,-9,2,-10]]",
+      "output": "-836",
+      "expectedOutput": "-836",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+      "output": "110",
+      "expectedOutput": "110",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,4,6,8,10,12]]",
+      "output": "196",
+      "expectedOutput": "196",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+      "output": "2752",
+      "expectedOutput": "2752",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[-1,2,-3,4,-5,6,-7]]",
+      "output": "-16",
+      "expectedOutput": "-16",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[100,-100,100,-100]]",
+      "output": "0",
+      "expectedOutput": "0",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[-1,-1,5,-2,-4,4,3,-3,5,4,1,0,2,-3,-1,4,5,-3,-5,3]]",
+      "output": "690",
+      "expectedOutput": "690",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[7,7,7,7,7]]",
+      "output": "133",
+      "expectedOutput": "133",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[3,-1,2,-4,5,0,-2]]",
+      "output": "22",
+      "expectedOutput": "22",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4]]",
+      "output": "25",
+      "expectedOutput": "25",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[1,2,3,4,5,6,7,8]]",
+      "output": "270",
+      "expectedOutput": "270",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[0,1,0,-1,0,1,0]]",
+      "output": "4",
+      "expectedOutput": "4",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "arr = [1, 4, 2, 5, 3]",
+        "output": "58",
+        "expectedOutput": "58",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "arr = [1, 2]",
+        "output": "3",
+        "expectedOutput": "3",
+        "explanation": ""
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "arr = [10, 11, 12]",
+        "output": "66",
+        "expectedOutput": "66",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,4,2,5,3]]",
+        "output": "58",
+        "expectedOutput": "58",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,2]]",
+        "output": "3",
+        "expectedOutput": "3",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[10,11,12]]",
+        "output": "66",
+        "expectedOutput": "66",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[5]]",
+        "output": "5",
+        "expectedOutput": "5",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[-5]]",
+        "output": "-5",
+        "expectedOutput": "-5",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,3]]",
+        "output": "12",
+        "expectedOutput": "12",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[-1,-2,-3,-4]]",
+        "output": "-25",
+        "expectedOutput": "-25",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[6,10,-4,-3,6,-10,-8,-2,-8,-6,2,8,-9,2,-10]]",
+        "output": "-836",
+        "expectedOutput": "-836",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,1,1,1,1,1,1,1,1,1]]",
+        "output": "110",
+        "expectedOutput": "110",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,4,6,8,10,12]]",
+        "output": "196",
+        "expectedOutput": "196",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]",
+        "output": "2752",
+        "expectedOutput": "2752",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[-1,2,-3,4,-5,6,-7]]",
+        "output": "-16",
+        "expectedOutput": "-16",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[100,-100,100,-100]]",
+        "output": "0",
+        "expectedOutput": "0",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[-1,-1,5,-2,-4,4,3,-3,5,4,1,0,2,-3,-1,4,5,-3,-5,3]]",
+        "output": "690",
+        "expectedOutput": "690",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[7,7,7,7,7]]",
+        "output": "133",
+        "expectedOutput": "133",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[3,-1,2,-4,5,0,-2]]",
+        "output": "22",
+        "expectedOutput": "22",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4]]",
+        "output": "25",
+        "expectedOutput": "25",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[1,2,3,4,5,6,7,8]]",
+        "output": "270",
+        "expectedOutput": "270",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[0,1,0,-1,0,1,0]]",
+        "output": "4",
+        "expectedOutput": "4",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def sumOddLengthSubarrays(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int sumOddLengthSubarrays(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int sumOddLengthSubarrays(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumOddLengthSubarrays(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumOddLengthSubarrays(arr) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def sumOddLengthSubarrays(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int sumOddLengthSubarrays(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int sumOddLengthSubarrays(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumOddLengthSubarrays(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumOddLengthSubarrays(arr) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def sumOddLengthSubarrays(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int sumOddLengthSubarrays(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int sumOddLengthSubarrays(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumOddLengthSubarrays(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumOddLengthSubarrays(arr) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def sumOddLengthSubarrays(self, arr):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    int sumOddLengthSubarrays(vector<int>& arr) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int sumOddLengthSubarrays(int[] arr) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun sumOddLengthSubarrays(arr: IntArray): Int {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    sumOddLengthSubarrays(arr) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1)",
+      "pattern": "count how many odd-length subarrays each element belongs to, and weight it by that count instead of enumerating subarrays"
+    },
+    "bruteForce": {
+      "approach": "enumerate every subarray, check if its length is odd, and add its sum (recomputed with a prefix sum or nested loop) to a running total",
+      "time": "O(n^2) or O(n^3) depending on how each subarray's sum is computed",
+      "space": "O(n) if using a prefix sum array to help"
+    }
+  },
+  "optimal": {
+    "pattern": "count how many odd-length subarrays each element belongs to, and weight it by that count instead of enumerating subarrays",
+    "time": "O(n)",
+    "space": "O(1)",
+    "hint_ladder": [
+      "instead of summing subarrays one at a time, what if you asked: for a fixed element at index i, how many odd-length subarrays include it, and can you sum contributions per element instead?",
+      "for index i (0-indexed), there are (i+1) choices for where a subarray could start at or before i, and (n-i) choices for where it could end at or after i - together giving total subarrays containing i",
+      "half (rounded appropriately) of those subarrays have odd length - work out the exact odd count from the total count and the count starting before/after i",
+      "multiply arr[i] by its odd-subarray count and sum over all i - this avoids ever materializing a subarray"
+    ]
+  },
+  "bruteForce": {
+    "approach": "enumerate every subarray, check if its length is odd, and add its sum (recomputed with a prefix sum or nested loop) to a running total",
+    "time": "O(n^2) or O(n^3) depending on how each subarray's sum is computed",
+    "space": "O(n) if using a prefix sum array to help"
+  },
+  "isIndex0": true,
+  "level": null
+}

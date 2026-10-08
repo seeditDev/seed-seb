@@ -1,0 +1,629 @@
+{
+  "id": "set-mismatch",
+  "questionId": "set-mismatch",
+  "slug": "set-mismatch",
+  "title": "Set Mismatch",
+  "difficulty": "Easy",
+  "category": "Cyclic sort",
+  "patterns": [
+    "cyclic sort",
+    "array"
+  ],
+  "lists": [],
+  "hints": [
+    "if every value belongs at index value-1, what does it mean when you find an index i where nums[i] - 1 != i?",
+    "try cyclic placement: repeatedly swap nums[i] to its home index v-1 unless that home index already holds the value v (which is your signal of a duplicate)",
+    "once placement finishes, scan for the one index i where nums[i] != i+1 - the value sitting there is the duplicate, and i+1 is the missing number",
+    "be careful not to swap a value with itself infinitely when it's a duplicate that already occupies a slot with the same value"
+  ],
+  "commonMistakes": [
+    "returning [missing, duplicate] instead of [duplicate, missing] (order matters)",
+    "infinite loop when the duplicate value and the value already at its home index are equal, since a naive swap condition never terminates",
+    "confusing value and index (value v belongs at index v-1, not v)"
+  ],
+  "content": {
+    "problemStatement": "You're given an array of length `n` that was supposed to contain every\nnumber from 1 to n exactly once. Due to an error, one number got\nduplicated, and as a result a different number from that range is now\nmissing entirely.\n\n**Return an array `[duplicate, missing]`.**\n",
+    "constraints": [
+      "2 <= nums.length <= 10^4",
+      "1 <= nums[i] <= nums.length",
+      "exactly one value in [1, nums.length] occurs twice and exactly one occurs zero times"
+    ],
+    "notes": [
+      "n = 2 with the smallest possible array",
+      "the duplicate and missing numbers are adjacent values",
+      "the duplicate is at the very first or very last index"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 2, 4]",
+        "output": "[2, 3]",
+        "expectedOutput": "[2, 3]",
+        "explanation": "2 is duplicated, 3 never appears"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 1]",
+        "output": "[1, 2]",
+        "expectedOutput": "[1, 2]",
+        "explanation": "1 is duplicated, 2 never appears"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [3, 2, 3, 4, 6, 5]",
+        "output": "[3, 1]",
+        "expectedOutput": "[3, 1]",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,2,4]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,1]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[3,2,3,4,6,5]]",
+        "output": "[3,1]",
+        "expectedOutput": "[3,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,1,2]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,2]]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,2]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,2,3]]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,3,3]]",
+        "output": "[3,2]",
+        "expectedOutput": "[3,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,3,5]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[2,3,4,4,6,1]]",
+        "output": "[4,5]",
+        "expectedOutput": "[4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[20,15,9,13,4,3,8,5,14,16,10,11,11,2,19,12,7,18,17,1]]",
+        "output": "[11,6]",
+        "expectedOutput": "[11,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[15,17,3,21,2,11,27,9,8,23,12,16,28,4,29,24,30,30,25,10,19,20,6,26,13,22,14,7,5,18]]",
+        "output": "[30,1]",
+        "expectedOutput": "[30,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,3,1,4,5,2,7,8,9,6,11,12,13,14,10]]",
+        "output": "[3,15]",
+        "expectedOutput": "[3,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,4,4,5]]",
+        "output": "[4,3]",
+        "expectedOutput": "[4,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,3,4,5,6,7,8,9,10,10]]",
+        "output": "[10,1]",
+        "expectedOutput": "[10,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,3,4,5,6,7,8]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[4,3,2,7,8,2,5,1]]",
+        "output": "[2,6]",
+        "expectedOutput": "[2,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,6,6,7,8,9,10]]",
+        "output": "[6,5]",
+        "expectedOutput": "[6,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,2,3,4,5,6,7,8]]",
+        "output": "[5,1]",
+        "expectedOutput": "[5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,5,5,6,7]]",
+        "output": "[5,4]",
+        "expectedOutput": "[5,4]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 2, 4]",
+      "output": "[2, 3]",
+      "expectedOutput": "[2, 3]",
+      "explanation": "2 is duplicated, 3 never appears"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 1]",
+      "output": "[1, 2]",
+      "expectedOutput": "[1, 2]",
+      "explanation": "1 is duplicated, 2 never appears"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [3, 2, 3, 4, 6, 5]",
+      "output": "[3, 1]",
+      "expectedOutput": "[3, 1]",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [1, 2, 2, 4]",
+      "output": "[2, 3]",
+      "expectedOutput": "[2, 3]",
+      "explanation": "2 is duplicated, 3 never appears"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [1, 1]",
+      "output": "[1, 2]",
+      "expectedOutput": "[1, 2]",
+      "explanation": "1 is duplicated, 2 never appears"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [3, 2, 3, 4, 6, 5]",
+      "output": "[3, 1]",
+      "expectedOutput": "[3, 1]",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[1,2,2,4]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[1,1]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[3,2,3,4,6,5]]",
+      "output": "[3,1]",
+      "expectedOutput": "[3,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[2,1,2]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[2,2]]",
+      "output": "[2,1]",
+      "expectedOutput": "[2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[1,2,2]]",
+      "output": "[2,3]",
+      "expectedOutput": "[2,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[2,2,3]]",
+      "output": "[2,1]",
+      "expectedOutput": "[2,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[1,3,3]]",
+      "output": "[3,2]",
+      "expectedOutput": "[3,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,3,5]]",
+      "output": "[3,4]",
+      "expectedOutput": "[3,4]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[2,3,4,4,6,1]]",
+      "output": "[4,5]",
+      "expectedOutput": "[4,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[20,15,9,13,4,3,8,5,14,16,10,11,11,2,19,12,7,18,17,1]]",
+      "output": "[11,6]",
+      "expectedOutput": "[11,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[15,17,3,21,2,11,27,9,8,23,12,16,28,4,29,24,30,30,25,10,19,20,6,26,13,22,14,7,5,18]]",
+      "output": "[30,1]",
+      "expectedOutput": "[30,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[3,3,1,4,5,2,7,8,9,6,11,12,13,14,10]]",
+      "output": "[3,15]",
+      "expectedOutput": "[3,15]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[1,2,4,4,5]]",
+      "output": "[4,3]",
+      "expectedOutput": "[4,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[2,3,4,5,6,7,8,9,10,10]]",
+      "output": "[10,1]",
+      "expectedOutput": "[10,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,1,3,4,5,6,7,8]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[4,3,2,7,8,2,5,1]]",
+      "output": "[2,6]",
+      "expectedOutput": "[2,6]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,2,3,4,6,6,7,8,9,10]]",
+      "output": "[6,5]",
+      "expectedOutput": "[6,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[5,2,3,4,5,6,7,8]]",
+      "output": "[5,1]",
+      "expectedOutput": "[5,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[1,2,3,5,5,6,7]]",
+      "output": "[5,4]",
+      "expectedOutput": "[5,4]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [1, 2, 2, 4]",
+        "output": "[2, 3]",
+        "expectedOutput": "[2, 3]",
+        "explanation": "2 is duplicated, 3 never appears"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [1, 1]",
+        "output": "[1, 2]",
+        "expectedOutput": "[1, 2]",
+        "explanation": "1 is duplicated, 2 never appears"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [3, 2, 3, 4, 6, 5]",
+        "output": "[3, 1]",
+        "expectedOutput": "[3, 1]",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[1,2,2,4]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[1,1]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[3,2,3,4,6,5]]",
+        "output": "[3,1]",
+        "expectedOutput": "[3,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[2,1,2]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[2,2]]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[1,2,2]]",
+        "output": "[2,3]",
+        "expectedOutput": "[2,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[2,2,3]]",
+        "output": "[2,1]",
+        "expectedOutput": "[2,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[1,3,3]]",
+        "output": "[3,2]",
+        "expectedOutput": "[3,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,3,5]]",
+        "output": "[3,4]",
+        "expectedOutput": "[3,4]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[2,3,4,4,6,1]]",
+        "output": "[4,5]",
+        "expectedOutput": "[4,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[20,15,9,13,4,3,8,5,14,16,10,11,11,2,19,12,7,18,17,1]]",
+        "output": "[11,6]",
+        "expectedOutput": "[11,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[15,17,3,21,2,11,27,9,8,23,12,16,28,4,29,24,30,30,25,10,19,20,6,26,13,22,14,7,5,18]]",
+        "output": "[30,1]",
+        "expectedOutput": "[30,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[3,3,1,4,5,2,7,8,9,6,11,12,13,14,10]]",
+        "output": "[3,15]",
+        "expectedOutput": "[3,15]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[1,2,4,4,5]]",
+        "output": "[4,3]",
+        "expectedOutput": "[4,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[2,3,4,5,6,7,8,9,10,10]]",
+        "output": "[10,1]",
+        "expectedOutput": "[10,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,1,3,4,5,6,7,8]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[4,3,2,7,8,2,5,1]]",
+        "output": "[2,6]",
+        "expectedOutput": "[2,6]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,2,3,4,6,6,7,8,9,10]]",
+        "output": "[6,5]",
+        "expectedOutput": "[6,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[5,2,3,4,5,6,7,8]]",
+        "output": "[5,1]",
+        "expectedOutput": "[5,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[1,2,3,5,5,6,7]]",
+        "output": "[5,4]",
+        "expectedOutput": "[5,4]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def findErrorNums(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findErrorNums(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findErrorNums(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findErrorNums(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findErrorNums(nums) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def findErrorNums(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findErrorNums(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findErrorNums(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findErrorNums(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findErrorNums(nums) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def findErrorNums(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findErrorNums(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findErrorNums(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findErrorNums(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findErrorNums(nums) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def findErrorNums(self, nums):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> findErrorNums(vector<int>& nums) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] findErrorNums(int[] nums) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun findErrorNums(nums: IntArray): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    findErrorNums(nums) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra",
+      "pattern": "cyclic sort: place each value v at index v-1, then the index that ends up holding the wrong value reveals both the duplicate and the missing number"
+    },
+    "bruteForce": {
+      "approach": "use a frequency array of size n+1 to count occurrences of each value, then scan it for the value with count 2 and the value with count 0",
+      "time": "O(n)",
+      "space": "O(n) for the frequency array"
+    }
+  },
+  "optimal": {
+    "pattern": "cyclic sort: place each value v at index v-1, then the index that ends up holding the wrong value reveals both the duplicate and the missing number",
+    "time": "O(n)",
+    "space": "O(1) extra",
+    "hint_ladder": [
+      "if every value belongs at index value-1, what does it mean when you find an index i where nums[i] - 1 != i?",
+      "try cyclic placement: repeatedly swap nums[i] to its home index v-1 unless that home index already holds the value v (which is your signal of a duplicate)",
+      "once placement finishes, scan for the one index i where nums[i] != i+1 - the value sitting there is the duplicate, and i+1 is the missing number",
+      "be careful not to swap a value with itself infinitely when it's a duplicate that already occupies a slot with the same value"
+    ]
+  },
+  "bruteForce": {
+    "approach": "use a frequency array of size n+1 to count occurrences of each value, then scan it for the value with count 2 and the value with count 0",
+    "time": "O(n)",
+    "space": "O(n) for the frequency array"
+  },
+  "isIndex0": true,
+  "level": null
+}

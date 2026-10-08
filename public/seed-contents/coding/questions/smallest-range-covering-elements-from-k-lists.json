@@ -1,0 +1,632 @@
+{
+  "id": "smallest-range-covering-elements-from-k-lists",
+  "questionId": "smallest-range-covering-elements-from-k-lists",
+  "slug": "smallest-range-covering-elements-from-k-lists",
+  "title": "Smallest Range Covering Elements from K Lists",
+  "difficulty": "Hard",
+  "category": "Heap",
+  "patterns": [
+    "heap",
+    "min-heap",
+    "k-way merge"
+  ],
+  "lists": [],
+  "hints": [
+    "a valid range must include at least one pick from every list - think of maintaining exactly one 'active' pointer per list at all times",
+    "the range's start is naturally the smallest of your k active picks; the range's end is the largest of your k active picks, since the range must stretch to cover every pick",
+    "seed a min-heap with the first element of every list, and separately track the current maximum among the k initial picks. the current range is [heap minimum, current maximum]",
+    "repeatedly pop the smallest pick, record the range if it's better than your best so far, then advance that same list's pointer to its next element and push it (updating the running maximum if needed). stop as soon as any list runs out of elements, since then you can no longer maintain one active pick per list"
+  ],
+  "commonMistakes": [
+    "trying all combinations directly, which is exponential and infeasible for more than a handful of lists",
+    "forgetting to track the running maximum across the k active picks separately, and instead re-scanning the heap for it each time (the heap only gives you the minimum efficiently)",
+    "not stopping as soon as one list is exhausted, continuing to search for smaller ranges when no valid range covering all k lists can exist anymore"
+  ],
+  "content": {
+    "problemStatement": "You're given `k` lists of integers, each sorted in ascending order (the\nlists may have different lengths).\n\n**Find the smallest range `[start, end]` such that at least one number from every one of the k lists falls within that range, inclusive on both ends, and return it as a two-element array `[start, end]`.**\n\nIf more than one range has the same smallest width (end - start), return the one that starts smallest.\n",
+    "constraints": [
+      "k == lists.length, 2 <= k <= 3500",
+      "1 <= lists[i].length <= 50",
+      "-10^5 <= lists[i][j] <= 10^5",
+      "lists[i] is sorted in non-decreasing order"
+    ],
+    "notes": [
+      "every list contains a common shared value, giving a zero-width range",
+      "lists of very different lengths",
+      "only two lists",
+      "a list with a single repeated value"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "lists = [[4, 10, 15, 24, 26], [0, 9, 12, 20], [5, 18, 22, 30]]",
+        "output": "[20, 24]",
+        "expectedOutput": "[20, 24]",
+        "explanation": "the range [20, 24] contains 24 from the first list, 20 from the second list, and 22 from the third list - a width of 4, which is the smallest possible"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "lists = [[1, 2, 3], [1, 2, 3], [1, 2, 3]]",
+        "output": "[1, 1]",
+        "expectedOutput": "[1, 1]",
+        "explanation": "the value 1 appears in all three lists, so the range [1, 1] with width 0 covers everything"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "lists = [[10, 10], [11, 11]]",
+        "output": "[10, 11]",
+        "expectedOutput": "[10, 11]",
+        "explanation": "the first list only has 10s and the second only has 11s, so [10, 11] is the tightest possible range"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[[4,10,15,24,26],[0,9,12,20],[5,18,22,30]]]",
+        "output": "[20,24]",
+        "expectedOutput": "[20,24]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2,3],[1,2,3],[1,2,3]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[10,10],[11,11]]]",
+        "output": "[10,11]",
+        "expectedOutput": "[10,11]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1],[2],[3]]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1],[1]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,100],[2,200]]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,5,10],[2,6,11],[3,7,12]]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[-5,-3,-1],[0,2,4],[-2,1,3]]]",
+        "output": "[-2,0]",
+        "expectedOutput": "[-2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2,3,4,5],[1,2,3,4,5]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,3,5,7,9],[2,4,6,8],[0,10]]]",
+        "output": "[0,2]",
+        "expectedOutput": "[0,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[10],[1,20],[5,15,25]]]",
+        "output": "[1,10]",
+        "expectedOutput": "[1,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,2,3],[100,200,300],[1,2,3]]]",
+        "output": "[3,100]",
+        "expectedOutput": "[3,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,3,6,9,12,15,18,21,24,27],[1,4,7,10,13,16,19,22,25,28],[2,5,8,11,14,17,20,23,26,29]]]",
+        "output": "[0,2]",
+        "expectedOutput": "[0,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[-10,-5,0,5,10],[-8,-3,2,7]]]",
+        "output": "[-10,-8]",
+        "expectedOutput": "[-10,-8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,1,1],[1,1,1]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[-100,0,100],[-50,0,50],[-1,0,1]]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[5],[5],[5],[5]]]",
+        "output": "[5,5]",
+        "expectedOutput": "[5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,2,3,4,5,6,7,8,9,10],[1,2,3,4,5,6,7,8,9,10],[1,2,3,4,5,6,7,8,9,10],[1,2,3,4,5,6,7,8,9,10]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,1000000000],[500000000]]]",
+        "output": "[0,500000000]",
+        "expectedOutput": "[0,500000000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[3,6,9],[1,2],[8,10,12]]]",
+        "output": "[2,8]",
+        "expectedOutput": "[2,8]",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "lists = [[4, 10, 15, 24, 26], [0, 9, 12, 20], [5, 18, 22, 30]]",
+      "output": "[20, 24]",
+      "expectedOutput": "[20, 24]",
+      "explanation": "the range [20, 24] contains 24 from the first list, 20 from the second list, and 22 from the third list - a width of 4, which is the smallest possible"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "lists = [[1, 2, 3], [1, 2, 3], [1, 2, 3]]",
+      "output": "[1, 1]",
+      "expectedOutput": "[1, 1]",
+      "explanation": "the value 1 appears in all three lists, so the range [1, 1] with width 0 covers everything"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "lists = [[10, 10], [11, 11]]",
+      "output": "[10, 11]",
+      "expectedOutput": "[10, 11]",
+      "explanation": "the first list only has 10s and the second only has 11s, so [10, 11] is the tightest possible range"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "lists = [[4, 10, 15, 24, 26], [0, 9, 12, 20], [5, 18, 22, 30]]",
+      "output": "[20, 24]",
+      "expectedOutput": "[20, 24]",
+      "explanation": "the range [20, 24] contains 24 from the first list, 20 from the second list, and 22 from the third list - a width of 4, which is the smallest possible"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "lists = [[1, 2, 3], [1, 2, 3], [1, 2, 3]]",
+      "output": "[1, 1]",
+      "expectedOutput": "[1, 1]",
+      "explanation": "the value 1 appears in all three lists, so the range [1, 1] with width 0 covers everything"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "lists = [[10, 10], [11, 11]]",
+      "output": "[10, 11]",
+      "expectedOutput": "[10, 11]",
+      "explanation": "the first list only has 10s and the second only has 11s, so [10, 11] is the tightest possible range"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[[4,10,15,24,26],[0,9,12,20],[5,18,22,30]]]",
+      "output": "[20,24]",
+      "expectedOutput": "[20,24]",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[[1,2,3],[1,2,3],[1,2,3]]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[[10,10],[11,11]]]",
+      "output": "[10,11]",
+      "expectedOutput": "[10,11]",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[[1],[2],[3]]]",
+      "output": "[1,3]",
+      "expectedOutput": "[1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[[1],[1]]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[[1,100],[2,200]]]",
+      "output": "[1,2]",
+      "expectedOutput": "[1,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[[1,5,10],[2,6,11],[3,7,12]]]",
+      "output": "[1,3]",
+      "expectedOutput": "[1,3]",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[[-5,-3,-1],[0,2,4],[-2,1,3]]]",
+      "output": "[-2,0]",
+      "expectedOutput": "[-2,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[[1,2,3,4,5],[1,2,3,4,5]]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[[1,3,5,7,9],[2,4,6,8],[0,10]]]",
+      "output": "[0,2]",
+      "expectedOutput": "[0,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[[10],[1,20],[5,15,25]]]",
+      "output": "[1,10]",
+      "expectedOutput": "[1,10]",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[[1,2,3],[100,200,300],[1,2,3]]]",
+      "output": "[3,100]",
+      "expectedOutput": "[3,100]",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[[0,3,6,9,12,15,18,21,24,27],[1,4,7,10,13,16,19,22,25,28],[2,5,8,11,14,17,20,23,26,29]]]",
+      "output": "[0,2]",
+      "expectedOutput": "[0,2]",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[[-10,-5,0,5,10],[-8,-3,2,7]]]",
+      "output": "[-10,-8]",
+      "expectedOutput": "[-10,-8]",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[[1,1,1],[1,1,1]]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[[-100,0,100],[-50,0,50],[-1,0,1]]]",
+      "output": "[0,0]",
+      "expectedOutput": "[0,0]",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[[5],[5],[5],[5]]]",
+      "output": "[5,5]",
+      "expectedOutput": "[5,5]",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[[1,2,3,4,5,6,7,8,9,10],[1,2,3,4,5,6,7,8,9,10],[1,2,3,4,5,6,7,8,9,10],[1,2,3,4,5,6,7,8,9,10]]]",
+      "output": "[1,1]",
+      "expectedOutput": "[1,1]",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[[0,1000000000],[500000000]]]",
+      "output": "[0,500000000]",
+      "expectedOutput": "[0,500000000]",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[[3,6,9],[1,2],[8,10,12]]]",
+      "output": "[2,8]",
+      "expectedOutput": "[2,8]",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "lists = [[4, 10, 15, 24, 26], [0, 9, 12, 20], [5, 18, 22, 30]]",
+        "output": "[20, 24]",
+        "expectedOutput": "[20, 24]",
+        "explanation": "the range [20, 24] contains 24 from the first list, 20 from the second list, and 22 from the third list - a width of 4, which is the smallest possible"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "lists = [[1, 2, 3], [1, 2, 3], [1, 2, 3]]",
+        "output": "[1, 1]",
+        "expectedOutput": "[1, 1]",
+        "explanation": "the value 1 appears in all three lists, so the range [1, 1] with width 0 covers everything"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "lists = [[10, 10], [11, 11]]",
+        "output": "[10, 11]",
+        "expectedOutput": "[10, 11]",
+        "explanation": "the first list only has 10s and the second only has 11s, so [10, 11] is the tightest possible range"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[[4,10,15,24,26],[0,9,12,20],[5,18,22,30]]]",
+        "output": "[20,24]",
+        "expectedOutput": "[20,24]",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[[1,2,3],[1,2,3],[1,2,3]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[[10,10],[11,11]]]",
+        "output": "[10,11]",
+        "expectedOutput": "[10,11]",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[[1],[2],[3]]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[[1],[1]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[[1,100],[2,200]]]",
+        "output": "[1,2]",
+        "expectedOutput": "[1,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[[1,5,10],[2,6,11],[3,7,12]]]",
+        "output": "[1,3]",
+        "expectedOutput": "[1,3]",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[[-5,-3,-1],[0,2,4],[-2,1,3]]]",
+        "output": "[-2,0]",
+        "expectedOutput": "[-2,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[[1,2,3,4,5],[1,2,3,4,5]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[[1,3,5,7,9],[2,4,6,8],[0,10]]]",
+        "output": "[0,2]",
+        "expectedOutput": "[0,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[[10],[1,20],[5,15,25]]]",
+        "output": "[1,10]",
+        "expectedOutput": "[1,10]",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[[1,2,3],[100,200,300],[1,2,3]]]",
+        "output": "[3,100]",
+        "expectedOutput": "[3,100]",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[[0,3,6,9,12,15,18,21,24,27],[1,4,7,10,13,16,19,22,25,28],[2,5,8,11,14,17,20,23,26,29]]]",
+        "output": "[0,2]",
+        "expectedOutput": "[0,2]",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[[-10,-5,0,5,10],[-8,-3,2,7]]]",
+        "output": "[-10,-8]",
+        "expectedOutput": "[-10,-8]",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[[1,1,1],[1,1,1]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[[-100,0,100],[-50,0,50],[-1,0,1]]]",
+        "output": "[0,0]",
+        "expectedOutput": "[0,0]",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[[5],[5],[5],[5]]]",
+        "output": "[5,5]",
+        "expectedOutput": "[5,5]",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[[1,2,3,4,5,6,7,8,9,10],[1,2,3,4,5,6,7,8,9,10],[1,2,3,4,5,6,7,8,9,10],[1,2,3,4,5,6,7,8,9,10]]]",
+        "output": "[1,1]",
+        "expectedOutput": "[1,1]",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[[0,1000000000],[500000000]]]",
+        "output": "[0,500000000]",
+        "expectedOutput": "[0,500000000]",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[[3,6,9],[1,2],[8,10,12]]]",
+        "output": "[2,8]",
+        "expectedOutput": "[2,8]",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def smallestRange(self, lists):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> smallestRange(vector<vector<int>>& lists) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] smallestRange(int[][] lists) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun smallestRange(lists: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    smallestRange(lists) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def smallestRange(self, lists):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> smallestRange(vector<vector<int>>& lists) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] smallestRange(int[][] lists) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun smallestRange(lists: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    smallestRange(lists) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def smallestRange(self, lists):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> smallestRange(vector<vector<int>>& lists) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] smallestRange(int[][] lists) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun smallestRange(lists: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    smallestRange(lists) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def smallestRange(self, lists):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <queue>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> smallestRange(vector<vector<int>>& lists) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public int[] smallestRange(int[][] lists) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun smallestRange(lists: Array<IntArray>): IntArray {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    smallestRange(lists) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(total_elements * log k)",
+      "space": "O(k)",
+      "pattern": "min-heap holding one pointer per list, sliding the window forward by always advancing the list with the current minimum"
+    },
+    "bruteForce": {
+      "approach": "try every combination of picking one element from each list (the full cross product) and check the resulting range width, keeping the smallest",
+      "time": "exponential in k",
+      "space": "O(k)"
+    }
+  },
+  "optimal": {
+    "pattern": "min-heap holding one pointer per list, sliding the window forward by always advancing the list with the current minimum",
+    "time": "O(total_elements * log k)",
+    "space": "O(k)",
+    "hint_ladder": [
+      "a valid range must include at least one pick from every list - think of maintaining exactly one 'active' pointer per list at all times",
+      "the range's start is naturally the smallest of your k active picks; the range's end is the largest of your k active picks, since the range must stretch to cover every pick",
+      "seed a min-heap with the first element of every list, and separately track the current maximum among the k initial picks. the current range is [heap minimum, current maximum]",
+      "repeatedly pop the smallest pick, record the range if it's better than your best so far, then advance that same list's pointer to its next element and push it (updating the running maximum if needed). stop as soon as any list runs out of elements, since then you can no longer maintain one active pick per list"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every combination of picking one element from each list (the full cross product) and check the resulting range width, keeping the smallest",
+    "time": "exponential in k",
+    "space": "O(k)"
+  },
+  "isIndex0": true,
+  "level": null
+}

@@ -1,0 +1,632 @@
+{
+  "id": "subset-sum-exists",
+  "questionId": "subset-sum-exists",
+  "slug": "subset-sum-exists",
+  "title": "Subset Sum Exists",
+  "difficulty": "Medium",
+  "category": "Knapsack",
+  "patterns": [
+    "knapsack",
+    "subset sum",
+    "dynamic programming"
+  ],
+  "lists": [],
+  "hints": [
+    "each number is either included in the subset or not - what would a table of 'is this sum reachable' look like, built up one number at a time?",
+    "define dp[s] as true if some subset of the numbers processed so far sums to exactly s, with dp[0] = true always (the empty subset)",
+    "for each number num, a sum s becomes reachable either because it already was, or because s - num was reachable before adding num: dp[s] = dp[s] OR dp[s - num]",
+    "update s from target down to num for each number, so you don't let the same number contribute twice to the same sum in one pass",
+    "after processing every number, return dp[target] directly"
+  ],
+  "commonMistakes": [
+    "iterating the sum update from low to high, which allows the same number to be reused multiple times toward the same subset",
+    "forgetting dp[0] = true, which breaks every derivation that relies on 'reachable sum plus this number'",
+    "not handling target = 0 as trivially true before or within the DP"
+  ],
+  "content": {
+    "problemStatement": "You're given a list of non-negative integers and a target value.\n\n**Determine whether some subset of the list, possibly empty, possibly all of it, sums to exactly the target, and return true if such a subset exists, false otherwise.**\n",
+    "constraints": [
+      "0 <= nums.length <= 200",
+      "0 <= nums[i] <= 1000",
+      "0 <= target <= 10^4"
+    ],
+    "notes": [
+      "target is 0 (always true via the empty subset)",
+      "target exceeds the sum of every element (always false)",
+      "a single element equal to the target"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 34, 4, 12, 5, 2], target = 9",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the subset [4, 5] sums to exactly 9"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [3, 34, 4, 12, 5, 2], target = 30",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "no combination of these numbers sums to exactly 30"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], target = 0",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the empty subset always sums to 0"
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[[3,34,4,12,5,2],9]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,34,4,12,5,2],30]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,5],4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5],5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5],3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5],15]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5],16]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,4,6,8],5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[10,20,30,40],100]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,1],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[7,3,2,5,8],14]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,200,300],600]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3],100]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[4,4,4,4],8]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,3,9,27],30]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[15,10,20,25,50],45]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,9,9],27]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 34, 4, 12, 5, 2], target = 9",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the subset [4, 5] sums to exactly 9"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [3, 34, 4, 12, 5, 2], target = 30",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "no combination of these numbers sums to exactly 30"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], target = 0",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the empty subset always sums to 0"
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "nums = [3, 34, 4, 12, 5, 2], target = 9",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the subset [4, 5] sums to exactly 9"
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "nums = [3, 34, 4, 12, 5, 2], target = 30",
+      "output": "false",
+      "expectedOutput": "false",
+      "explanation": "no combination of these numbers sums to exactly 30"
+    },
+    {
+      "id": "sample_3",
+      "type": "reg",
+      "input": "nums = [1, 2, 3], target = 0",
+      "output": "true",
+      "expectedOutput": "true",
+      "explanation": "the empty subset always sums to 0"
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[[3,34,4,12,5,2],9]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[[3,34,4,12,5,2],30]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[[1,2,3],0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[[1,2,5],4]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[[],0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[[5],5]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[[5],3]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[[0,0,0],0]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[[1,2,3,4,5],15]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[[1,2,3,4,5],16]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[[2,4,6,8],5]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[[10,20,30,40],100]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[[1,1,1,1,1],3]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[[7,3,2,5,8],14]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[[100,200,300],600]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[[1,2,3],100]",
+      "output": "false",
+      "expectedOutput": "false",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[[4,4,4,4],8]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[[1,3,9,27],30]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[[15,10,20,25,50],45]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[[9,9,9],27]",
+      "output": "true",
+      "expectedOutput": "true",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "nums = [3, 34, 4, 12, 5, 2], target = 9",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the subset [4, 5] sums to exactly 9"
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "nums = [3, 34, 4, 12, 5, 2], target = 30",
+        "output": "false",
+        "expectedOutput": "false",
+        "explanation": "no combination of these numbers sums to exactly 30"
+      },
+      {
+        "id": "sample_3",
+        "type": "reg",
+        "input": "nums = [1, 2, 3], target = 0",
+        "output": "true",
+        "expectedOutput": "true",
+        "explanation": "the empty subset always sums to 0"
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[[3,34,4,12,5,2],9]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[[3,34,4,12,5,2],30]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[[1,2,3],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[[1,2,5],4]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[[],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[[5],5]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[[5],3]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[[0,0,0],0]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[[1,2,3,4,5],15]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[[1,2,3,4,5],16]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[[2,4,6,8],5]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[[10,20,30,40],100]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[[1,1,1,1,1],3]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[[7,3,2,5,8],14]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[[100,200,300],600]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[[1,2,3],100]",
+        "output": "false",
+        "expectedOutput": "false",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[[4,4,4,4],8]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[[1,3,9,27],30]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[[15,10,20,25,50],45]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[[9,9,9],27]",
+        "output": "true",
+        "expectedOutput": "true",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def subsetSumExists(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool subsetSumExists(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean subsetSumExists(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subsetSumExists(nums: IntArray, target: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subsetSumExists(nums, target) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def subsetSumExists(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool subsetSumExists(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean subsetSumExists(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subsetSumExists(nums: IntArray, target: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subsetSumExists(nums, target) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def subsetSumExists(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool subsetSumExists(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean subsetSumExists(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subsetSumExists(nums: IntArray, target: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subsetSumExists(nums, target) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def subsetSumExists(self, nums, target):\n",
+    "cpp": "#include <vector>\n#include <string>\nusing namespace std;\n\nclass Solution {\npublic:\n    bool subsetSumExists(vector<int>& nums, int target) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public boolean subsetSumExists(int[] nums, int target) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun subsetSumExists(nums: IntArray, target: Int): Boolean {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    subsetSumExists(nums, target) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n * target)",
+      "space": "O(target)",
+      "pattern": "knapsack (0/1 subset sum, general target rather than half the total)"
+    },
+    "bruteForce": {
+      "approach": "try every possible subset of nums (2^n possibilities) and check if any subset's sum equals target exactly",
+      "time": "O(2^n)",
+      "space": "O(n) recursion depth"
+    }
+  },
+  "optimal": {
+    "pattern": "knapsack (0/1 subset sum, general target rather than half the total)",
+    "time": "O(n * target)",
+    "space": "O(target)",
+    "hint_ladder": [
+      "each number is either included in the subset or not - what would a table of 'is this sum reachable' look like, built up one number at a time?",
+      "define dp[s] as true if some subset of the numbers processed so far sums to exactly s, with dp[0] = true always (the empty subset)",
+      "for each number num, a sum s becomes reachable either because it already was, or because s - num was reachable before adding num: dp[s] = dp[s] OR dp[s - num]",
+      "update s from target down to num for each number, so you don't let the same number contribute twice to the same sum in one pass",
+      "after processing every number, return dp[target] directly"
+    ]
+  },
+  "bruteForce": {
+    "approach": "try every possible subset of nums (2^n possibilities) and check if any subset's sum equals target exactly",
+    "time": "O(2^n)",
+    "space": "O(n) recursion depth"
+  },
+  "isIndex0": true,
+  "level": null
+}

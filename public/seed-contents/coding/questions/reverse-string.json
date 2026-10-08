@@ -1,0 +1,658 @@
+{
+  "id": "reverse-string",
+  "questionId": "reverse-string",
+  "slug": "reverse-string",
+  "title": "Reverse String",
+  "difficulty": "Easy",
+  "category": "Two pointers",
+  "patterns": [
+    "two pointers"
+  ],
+  "lists": [],
+  "hints": [
+    "a built-in reverse works, but what is it actually doing under the hood?",
+    "what if you had a pointer at each end of the string and swapped the characters they point to?",
+    "move both pointers toward the middle after each swap, stopping when they meet or cross",
+    "this is the same two-pointer shape you'll see again in palindrome checks and array reversals"
+  ],
+  "commonMistakes": [
+    "swapping past the middle (going one step too far and un-swapping)",
+    "forgetting the loop condition for odd-length strings, where the middle character shouldn't move",
+    "trying to mutate an immutable string in place instead of building/returning a new one where the language requires it"
+  ],
+  "content": {
+    "problemStatement": "You're given a string.\n\n**Return it reversed.**\n\nDo not use a built-in reverse function or slicing trick, the point is to do the swapping yourself with two pointers.\n",
+    "constraints": [
+      "0 <= s.length <= 10^5",
+      "s consists of printable ASCII characters"
+    ],
+    "notes": [
+      "empty string",
+      "single character",
+      "string with repeated characters"
+    ],
+    "inputFormat": "Arguments passed into solution function",
+    "outputFormat": "Return output matching method signature",
+    "sampleTestCases": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"hello\"",
+        "output": "\"olleh\"",
+        "expectedOutput": "\"olleh\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"Hannah\"",
+        "output": "\"hannaH\"",
+        "expectedOutput": "\"hannaH\"",
+        "explanation": ""
+      }
+    ],
+    "testCases": [
+      {
+        "id": "tc_1",
+        "input": "[\"hello\"]",
+        "output": "olleh",
+        "expectedOutput": "olleh",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"Hannah\"]",
+        "output": "hannaH",
+        "expectedOutput": "hannaH",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"b\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"ab\"]",
+        "output": "ba",
+        "expectedOutput": "ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abc\"]",
+        "output": "cba",
+        "expectedOutput": "cba",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"racecar\"]",
+        "output": "racecar",
+        "expectedOutput": "racecar",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"Hello, World!\"]",
+        "output": "!dlroW ,olleH",
+        "expectedOutput": "!dlroW ,olleH",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"   spaced   \"]",
+        "output": "   decaps   ",
+        "expectedOutput": "   decaps   ",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaaaaaaaaa\"]",
+        "output": "aaaaaaaaaa",
+        "expectedOutput": "aaaaaaaaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "zyxwvutsrqponmlkjihgfedcba",
+        "expectedOutput": "zyxwvutsrqponmlkjihgfedcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"1234567890\"]",
+        "output": "0987654321",
+        "expectedOutput": "0987654321",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"Aa\"]",
+        "output": "aA",
+        "expectedOutput": "aA",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"zZ\"]",
+        "output": "Zz",
+        "expectedOutput": "Zz",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"!@#$%^&*()\"]",
+        "output": ")(*&^%$#@!",
+        "expectedOutput": ")(*&^%$#@!",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"the quick brown fox jumps over the lazy dog and runs very far away\"]",
+        "output": "yawa raf yrev snur dna god yzal eht revo spmuj xof nworb kciuq eht",
+        "expectedOutput": "yawa raf yrev snur dna god yzal eht revo spmuj xof nworb kciuq eht",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"]",
+        "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "expectedOutput": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"Madam, in Eden, I'm Adam\"]",
+        "output": "madA m'I ,nedE ni ,madaM",
+        "expectedOutput": "madA m'I ,nedE ni ,madaM",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcd\"]",
+        "output": "dcba",
+        "expectedOutput": "dcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"X\"]",
+        "output": "X",
+        "expectedOutput": "X",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"ABBA\"]",
+        "output": "ABBA",
+        "expectedOutput": "ABBA",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"stressed\"]",
+        "output": "desserts",
+        "expectedOutput": "desserts",
+        "hidden": true
+      }
+    ]
+  },
+  "sampleTestCases": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"hello\"",
+      "output": "\"olleh\"",
+      "expectedOutput": "\"olleh\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"Hannah\"",
+      "output": "\"hannaH\"",
+      "expectedOutput": "\"hannaH\"",
+      "explanation": ""
+    }
+  ],
+  "sampleTests": [
+    {
+      "id": "sample_1",
+      "type": "reg",
+      "input": "s = \"hello\"",
+      "output": "\"olleh\"",
+      "expectedOutput": "\"olleh\"",
+      "explanation": ""
+    },
+    {
+      "id": "sample_2",
+      "type": "reg",
+      "input": "s = \"Hannah\"",
+      "output": "\"hannaH\"",
+      "expectedOutput": "\"hannaH\"",
+      "explanation": ""
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "id": "tc_1",
+      "input": "[\"hello\"]",
+      "output": "olleh",
+      "expectedOutput": "olleh",
+      "hidden": false
+    },
+    {
+      "id": "tc_2",
+      "input": "[\"Hannah\"]",
+      "output": "hannaH",
+      "expectedOutput": "hannaH",
+      "hidden": false
+    },
+    {
+      "id": "tc_3",
+      "input": "[\"a\"]",
+      "output": "a",
+      "expectedOutput": "a",
+      "hidden": false
+    },
+    {
+      "id": "tc_4",
+      "input": "[\"\"]",
+      "output": "",
+      "expectedOutput": "",
+      "hidden": true
+    },
+    {
+      "id": "tc_5",
+      "input": "[\"b\"]",
+      "output": "b",
+      "expectedOutput": "b",
+      "hidden": true
+    },
+    {
+      "id": "tc_6",
+      "input": "[\"ab\"]",
+      "output": "ba",
+      "expectedOutput": "ba",
+      "hidden": true
+    },
+    {
+      "id": "tc_7",
+      "input": "[\"abc\"]",
+      "output": "cba",
+      "expectedOutput": "cba",
+      "hidden": true
+    },
+    {
+      "id": "tc_8",
+      "input": "[\"racecar\"]",
+      "output": "racecar",
+      "expectedOutput": "racecar",
+      "hidden": true
+    },
+    {
+      "id": "tc_9",
+      "input": "[\"Hello, World!\"]",
+      "output": "!dlroW ,olleH",
+      "expectedOutput": "!dlroW ,olleH",
+      "hidden": true
+    },
+    {
+      "id": "tc_10",
+      "input": "[\"   spaced   \"]",
+      "output": "   decaps   ",
+      "expectedOutput": "   decaps   ",
+      "hidden": true
+    },
+    {
+      "id": "tc_11",
+      "input": "[\"aaaaaaaaaa\"]",
+      "output": "aaaaaaaaaa",
+      "expectedOutput": "aaaaaaaaaa",
+      "hidden": true
+    },
+    {
+      "id": "tc_12",
+      "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+      "output": "zyxwvutsrqponmlkjihgfedcba",
+      "expectedOutput": "zyxwvutsrqponmlkjihgfedcba",
+      "hidden": true
+    },
+    {
+      "id": "tc_13",
+      "input": "[\"1234567890\"]",
+      "output": "0987654321",
+      "expectedOutput": "0987654321",
+      "hidden": true
+    },
+    {
+      "id": "tc_14",
+      "input": "[\"Aa\"]",
+      "output": "aA",
+      "expectedOutput": "aA",
+      "hidden": true
+    },
+    {
+      "id": "tc_15",
+      "input": "[\"zZ\"]",
+      "output": "Zz",
+      "expectedOutput": "Zz",
+      "hidden": true
+    },
+    {
+      "id": "tc_16",
+      "input": "[\"!@#$%^&*()\"]",
+      "output": ")(*&^%$#@!",
+      "expectedOutput": ")(*&^%$#@!",
+      "hidden": true
+    },
+    {
+      "id": "tc_17",
+      "input": "[\"the quick brown fox jumps over the lazy dog and runs very far away\"]",
+      "output": "yawa raf yrev snur dna god yzal eht revo spmuj xof nworb kciuq eht",
+      "expectedOutput": "yawa raf yrev snur dna god yzal eht revo spmuj xof nworb kciuq eht",
+      "hidden": true
+    },
+    {
+      "id": "tc_18",
+      "input": "[\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"]",
+      "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "expectedOutput": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "hidden": true
+    },
+    {
+      "id": "tc_19",
+      "input": "[\"Madam, in Eden, I'm Adam\"]",
+      "output": "madA m'I ,nedE ni ,madaM",
+      "expectedOutput": "madA m'I ,nedE ni ,madaM",
+      "hidden": true
+    },
+    {
+      "id": "tc_20",
+      "input": "[\"abcd\"]",
+      "output": "dcba",
+      "expectedOutput": "dcba",
+      "hidden": true
+    },
+    {
+      "id": "tc_21",
+      "input": "[\"X\"]",
+      "output": "X",
+      "expectedOutput": "X",
+      "hidden": true
+    },
+    {
+      "id": "tc_22",
+      "input": "[\"ABBA\"]",
+      "output": "ABBA",
+      "expectedOutput": "ABBA",
+      "hidden": true
+    },
+    {
+      "id": "tc_23",
+      "input": "[\"stressed\"]",
+      "output": "desserts",
+      "expectedOutput": "desserts",
+      "hidden": true
+    }
+  ],
+  "testCases": {
+    "sample": [
+      {
+        "id": "sample_1",
+        "type": "reg",
+        "input": "s = \"hello\"",
+        "output": "\"olleh\"",
+        "expectedOutput": "\"olleh\"",
+        "explanation": ""
+      },
+      {
+        "id": "sample_2",
+        "type": "reg",
+        "input": "s = \"Hannah\"",
+        "output": "\"hannaH\"",
+        "expectedOutput": "\"hannaH\"",
+        "explanation": ""
+      }
+    ],
+    "hidden": [
+      {
+        "id": "tc_1",
+        "input": "[\"hello\"]",
+        "output": "olleh",
+        "expectedOutput": "olleh",
+        "hidden": false
+      },
+      {
+        "id": "tc_2",
+        "input": "[\"Hannah\"]",
+        "output": "hannaH",
+        "expectedOutput": "hannaH",
+        "hidden": false
+      },
+      {
+        "id": "tc_3",
+        "input": "[\"a\"]",
+        "output": "a",
+        "expectedOutput": "a",
+        "hidden": false
+      },
+      {
+        "id": "tc_4",
+        "input": "[\"\"]",
+        "output": "",
+        "expectedOutput": "",
+        "hidden": true
+      },
+      {
+        "id": "tc_5",
+        "input": "[\"b\"]",
+        "output": "b",
+        "expectedOutput": "b",
+        "hidden": true
+      },
+      {
+        "id": "tc_6",
+        "input": "[\"ab\"]",
+        "output": "ba",
+        "expectedOutput": "ba",
+        "hidden": true
+      },
+      {
+        "id": "tc_7",
+        "input": "[\"abc\"]",
+        "output": "cba",
+        "expectedOutput": "cba",
+        "hidden": true
+      },
+      {
+        "id": "tc_8",
+        "input": "[\"racecar\"]",
+        "output": "racecar",
+        "expectedOutput": "racecar",
+        "hidden": true
+      },
+      {
+        "id": "tc_9",
+        "input": "[\"Hello, World!\"]",
+        "output": "!dlroW ,olleH",
+        "expectedOutput": "!dlroW ,olleH",
+        "hidden": true
+      },
+      {
+        "id": "tc_10",
+        "input": "[\"   spaced   \"]",
+        "output": "   decaps   ",
+        "expectedOutput": "   decaps   ",
+        "hidden": true
+      },
+      {
+        "id": "tc_11",
+        "input": "[\"aaaaaaaaaa\"]",
+        "output": "aaaaaaaaaa",
+        "expectedOutput": "aaaaaaaaaa",
+        "hidden": true
+      },
+      {
+        "id": "tc_12",
+        "input": "[\"abcdefghijklmnopqrstuvwxyz\"]",
+        "output": "zyxwvutsrqponmlkjihgfedcba",
+        "expectedOutput": "zyxwvutsrqponmlkjihgfedcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_13",
+        "input": "[\"1234567890\"]",
+        "output": "0987654321",
+        "expectedOutput": "0987654321",
+        "hidden": true
+      },
+      {
+        "id": "tc_14",
+        "input": "[\"Aa\"]",
+        "output": "aA",
+        "expectedOutput": "aA",
+        "hidden": true
+      },
+      {
+        "id": "tc_15",
+        "input": "[\"zZ\"]",
+        "output": "Zz",
+        "expectedOutput": "Zz",
+        "hidden": true
+      },
+      {
+        "id": "tc_16",
+        "input": "[\"!@#$%^&*()\"]",
+        "output": ")(*&^%$#@!",
+        "expectedOutput": ")(*&^%$#@!",
+        "hidden": true
+      },
+      {
+        "id": "tc_17",
+        "input": "[\"the quick brown fox jumps over the lazy dog and runs very far away\"]",
+        "output": "yawa raf yrev snur dna god yzal eht revo spmuj xof nworb kciuq eht",
+        "expectedOutput": "yawa raf yrev snur dna god yzal eht revo spmuj xof nworb kciuq eht",
+        "hidden": true
+      },
+      {
+        "id": "tc_18",
+        "input": "[\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"]",
+        "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "expectedOutput": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "hidden": true
+      },
+      {
+        "id": "tc_19",
+        "input": "[\"Madam, in Eden, I'm Adam\"]",
+        "output": "madA m'I ,nedE ni ,madaM",
+        "expectedOutput": "madA m'I ,nedE ni ,madaM",
+        "hidden": true
+      },
+      {
+        "id": "tc_20",
+        "input": "[\"abcd\"]",
+        "output": "dcba",
+        "expectedOutput": "dcba",
+        "hidden": true
+      },
+      {
+        "id": "tc_21",
+        "input": "[\"X\"]",
+        "output": "X",
+        "expectedOutput": "X",
+        "hidden": true
+      },
+      {
+        "id": "tc_22",
+        "input": "[\"ABBA\"]",
+        "output": "ABBA",
+        "expectedOutput": "ABBA",
+        "hidden": true
+      },
+      {
+        "id": "tc_23",
+        "input": "[\"stressed\"]",
+        "output": "desserts",
+        "expectedOutput": "desserts",
+        "hidden": true
+      }
+    ]
+  },
+  "boilerplates": {
+    "python": "class Solution:\n    def reverseString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string reverseString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String reverseString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseString(s) {\n\n    }\n}\n"
+  },
+  "boilerPlates": {
+    "python": "class Solution:\n    def reverseString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string reverseString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String reverseString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseString(s) {\n\n    }\n}\n"
+  },
+  "starterCode": {
+    "python": "class Solution:\n    def reverseString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string reverseString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String reverseString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseString(s) {\n\n    }\n}\n"
+  },
+  "starterCodes": {
+    "python": "class Solution:\n    def reverseString(self, s):\n",
+    "cpp": "#include <vector>\n#include <string>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    string reverseString(string s) {\n\n    }\n};\n",
+    "java": "class Solution {\n    public String reverseString(String s) {\n\n    }\n}\n",
+    "kotlin": "class Solution {\n    fun reverseString(s: String): String {\n\n    }\n}\n",
+    "javascript": "class Solution {\n    reverseString(s) {\n\n    }\n}\n"
+  },
+  "complexityAnalysis": {
+    "optimal": {
+      "time": "O(n)",
+      "space": "O(1) extra, beyond the output",
+      "pattern": "two pointers from both ends, swapping characters and moving inward"
+    },
+    "bruteForce": {
+      "approach": "use the language's built-in reverse (slicing, StringBuilder.reverse(), etc.)",
+      "time": "O(n)",
+      "space": "O(n) for the new string"
+    }
+  },
+  "optimal": {
+    "pattern": "two pointers from both ends, swapping characters and moving inward",
+    "time": "O(n)",
+    "space": "O(1) extra, beyond the output",
+    "hint_ladder": [
+      "a built-in reverse works, but what is it actually doing under the hood?",
+      "what if you had a pointer at each end of the string and swapped the characters they point to?",
+      "move both pointers toward the middle after each swap, stopping when they meet or cross",
+      "this is the same two-pointer shape you'll see again in palindrome checks and array reversals"
+    ]
+  },
+  "bruteForce": {
+    "approach": "use the language's built-in reverse (slicing, StringBuilder.reverse(), etc.)",
+    "time": "O(n)",
+    "space": "O(n) for the new string"
+  },
+  "isIndex0": true,
+  "level": null
+}
